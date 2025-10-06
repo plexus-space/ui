@@ -1,0 +1,55 @@
+{
+  "name": "@plexusui/gantt",
+  "version": "0.0.1",
+  "description": "Primitive-based Gantt chart component for aerospace and project timeline visualization",
+  "main": "./dist/gantt.js",
+  "types": "./dist/gantt.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/gantt.js",
+      "types": "./dist/gantt.d.ts"
+    },
+    "./hooks": {
+      "import": "./dist/hooks/index.js",
+      "types": "./dist/hooks/index.d.ts"
+    },
+    "./primitives": {
+      "import": "./dist/primitives/index.js",
+      "types": "./dist/primitives/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "gantt",
+    "timeline",
+    "chart",
+    "aerospace",
+    "ui",
+    "react",
+    "primitives",
+    "shadcn"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ui-aerospace.git",
+    "directory": "packages/gantt"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.25",
+    "@types/react-dom": "^18.3.7",
+    "typescript": "^5.4.5"
+  }
+}

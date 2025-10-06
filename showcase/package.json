@@ -1,0 +1,43 @@
+{
+  "name": "@plexusui/showcase",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@react-three/fiber": "^8.0.0",
+    "@react-three/drei": "^9.0.0",
+    "three": "^0.160.0",
+    "@plexusui/earth": "*",
+    "@plexusui/mars": "*",
+    "@plexusui/mercury": "*",
+    "@plexusui/venus": "*",
+    "@plexusui/moon": "*",
+    "@plexusui/jupiter": "*",
+    "@plexusui/saturn": "*",
+    "@plexusui/uranus": "*",
+    "@plexusui/neptune": "*",
+    "@plexusui/gantt": "*",
+    "@plexusui/orbital-path": "*",
+    "@plexusui/ground-track": "*",
+    "@plexusui/trajectory": "*",
+    "@plexusui/transfer-orbit": "*",
+    "@plexusui/lagrange-points": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.3.25",
+    "@types/react-dom": "^18.3.7",
+    "@types/three": "^0.160.0",
+    "typescript": "^5.4.5",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0"
+  }
+}

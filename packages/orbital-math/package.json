@@ -1,0 +1,31 @@
+{
+  "name": "@plexusui/orbital-math",
+  "version": "0.0.1",
+  "description": "High-precision orbital mechanics math utilities for aerospace applications",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "orbital-mechanics",
+    "astrodynamics",
+    "kepler",
+    "lagrange",
+    "math",
+    "aerospace",
+    "utilities"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
