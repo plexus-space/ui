@@ -1,90 +1,106 @@
-# Plexus UI Aerospace
+# Plexus UI
 
 > Primitive-based aerospace & physics component library with scientific accuracy
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Plexus UI is a React component library for aerospace visualization, designed with the same philosophy as [shadcn/ui](https://ui.shadcn.com): **primitives-first**, **composable**, and **easy to use**.
+Plexus UI is a React component library for aerospace visualization, designed with: **copy the code, not install packages**.
 
 ## ✨ Features
 
 - 🌍 **High-quality planetary visualizations** - Earth, Mars, Jupiter, Saturn, and more
 - 🛸 **Scientific orbital mechanics** - Real astrodynamics math, not approximations
-- 📊 **Charts & timelines** - Gantt charts, telemetry graphs, mission planning tools
+- 📊 **Charts & timelines** - Gantt charts for mission planning
 - 🎯 **High-precision mode** - Optional Newton-Raphson solvers for exact calculations
 - 🧩 **Primitives pattern** - Build complex scenes from simple building blocks
 - ⚡ **Performance focused** - Optimized Three.js rendering with React Three Fiber
+- 🎨 **You own the code** - Like shadcn, components are copied to your project
 
 ## 🚀 Quick Start
 
 ```bash
-# Install a component
-npm install @plexusui/earth
+# Initialize your project (one time)
+npx @plexusui/cli init
 
-# Or use the CLI
-npx @plexusui/cli add earth mars orbital-path
+# Add components (copies source code to your project)
+npx @plexusui/cli add earth mars orbital-path solar-system
 ```
 
+This copies the component files to `src/components/plexusui/` - you own the code and can customize it however you want!
+
 ```tsx
-import { Canvas } from '@react-three/fiber';
-import { Earth } from '@plexusui/earth';
+import { SolarSystem } from "@/components/plexusui/solar-system";
 
 export default function App() {
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <Canvas>
-        <Earth enableRotation />
-      </Canvas>
+    <div style={{ width: "100vw", height: "100vh" }}>
+      <SolarSystem
+        showOrbitalPaths
+        animationSpeed={10}
+      />
     </div>
   );
 }
 ```
 
-## 📦 Component Categories
+## 💡 Why Copy Instead of Install?
+
+Like shadcn/ui, we believe you should own your components:
+
+- ✅ **Full control** - Modify components to fit your exact needs
+- ✅ **No version lock-in** - Update on your own schedule
+- ✅ **Bundle optimization** - Only ship what you use
+- ✅ **No magic** - See exactly how everything works
+- ✅ **Easier debugging** - Component code is right in your project
+
+## 📦 Available Components
 
 ### 🌍 Planetary Bodies (3D)
 
 High-quality planetary visualizations with real textures and rotation:
 
-- `@plexusui/earth` - Earth with configurable rotation and textures
-- `@plexusui/mars` - Mars with surface features
-- `@plexusui/mercury`, `@plexusui/venus`, `@plexusui/moon`
-- `@plexusui/jupiter`, `@plexusui/saturn`, `@plexusui/uranus`, `@plexusui/neptune`
+- `earth` - Earth with configurable rotation and textures
+- `mars` - Mars with surface features
+- `mercury`, `venus`, `moon`
+- `jupiter`, `saturn`, `uranus`, `neptune`
 
 ### 🛸 Orbital Mechanics (3D)
 
 Scientifically accurate orbital visualization using real astrodynamics equations:
 
-- `@plexusui/orbital-path` - Elliptical orbits with Keplerian elements
-- `@plexusui/ground-track` - Satellite ground paths on planetary surfaces
-- `@plexusui/trajectory` - Flight paths with waypoints and burn markers
-- `@plexusui/transfer-orbit` - Hohmann & bi-elliptic transfers
-- `@plexusui/lagrange-points` - L1-L5 equilibrium points
+- `orbital-path` - Elliptical orbits with Keplerian elements
 
 **💡 All orbital components support optional high-precision mode!**
+
+### 🌌 Solar System (3D)
+
+Complete solar system visualization with astronomically accurate distances:
+
+- `solar-system` - All 8 planets at correct relative distances with animated orbits
 
 ### 📊 Charts & Timelines (2D)
 
 Data visualization for mission planning:
 
-- `@plexusui/gantt` - Timeline charts for mission planning
+- `gantt` - Timeline charts for mission planning
 
 ### 🔧 Utilities
 
-- `@plexusui/orbital-math` - High-precision orbital mechanics math library
-- `@plexusui/cli` - Command-line tool for installing components
+- `orbital-math` - High-precision orbital mechanics math library
 
 ## 🎯 Scientific Accuracy
 
 Plexus UI uses real orbital mechanics equations from aerospace textbooks:
 
 ### ✅ Exact Math (Always)
+
 - Keplerian orbital elements (vis-viva equation)
 - Hohmann & bi-elliptic transfers
 - State vector conversions
 - Kepler's laws
 
 ### ⚙️ High-Precision Mode (Optional)
+
 ```tsx
 // Default: Fast approximation (~1% error)
 <LaGrangePoints system={earthMoon} />
@@ -94,11 +110,13 @@ Plexus UI uses real orbital mechanics equations from aerospace textbooks:
 ```
 
 **When to use high-precision:**
+
 - Research and analysis
 - Mission planning studies
 - When you need exact positions
 
 **When approximations are fine:**
+
 - Interactive dashboards
 - Educational visualizations
 - Game development
@@ -106,6 +124,7 @@ Plexus UI uses real orbital mechanics equations from aerospace textbooks:
 ### 📚 Algorithm Sources
 
 All algorithms based on peer-reviewed aerospace textbooks:
+
 - **Vallado, D.A.** - "Fundamentals of Astrodynamics and Applications" (4th ed.)
 - **Curtis, H.D.** - "Orbital Mechanics for Engineering Students" (4th ed.)
 - **Battin, R.H.** - "An Introduction to the Mathematics and Methods of Astrodynamics"
@@ -134,18 +153,35 @@ Every component follows a **three-tier architecture** for maximum flexibility:
 
 ## 💡 Examples
 
+### Solar System Overview
+
+```tsx
+import { SolarSystem } from "@/components/plexusui/solar-system";
+
+function SolarSystemVisualization() {
+  return (
+    <SolarSystem
+      showOrbitalPaths
+      animationSpeed={50}
+      planetSizeScale={5}
+      brightness={1.2}
+      cameraPosition={[0, 1000, 2000]}
+    />
+  );
+}
+```
+
 ### Earth with ISS Orbit
 
 ```tsx
-import { Canvas } from '@react-three/fiber';
-import { EarthScene, EarthSphereRoot } from '@plexusui/earth';
-import { OrbitalPathRoot } from '@plexusui/orbital-path';
+import { EarthScene, EarthSphereRoot } from "@/components/plexusui/earth";
+import { OrbitalPathRoot } from "@/components/plexusui/orbital-path";
 
 function ISSVisualization() {
   const issOrbit = {
-    semiMajorAxis: 6771,  // km
+    semiMajorAxis: 6771, // km
     eccentricity: 0.0001,
-    inclination: 51.6,    // degrees
+    inclination: 51.6, // degrees
     longitudeOfAscendingNode: 0,
     argumentOfPeriapsis: 0,
   };
@@ -159,171 +195,79 @@ function ISSVisualization() {
 }
 ```
 
-### Lagrange Points (High Precision)
-
-```tsx
-import { Canvas } from '@react-three/fiber';
-import { LaGrangePoints, LaGrangePointsUtils } from '@plexusui/lagrange-points';
-
-function JWSTLocation() {
-  return (
-    <Canvas>
-      <LaGrangePoints
-        system={LaGrangePointsUtils.SunEarthSystem()}
-        showPoints={['L2']}  // JWST is at Sun-Earth L2
-        highPrecision        // Exact position
-        showLabels
-      />
-    </Canvas>
-  );
-}
-```
-
-### Hohmann Transfer with Math Utilities
-
-```tsx
-import { TransferOrbit } from '@plexusui/transfer-orbit';
-import { OrbitalMath } from '@plexusui/orbital-math';
-
-function LEOtoGEO() {
-  // Calculate exact delta-V requirement
-  const { dv1, dv2, total } = OrbitalMath.calculateHohmannDeltaV(
-    6771,   // LEO
-    42164   // GEO
-  );
-
-  console.log(`Total Δv: ${total} m/s`);  // 3909.4 m/s
-
-  return (
-    <Canvas>
-      <TransferOrbit
-        config={{
-          initialRadius: 6771,
-          finalRadius: 42164,
-          type: 'hohmann'
-        }}
-        showBurns
-      />
-    </Canvas>
-  );
-}
-```
-
-## 🔬 Using @plexusui/orbital-math Directly
-
-For custom calculations without UI components:
-
-```typescript
-import { OrbitalMath } from '@plexusui/orbital-math';
-
-// Solve Kepler's equation
-const E = OrbitalMath.solveKeplerEquation(1.5, 0.3);
-
-// Exact Lagrange point positions
-const l1 = OrbitalMath.solveL1Position(0.012);  // Earth-Moon
-
-// Convert elements to position & velocity
-const state = OrbitalMath.elementsToStateVector({
-  a: 7000,
-  e: 0.01,
-  i: 0.9,
-  Omega: 1.2,
-  omega: 0.5,
-  nu: 2.0
-});
-
-console.log(state.position);  // [x, y, z] km
-console.log(state.velocity);  // [vx, vy, vz] km/s
-```
-
-## ⚡ Performance
-
-| Operation | Time | Accuracy |
-|-----------|------|----------|
-| Kepler's Equation | ~0.01ms | < 1e-14 |
-| L1 Position Solver | ~0.02ms | < 1e-10 |
-| State Vector Conv | ~0.005ms | Exact |
-| Hohmann Delta-V | ~0.003ms | Exact |
-
-All solvers converge in 3-6 iterations.
-
 ## 📥 Installation
 
-### Individual Components
+### Prerequisites
+
+Install peer dependencies first:
 
 ```bash
-npm install @plexusui/earth
-npm install @plexusui/orbital-path
-npm install @plexusui/orbital-math
-```
-
-### Using the CLI
-
-```bash
-# Install CLI globally
-npm install -g @plexusui/cli
-
-# Add components to your project
-plexus add earth mars orbital-path lagrange-points
-
-# Or use npx
-npx @plexusui/cli add earth orbital-path
-```
-
-## 🔗 Peer Dependencies
-
-All 3D components require:
-
-```bash
+# For 3D components
 npm install react react-dom three @react-three/fiber @react-three/drei
-```
 
-Chart components only need:
-
-```bash
+# For 2D components (charts)
 npm install react react-dom
 ```
 
-## 🏗️ Monorepo Structure
+### Add Components
+
+```bash
+# Initialize (one time setup)
+npx @plexusui/cli init
+
+# Add components
+npx @plexusui/cli add earth mars orbital-path
 
 ```
-packages/
-├── earth/              # Earth component
-├── mars/               # Mars component
-├── orbital-path/       # Orbital path component
-├── lagrange-points/    # Lagrange points component
-├── orbital-math/       # Math utilities (no React deps)
-├── cli/                # CLI tool
+
+Components are copied to `src/components/ui/` and you can immediately start using them:
+
+```tsx
+import { Earth } from "@/components/ui/earth";
+import { OrbitalPath } from "@/components/ui/orbital-path";
+```
+
+## 🏗️ Repository Structure
+
+```
+components/             # All component source files (copied by CLI)
+├── earth.tsx
+├── mars.tsx
+├── jupiter.tsx
+├── saturn.tsx
+├── orbital-path.tsx
 └── ...
+
+packages/
+└── cli/                # CLI tool (only package published to npm)
 
 showcase/               # Demo application
 ```
 
-## 🗺️ Roadmap
+## 🎨 Showcase
 
-See [COMPONENT_ROADMAP.md](COMPONENT_ROADMAP.md) for planned components.
+See all components in action at the interactive showcase:
 
-**Completed:**
-- ✅ All planetary bodies (Earth through Neptune)
-- ✅ Core orbital mechanics (OrbitalPath, GroundTrack, Trajectory, TransferOrbit, LaGrangePoints)
-- ✅ High-precision math library
-- ✅ Gantt charts
+```bash
+git clone https://github.com/plexus-space/ui.git
+cd ui
+npm install
+npm run dev
+```
 
-**Next up:**
-- 🔄 Coordinate frames & reference systems
-- 🔄 Spacecraft models
-- 🔄 Sensor FOV visualization
-- 🔄 Telemetry graphs
+Then open http://localhost:3000
 
 ## ⚠️ Limitations & Scope
 
 ### NOT Suitable For:
+
 - ❌ Flight-certified spacecraft software
 - ❌ Real-time spacecraft navigation
 - ❌ Perturbation modeling (J2, atmospheric drag)
 - ❌ N-body propagation
 
 ### Perfect For:
+
 - ✅ Educational visualizations
 - ✅ Mission concept studies
 - ✅ Interactive dashboards
@@ -332,43 +276,41 @@ See [COMPONENT_ROADMAP.md](COMPONENT_ROADMAP.md) for planned components.
 - ✅ Preliminary mission planning
 
 **For production spacecraft software, use:**
+
 - [GMAT](https://software.nasa.gov/software/GSC-17177-1) (NASA)
 - [STK](https://www.agi.com/products/stk) (AGI)
 - [NAIF SPICE](https://naif.jpl.nasa.gov/naif/) (JPL)
 
-## 🎨 Showcase
+## 🗺️ Roadmap
 
-Visit the showcase to see all components in action and try the interactive demos:
+**Completed:**
 
-```bash
-git clone https://github.com/yourusername/ui-aerospace.git
-cd ui-aerospace
-npm install
-npm run showcase:dev
-```
+- ✅ All planetary bodies
+- ✅ High-precision math library
+- ✅ CLI
 
-Then open http://localhost:3000
+**Next up:**
+
+- Coordinate frames & reference systems
+- Spacecraft models
+- Sensor FOV visualization
+- Telemetry graphs
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! To add a new component:
 
-### Adding New Components
-
-Follow the [Component Setup Guide](COMPONENT_SETUP_GUIDE.md) to ensure consistency:
-
-1. Create package in `packages/[component-name]/`
-2. Implement Root → Scene → Composed pattern
-3. Add to CLI and showcase
-4. Write comprehensive README with examples
+1. Create component in `packages/[component-name]/`
+2. Add to CLI registry in `packages/cli/src/commands/add.ts`
+3. Add to showcase
+4. Submit a PR
 
 ## 📄 License
 
-MIT © Plexus UI Team
+MIT © Plexus Aerospace
 
 ## 🙏 Credits
 
-- Inspired by [shadcn/ui](https://ui.shadcn.com)
 - Powered by [React Three Fiber](https://docs.pmnd.rs/react-three-fiber)
 - Math based on aerospace textbooks by Vallado, Curtis, and Battin
 - Planetary textures from [NASA](https://nasa.gov) and [Solar System Scope](https://www.solarsystemscope.com/)

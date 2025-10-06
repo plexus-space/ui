@@ -2,22 +2,21 @@
 
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { Suspense, useState } from "react";
-import { Earth, EARTH_RADIUS } from "@plexusui/earth";
-import { MarsSphereRoot, MARS_RADIUS } from "@plexusui/mars";
-import { MercurySphereRoot, MERCURY_RADIUS } from "@plexusui/mercury";
-import { VenusSphereRoot, VENUS_RADIUS } from "@plexusui/venus";
-import { MoonSphereRoot, MOON_RADIUS } from "@plexusui/moon";
-import { JupiterSphereRoot, JUPITER_RADIUS } from "@plexusui/jupiter";
-import { SaturnSphereRoot, SATURN_RADIUS } from "@plexusui/saturn";
-import { UranusSphereRoot, URANUS_RADIUS } from "@plexusui/uranus";
-import { NeptuneSphereRoot, NEPTUNE_RADIUS } from "@plexusui/neptune";
-import { Gantt, type GanttGroup } from "@plexusui/gantt";
-import { OrbitalPathRoot } from "@plexusui/orbital-path";
-import { GroundTrackRoot, GroundTrackUtils } from "@plexusui/ground-track";
-import { TrajectoryRoot } from "@plexusui/trajectory";
-import { TransferOrbitRoot } from "@plexusui/transfer-orbit";
-import { LaGrangePointsRoot } from "@plexusui/lagrange-points";
+import { Suspense } from "react";
+import { Earth, EARTH_RADIUS } from "../../components/earth";
+import { MarsSphereRoot, MARS_RADIUS } from "../../components/mars";
+import { MercurySphereRoot, MERCURY_RADIUS } from "../../components/mercury";
+import { VenusSphereRoot, VENUS_RADIUS } from "../../components/venus";
+import { MoonSphereRoot, MOON_RADIUS } from "../../components/moon";
+import { JupiterSphereRoot, JUPITER_RADIUS } from "../../components/jupiter";
+import { SaturnSphereRoot, SATURN_RADIUS } from "../../components/saturn";
+import { UranusSphereRoot, URANUS_RADIUS } from "../../components/uranus";
+import { NeptuneSphereRoot, NEPTUNE_RADIUS } from "../../components/neptune";
+import { OrbitalPathRoot } from "../../components/orbital-path";
+import { SolarSystem } from "../../components/solar-system";
+import { LineChart } from "../../components/line-chart";
+import { XYPlot } from "../../components/xy-plot";
+import { PolarPlot } from "../../components/polar-plot";
 
 interface ComponentPreviewProps {
   componentId: string;
@@ -75,159 +74,6 @@ const planetConfigs: Record<
   },
 };
 
-function GanttPreview() {
-  const [selectedTaskId, setSelectedTaskId] = useState<string | undefined>();
-
-  const now = Date.now();
-  const groups: GanttGroup[] = [
-    {
-      id: "alaska",
-      label: "Alaska Ground Station",
-      sublabel: "Fairbanks",
-      tasks: [
-        {
-          id: "iss-1",
-          label: "ISS",
-          startTime: now + 1000 * 60 * 30,
-          endTime: now + 1000 * 60 * 45,
-          priority: "critical",
-        },
-        {
-          id: "starlink-1",
-          label: "Starlink-52",
-          startTime: now + 1000 * 60 * 120,
-          endTime: now + 1000 * 60 * 135,
-          priority: "high",
-        },
-      ],
-    },
-    {
-      id: "hawaii",
-      label: "Hawaii Ground Station",
-      sublabel: "Maui",
-      tasks: [
-        {
-          id: "hubble-1",
-          label: "Hubble",
-          startTime: now + 1000 * 60 * 60,
-          endTime: now + 1000 * 60 * 75,
-          priority: "medium",
-        },
-      ],
-    },
-    {
-      id: "chile",
-      label: "Chile Ground Station",
-      sublabel: "Santiago",
-      tasks: [
-        {
-          id: "landsat-1",
-          label: "Landsat 9",
-          startTime: now + 1000 * 60 * 180,
-          endTime: now + 1000 * 60 * 195,
-          priority: "low",
-        },
-        {
-          id: "sentinel-1",
-          label: "Sentinel-2",
-          startTime: now + 1000 * 60 * 240,
-          endTime: now + 1000 * 60 * 255,
-          priority: "medium",
-        },
-      ],
-    },
-  ];
-
-  return (
-    <div className="w-full h-full bg-zinc-950 p-6">
-      <Gantt
-        groups={groups}
-        timeWindowStart={now}
-        timeWindowDuration={12 * 60 * 60 * 1000}
-        selectedTaskId={selectedTaskId}
-        onTaskClick={setSelectedTaskId}
-      />
-    </div>
-  );
-}
-
-function GroundTrackPreview() {
-  // Generate ISS-like ground track using library utilities
-  const groundTrackPoints = GroundTrackUtils.generateFromOrbit(
-    EARTH_RADIUS * 1000 + 420, // ISS altitude (convert to km)
-    (51.6 * Math.PI) / 180, // ISS inclination (convert to radians)
-    100,
-    EARTH_RADIUS * 1000 // Earth radius in km
-  );
-
-  return (
-    <div className="w-full h-full bg-black">
-      <Canvas gl={{ antialias: true }}>
-        <color attach="background" args={["#000000"]} />
-        <PerspectiveCamera
-          makeDefault
-          position={[0, 0, EARTH_RADIUS * 2.5]}
-          fov={45}
-        />
-
-        <ambientLight intensity={0.8} />
-        <directionalLight
-          position={[EARTH_RADIUS * 20, 0, 0]}
-          intensity={1.5}
-        />
-
-        <Suspense fallback={null}>
-          {/* Use library Earth component */}
-          <Earth dayMapUrl="/day.jpg" enableRotation timeScale={100} />
-
-          {/* Use library GroundTrack primitive */}
-          <GroundTrackRoot
-            points={groundTrackPoints}
-            planetRadius={EARTH_RADIUS * 1000}
-            color="#ffff00"
-            offset={50}
-          />
-        </Suspense>
-
-        <OrbitControls
-          enableZoom={true}
-          enablePan={true}
-          autoRotate
-          autoRotateSpeed={0.5}
-        />
-      </Canvas>
-    </div>
-  );
-}
-
-function LagrangePointsPreview() {
-  return (
-    <div className="w-full h-full bg-black">
-      <Canvas gl={{ antialias: true }}>
-        <color attach="background" args={["#000000"]} />
-        <PerspectiveCamera makeDefault position={[0, 5, 10]} fov={45} />
-
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-
-        <Suspense fallback={null}>
-          {/* Use library LaGrangePoints primitive */}
-          <LaGrangePointsRoot
-            system={{
-              primaryMass: 5.972e24, // Earth
-              secondaryMass: 7.342e22, // Moon
-              distance: 384400, // Earth-Moon distance in km
-            }}
-            showLabels={false}
-          />
-        </Suspense>
-
-        <OrbitControls enableZoom={true} enablePan={true} />
-      </Canvas>
-    </div>
-  );
-}
-
 function OrbitalPathPreview() {
   const orbitElements = {
     semiMajorAxis: 4,
@@ -265,72 +111,98 @@ function OrbitalPathPreview() {
   );
 }
 
-function TrajectoryPreview() {
-  // Generate trajectory waypoints
-  const waypoints: Array<{ position: [number, number, number] }> = [];
+function TimeSeriesPreview() {
+  // Simple example data
+  const data = [];
   for (let i = 0; i <= 50; i++) {
-    const t = i / 50;
-    const x = t * 8 - 4;
-    const y = Math.sin(t * Math.PI * 2) * 2;
-    const z = Math.cos(t * Math.PI) * 1;
-    waypoints.push({ position: [x, y, z] });
+    const x = i * 0.2;
+    data.push({ x, y: Math.sin(x) * Math.exp(-x * 0.1) * 3 + 2 });
   }
 
+  const series = [
+    {
+      name: "Temperature",
+      data,
+      color: "#0ea5e9",
+      strokeWidth: 2.5,
+    },
+  ];
+
   return (
-    <div className="w-full h-full bg-black">
-      <Canvas gl={{ antialias: true }}>
-        <color attach="background" args={["#000000"]} />
-        <PerspectiveCamera makeDefault position={[0, 5, 10]} fov={45} />
-
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-
-        <Suspense fallback={null}>
-          {/* Use library Trajectory primitive */}
-          <TrajectoryRoot
-            waypoints={waypoints}
-            color="#ff00ff"
-            showWaypoints
-            waypointSize={0.2}
-          />
-        </Suspense>
-
-        <OrbitControls enableZoom={true} enablePan={true} />
-      </Canvas>
+    <div className="w-full h-full bg-white dark:bg-zinc-950 flex items-center justify-center p-8">
+      <LineChart
+        series={series}
+        xAxis={{ label: "Time (s)" }}
+        yAxis={{ label: "Temp (°C)" }}
+        width={750}
+        height={450}
+        className="text-zinc-800 dark:text-zinc-300"
+      />
     </div>
   );
 }
 
-function TransferOrbitPreview() {
+function XYPlotPreview() {
+  // Generate phase space data (damped oscillator)
+  const data = [];
+  for (let i = 0; i < 200; i++) {
+    const t = (i / 200) * Math.PI * 6;
+    const decay = Math.exp(-t / 8);
+    data.push({
+      x: Math.cos(t) * decay,
+      y: -Math.sin(t) * decay,
+    });
+  }
+
   return (
-    <div className="w-full h-full bg-black">
-      <Canvas gl={{ antialias: true }}>
-        <color attach="background" args={["#000000"]} />
-        <PerspectiveCamera makeDefault position={[0, 8, 8]} fov={45} />
+    <div className="w-full h-full bg-white dark:bg-zinc-950 flex items-center justify-center p-8">
+      <XYPlot
+        data={data}
+        xAxis={{ label: "Position" }}
+        yAxis={{ label: "Velocity" }}
+        pointStyle="circle"
+        pointSize={3}
+        color="density"
+        showTrendline={false}
+        width={750}
+        height={450}
+        className="text-zinc-800 dark:text-zinc-300"
+      />
+    </div>
+  );
+}
 
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
+function PolarPlotPreview() {
+  // Generate antenna radiation pattern data
+  const antennaData = [];
+  for (let angle = 0; angle <= 360; angle += 10) {
+    // Cardioid pattern: r = 1 + cos(θ)
+    const theta = (angle * Math.PI) / 180;
+    const gain = 10 * (1 + Math.cos(theta));
+    antennaData.push({ angle, radius: gain });
+  }
 
-        <Suspense fallback={null}>
-          {/* Central body */}
-          <mesh position={[0, 0, 0]}>
-            <sphereGeometry args={[0.5, 32, 32]} />
-            <meshStandardMaterial color="#ffaa00" />
-          </mesh>
+  const series = [
+    {
+      name: "Antenna Pattern",
+      data: antennaData,
+      color: "#0ea5e9",
+      filled: true,
+      strokeWidth: 2,
+    },
+  ];
 
-          {/* Use library TransferOrbit primitive */}
-          <TransferOrbitRoot
-            config={{
-              initialRadius: 2,
-              finalRadius: 4,
-              type: "hohmann",
-            }}
-            showBurns
-          />
-        </Suspense>
-
-        <OrbitControls enableZoom={true} enablePan={true} />
-      </Canvas>
+  return (
+    <div className="w-full h-full bg-white dark:bg-zinc-950 flex items-center justify-center p-8">
+      <PolarPlot
+        series={series}
+        radialAxis={{ label: "Gain (dBi)", scale: "linear" }}
+        angularAxis={{ unit: "degrees" }}
+        showGrid={{ radial: true, angular: true }}
+        width={550}
+        height={550}
+        className="text-zinc-800 dark:text-zinc-300"
+      />
     </div>
   );
 }
@@ -338,29 +210,30 @@ function TransferOrbitPreview() {
 export default function ComponentPreview({
   componentId,
 }: ComponentPreviewProps) {
-  // Gantt chart component (2D, no Canvas needed)
-  if (componentId === "gantt") {
-    return <GanttPreview />;
+  if (componentId === "line-chart") {
+    return <TimeSeriesPreview />;
   }
 
-  // Orbital mechanics components
-  if (componentId === "ground-track") {
-    return <GroundTrackPreview />;
+  if (componentId === "xy-plot") {
+    return <XYPlotPreview />;
   }
-  if (componentId === "lagrange-points") {
-    return <LagrangePointsPreview />;
+
+  if (componentId === "polar-plot") {
+    return <PolarPlotPreview />;
   }
+
   if (componentId === "orbital-path") {
     return <OrbitalPathPreview />;
   }
-  if (componentId === "trajectory") {
-    return <TrajectoryPreview />;
-  }
-  if (componentId === "transfer-orbit") {
-    return <TransferOrbitPreview />;
+
+  if (componentId === "solar-system") {
+    return (
+      <div className="w-full h-full bg-black">
+        <SolarSystem enableRotation={true} brightness={1.2} timeScale={500} />
+      </div>
+    );
   }
 
-  // Special case: Earth with full features
   if (componentId === "earth") {
     return (
       <div className="w-full h-full bg-black">
@@ -417,8 +290,6 @@ export default function ComponentPreview({
           <OrbitControls
             enableZoom={true}
             enablePan={false}
-            autoRotate
-            autoRotateSpeed={0.5}
             minDistance={radius * 1.5}
             maxDistance={radius * 10}
           />

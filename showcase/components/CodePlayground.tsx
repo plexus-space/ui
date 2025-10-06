@@ -27,8 +27,8 @@ export default function CodePlayground({
   };
 
   return (
-    <div className="relative bg-zinc-900 border border-zinc-800 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800 bg-black/30">
+    <div className="relative bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-200/50 dark:bg-black/30">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40"></div>
@@ -39,7 +39,7 @@ export default function CodePlayground({
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-2 px-3 py-1 text-xs text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800 rounded transition-colors"
+          className="flex items-center gap-2 px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400 hover:text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded transition-colors"
         >
           {copied ? (
             <>
@@ -82,7 +82,7 @@ export default function CodePlayground({
       {/* Code Content */}
       <div className="relative">
         <pre className="p-4 overflow-x-auto text-sm">
-          <code className="text-zinc-300 font-mono">{code}</code>
+          <code className="text-zinc-700 dark:text-zinc-300 font-mono">{code}</code>
         </pre>
       </div>
     </div>
