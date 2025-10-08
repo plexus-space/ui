@@ -9,7 +9,11 @@ function cn(...classes: (string | undefined | null | false)[]) {
 }
 
 // Timezone utilities (simplified date-fns-tz replacement)
-function formatInTimeZone(date: Date, timezone: string, format: string): string {
+function formatInTimeZone(
+  date: Date,
+  timezone: string,
+  format: string
+): string {
   const options: Intl.DateTimeFormatOptions = {
     timeZone: timezone,
     hour: "2-digit",
@@ -81,7 +85,7 @@ interface GanttContext {
   totalHeight: number;
   width: number;
   extendedWidth: number;
-  scrollContainerRef: React.RefObject<HTMLDivElement>;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   initialScrollPosition: Date;
 }
 
