@@ -284,6 +284,7 @@ export const SolarSystemScene = forwardRef<
           gl={{ antialias: true }}
         >
           {/* Deep space background */}
+          {/* @ts-ignore */}
           <color attach="background" args={["#000000"]} />
 
           <Suspense fallback={null}>

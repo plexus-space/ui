@@ -82,7 +82,9 @@ export default function CodePlayground({
       {/* Code Content */}
       <div className="relative">
         <pre className="p-4 overflow-x-auto text-sm">
-          <code className="text-zinc-700 dark:text-zinc-300 font-mono">{code}</code>
+          <code className="text-zinc-700 dark:text-zinc-300 font-mono">
+            {code}
+          </code>
         </pre>
       </div>
     </div>

@@ -302,6 +302,7 @@ export const OrbitalPathScene = forwardRef<
     return (
       <div ref={ref} className="relative h-full w-full">
         <Canvas gl={{ antialias: true }}>
+          {/* @ts-ignore */}
           <color attach="background" args={["#000000"]} />
           <PerspectiveCamera
             makeDefault

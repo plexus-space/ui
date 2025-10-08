@@ -233,6 +233,7 @@ export const UranusScene = forwardRef<HTMLDivElement, UranusSceneProps>(
           camera={{ position: cameraPosition, fov: cameraFov }}
           gl={{ antialias: true }}
         >
+          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
 
           <Suspense fallback={null}>

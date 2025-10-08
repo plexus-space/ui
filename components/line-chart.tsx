@@ -164,11 +164,11 @@ interface GridProps {
   xTicks: number[];
   yTicks: number[];
   animate: boolean;
+  margin: { top: number; right: number; bottom: number; left: number };
 }
 
-const Grid = memo(({ xTicks, yTicks, animate }: GridProps) => {
+const Grid = memo(({ xTicks, yTicks, animate, margin }: GridProps) => {
   const { width, height, xScale, yScale } = useChart();
-  const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
   return (
     <g className="grid">
@@ -219,11 +219,11 @@ interface AxesProps {
   xAxis?: Axis;
   yAxis?: Axis;
   animate: boolean;
+  margin: { top: number; right: number; bottom: number; left: number };
 }
 
-const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: AxesProps) => {
+const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate, margin }: AxesProps) => {
   const { width, height, xScale, yScale } = useChart();
-  const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
   const formatTick = (value: number, axis?: Axis): string => {
     if (axis?.formatter) {
@@ -359,11 +359,11 @@ Axes.displayName = "Axes";
 interface InteractionLayerProps {
   series: Series[];
   magneticCrosshair: boolean;
+  margin: { top: number; right: number; bottom: number; left: number };
 }
 
-const InteractionLayer = memo(({ series, magneticCrosshair }: InteractionLayerProps) => {
+const InteractionLayer = memo(({ series, magneticCrosshair, margin }: InteractionLayerProps) => {
   const { width, height, xScale, setHoveredPoint } = useChart();
-  const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
   const handleMouseMove = (e: React.MouseEvent<SVGRectElement>) => {
     if (!magneticCrosshair) return;
@@ -441,7 +441,16 @@ export const LineChart = memo(
     ) => {
       const [hoveredPoint, setHoveredPoint] = useState<{ seriesIdx: number; pointIdx: number } | null>(null);
 
-      const margin = useMemo(() => ({ top: 20, right: 20, bottom: 50, left: 60 }), []);
+      // Add more margin when legend is shown
+      const margin = useMemo(
+        () => ({
+          top: 30,
+          right: showLegend ? 180 : 30,
+          bottom: 60,
+          left: 70,
+        }),
+        [showLegend]
+      );
 
       // Decimate data if needed
       const processedSeries = useMemo(() => {
@@ -547,7 +556,7 @@ export const LineChart = memo(
               className={className}
               style={{ userSelect: "none", position: "absolute", top: 0, left: 0 }}
             >
-              {showGrid && <Grid xTicks={xTicks} yTicks={yTicks} animate={animate} />}
+              {showGrid && <Grid xTicks={xTicks} yTicks={yTicks} animate={animate} margin={margin} />}
               <Axes
                 xTicks={xTicks}
                 yTicks={yTicks}
@@ -556,8 +565,9 @@ export const LineChart = memo(
                 xAxis={xAxis}
                 yAxis={yAxis}
                 animate={animate}
+                margin={margin}
               />
-              <InteractionLayer series={processedSeries} magneticCrosshair={magneticCrosshair} />
+              <InteractionLayer series={processedSeries} magneticCrosshair={magneticCrosshair} margin={margin} />
               {tooltipContent && tooltipPosition && (
                 <ChartTooltip
                   x={tooltipPosition.x}
@@ -567,7 +577,13 @@ export const LineChart = memo(
                   crosshairBounds={[margin.left, margin.top, width - margin.right, height - margin.bottom]}
                 />
               )}
-              {showLegend && <ChartLegend items={legendItems} x={width - 160} y={margin.top + 10} />}
+              {showLegend && (
+                <ChartLegend
+                  items={legendItems}
+                  x={width - margin.right + 10}
+                  y={margin.top}
+                />
+              )}
             </svg>
           </div>
         </Context.Provider>

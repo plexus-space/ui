@@ -1,8 +1,9 @@
-'use client'
+"use client";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Sidenav } from "@/components/sidenav";
+import { TopNav } from "@/components/top-nav";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,13 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <div className="flex h-screen overflow-hidden">
-        <Sidenav />
-        <div className="flex-1 flex flex-col overflow-hidden relative">
-          <ThemeToggle />
-          {children}
-        </div>
-      </div>
+      {children}
     </ThemeProvider>
   );
 }

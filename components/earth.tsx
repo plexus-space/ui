@@ -74,7 +74,9 @@ export const EarthScene = forwardRef<HTMLDivElement, EarthSceneProps>(
             toneMappingExposure: 1.0,
           }}
         >
+          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
+          {/* @ts-ignore */}
           <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>

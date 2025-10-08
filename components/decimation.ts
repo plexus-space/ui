@@ -79,10 +79,11 @@ export function lttb(data: Point[], threshold: number): Point[] {
 
     for (; rangeOffs < rangeTo; rangeOffs++) {
       // Calculate triangle area over three buckets
-      const area = Math.abs(
-        (pointAX - avgX) * (data[rangeOffs].y - pointAY) -
-        (pointAX - data[rangeOffs].x) * (avgY - pointAY)
-      ) * 0.5;
+      const area =
+        Math.abs(
+          (pointAX - avgX) * (data[rangeOffs].y - pointAY) -
+            (pointAX - data[rangeOffs].x) * (avgY - pointAY)
+        ) * 0.5;
 
       if (area > maxArea) {
         maxArea = area;
@@ -156,22 +157,22 @@ export function minMaxDecimation(data: Point[], threshold: number): Point[] {
 export function decimate(
   data: Point[],
   threshold: number,
-  strategy: 'lttb' | 'minmax' | 'auto' = 'auto'
+  strategy: "lttb" | "minmax" | "auto" = "auto"
 ): Point[] {
   if (data.length <= threshold) {
     return data;
   }
 
-  if (strategy === 'auto') {
+  if (strategy === "auto") {
     // Use LTTB for most cases, it's excellent at preserving shape
     // Could add heuristics here to detect high-frequency signals
-    strategy = 'lttb';
+    strategy = "lttb";
   }
 
   switch (strategy) {
-    case 'lttb':
+    case "lttb":
       return lttb(data, threshold);
-    case 'minmax':
+    case "minmax":
       return minMaxDecimation(data, threshold);
     default:
       return data;
@@ -194,6 +195,6 @@ export function calculateDecimationStats(
     originalCount: original.length,
     decimatedCount: decimated.length,
     reductionRatio: original.length / decimated.length,
-    compressionPercent: ((1 - decimated.length / original.length) * 100),
+    compressionPercent: (1 - decimated.length / original.length) * 100,
   };
 }
