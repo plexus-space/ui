@@ -7,7 +7,8 @@ export default function Home() {
     <div className="max-w-5xl mx-auto px-8 py-12">
       <div className="mb-12">
         <h1 className="text-5xl font-bold text-foreground mb-4">
-          Aerospace. Physics. Deep Tech. UI Components
+          Aerospace. Physics. Deep Tech.
+          <br /> UI Components
         </h1>
         <p className="max-w-2xl text-zinc-600 font-geist-mono dark:text-zinc-400 mb-4">
           A set of purposefully designed components that you can customize,

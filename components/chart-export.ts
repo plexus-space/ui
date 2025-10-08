@@ -76,7 +76,10 @@ export async function exportToPNG(
  * @param svgElement - SVG DOM element
  * @param filename - Output filename
  */
-export function exportToSVG(svgElement: SVGSVGElement, filename: string = "chart.svg"): void {
+export function exportToSVG(
+  svgElement: SVGSVGElement,
+  filename: string = "chart.svg"
+): void {
   // Clone and clean up
   const clone = svgElement.cloneNode(true) as SVGSVGElement;
 
@@ -131,7 +134,9 @@ export function exportToCSV(
 export function exportToJSON(data: any, filename: string = "data.json"): void {
   const jsonString = JSON.stringify(data, null, 2);
 
-  const blob = new Blob([jsonString], { type: "application/json;charset=utf-8;" });
+  const blob = new Blob([jsonString], {
+    type: "application/json;charset=utf-8;",
+  });
   const url = URL.createObjectURL(blob);
   downloadURL(url, filename);
   URL.revokeObjectURL(url);
@@ -154,7 +159,9 @@ function downloadURL(url: string, filename: string): void {
  *
  * @param canvas - Canvas element
  */
-export async function copyToClipboard(canvas: HTMLCanvasElement): Promise<void> {
+export async function copyToClipboard(
+  canvas: HTMLCanvasElement
+): Promise<void> {
   if (!navigator.clipboard || !window.ClipboardItem) {
     throw new Error("Clipboard API not supported");
   }

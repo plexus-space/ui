@@ -1,3 +1,4 @@
+import { CopyButton } from "@/components/copy-button";
 import { Footer } from "@/components/footer";
 
 export default function Docs() {
@@ -9,15 +10,21 @@ export default function Docs() {
           Install cli and use it to add components to your project - get all the
           code
         </p>
-        <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-4 mb-2">
-          <pre className="text-sm text-emerald-600 dark:text-emerald-400">
-            npx @plexusui/cli init
-          </pre>
+        <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md p-2">
+          <div className="flex items-center justify-between gap-2">
+            <pre className="text-sm font-geist-mono text-emerald-600 dark:text-emerald-400">
+              npx @plexusui/cli init
+            </pre>
+            <CopyButton hideText copyText={`npx @plexusui/cli init`} />
+          </div>
         </div>
-        <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 p-4">
-          <pre className="text-sm text-emerald-600 dark:text-emerald-400">
-            npx @plexusui/cli add line-chart
-          </pre>
+        <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md p-2">
+          <div className="flex items-center justify-between gap-2">
+            <pre className="text-sm font-geist-mono text-emerald-600 dark:text-emerald-400">
+              npx @plexusui/cli add earth
+            </pre>
+            <CopyButton hideText copyText={`npx @plexusui/cli earth`} />
+          </div>
         </div>
       </div>
       <Footer />

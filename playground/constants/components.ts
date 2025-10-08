@@ -70,14 +70,6 @@ export const components = [
     textures: [],
   },
   {
-    id: "solar-system",
-    name: "Solar System",
-    category: "Planetary Bodies",
-    description:
-      "Complete solar system visualization with all 8 planets at astronomically accurate relative distances. Includes animated orbits and realistic planet sizes.",
-    textures: [],
-  },
-  {
     id: "line-chart",
     name: "Line Chart",
     category: "Charts",

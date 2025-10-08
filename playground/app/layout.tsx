@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Open_Sans, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/app/providers";
 import { Sidenav } from "@/components/sidenav";
 import { TopNav } from "@/components/top-nav";
@@ -29,16 +29,17 @@ export const metadata: Metadata = {
   },
 };
 
-const geist = Geist({
+const geist = Open_Sans({
   subsets: ["latin"],
-  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = Space_Grotesk({
   subsets: ["latin"],
-  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-geist-mono",
 });
+
 export default function RootLayout({
   children,
 }: Readonly<{

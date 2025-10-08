@@ -115,7 +115,7 @@ const LineChartExamples = () => {
         title="FFT Magnitude Spectrum"
         description="Frequency domain analysis showing harmonic peaks at 5Hz, 10Hz, and 15Hz. Common in signal processing and vibration analysis."
         preview={
-          <LineChart
+          <LineChart.Root
             series={[
               {
                 name: "Magnitude",
@@ -129,12 +129,19 @@ const LineChartExamples = () => {
             yAxis={{ label: "Magnitude (dB)" }}
             width={850}
             height={350}
-            showGrid={true}
-            showLegend={false}
-            renderer="svg"
-          />
+          >
+            <LineChart.Container>
+              <LineChart.Viewport>
+                <LineChart.Grid />
+                <LineChart.Axes />
+                <LineChart.Lines />
+                <LineChart.Interaction />
+                <LineChart.Tooltip />
+              </LineChart.Viewport>
+            </LineChart.Container>
+          </LineChart.Root>
         }
-        code={`<LineChart
+        code={`<LineChart.Root
   series={[
     {
       name: "Magnitude",
@@ -145,8 +152,19 @@ const LineChartExamples = () => {
   ]}
   xAxis={{ label: "Frequency (Hz)" }}
   yAxis={{ label: "Magnitude (dB)" }}
-  showGrid={true}
-/>`}
+  width={850}
+  height={350}
+>
+  <LineChart.Container>
+    <LineChart.Viewport>
+      <LineChart.Grid />
+      <LineChart.Axes />
+      <LineChart.Lines />
+      <LineChart.Interaction />
+      <LineChart.Tooltip />
+    </LineChart.Viewport>
+  </LineChart.Container>
+</LineChart.Root>`}
       />
 
       {/* Damped Oscillation */}
@@ -154,7 +172,7 @@ const LineChartExamples = () => {
         title="Damped Harmonic Oscillator"
         description="Exponential decay with oscillation (γ = 0.1, ω = 2 rad/s). Common in mechanical systems, RLC circuits, and vibration damping."
         preview={
-          <LineChart
+          <LineChart.Root
             series={[
               {
                 name: "Displacement",
@@ -167,12 +185,19 @@ const LineChartExamples = () => {
             yAxis={{ label: "Amplitude" }}
             width={850}
             height={350}
-            showGrid={true}
-            showLegend={false}
-            renderer="svg"
-          />
+          >
+            <LineChart.Container>
+              <LineChart.Viewport>
+                <LineChart.Grid />
+                <LineChart.Axes />
+                <LineChart.Lines />
+                <LineChart.Interaction />
+                <LineChart.Tooltip />
+              </LineChart.Viewport>
+            </LineChart.Container>
+          </LineChart.Root>
         }
-        code={`<LineChart
+        code={`<LineChart.Root
   series={[{
     name: "Displacement",
     data: dampedOscillation,
@@ -180,8 +205,19 @@ const LineChartExamples = () => {
   }]}
   xAxis={{ label: "Time (s)" }}
   yAxis={{ label: "Amplitude" }}
-  showGrid={true}
-/>`}
+  width={850}
+  height={350}
+>
+  <LineChart.Container>
+    <LineChart.Viewport>
+      <LineChart.Grid />
+      <LineChart.Axes />
+      <LineChart.Lines />
+      <LineChart.Interaction />
+      <LineChart.Tooltip />
+    </LineChart.Viewport>
+  </LineChart.Container>
+</LineChart.Root>`}
       />
 
       {/* Signal Processing */}
@@ -189,7 +225,7 @@ const LineChartExamples = () => {
         title="Signal Processing: Noise Reduction"
         description="Raw signal with noise vs filtered output. Demonstrates digital filtering and noise reduction techniques."
         preview={
-          <LineChart
+          <LineChart.Root
             series={[
               {
                 name: "Noisy Signal",
@@ -208,12 +244,20 @@ const LineChartExamples = () => {
             yAxis={{ label: "Voltage (V)" }}
             width={850}
             height={350}
-            showGrid={true}
-            showLegend={true}
-            renderer="svg"
-          />
+          >
+            <LineChart.Container>
+              <LineChart.Viewport>
+                <LineChart.Grid />
+                <LineChart.Axes />
+                <LineChart.Lines />
+                <LineChart.Interaction />
+                <LineChart.Tooltip />
+                <LineChart.Legend />
+              </LineChart.Viewport>
+            </LineChart.Container>
+          </LineChart.Root>
         }
-        code={`<LineChart
+        code={`<LineChart.Root
   series={[
     {
       name: "Noisy Signal",
@@ -228,8 +272,20 @@ const LineChartExamples = () => {
   ]}
   xAxis={{ label: "Time (s)" }}
   yAxis={{ label: "Voltage (V)" }}
-  showGrid={true}
-/>`}
+  width={850}
+  height={350}
+>
+  <LineChart.Container>
+    <LineChart.Viewport>
+      <LineChart.Grid />
+      <LineChart.Axes />
+      <LineChart.Lines />
+      <LineChart.Interaction />
+      <LineChart.Tooltip />
+      <LineChart.Legend />
+    </LineChart.Viewport>
+  </LineChart.Container>
+</LineChart.Root>`}
       />
 
       {/* Orbital Velocity */}
@@ -237,7 +293,7 @@ const LineChartExamples = () => {
         title="Orbital Velocity vs Altitude"
         description="Earth orbital mechanics using v = √(μ/r). Shows how orbital velocity decreases with altitude."
         preview={
-          <LineChart
+          <LineChart.Root
             series={[
               {
                 name: "Velocity",
@@ -250,12 +306,19 @@ const LineChartExamples = () => {
             yAxis={{ label: "Orbital Velocity (km/s)" }}
             width={850}
             height={350}
-            showGrid={true}
-            showLegend={false}
-            renderer="svg"
-          />
+          >
+            <LineChart.Container>
+              <LineChart.Viewport>
+                <LineChart.Grid />
+                <LineChart.Axes />
+                <LineChart.Lines />
+                <LineChart.Interaction />
+                <LineChart.Tooltip />
+              </LineChart.Viewport>
+            </LineChart.Container>
+          </LineChart.Root>
         }
-        code={`<LineChart
+        code={`<LineChart.Root
   series={[{
     name: "Velocity",
     data: orbitalVelocity,
@@ -263,8 +326,19 @@ const LineChartExamples = () => {
   }]}
   xAxis={{ label: "Altitude (km)" }}
   yAxis={{ label: "Orbital Velocity (km/s)" }}
-  showGrid={true}
-/>`}
+  width={850}
+  height={350}
+>
+  <LineChart.Container>
+    <LineChart.Viewport>
+      <LineChart.Grid />
+      <LineChart.Axes />
+      <LineChart.Lines />
+      <LineChart.Interaction />
+      <LineChart.Tooltip />
+    </LineChart.Viewport>
+  </LineChart.Container>
+</LineChart.Root>`}
       />
 
       {/* Real-Time Streaming */}
@@ -273,7 +347,7 @@ const LineChartExamples = () => {
         description="Live data streaming with a sliding window. Updates at 10Hz. Perfect for telemetry displays and real-time monitoring."
         preview={
           <div>
-            <LineChart
+            <LineChart.Root
               series={[
                 {
                   name: "Live Telemetry",
@@ -285,9 +359,18 @@ const LineChartExamples = () => {
               yAxis={{ label: "Value" }}
               width={850}
               height={350}
-              showGrid={true}
               animate={false}
-            />
+            >
+              <LineChart.Container>
+                <LineChart.Viewport>
+                  <LineChart.Grid />
+                  <LineChart.Axes />
+                  <LineChart.Lines />
+                  <LineChart.Interaction />
+                  <LineChart.Tooltip />
+                </LineChart.Viewport>
+              </LineChart.Container>
+            </LineChart.Root>
             <div className="mt-4 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span>Live • Updating at 10Hz</span>
@@ -303,12 +386,24 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
-<LineChart
+<LineChart.Root
   series={[{ name: "Live Telemetry", data }]}
   xAxis={{ label: "Time" }}
   yAxis={{ label: "Value" }}
+  width={850}
+  height={350}
   animate={false}
-/>`}
+>
+  <LineChart.Container>
+    <LineChart.Viewport>
+      <LineChart.Grid />
+      <LineChart.Axes />
+      <LineChart.Lines />
+      <LineChart.Interaction />
+      <LineChart.Tooltip />
+    </LineChart.Viewport>
+  </LineChart.Container>
+</LineChart.Root>`}
       />
 
       {/* High-Volume Data */}
@@ -317,7 +412,7 @@ useEffect(() => {
         description="Rendering 50,000 data points with automatic decimation (LTTB) and Canvas rendering for smooth 60fps performance."
         preview={
           <div className="space-y-2">
-            <LineChart
+            <LineChart.Root
               series={[
                 { name: "Sensor Data", data: highVolumeData, color: "#8b5cf6" },
               ]}
@@ -325,11 +420,18 @@ useEffect(() => {
               yAxis={{ label: "Signal" }}
               width={850}
               height={300}
-              showGrid={true}
-              showLegend={false}
-              renderer="canvas"
               maxPoints={2000}
-            />
+            >
+              <LineChart.Container>
+                <LineChart.Viewport>
+                  <LineChart.Grid />
+                  <LineChart.Axes />
+                  <LineChart.Lines />
+                  <LineChart.Interaction />
+                  <LineChart.Tooltip />
+                </LineChart.Viewport>
+              </LineChart.Container>
+            </LineChart.Root>
             <p className="text-xs text-zinc-500">
               • Original: 50,000 points • Decimated: 2,000 points • Renderer:
               Canvas • FPS: 60
@@ -357,7 +459,7 @@ useEffect(() => {
               <p className="text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
                 Minimal
               </p>
-              <LineChart
+              <LineChart.Root
                 series={[
                   {
                     name: "Data",
@@ -368,14 +470,20 @@ useEffect(() => {
                 width={850}
                 height={200}
                 variant="minimal"
-                showLegend={false}
-              />
+              >
+                <LineChart.Container>
+                  <LineChart.Viewport>
+                    <LineChart.Axes />
+                    <LineChart.Lines />
+                  </LineChart.Viewport>
+                </LineChart.Container>
+              </LineChart.Root>
             </div>
             <div>
               <p className="text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
                 Scientific
               </p>
-              <LineChart
+              <LineChart.Root
                 series={[
                   {
                     name: "Data",
@@ -386,14 +494,23 @@ useEffect(() => {
                 width={850}
                 height={200}
                 variant="scientific"
-                showLegend={false}
-              />
+              >
+                <LineChart.Container>
+                  <LineChart.Viewport>
+                    <LineChart.Grid />
+                    <LineChart.Axes />
+                    <LineChart.Points radius={3} />
+                    <LineChart.Interaction />
+                    <LineChart.Tooltip />
+                  </LineChart.Viewport>
+                </LineChart.Container>
+              </LineChart.Root>
             </div>
             <div>
               <p className="text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
                 Dashboard
               </p>
-              <LineChart
+              <LineChart.Root
                 series={[
                   {
                     name: "Data",
@@ -404,8 +521,17 @@ useEffect(() => {
                 width={850}
                 height={200}
                 variant="dashboard"
-                showLegend={false}
-              />
+              >
+                <LineChart.Container>
+                  <LineChart.Viewport>
+                    <LineChart.Grid />
+                    <LineChart.Axes />
+                    <LineChart.Lines />
+                    <LineChart.Interaction />
+                    <LineChart.Tooltip />
+                  </LineChart.Viewport>
+                </LineChart.Container>
+              </LineChart.Root>
             </div>
           </div>
         }
@@ -1906,6 +2032,213 @@ export default function ComponentPage() {
           </div>
         )}
 
+        {componentId === "line-chart" && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+              Primitive Components
+            </h3>
+            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+              LineChart uses composable primitives following shadcn
+              architecture:
+            </p>
+            <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Root
+                </code>{" "}
+                - Context provider with data processing (default export)
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Container
+                </code>{" "}
+                - Main wrapper with border and sizing
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Viewport
+                </code>{" "}
+                - SVG canvas for rendering
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Grid
+                </code>{" "}
+                - Background grid lines (X/Y)
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Axes
+                </code>{" "}
+                - X/Y axes with ticks and labels
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Lines
+                </code>{" "}
+                - Data line paths with optional fill
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Points
+                </code>{" "}
+                - Individual data point markers
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Tooltip
+                </code>{" "}
+                - Interactive hover tooltip with crosshair
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Interaction
+                </code>{" "}
+                - Mouse event handling layer
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Legend
+                </code>{" "}
+                - Series legend with optional toggle
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Empty
+                </code>{" "}
+                - Empty state component
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  LineChart.Loading
+                </code>{" "}
+                - Loading state component
+              </li>
+            </ul>
+            <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/30 rounded border border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-900 dark:text-blue-100 font-medium mb-1">
+                Composable Architecture
+              </p>
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                Mix and match primitives to create custom chart layouts. For
+                example, omit{" "}
+                <code className="bg-blue-200 dark:bg-blue-800 px-1 py-0.5 rounded text-xs">
+                  LineChart.Grid
+                </code>{" "}
+                for a minimal sparkline, or add{" "}
+                <code className="bg-blue-200 dark:bg-blue-800 px-1 py-0.5 rounded text-xs">
+                  LineChart.Points
+                </code>{" "}
+                for scientific plots.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {(componentId === "mars" ||
+          componentId === "mercury" ||
+          componentId === "venus" ||
+          componentId === "moon" ||
+          componentId === "jupiter" ||
+          componentId === "uranus" ||
+          componentId === "neptune") && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+              Primitive Components
+            </h3>
+            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+              {componentId.charAt(0).toUpperCase() + componentId.slice(1)} uses
+              composable primitives following shadcn architecture:
+            </p>
+            <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  {componentId.charAt(0).toUpperCase() + componentId.slice(1)}
+                  .Root
+                </code>{" "}
+                - Context provider (default export)
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  {componentId.charAt(0).toUpperCase() + componentId.slice(1)}
+                  .Canvas
+                </code>{" "}
+                - Three.js canvas wrapper
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  {componentId.charAt(0).toUpperCase() + componentId.slice(1)}
+                  .Controls
+                </code>{" "}
+                - Orbit controls for interaction
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  {componentId.charAt(0).toUpperCase() + componentId.slice(1)}
+                  .Globe
+                </code>{" "}
+                - Main {componentId} sphere
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  {componentId.charAt(0).toUpperCase() + componentId.slice(1)}
+                  .Axis
+                </code>{" "}
+                - Debug axis helper
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {componentId === "saturn" && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+              Primitive Components
+            </h3>
+            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+              Saturn uses composable primitives following shadcn architecture:
+            </p>
+            <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Saturn.Root
+                </code>{" "}
+                - Context provider (default export)
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Saturn.Canvas
+                </code>{" "}
+                - Three.js canvas wrapper
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Saturn.Controls
+                </code>{" "}
+                - Orbit controls for interaction
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Saturn.Globe
+                </code>{" "}
+                - Main Saturn sphere
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Saturn.Rings
+                </code>{" "}
+                - Saturn's ring system
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Saturn.Axis
+                </code>{" "}
+                - Debug axis helper
+              </li>
+            </ul>
+          </div>
+        )}
+
         <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 dark:bg-zinc-900">
@@ -2215,6 +2548,118 @@ export default function ComponentPage() {
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
                       Custom value formatting function
+                    </td>
+                  </tr>
+                </>
+              )}
+              {(componentId === "mars" ||
+                componentId === "mercury" ||
+                componentId === "venus" ||
+                componentId === "moon" ||
+                componentId === "jupiter" ||
+                componentId === "uranus" ||
+                componentId === "neptune") && (
+                <>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">textureUrl</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      URL to surface texture map
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">radius</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">
+                      {componentId.toUpperCase()}_RADIUS
+                    </td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Planet radius in scene units
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">enableRotation</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Enable automatic rotation based on time
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">timeScale</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">1</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Rotation speed multiplier (2 = 2x faster)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">brightness</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">1.2</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Overall scene brightness multiplier
+                    </td>
+                  </tr>
+                </>
+              )}
+              {componentId === "saturn" && (
+                <>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">textureUrl</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      URL to surface texture map
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">ringTextureUrl</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      URL to ring texture map
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">radius</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">SATURN_RADIUS</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Saturn radius in scene units
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">enableRotation</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Enable automatic rotation based on time
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">timeScale</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">1</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Rotation speed multiplier (2 = 2x faster)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">brightness</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">1.2</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Overall scene brightness multiplier
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">showRings</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Display Saturn's ring system
                     </td>
                   </tr>
                 </>

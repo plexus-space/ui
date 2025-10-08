@@ -1,13 +1,15 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-export function CopyButton({
+export const CopyButton = ({
   copyText,
   hideText,
 }: {
   copyText: string;
   hideText?: boolean;
-}) {
+}) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -58,4 +60,4 @@ export function CopyButton({
       )}
     </Button>
   );
-}
+};
