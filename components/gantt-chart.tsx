@@ -2,8 +2,27 @@
 
 import * as React from "react";
 import { addHours, addMinutes, differenceInMinutes } from "date-fns";
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
-import { cn } from "../playground/lib/utils";
+
+// Utility function for class names
+function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
+// Timezone utilities (simplified date-fns-tz replacement)
+function formatInTimeZone(date: Date, timezone: string, format: string): string {
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  };
+  return new Intl.DateTimeFormat("en-US", options).format(date);
+}
+
+function toZonedTime(date: Date, timezone: string): Date {
+  const dateString = date.toLocaleString("en-US", { timeZone: timezone });
+  return new Date(dateString);
+}
 
 // ============================================================================
 // Types

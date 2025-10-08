@@ -110,7 +110,7 @@ const COMPONENT_REGISTRY = {
     "gantt-chart": {
         sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/gantt-chart.tsx",
         filename: "gantt-chart.tsx",
-        dependencies: ["react"],
+        dependencies: ["react", "date-fns"],
     },
 };
 const PRIMITIVES_REGISTRY = {
