@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "../playground/lib/utils";
+
+// Utility function for class names
+function cn(...classes: (string | undefined | null | false)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 
 // ============================================================================
 // Types
@@ -76,7 +80,9 @@ interface LineChartContext {
   xTicks: number[];
   yTicks: number[];
   hoveredPoint: { seriesIdx: number; pointIdx: number } | null;
-  setHoveredPoint: (point: { seriesIdx: number; pointIdx: number } | null) => void;
+  setHoveredPoint: (
+    point: { seriesIdx: number; pointIdx: number } | null
+  ) => void;
   hiddenSeries: Set<number>;
   toggleSeries: (idx: number) => void;
   variant: LineChartVariant;
@@ -656,7 +662,9 @@ const LineChartLines = React.forwardRef<
                   style={
                     animate
                       ? {
-                          animation: `fadeIn 0.5s ease ${seriesIdx * 0.1}s forwards`,
+                          animation: `fadeIn 0.5s ease ${
+                            seriesIdx * 0.1
+                          }s forwards`,
                           opacity: 0,
                         }
                       : undefined
@@ -675,7 +683,9 @@ const LineChartLines = React.forwardRef<
               style={
                 animate
                   ? {
-                      animation: `fadeIn 0.5s ease ${seriesIdx * 0.1}s forwards`,
+                      animation: `fadeIn 0.5s ease ${
+                        seriesIdx * 0.1
+                      }s forwards`,
                       opacity: 0,
                     }
                   : undefined
@@ -817,7 +827,14 @@ const LineChartTooltip = React.forwardRef<
           repeatCount="indefinite"
         />
       </circle>
-      <circle cx={px} cy={py} r={4} fill={color} stroke="white" strokeWidth={2} />
+      <circle
+        cx={px}
+        cy={py}
+        r={4}
+        fill={color}
+        stroke="white"
+        strokeWidth={2}
+      />
 
       {/* Tooltip box */}
       <rect
@@ -919,7 +936,10 @@ const LineChartInteraction = React.forwardRef<
       });
 
       if (minDist < snapRadius) {
-        setHoveredPoint({ seriesIdx: nearestSeriesIdx, pointIdx: nearestPointIdx });
+        setHoveredPoint({
+          seriesIdx: nearestSeriesIdx,
+          pointIdx: nearestPointIdx,
+        });
       } else {
         setHoveredPoint(null);
       }
@@ -1054,7 +1074,9 @@ const LineChartEmpty = React.forwardRef<
               strokeLinejoin="round"
             />
           </svg>
-          <div style={{ fontSize: "14px", opacity: 0.5 }}>No data available</div>
+          <div style={{ fontSize: "14px", opacity: 0.5 }}>
+            No data available
+          </div>
         </>
       )}
     </div>
