@@ -3,11 +3,7 @@ import chalk from "chalk";
 import ora from "ora";
 import * as fs from "fs-extra";
 import * as path from "path";
-import { fileURLToPath } from "url";
 import https from "https";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const AVAILABLE_COMPONENTS = [
   "earth",
@@ -25,61 +21,70 @@ const AVAILABLE_COMPONENTS = [
 
 const COMPONENT_REGISTRY: Record<
   string,
-  { sourceUrl: string; filename: string; dependencies: string[] }
+  { sourceUrl: string; filename: string; dependencies: string[]; primitives?: string[] }
 > = {
   earth: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/earth.tsx",
     filename: "earth.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   mars: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/mars.tsx",
     filename: "mars.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   mercury: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/mercury.tsx",
     filename: "mercury.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   venus: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/venus.tsx",
     filename: "venus.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   moon: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/moon.tsx",
     filename: "moon.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   jupiter: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/jupiter.tsx",
     filename: "jupiter.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   saturn: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/saturn.tsx",
     filename: "saturn.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   uranus: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/uranus.tsx",
     filename: "uranus.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   neptune: {
     sourceUrl:
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/neptune.tsx",
     filename: "neptune.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
+    primitives: ["sphere"],
   },
   "orbital-path": {
     sourceUrl:
@@ -92,6 +97,13 @@ const COMPONENT_REGISTRY: Record<
       "https://raw.githubusercontent.com/plexus-space/ui/main/components/line-chart.tsx",
     filename: "line-chart.tsx",
     dependencies: ["react"],
+  },
+};
+
+const PRIMITIVES_REGISTRY: Record<string, { sourceUrl: string; filename: string }> = {
+  sphere: {
+    sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/primitives/sphere.tsx",
+    filename: "sphere.tsx",
   },
 };
 
@@ -112,6 +124,22 @@ async function detectProjectStructure(): Promise<{
 }> {
   const cwd = process.cwd();
 
+  // Check for app/components directory (Next.js app router)
+  if (await fs.pathExists(path.join(cwd, "app"))) {
+    return {
+      componentsDir: path.join(cwd, "components", "plexusui"),
+      srcDir: cwd,
+    };
+  }
+
+  // Check for src/app directory (Next.js app router with src)
+  if (await fs.pathExists(path.join(cwd, "src", "app"))) {
+    return {
+      componentsDir: path.join(cwd, "src", "components", "plexusui"),
+      srcDir: path.join(cwd, "src"),
+    };
+  }
+
   // Check for src/components directory (Next.js/React app)
   if (await fs.pathExists(path.join(cwd, "src", "components"))) {
     return {
@@ -128,10 +156,10 @@ async function detectProjectStructure(): Promise<{
     };
   }
 
-  // Default: create src/components
+  // Default: create components directory (app router style)
   return {
-    componentsDir: path.join(cwd, "src", "components", "plexusui"),
-    srcDir: path.join(cwd, "src"),
+    componentsDir: path.join(cwd, "components", "plexusui"),
+    srcDir: cwd,
   };
 }
 
@@ -180,6 +208,37 @@ export async function add(components: string[]) {
     await fs.ensureDir(componentsDir);
     spinner.text = "Downloading components...";
 
+    // Collect all primitives needed
+    const primitivesNeeded = new Set<string>();
+    components.forEach((c) => {
+      const config = COMPONENT_REGISTRY[c];
+      if (config?.primitives) {
+        config.primitives.forEach((p) => primitivesNeeded.add(p));
+      }
+    });
+
+    // Download primitives first
+    if (primitivesNeeded.size > 0) {
+      const primitivesDir = path.join(componentsDir, "primitives");
+      await fs.ensureDir(primitivesDir);
+
+      for (const primitive of primitivesNeeded) {
+        const config = PRIMITIVES_REGISTRY[primitive];
+        if (!config) continue;
+
+        spinner.text = `Adding primitive: ${primitive}...`;
+
+        try {
+          const content = await downloadFile(config.sourceUrl);
+          const destPath = path.join(primitivesDir, config.filename);
+          await fs.writeFile(destPath, content);
+        } catch (err) {
+          spinner.fail(`Failed to download primitive: ${primitive}`);
+          throw new Error(`Could not download ${primitive}: ${err}`);
+        }
+      }
+    }
+
     // Download and save each component
     for (const component of components) {
       const config = COMPONENT_REGISTRY[component];
@@ -187,51 +246,13 @@ export async function add(components: string[]) {
 
       spinner.text = `Adding ${component}...`;
 
-      // For local development/testing, copy from local components directory
-      // In production, this would download from GitHub
-      const localSourcePath = path.join(
-        __dirname,
-        "..",
-        "..",
-        "..",
-        "..",
-        "components",
-        config.filename
-      );
-
-      if (await fs.pathExists(localSourcePath)) {
-        // Copy from local (development mode)
-        const content = await fs.readFile(localSourcePath, "utf-8");
+      try {
+        const content = await downloadFile(config.sourceUrl);
         const destPath = path.join(componentsDir, config.filename);
         await fs.writeFile(destPath, content);
-      } else {
-        // Download from GitHub (production mode)
-        try {
-          const content = await downloadFile(config.sourceUrl);
-          const destPath = path.join(componentsDir, config.filename);
-          await fs.writeFile(destPath, content);
-        } catch (err) {
-          spinner.warn(
-            chalk.yellow(
-              `Could not download ${component} from GitHub. Using local fallback...`
-            )
-          );
-          // Try local fallback
-          const fallbackPath = path.join(
-            __dirname,
-            "..",
-            "..",
-            "..",
-            "..",
-            "components",
-            config.filename
-          );
-          if (await fs.pathExists(fallbackPath)) {
-            const content = await fs.readFile(fallbackPath, "utf-8");
-            const destPath = path.join(componentsDir, config.filename);
-            await fs.writeFile(destPath, content);
-          }
-        }
+      } catch (err) {
+        spinner.fail(`Failed to download ${component}`);
+        throw new Error(`Could not download ${component}: ${err}`);
       }
     }
 
