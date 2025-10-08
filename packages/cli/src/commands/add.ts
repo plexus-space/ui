@@ -110,11 +110,16 @@ const PRIMITIVES_REGISTRY: Record<string, { sourceUrl: string; filename: string 
 async function downloadFile(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     https.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        reject(new Error(`Failed to download: ${res.statusCode} ${res.statusMessage}`));
+        return;
+      }
+
       let data = "";
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => resolve(data));
       res.on("error", reject);
-    });
+    }).on("error", reject);
   });
 }
 
@@ -295,9 +300,12 @@ export async function add(components: string[]) {
     });
   } catch (error) {
     spinner.fail("Failed to add components");
-    console.error(
-      chalk.dim(error instanceof Error ? error.message : "Unknown error")
-    );
+    console.error(chalk.red("\n❌ Error:"));
+    console.error(chalk.dim(error instanceof Error ? error.message : "Unknown error"));
+    if (error instanceof Error && error.stack) {
+      console.error(chalk.dim("\nStack trace:"));
+      console.error(chalk.dim(error.stack));
+    }
     process.exit(1);
   }
 }
