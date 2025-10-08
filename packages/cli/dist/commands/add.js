@@ -192,7 +192,7 @@ export async function add(components) {
                 try {
                     const content = await downloadFile(config.sourceUrl);
                     const destPath = path.join(primitivesDir, config.filename);
-                    await fs.writeFile(destPath, content);
+                    await fs.outputFile(destPath, content);
                 }
                 catch (err) {
                     spinner.fail(`Failed to download primitive: ${primitive}`);
@@ -209,7 +209,7 @@ export async function add(components) {
             try {
                 const content = await downloadFile(config.sourceUrl);
                 const destPath = path.join(componentsDir, config.filename);
-                await fs.writeFile(destPath, content);
+                await fs.outputFile(destPath, content);
             }
             catch (err) {
                 spinner.fail(`Failed to download ${component}`);
