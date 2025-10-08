@@ -16,6 +16,11 @@ const AVAILABLE_COMPONENTS = [
     "neptune",
     "orbital-path",
     "line-chart",
+    "scatter-plot",
+    "polar-plot",
+    "heatmap",
+    "histogram",
+    "gantt-chart",
 ];
 const COMPONENT_REGISTRY = {
     earth: {
@@ -80,6 +85,31 @@ const COMPONENT_REGISTRY = {
     "line-chart": {
         sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/line-chart.tsx",
         filename: "line-chart.tsx",
+        dependencies: ["react"],
+    },
+    "scatter-plot": {
+        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/scatter-plot.tsx",
+        filename: "scatter-plot.tsx",
+        dependencies: ["react"],
+    },
+    "polar-plot": {
+        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/polar-plot.tsx",
+        filename: "polar-plot.tsx",
+        dependencies: ["react"],
+    },
+    heatmap: {
+        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/heatmap.tsx",
+        filename: "heatmap.tsx",
+        dependencies: ["react"],
+    },
+    histogram: {
+        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/histogram.tsx",
+        filename: "histogram.tsx",
+        dependencies: ["react"],
+    },
+    "gantt-chart": {
+        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/gantt-chart.tsx",
+        filename: "gantt-chart.tsx",
         dependencies: ["react"],
     },
 };
