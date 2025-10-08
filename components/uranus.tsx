@@ -1,261 +1,198 @@
 "use client";
 
-import { Suspense, useRef, memo, forwardRef } from "react";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber";
+import * as React from "react";
+import { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { Sphere } from "./primitives/sphere";
 
 // ============================================================================
-// Constants
+// Constants - Astronomically Accurate Values
 // ============================================================================
 
-/**
- * Uranus radius in scene units (relative to Earth)
- * @constant {number}
- */
-export const URANUS_RADIUS = 4.01; // Relative to Earth (25,362 km actual)
-
-/**
- * Uranus actual radius in kilometers
- * @constant {number}
- */
-export const URANUS_REAL_RADIUS_KM = 25362;
-
-/**
- * Uranus rotation period in Earth days (17.2 hours - retrograde)
- * @constant {number}
- */
-export const URANUS_ROTATION_PERIOD = 0.72;
-
-/**
- * Uranus orbital period around the Sun in Earth days (84 years)
- * @constant {number}
- */
-export const URANUS_ORBITAL_PERIOD = 30687;
-
-/**
- * Uranus's axial tilt in degrees (on its side!)
- * @constant {number}
- */
-export const URANUS_AXIAL_TILT = 97.8;
+export const URANUS_RADIUS_KM = 25362;
+export const SCENE_SCALE = 0.001;
+export const URANUS_RADIUS = URANUS_RADIUS_KM * SCENE_SCALE;
+export const URANUS_ROTATION_PERIOD_SECONDS = 62064.0; // 17.2 hours (retrograde)
+export const URANUS_ORBITAL_PERIOD_DAYS = 30687; // 84 years
+export const URANUS_AXIAL_TILT_DEG = 97.8; // On its side!
 
 // ============================================================================
-// Internal Sphere Component
+// Context
 // ============================================================================
-interface UranusSphereProps {
+
+interface UranusContext {
   radius: number;
-  textureUrl?: string;
+  rotationSpeed: number;
+  axialTilt: [number, number, number];
   brightness: number;
-  enableRotation: boolean;
-  emissiveColor: string;
-  shininess: number;
-}
-
-const UranusSphere = memo(function UranusSphere({
-  radius,
-  textureUrl,
-  brightness,
-  enableRotation,
-  emissiveColor,
-  shininess,
-}: UranusSphereProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const texture = textureUrl
-    ? useLoader(THREE.TextureLoader, textureUrl)
-    : null;
-
-  // Apply axial tilt (Uranus is on its side!)
-  useFrame(() => {
-    if (groupRef.current && groupRef.current.rotation.z === 0) {
-      groupRef.current.rotation.z = THREE.MathUtils.degToRad(URANUS_AXIAL_TILT);
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[radius, 64, 32]} />
-      {texture ? (
-        <meshPhongMaterial
-          map={texture}
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.12 * brightness}
-        />
-      ) : (
-        <meshPhongMaterial
-          color="#4fd0e7"
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.12 * brightness}
-        />
-      )}
-      </mesh>
-    </group>
-  );
-});
-
-// ============================================================================
-// PRIMITIVES - Composable building blocks
-// ============================================================================
-
-/**
- * Props for the UranusSphereRoot component
- * @interface UranusSphereRootProps
- */
-export interface UranusSphereRootProps {
-  /** Radius of the Uranus sphere in scene units (default: URANUS_RADIUS) */
-  radius?: number;
-  /** URL to the Uranus surface texture (optional - uses cyan/blue fallback) */
+  timeScale: number;
   textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Emissive color for the material (default: "#004466") */
-  emissiveColor?: string;
-  /** Material shininess value (default: 25) */
-  shininess?: number;
 }
 
-/**
- * UranusSphereRoot - The base Uranus sphere primitive
- *
- * Use this when you want full control over the Three.js scene setup.
- * Renders just the Uranus sphere with optional texture and materials.
- *
- * @example
- * Basic usage in custom scene:
- *
- * import { Canvas } from '@react-three/fiber';
- * import { UranusSphereRoot } from '@/components/ui/uranus';
- *
- * function MyScene() {
- *   return (
- *     <Canvas>
- *       <ambientLight />
- *       <UranusSphereRoot />
- *     </Canvas>
- *   );
- * }
- */
-export const UranusSphereRoot = forwardRef<THREE.Group, UranusSphereRootProps>(
-  (
-    {
-      radius = URANUS_RADIUS,
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      emissiveColor = "#004466",
-      shininess = 25,
-    },
-    ref
-  ) => {
-    return (
-      <group ref={ref}>
-        <UranusSphere
-          radius={radius}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-          emissiveColor={emissiveColor}
-          shininess={shininess}
-        />
-      </group>
-    );
-  }
-);
+const UranusContext = React.createContext<UranusContext | null>(null);
 
-UranusSphereRoot.displayName = "UranusSphereRoot";
+function useUranus() {
+  const ctx = React.useContext(UranusContext);
+  if (!ctx) throw new Error("useUranus must be used within Uranus.Root");
+  return ctx;
+}
 
-/**
- * Props for the UranusScene component
- * @interface UranusSceneProps
- */
-export interface UranusSceneProps {
-  /** Initial camera position in 3D space [x, y, z] (default: [0, 0, 12.03]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view in degrees (default: 45) */
-  cameraFov?: number;
-  /** Minimum zoom distance from target (default: 6.015) */
-  minDistance?: number;
-  /** Maximum zoom distance from target (default: 80.2) */
-  maxDistance?: number;
-  /** Overall scene brightness multiplier (default: 1.2) */
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface UranusRootProps {
+  /** Texture URL for Uranus surface map */
+  textureUrl?: string;
+  /** Uranus radius in scene units */
+  radius?: number;
+  /** Enable automatic rotation */
+  enableRotation?: boolean;
+  /** Time scale multiplier for rotation speed */
+  timeScale?: number;
+  /** Overall brightness multiplier */
   brightness?: number;
-  /** Child components to render within the scene */
   children?: React.ReactNode;
 }
 
+export interface UranusCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Camera position [x, y, z] */
+  cameraPosition?: [number, number, number];
+  /** Camera field of view */
+  cameraFov?: number;
+  /** Canvas height */
+  height?: string;
+  /** Canvas width */
+  width?: string;
+  children?: React.ReactNode;
+}
+
+export interface UranusControlsProps {
+  /** Minimum zoom distance */
+  minDistance?: number;
+  /** Maximum zoom distance */
+  maxDistance?: number;
+  /** Zoom speed */
+  zoomSpeed?: number;
+  /** Pan speed */
+  panSpeed?: number;
+  /** Rotate speed */
+  rotateSpeed?: number;
+  /** Enable pan */
+  enablePan?: boolean;
+  /** Enable zoom */
+  enableZoom?: boolean;
+  /** Enable rotate */
+  enableRotate?: boolean;
+  /** Enable damping */
+  enableDamping?: boolean;
+  /** Damping factor */
+  dampingFactor?: number;
+}
+
+export interface UranusGlobeProps {
+  /** Number of segments for sphere geometry */
+  segments?: number;
+  children?: React.ReactNode;
+}
+
+// ============================================================================
+// Primitives
+// ============================================================================
+
 /**
- * UranusScene - The Three.js scene primitive component
- *
- * Provides a complete Three.js scene with Canvas, lights, camera, and orbital controls.
- * Use this when you want a pre-configured scene but still need to add custom content.
- *
- * @example
- * Usage with custom meshes:
- *
- * import { UranusScene, UranusSphereRoot } from '@/components/ui/uranus';
- *
- * function CustomUranus() {
- *   return (
- *     <UranusScene cameraPosition={[0, 0, 15]} brightness={1.5}>
- *       <UranusSphereRoot
- *         radius={4.01}
- *         textureUrl="/uranus.jpg"
- *         enableRotation={true}
- *       />
- *       <mesh position={[0, 6, 0]}>
- *         <sphereGeometry args={[0.5, 32, 32]} />
- *         <meshStandardMaterial color="white" />
- *       </mesh>
- *     </UranusScene>
- *   );
- * }
+ * Root component - provides context for all child components
  */
-export const UranusScene = forwardRef<HTMLDivElement, UranusSceneProps>(
+const UranusRoot = React.forwardRef<HTMLDivElement, UranusRootProps>(
   (
     {
-      cameraPosition = [0, 0, 12.03],
-      cameraFov = 45,
-      minDistance = 6.015,
-      maxDistance = 80.2,
+      textureUrl,
+      radius = URANUS_RADIUS,
+      enableRotation = true,
+      timeScale = 1,
       brightness = 1.2,
       children,
     },
     ref
   ) => {
+    const rotationSpeed = React.useMemo(() => {
+      if (!enableRotation) return 0;
+      return ((2 * Math.PI) / (URANUS_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+    }, [enableRotation, timeScale]);
+
+    const axialTilt: [number, number, number] = React.useMemo(
+      () => [0, 0, THREE.MathUtils.degToRad(URANUS_AXIAL_TILT_DEG)],
+      []
+    );
+
+    const contextValue: UranusContext = React.useMemo(
+      () => ({
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        textureUrl,
+      }),
+      [radius, rotationSpeed, axialTilt, brightness, timeScale, textureUrl]
+    );
+
     return (
-      <div ref={ref} className="relative h-full w-full">
+      <UranusContext.Provider value={contextValue}>
+        <div ref={ref} className="uranus-root relative h-full w-full">
+          {children}
+        </div>
+      </UranusContext.Provider>
+    );
+  }
+);
+
+UranusRoot.displayName = "Uranus.Root";
+
+/**
+ * Canvas component - wraps the Three.js canvas
+ */
+const UranusCanvas = React.forwardRef<HTMLDivElement, UranusCanvasProps>(
+  (
+    {
+      cameraPosition = [0, 5, 50],
+      cameraFov = 45,
+      height = "600px",
+      width = "100%",
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const { brightness } = useUranus();
+
+    return (
+      <div ref={ref} className={className} {...props}>
         <Canvas
+          style={{
+            height: `${height}`,
+            width: `${width}`,
+          }}
           camera={{ position: cameraPosition, fov: cameraFov }}
-          gl={{ antialias: true }}
+          gl={{
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.0,
+          }}
         >
-          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
+          <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>
-            <ambientLight intensity={0.8 * brightness} />
+            <ambientLight intensity={0.4 * brightness} />
             <directionalLight
-              position={[5, 3, 5]}
-              intensity={1.5 * brightness}
+              position={[10, 5, 10]}
+              intensity={2.0 * brightness}
+              castShadow={false}
             />
-
-            <OrbitControls
-              enablePan
-              enableZoom
-              enableRotate
-              zoomSpeed={0.6}
-              panSpeed={0.5}
-              rotateSpeed={0.4}
-              minDistance={minDistance}
-              maxDistance={maxDistance}
-              enableDamping
-              dampingFactor={0.05}
-            />
-
             {children}
           </Suspense>
         </Canvas>
@@ -264,92 +201,95 @@ export const UranusScene = forwardRef<HTMLDivElement, UranusSceneProps>(
   }
 );
 
-UranusScene.displayName = "UranusScene";
-
-// ============================================================================
-// COMPOSED COMPONENT - Pre-configured for common use cases
-// ============================================================================
+UranusCanvas.displayName = "Uranus.Canvas";
 
 /**
- * Props for the main Uranus component
- * @interface UranusProps
+ * Controls component - adds orbit controls to the scene
  */
-export interface UranusProps {
-  /** URL to the Uranus surface texture (optional - uses cyan/blue fallback) */
-  textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Custom child components to render in the scene */
-  children?: React.ReactNode;
-  /** Camera position [x, y, z] (default: [0, 0, 12.03]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view (default: 45) */
-  cameraFov?: number;
-  /** Minimum camera zoom distance (default: 6.015) */
-  minDistance?: number;
-  /** Maximum camera zoom distance (default: 80.2) */
-  maxDistance?: number;
-}
-
-/**
- * Uranus - The main composed Uranus component
- *
- * A fully pre-configured Uranus visualization with sensible defaults.
- * Just drop it in and it works - no textures or setup required!
- *
- * @example
- * Simplest usage (works immediately):
- *
- * import { Uranus } from '@/components/ui/uranus';
- *
- * function App() {
- *   return <Uranus />;
- * }
- *
- * @example
- * With texture:
- *
- * function App() {
- *   return <Uranus textureUrl="/textures/uranus.jpg" />;
- * }
- */
-const UranusComponent = forwardRef<HTMLDivElement, UranusProps>(
+const UranusControls = React.forwardRef<any, UranusControlsProps>(
   (
     {
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      children,
-      cameraPosition = [0, 0, 12.03],
-      cameraFov = 45,
-      minDistance = 6.015,
-      maxDistance = 80.2,
+      minDistance = 30,
+      maxDistance = 200,
+      zoomSpeed = 0.6,
+      panSpeed = 0.5,
+      rotateSpeed = 0.4,
+      enablePan = true,
+      enableZoom = true,
+      enableRotate = true,
+      enableDamping = true,
+      dampingFactor = 0.05,
     },
     ref
   ) => {
     return (
-      <UranusScene
+      <OrbitControls
         ref={ref}
-        cameraPosition={cameraPosition}
-        cameraFov={cameraFov}
+        makeDefault
+        enablePan={enablePan}
+        enableZoom={enableZoom}
+        enableRotate={enableRotate}
+        zoomSpeed={zoomSpeed}
+        panSpeed={panSpeed}
+        rotateSpeed={rotateSpeed}
         minDistance={minDistance}
         maxDistance={maxDistance}
-        brightness={brightness}
-      >
-        <UranusSphereRoot
-          radius={URANUS_RADIUS}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-        />
-        {children}
-      </UranusScene>
+        enableDamping={enableDamping}
+        dampingFactor={dampingFactor}
+      />
     );
   }
 );
 
-UranusComponent.displayName = "Uranus";
+UranusControls.displayName = "Uranus.Controls";
 
-export const Uranus = memo(UranusComponent);
+/**
+ * Globe component - renders the main Uranus sphere
+ */
+const UranusGlobe = React.forwardRef<any, UranusGlobeProps>(
+  ({ segments = 128, children }, ref) => {
+    const { radius, rotationSpeed, axialTilt, textureUrl } = useUranus();
+
+    return (
+      <Sphere
+        ref={ref}
+        radius={radius}
+        textureUrl={textureUrl}
+        color={textureUrl ? "#ffffff" : "#4fd0e7"}
+        rotationSpeed={rotationSpeed}
+        rotation={axialTilt}
+        segments={segments}
+        roughness={0.7}
+        metalness={0.1}
+      >
+        {children}
+      </Sphere>
+    );
+  }
+);
+
+UranusGlobe.displayName = "Uranus.Globe";
+
+/**
+ * Axis helper component - shows coordinate axes (for debugging)
+ */
+const UranusAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+  const { radius } = useUranus();
+  const axisSize = size ?? radius * 3;
+
+  return <axesHelper ref={ref} args={[axisSize]} />;
+});
+
+UranusAxis.displayName = "Uranus.Axis";
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export const Uranus = Object.assign(UranusRoot, {
+  Root: UranusRoot,
+  Canvas: UranusCanvas,
+  Controls: UranusControls,
+  Globe: UranusGlobe,
+  Axis: UranusAxis,
+});

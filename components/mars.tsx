@@ -1,235 +1,198 @@
 "use client";
 
-import { Suspense, useRef, memo, forwardRef } from "react";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber";
+import * as React from "react";
+import { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { Sphere } from "./primitives/sphere";
 
 // ============================================================================
-// Constants
+// Constants - Astronomically Accurate Values
 // ============================================================================
 
-/**
- * Mars radius in scene units (relative to Earth)
- * @constant {number}
- */
-export const MARS_RADIUS = 0.532; // Relative to Earth (3,389.5 km actual)
-
-/**
- * Mars actual radius in kilometers (same as MARS_RADIUS)
- * @constant {number}
- */
-export const MARS_REAL_RADIUS_KM = 3389.5;
-
-/**
- * Mars diameter in kilometers
- * @constant {number}
- */
-export const MARS_DIAMETER_KM = 6779;
-
-/**
- * Mars rotation period in Earth days (24.6 hours)
- * @constant {number}
- */
-export const MARS_ROTATION_PERIOD = 1.03;
-
-/**
- * Mars orbital period around the Sun in Earth days
- * @constant {number}
- */
-export const MARS_ORBITAL_PERIOD = 687;
-
-/**
- * Mars's axial tilt in degrees (similar to Earth)
- * @constant {number}
- */
-export const MARS_AXIAL_TILT = 25.2;
+export const MARS_RADIUS_KM = 3389.5;
+export const SCENE_SCALE = 0.001;
+export const MARS_RADIUS = MARS_RADIUS_KM * SCENE_SCALE;
+export const MARS_ROTATION_PERIOD_SECONDS = 88642.0; // 24.6 hours
+export const MARS_ORBITAL_PERIOD_DAYS = 687;
+export const MARS_AXIAL_TILT_DEG = 25.2;
 
 // ============================================================================
-// Internal Sphere Component
+// Context
 // ============================================================================
-interface MarsSphereProps {
+
+interface MarsContext {
   radius: number;
-  textureUrl?: string;
+  rotationSpeed: number;
+  axialTilt: [number, number, number];
   brightness: number;
-  enableRotation: boolean;
-  emissiveColor: string;
-  shininess: number;
-}
-
-const MarsSphere = memo(function MarsSphere({
-  radius,
-  textureUrl,
-  brightness,
-  enableRotation,
-  emissiveColor,
-  shininess,
-}: MarsSphereProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const texture = textureUrl
-    ? useLoader(THREE.TextureLoader, textureUrl)
-    : null;
-
-  // Apply axial tilt
-  useFrame(() => {
-    if (groupRef.current && groupRef.current.rotation.z === 0) {
-      groupRef.current.rotation.z = THREE.MathUtils.degToRad(MARS_AXIAL_TILT);
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[radius, 64, 32]} />
-      {texture ? (
-        <meshStandardMaterial
-          map={texture}
-          roughness={0.9} // Dusty surface
-          metalness={0.1}
-          emissive={emissiveColor}
-          emissiveIntensity={0.1 * brightness}
-        />
-      ) : (
-        <meshStandardMaterial
-          color="#cd5c5c"
-          roughness={0.9} // Dusty surface
-          metalness={0.1}
-          emissive={emissiveColor}
-          emissiveIntensity={0.1 * brightness}
-        />
-      )}
-      </mesh>
-    </group>
-  );
-});
-
-// ============================================================================
-// PRIMITIVES - Composable building blocks
-// ============================================================================
-
-/**
- * Props for the MarsSphereRoot component
- * @interface MarsSphereRootProps
- */
-export interface MarsSphereRootProps {
-  /** Radius of the Mars sphere in scene units (default: MARS_RADIUS) */
-  radius?: number;
-  /** URL to the Mars surface texture (optional - uses reddish-brown fallback) */
+  timeScale: number;
   textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Emissive color for the material (default: "#331100") */
-  emissiveColor?: string;
-  /** Material shininess value (default: 5) */
-  shininess?: number;
 }
 
-/**
- * MarsSphereRoot - The base Mars sphere primitive
- *
- * Use this when you want full control over the Three.js scene setup.
- * Renders just the Mars sphere with optional texture and materials.
- *
- * @example
- * Basic usage in custom scene:
- *
- * import { Canvas } from '@react-three/fiber';
- * import { MarsSphereRoot } from '@/ui/components/mars';
- *
- * function MyScene() {
- *   return (
- *     <Canvas>
- *       <ambientLight />
- *       <MarsSphereRoot />
- *     </Canvas>
- *   );
- * }
- */
-export const MarsSphereRoot = forwardRef<THREE.Group, MarsSphereRootProps>(
-  (
-    {
-      radius = MARS_RADIUS,
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      emissiveColor = "#331100",
-      shininess = 5,
-    },
-    ref
-  ) => {
-    return (
-      <group ref={ref}>
-        <MarsSphere
-          radius={radius}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-          emissiveColor={emissiveColor}
-          shininess={shininess}
-        />
-      </group>
-    );
-  }
-);
+const MarsContext = React.createContext<MarsContext | null>(null);
 
-MarsSphereRoot.displayName = "MarsSphereRoot";
+function useMars() {
+  const ctx = React.useContext(MarsContext);
+  if (!ctx) throw new Error("useMars must be used within Mars.Root");
+  return ctx;
+}
 
-/**
- * MarsScene - The Three.js scene primitive
- */
-export interface MarsSceneProps {
-  cameraPosition?: [number, number, number];
-  cameraFov?: number;
-  minDistance?: number;
-  maxDistance?: number;
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface MarsRootProps {
+  /** Texture URL for Mars surface map */
+  textureUrl?: string;
+  /** Mars radius in scene units */
+  radius?: number;
+  /** Enable automatic rotation */
+  enableRotation?: boolean;
+  /** Time scale multiplier for rotation speed */
+  timeScale?: number;
+  /** Overall brightness multiplier */
   brightness?: number;
   children?: React.ReactNode;
 }
 
-export const MarsScene = forwardRef<HTMLDivElement, MarsSceneProps>(
+export interface MarsCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Camera position [x, y, z] */
+  cameraPosition?: [number, number, number];
+  /** Camera field of view */
+  cameraFov?: number;
+  /** Canvas height */
+  height?: string;
+  /** Canvas width */
+  width?: string;
+  children?: React.ReactNode;
+}
+
+export interface MarsControlsProps {
+  /** Minimum zoom distance */
+  minDistance?: number;
+  /** Maximum zoom distance */
+  maxDistance?: number;
+  /** Zoom speed */
+  zoomSpeed?: number;
+  /** Pan speed */
+  panSpeed?: number;
+  /** Rotate speed */
+  rotateSpeed?: number;
+  /** Enable pan */
+  enablePan?: boolean;
+  /** Enable zoom */
+  enableZoom?: boolean;
+  /** Enable rotate */
+  enableRotate?: boolean;
+  /** Enable damping */
+  enableDamping?: boolean;
+  /** Damping factor */
+  dampingFactor?: number;
+}
+
+export interface MarsGlobeProps {
+  /** Number of segments for sphere geometry */
+  segments?: number;
+  children?: React.ReactNode;
+}
+
+// ============================================================================
+// Primitives
+// ============================================================================
+
+/**
+ * Root component - provides context for all child components
+ */
+const MarsRoot = React.forwardRef<HTMLDivElement, MarsRootProps>(
   (
     {
-      cameraPosition = [0, 0, 1.596], // 3x Mars radius
-      cameraFov = 45,
-      minDistance = 0.798,
-      maxDistance = 10.64,
+      textureUrl,
+      radius = MARS_RADIUS,
+      enableRotation = true,
+      timeScale = 1,
       brightness = 1.2,
       children,
     },
     ref
   ) => {
+    const rotationSpeed = React.useMemo(() => {
+      if (!enableRotation) return 0;
+      return ((2 * Math.PI) / (MARS_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+    }, [enableRotation, timeScale]);
+
+    const axialTilt: [number, number, number] = React.useMemo(
+      () => [0, 0, THREE.MathUtils.degToRad(MARS_AXIAL_TILT_DEG)],
+      []
+    );
+
+    const contextValue: MarsContext = React.useMemo(
+      () => ({
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        textureUrl,
+      }),
+      [radius, rotationSpeed, axialTilt, brightness, timeScale, textureUrl]
+    );
+
     return (
-      <div ref={ref} className="relative h-full w-full">
+      <MarsContext.Provider value={contextValue}>
+        <div ref={ref} className="mars-root relative h-full w-full">
+          {children}
+        </div>
+      </MarsContext.Provider>
+    );
+  }
+);
+
+MarsRoot.displayName = "Mars.Root";
+
+/**
+ * Canvas component - wraps the Three.js canvas
+ */
+const MarsCanvas = React.forwardRef<HTMLDivElement, MarsCanvasProps>(
+  (
+    {
+      cameraPosition = [0, 5, 20],
+      cameraFov = 45,
+      height = "600px",
+      width = "100%",
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const { brightness } = useMars();
+
+    return (
+      <div ref={ref} className={className} {...props}>
         <Canvas
+          style={{
+            height: `${height}`,
+            width: `${width}`,
+          }}
           camera={{ position: cameraPosition, fov: cameraFov }}
-          gl={{ antialias: true }}
+          gl={{
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.0,
+          }}
         >
-          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
+          <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>
-            <ambientLight intensity={0.6 * brightness} />
+            <ambientLight intensity={0.4 * brightness} />
             <directionalLight
-              position={[5, 3, 5]}
-              intensity={1.5 * brightness}
+              position={[10, 5, 10]}
+              intensity={2.0 * brightness}
+              castShadow={false}
             />
-
-            <OrbitControls
-              enablePan
-              enableZoom
-              enableRotate
-              zoomSpeed={0.6}
-              panSpeed={0.5}
-              rotateSpeed={0.4}
-              minDistance={minDistance}
-              maxDistance={maxDistance}
-              enableDamping
-              dampingFactor={0.05}
-            />
-
             {children}
           </Suspense>
         </Canvas>
@@ -238,92 +201,95 @@ export const MarsScene = forwardRef<HTMLDivElement, MarsSceneProps>(
   }
 );
 
-MarsScene.displayName = "MarsScene";
-
-// ============================================================================
-// COMPOSED COMPONENT - Pre-configured for common use cases
-// ============================================================================
+MarsCanvas.displayName = "Mars.Canvas";
 
 /**
- * Props for the main Mars component
- * @interface MarsProps
+ * Controls component - adds orbit controls to the scene
  */
-export interface MarsProps {
-  /** URL to the Mars surface texture (optional - uses reddish-brown fallback) */
-  textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Custom child components to render in the scene */
-  children?: React.ReactNode;
-  /** Camera position [x, y, z] (default: [0, 0, 1.596]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view (default: 45) */
-  cameraFov?: number;
-  /** Minimum camera zoom distance (default: 1.0) */
-  minDistance?: number;
-  /** Maximum camera zoom distance (default: 12) */
-  maxDistance?: number;
-}
-
-/**
- * Mars - The main composed Mars component
- *
- * A fully pre-configured Mars visualization with sensible defaults.
- * Just drop it in and it works - no textures or setup required!
- *
- * @example
- * Simplest usage (works immediately):
- *
- * import { Mars } from '@/ui/components/mars';
- *
- * function App() {
- *   return <Mars />;
- * }
- *
- * @example
- * With texture:
- *
- * function App() {
- *   return <Mars textureUrl="/textures/mars.jpg" />;
- * }
- */
-const MarsComponent = forwardRef<HTMLDivElement, MarsProps>(
+const MarsControls = React.forwardRef<any, MarsControlsProps>(
   (
     {
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      children,
-      cameraPosition = [0, 0, 1.596],
-      cameraFov = 45,
-      minDistance = 0.798,
-      maxDistance = 10.64,
+      minDistance = 8,
+      maxDistance = 100,
+      zoomSpeed = 0.6,
+      panSpeed = 0.5,
+      rotateSpeed = 0.4,
+      enablePan = true,
+      enableZoom = true,
+      enableRotate = true,
+      enableDamping = true,
+      dampingFactor = 0.05,
     },
     ref
   ) => {
     return (
-      <MarsScene
+      <OrbitControls
         ref={ref}
-        cameraPosition={cameraPosition}
-        cameraFov={cameraFov}
+        makeDefault
+        enablePan={enablePan}
+        enableZoom={enableZoom}
+        enableRotate={enableRotate}
+        zoomSpeed={zoomSpeed}
+        panSpeed={panSpeed}
+        rotateSpeed={rotateSpeed}
         minDistance={minDistance}
         maxDistance={maxDistance}
-        brightness={brightness}
-      >
-        <MarsSphereRoot
-          radius={MARS_RADIUS}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-        />
-        {children}
-      </MarsScene>
+        enableDamping={enableDamping}
+        dampingFactor={dampingFactor}
+      />
     );
   }
 );
 
-MarsComponent.displayName = "Mars";
+MarsControls.displayName = "Mars.Controls";
 
-export const Mars = memo(MarsComponent);
+/**
+ * Globe component - renders the main Mars sphere
+ */
+const MarsGlobe = React.forwardRef<any, MarsGlobeProps>(
+  ({ segments = 128, children }, ref) => {
+    const { radius, rotationSpeed, axialTilt, textureUrl } = useMars();
+
+    return (
+      <Sphere
+        ref={ref}
+        radius={radius}
+        textureUrl={textureUrl}
+        color={textureUrl ? "#ffffff" : "#cd5c5c"}
+        rotationSpeed={rotationSpeed}
+        rotation={axialTilt}
+        segments={segments}
+        roughness={0.9}
+        metalness={0.1}
+      >
+        {children}
+      </Sphere>
+    );
+  }
+);
+
+MarsGlobe.displayName = "Mars.Globe";
+
+/**
+ * Axis helper component - shows coordinate axes (for debugging)
+ */
+const MarsAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+  const { radius } = useMars();
+  const axisSize = size ?? radius * 3;
+
+  return <axesHelper ref={ref} args={[axisSize]} />;
+});
+
+MarsAxis.displayName = "Mars.Axis";
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export const Mars = Object.assign(MarsRoot, {
+  Root: MarsRoot,
+  Canvas: MarsCanvas,
+  Controls: MarsControls,
+  Globe: MarsGlobe,
+  Axis: MarsAxis,
+});

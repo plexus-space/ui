@@ -1,266 +1,198 @@
 "use client";
 
-import { Suspense, useRef, memo, forwardRef } from "react";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber";
+import * as React from "react";
+import { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { Sphere } from "./primitives/sphere";
 
 // ============================================================================
-// Constants
+// Constants - Astronomically Accurate Values
 // ============================================================================
 
-/**
- * Moon radius in scene units (relative to Earth)
- * @constant {number}
- */
-export const MOON_RADIUS = 0.273; // Relative to Earth (1,737.4 km actual)
-
-/**
- * Moon actual radius in kilometers
- * @constant {number}
- */
-export const MOON_REAL_RADIUS_KM = 1737.4;
-
-/**
- * Moon rotation period in Earth days (tidally locked)
- * @constant {number}
- */
-export const MOON_ROTATION_PERIOD = 27.3;
-
-/**
- * Moon orbital period around Earth in Earth days
- * @constant {number}
- */
-export const MOON_ORBITAL_PERIOD = 27.3;
-
-/**
- * Moon's axial tilt in degrees (relative to ecliptic)
- * @constant {number}
- */
-export const MOON_AXIAL_TILT = 6.7;
+export const MOON_RADIUS_KM = 1737.4;
+export const SCENE_SCALE = 0.001;
+export const MOON_RADIUS = MOON_RADIUS_KM * SCENE_SCALE;
+export const MOON_ROTATION_PERIOD_SECONDS = 2360592.0; // 27.3 days (tidally locked)
+export const MOON_ORBITAL_PERIOD_DAYS = 27.3;
+export const MOON_AXIAL_TILT_DEG = 6.7;
 
 // ============================================================================
-// Internal Sphere Component
+// Context
 // ============================================================================
-interface MoonSphereProps {
+
+interface MoonContext {
   radius: number;
-  textureUrl?: string;
+  rotationSpeed: number;
+  axialTilt: [number, number, number];
   brightness: number;
-  enableRotation: boolean;
-  emissiveColor: string;
-  shininess: number;
-}
-
-const MoonSphere = memo(function MoonSphere({
-  radius,
-  textureUrl,
-  brightness,
-  enableRotation,
-  emissiveColor,
-  shininess,
-}: MoonSphereProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const texture = textureUrl
-    ? useLoader(THREE.TextureLoader, textureUrl)
-    : null;
-
-  // Apply axial tilt
-  useFrame(() => {
-    if (groupRef.current && groupRef.current.rotation.z === 0) {
-      groupRef.current.rotation.z = THREE.MathUtils.degToRad(MOON_AXIAL_TILT);
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[radius, 64, 32]} />
-      {texture ? (
-        <meshPhongMaterial
-          map={texture}
-          bumpScale={0.005}
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.05 * brightness}
-        />
-      ) : (
-        <meshPhongMaterial
-          color="#aaaaaa"
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.05 * brightness}
-        />
-      )}
-      </mesh>
-    </group>
-  );
-});
-
-// ============================================================================
-// PRIMITIVES - Composable building blocks
-// ============================================================================
-
-/**
- * Props for the MoonSphereRoot component
- * @interface MoonSphereRootProps
- */
-export interface MoonSphereRootProps {
-  /** Radius of the Moon sphere in scene units (default: MOON_RADIUS) */
-  radius?: number;
-  /** URL to the Moon surface texture (optional - uses gray fallback) */
+  timeScale: number;
   textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Emissive color for the material (default: "#0a0a0a") */
-  emissiveColor?: string;
-  /** Material shininess value (default: 1) */
-  shininess?: number;
 }
 
-/**
- * MoonSphereRoot - The base Moon sphere primitive
- *
- * Use this when you want full control over the Three.js scene setup.
- * Renders just the Moon sphere with optional texture and materials.
- *
- * @example
- * Basic usage in custom scene:
- *
- * import { Canvas } from '@react-three/fiber';
- * import { MoonSphereRoot } from '@components/ui/moon';
- *
- * function MyScene() {
- *   return (
- *     <Canvas>
- *       <ambientLight />
- *       <MoonSphereRoot />
- *     </Canvas>
- *   );
- * }
- */
-export const MoonSphereRoot = forwardRef<THREE.Group, MoonSphereRootProps>(
-  (
-    {
-      radius = MOON_RADIUS,
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      emissiveColor = "#0a0a0a",
-      shininess = 1,
-    },
-    ref
-  ) => {
-    return (
-      <group ref={ref}>
-        <MoonSphere
-          radius={radius}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-          emissiveColor={emissiveColor}
-          shininess={shininess}
-        />
-      </group>
-    );
-  }
-);
+const MoonContext = React.createContext<MoonContext | null>(null);
 
-MoonSphereRoot.displayName = "MoonSphereRoot";
+function useMoon() {
+  const ctx = React.useContext(MoonContext);
+  if (!ctx) throw new Error("useMoon must be used within Moon.Root");
+  return ctx;
+}
 
-/**
- * Props for the MoonScene component
- * @interface MoonSceneProps
- */
-export interface MoonSceneProps {
-  /** Initial camera position in 3D space [x, y, z] (default: [0, 0, 0.819]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view in degrees (default: 45) */
-  cameraFov?: number;
-  /** Minimum zoom distance from target (default: 0.41) */
-  minDistance?: number;
-  /** Maximum zoom distance from target (default: 5.46) */
-  maxDistance?: number;
-  /** Overall scene brightness multiplier (default: 1.2) */
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface MoonRootProps {
+  /** Texture URL for Moon surface map */
+  textureUrl?: string;
+  /** Moon radius in scene units */
+  radius?: number;
+  /** Enable automatic rotation */
+  enableRotation?: boolean;
+  /** Time scale multiplier for rotation speed */
+  timeScale?: number;
+  /** Overall brightness multiplier */
   brightness?: number;
-  /** Child components to render within the scene */
   children?: React.ReactNode;
 }
 
+export interface MoonCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Camera position [x, y, z] */
+  cameraPosition?: [number, number, number];
+  /** Camera field of view */
+  cameraFov?: number;
+  /** Canvas height */
+  height?: string;
+  /** Canvas width */
+  width?: string;
+  children?: React.ReactNode;
+}
+
+export interface MoonControlsProps {
+  /** Minimum zoom distance */
+  minDistance?: number;
+  /** Maximum zoom distance */
+  maxDistance?: number;
+  /** Zoom speed */
+  zoomSpeed?: number;
+  /** Pan speed */
+  panSpeed?: number;
+  /** Rotate speed */
+  rotateSpeed?: number;
+  /** Enable pan */
+  enablePan?: boolean;
+  /** Enable zoom */
+  enableZoom?: boolean;
+  /** Enable rotate */
+  enableRotate?: boolean;
+  /** Enable damping */
+  enableDamping?: boolean;
+  /** Damping factor */
+  dampingFactor?: number;
+}
+
+export interface MoonGlobeProps {
+  /** Number of segments for sphere geometry */
+  segments?: number;
+  children?: React.ReactNode;
+}
+
+// ============================================================================
+// Primitives
+// ============================================================================
+
 /**
- * MoonScene - The Three.js scene primitive component
- *
- * Provides a complete Three.js scene with Canvas, lights, camera, and orbital controls.
- * Use this when you want a pre-configured scene but still need to add custom content.
- *
- * @example
- * Usage with custom meshes:
- *
- * import { MoonScene, MoonSphereRoot } from '@components/ui/moon';
- *
- * function CustomMoon() {
- *   return (
- *     <MoonScene cameraPosition={[0, 0, 0.819]} brightness={1.5}>
- *       <MoonSphereRoot
- *         radius={0.273}
- *         textureUrl="/moon.jpg"
- *         enableRotation={true}
- *       />
- *       <mesh position={[0, 0.4, 0]}>
- *         <sphereGeometry args={[0.05, 32, 32]} />
- *         <meshStandardMaterial color="red" />
- *       </mesh>
- *     </MoonScene>
- *   );
- * }
- *
- * @param props - Configuration props for the scene
- * @param ref - Forward ref to the container div element
- * @returns A complete Three.js scene ready to render
+ * Root component - provides context for all child components
  */
-export const MoonScene = forwardRef<HTMLDivElement, MoonSceneProps>(
+const MoonRoot = React.forwardRef<HTMLDivElement, MoonRootProps>(
   (
     {
-      cameraPosition = [0, 0, 0.819],
-      cameraFov = 45,
-      minDistance = 0.41,
-      maxDistance = 5.46,
+      textureUrl,
+      radius = MOON_RADIUS,
+      enableRotation = true,
+      timeScale = 1,
       brightness = 1.2,
       children,
     },
     ref
   ) => {
+    const rotationSpeed = React.useMemo(() => {
+      if (!enableRotation) return 0;
+      return ((2 * Math.PI) / (MOON_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+    }, [enableRotation, timeScale]);
+
+    const axialTilt: [number, number, number] = React.useMemo(
+      () => [0, 0, THREE.MathUtils.degToRad(MOON_AXIAL_TILT_DEG)],
+      []
+    );
+
+    const contextValue: MoonContext = React.useMemo(
+      () => ({
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        textureUrl,
+      }),
+      [radius, rotationSpeed, axialTilt, brightness, timeScale, textureUrl]
+    );
+
     return (
-      <div ref={ref} className="relative h-full w-full">
+      <MoonContext.Provider value={contextValue}>
+        <div ref={ref} className="moon-root relative h-full w-full">
+          {children}
+        </div>
+      </MoonContext.Provider>
+    );
+  }
+);
+
+MoonRoot.displayName = "Moon.Root";
+
+/**
+ * Canvas component - wraps the Three.js canvas
+ */
+const MoonCanvas = React.forwardRef<HTMLDivElement, MoonCanvasProps>(
+  (
+    {
+      cameraPosition = [0, 2, 8],
+      cameraFov = 45,
+      height = "600px",
+      width = "100%",
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const { brightness } = useMoon();
+
+    return (
+      <div ref={ref} className={className} {...props}>
         <Canvas
+          style={{
+            height: `${height}`,
+            width: `${width}`,
+          }}
           camera={{ position: cameraPosition, fov: cameraFov }}
-          gl={{ antialias: true }}
+          gl={{
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.0,
+          }}
         >
-          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
+          <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>
-            <ambientLight intensity={0.8 * brightness} />
+            <ambientLight intensity={0.4 * brightness} />
             <directionalLight
-              position={[5, 3, 5]}
-              intensity={1.5 * brightness}
+              position={[10, 5, 10]}
+              intensity={2.0 * brightness}
+              castShadow={false}
             />
-
-            <OrbitControls
-              enablePan
-              enableZoom
-              enableRotate
-              zoomSpeed={0.6}
-              panSpeed={0.5}
-              rotateSpeed={0.4}
-              minDistance={minDistance}
-              maxDistance={maxDistance}
-              enableDamping
-              dampingFactor={0.05}
-            />
-
             {children}
           </Suspense>
         </Canvas>
@@ -269,92 +201,95 @@ export const MoonScene = forwardRef<HTMLDivElement, MoonSceneProps>(
   }
 );
 
-MoonScene.displayName = "MoonScene";
-
-// ============================================================================
-// COMPOSED COMPONENT - Pre-configured for common use cases
-// ============================================================================
+MoonCanvas.displayName = "Moon.Canvas";
 
 /**
- * Props for the main Moon component
- * @interface MoonProps
+ * Controls component - adds orbit controls to the scene
  */
-export interface MoonProps {
-  /** URL to the Moon surface texture (optional - uses gray fallback) */
-  textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Custom child components to render in the scene */
-  children?: React.ReactNode;
-  /** Camera position [x, y, z] (default: [0, 0, 0.819]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view (default: 45) */
-  cameraFov?: number;
-  /** Minimum camera zoom distance (default: 0.41) */
-  minDistance?: number;
-  /** Maximum camera zoom distance (default: 5.46) */
-  maxDistance?: number;
-}
-
-/**
- * Moon - The main composed Moon component
- *
- * A fully pre-configured Moon visualization with sensible defaults.
- * Just drop it in and it works - no textures or setup required!
- *
- * @example
- * Simplest usage (works immediately):
- *
- * import { Moon } from '@/components/ui/moon';
- *
- * function App() {
- *   return <Moon />;
- * }
- *
- * @example
- * With texture:
- *
- * function App() {
- *   return <Moon textureUrl="/textures/moon.jpg" />;
- * }
- */
-const MoonComponent = forwardRef<HTMLDivElement, MoonProps>(
+const MoonControls = React.forwardRef<any, MoonControlsProps>(
   (
     {
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      children,
-      cameraPosition = [0, 0, 0.819],
-      cameraFov = 45,
-      minDistance = 0.41,
-      maxDistance = 5.46,
+      minDistance = 3,
+      maxDistance = 30,
+      zoomSpeed = 0.6,
+      panSpeed = 0.5,
+      rotateSpeed = 0.4,
+      enablePan = true,
+      enableZoom = true,
+      enableRotate = true,
+      enableDamping = true,
+      dampingFactor = 0.05,
     },
     ref
   ) => {
     return (
-      <MoonScene
+      <OrbitControls
         ref={ref}
-        cameraPosition={cameraPosition}
-        cameraFov={cameraFov}
+        makeDefault
+        enablePan={enablePan}
+        enableZoom={enableZoom}
+        enableRotate={enableRotate}
+        zoomSpeed={zoomSpeed}
+        panSpeed={panSpeed}
+        rotateSpeed={rotateSpeed}
         minDistance={minDistance}
         maxDistance={maxDistance}
-        brightness={brightness}
-      >
-        <MoonSphereRoot
-          radius={MOON_RADIUS}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-        />
-        {children}
-      </MoonScene>
+        enableDamping={enableDamping}
+        dampingFactor={dampingFactor}
+      />
     );
   }
 );
 
-MoonComponent.displayName = "Moon";
+MoonControls.displayName = "Moon.Controls";
 
-export const Moon = memo(MoonComponent);
+/**
+ * Globe component - renders the main Moon sphere
+ */
+const MoonGlobe = React.forwardRef<any, MoonGlobeProps>(
+  ({ segments = 128, children }, ref) => {
+    const { radius, rotationSpeed, axialTilt, textureUrl } = useMoon();
+
+    return (
+      <Sphere
+        ref={ref}
+        radius={radius}
+        textureUrl={textureUrl}
+        color={textureUrl ? "#ffffff" : "#aaaaaa"}
+        rotationSpeed={rotationSpeed}
+        rotation={axialTilt}
+        segments={segments}
+        roughness={0.95}
+        metalness={0.05}
+      >
+        {children}
+      </Sphere>
+    );
+  }
+);
+
+MoonGlobe.displayName = "Moon.Globe";
+
+/**
+ * Axis helper component - shows coordinate axes (for debugging)
+ */
+const MoonAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+  const { radius } = useMoon();
+  const axisSize = size ?? radius * 3;
+
+  return <axesHelper ref={ref} args={[axisSize]} />;
+});
+
+MoonAxis.displayName = "Moon.Axis";
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export const Moon = Object.assign(MoonRoot, {
+  Root: MoonRoot,
+  Canvas: MoonCanvas,
+  Controls: MoonControls,
+  Globe: MoonGlobe,
+  Axis: MoonAxis,
+});

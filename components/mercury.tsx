@@ -1,230 +1,198 @@
 "use client";
 
-import { Suspense, useRef, memo, forwardRef } from "react";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber";
+import * as React from "react";
+import { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { Sphere } from "./primitives/sphere";
 
 // ============================================================================
-// Constants
+// Constants - Astronomically Accurate Values
 // ============================================================================
 
-/**
- * Mercury radius in scene units (relative to Earth)
- * @constant {number}
- */
-export const MERCURY_RADIUS = 0.383; // Relative to Earth (2,439.7 km actual)
-
-/**
- * Mercury actual radius in kilometers
- * @constant {number}
- */
-export const MERCURY_REAL_RADIUS_KM = 2439.7;
-
-/**
- * Mercury rotation period in Earth days (58.6 days)
- * @constant {number}
- */
-export const MERCURY_ROTATION_PERIOD = 58.6;
-
-/**
- * Mercury orbital period around the Sun in Earth days
- * @constant {number}
- */
-export const MERCURY_ORBITAL_PERIOD = 88;
-
-/**
- * Mercury's axial tilt in degrees (almost upright)
- * @constant {number}
- */
-export const MERCURY_AXIAL_TILT = 0.034;
+export const MERCURY_RADIUS_KM = 2439.7;
+export const SCENE_SCALE = 0.001;
+export const MERCURY_RADIUS = MERCURY_RADIUS_KM * SCENE_SCALE;
+export const MERCURY_ROTATION_PERIOD_SECONDS = 5067360.0; // 58.6 days
+export const MERCURY_ORBITAL_PERIOD_DAYS = 88;
+export const MERCURY_AXIAL_TILT_DEG = 0.034; // Almost upright
 
 // ============================================================================
-// Internal Sphere Component
+// Context
 // ============================================================================
-interface MercurySphereProps {
+
+interface MercuryContext {
   radius: number;
-  textureUrl?: string;
+  rotationSpeed: number;
+  axialTilt: [number, number, number];
   brightness: number;
-  enableRotation: boolean;
-  emissiveColor: string;
-  shininess: number;
-}
-
-const MercurySphere = memo(function MercurySphere({
-  radius,
-  textureUrl,
-  brightness,
-  enableRotation,
-  emissiveColor,
-  shininess,
-}: MercurySphereProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const texture = textureUrl
-    ? useLoader(THREE.TextureLoader, textureUrl)
-    : null;
-
-  // Apply axial tilt
-  useFrame(() => {
-    if (groupRef.current && groupRef.current.rotation.z === 0) {
-      groupRef.current.rotation.z = THREE.MathUtils.degToRad(MERCURY_AXIAL_TILT);
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[radius, 64, 32]} />
-      {texture ? (
-        <meshPhongMaterial
-          map={texture}
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.1 * brightness}
-        />
-      ) : (
-        <meshPhongMaterial
-          color="#8c7853"
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.1 * brightness}
-        />
-      )}
-      </mesh>
-    </group>
-  );
-});
-
-// ============================================================================
-// PRIMITIVES - Composable building blocks
-// ============================================================================
-
-/**
- * Props for the MercurySphereRoot component
- * @interface MercurySphereRootProps
- */
-export interface MercurySphereRootProps {
-  /** Radius of the Mercury sphere in scene units (default: MERCURY_RADIUS) */
-  radius?: number;
-  /** URL to the Mercury surface texture (optional - uses gray-brown fallback) */
+  timeScale: number;
   textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Emissive color for the material (default: "#111111") */
-  emissiveColor?: string;
-  /** Material shininess value (default: 5) */
-  shininess?: number;
 }
 
-/**
- * MercurySphereRoot - The base Mercury sphere primitive
- *
- * Use this when you want full control over the Three.js scene setup.
- * Renders just the Mercury sphere with optional texture and materials.
- *
- * @example
- * Basic usage in custom scene:
- *
- * import { Canvas } from '@react-three/fiber';
- * import { MercurySphereRoot } from '@/ui/components/mercury';
- *
- * function MyScene() {
- *   return (
- *     <Canvas>
- *       <ambientLight />
- *       <MercurySphereRoot />
- *     </Canvas>
- *   );
- * }
- */
-export const MercurySphereRoot = forwardRef<
-  THREE.Group,
-  MercurySphereRootProps
->(
-  (
-    {
-      radius = MERCURY_RADIUS,
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      emissiveColor = "#111111",
-      shininess = 5,
-    },
-    ref
-  ) => {
-    return (
-      <group ref={ref}>
-        <MercurySphere
-          radius={radius}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-          emissiveColor={emissiveColor}
-          shininess={shininess}
-        />
-      </group>
-    );
-  }
-);
+const MercuryContext = React.createContext<MercuryContext | null>(null);
 
-MercurySphereRoot.displayName = "MercurySphereRoot";
+function useMercury() {
+  const ctx = React.useContext(MercuryContext);
+  if (!ctx) throw new Error("useMercury must be used within Mercury.Root");
+  return ctx;
+}
 
-/**
- * MercuryScene - The Three.js scene primitive
- */
-export interface MercurySceneProps {
-  cameraPosition?: [number, number, number];
-  cameraFov?: number;
-  minDistance?: number;
-  maxDistance?: number;
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface MercuryRootProps {
+  /** Texture URL for Mercury surface map */
+  textureUrl?: string;
+  /** Mercury radius in scene units */
+  radius?: number;
+  /** Enable automatic rotation */
+  enableRotation?: boolean;
+  /** Time scale multiplier for rotation speed */
+  timeScale?: number;
+  /** Overall brightness multiplier */
   brightness?: number;
   children?: React.ReactNode;
 }
 
-export const MercuryScene = forwardRef<HTMLDivElement, MercurySceneProps>(
+export interface MercuryCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Camera position [x, y, z] */
+  cameraPosition?: [number, number, number];
+  /** Camera field of view */
+  cameraFov?: number;
+  /** Canvas height */
+  height?: string;
+  /** Canvas width */
+  width?: string;
+  children?: React.ReactNode;
+}
+
+export interface MercuryControlsProps {
+  /** Minimum zoom distance */
+  minDistance?: number;
+  /** Maximum zoom distance */
+  maxDistance?: number;
+  /** Zoom speed */
+  zoomSpeed?: number;
+  /** Pan speed */
+  panSpeed?: number;
+  /** Rotate speed */
+  rotateSpeed?: number;
+  /** Enable pan */
+  enablePan?: boolean;
+  /** Enable zoom */
+  enableZoom?: boolean;
+  /** Enable rotate */
+  enableRotate?: boolean;
+  /** Enable damping */
+  enableDamping?: boolean;
+  /** Damping factor */
+  dampingFactor?: number;
+}
+
+export interface MercuryGlobeProps {
+  /** Number of segments for sphere geometry */
+  segments?: number;
+  children?: React.ReactNode;
+}
+
+// ============================================================================
+// Primitives
+// ============================================================================
+
+/**
+ * Root component - provides context for all child components
+ */
+const MercuryRoot = React.forwardRef<HTMLDivElement, MercuryRootProps>(
   (
     {
-      cameraPosition = [0, 0, 1.149],
-      cameraFov = 45,
-      minDistance = 0.5745,
-      maxDistance = 7.66,
+      textureUrl,
+      radius = MERCURY_RADIUS,
+      enableRotation = true,
+      timeScale = 1,
       brightness = 1.2,
       children,
     },
     ref
   ) => {
+    const rotationSpeed = React.useMemo(() => {
+      if (!enableRotation) return 0;
+      return ((2 * Math.PI) / (MERCURY_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+    }, [enableRotation, timeScale]);
+
+    const axialTilt: [number, number, number] = React.useMemo(
+      () => [0, 0, THREE.MathUtils.degToRad(MERCURY_AXIAL_TILT_DEG)],
+      []
+    );
+
+    const contextValue: MercuryContext = React.useMemo(
+      () => ({
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        textureUrl,
+      }),
+      [radius, rotationSpeed, axialTilt, brightness, timeScale, textureUrl]
+    );
+
     return (
-      <div ref={ref} className="relative h-full w-full">
+      <MercuryContext.Provider value={contextValue}>
+        <div ref={ref} className="mercury-root relative h-full w-full">
+          {children}
+        </div>
+      </MercuryContext.Provider>
+    );
+  }
+);
+
+MercuryRoot.displayName = "Mercury.Root";
+
+/**
+ * Canvas component - wraps the Three.js canvas
+ */
+const MercuryCanvas = React.forwardRef<HTMLDivElement, MercuryCanvasProps>(
+  (
+    {
+      cameraPosition = [0, 3, 10],
+      cameraFov = 45,
+      height = "600px",
+      width = "100%",
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const { brightness } = useMercury();
+
+    return (
+      <div ref={ref} className={className} {...props}>
         <Canvas
+          style={{
+            height: `${height}`,
+            width: `${width}`,
+          }}
           camera={{ position: cameraPosition, fov: cameraFov }}
-          gl={{ antialias: true }}
+          gl={{
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.0,
+          }}
         >
-          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
+          <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>
-            <ambientLight intensity={0.6 * brightness} />
+            <ambientLight intensity={0.4 * brightness} />
             <directionalLight
-              position={[5, 3, 5]}
-              intensity={1.5 * brightness}
+              position={[10, 5, 10]}
+              intensity={2.0 * brightness}
+              castShadow={false}
             />
-
-            <OrbitControls
-              enablePan
-              enableZoom
-              enableRotate
-              zoomSpeed={0.6}
-              panSpeed={0.5}
-              rotateSpeed={0.4}
-              minDistance={minDistance}
-              maxDistance={maxDistance}
-              enableDamping
-              dampingFactor={0.05}
-            />
-
             {children}
           </Suspense>
         </Canvas>
@@ -233,92 +201,95 @@ export const MercuryScene = forwardRef<HTMLDivElement, MercurySceneProps>(
   }
 );
 
-MercuryScene.displayName = "MercuryScene";
-
-// ============================================================================
-// COMPOSED COMPONENT - Pre-configured for common use cases
-// ============================================================================
+MercuryCanvas.displayName = "Mercury.Canvas";
 
 /**
- * Props for the main Mercury component
- * @interface MercuryProps
+ * Controls component - adds orbit controls to the scene
  */
-export interface MercuryProps {
-  /** URL to the Mercury surface texture (optional - uses gray-brown fallback) */
-  textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Custom child components to render in the scene */
-  children?: React.ReactNode;
-  /** Camera position [x, y, z] (default: [0, 0, 1.149]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view (default: 45) */
-  cameraFov?: number;
-  /** Minimum camera zoom distance (default: 0.5745) */
-  minDistance?: number;
-  /** Maximum camera zoom distance (default: 7.66) */
-  maxDistance?: number;
-}
-
-/**
- * Mercury - The main composed Mercury component
- *
- * A fully pre-configured Mercury visualization with sensible defaults.
- * Just drop it in and it works - no textures or setup required!
- *
- * @example
- * Simplest usage (works immediately):
- *
- * import { Mercury } from '@/ui/components/mercury';
- *
- * function App() {
- *   return <Mercury />;
- * }
- *
- * @example
- * With texture:
- *
- * function App() {
- *   return <Mercury textureUrl="/textures/mercury.jpg" />;
- * }
- */
-const MercuryComponent = forwardRef<HTMLDivElement, MercuryProps>(
+const MercuryControls = React.forwardRef<any, MercuryControlsProps>(
   (
     {
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      children,
-      cameraPosition = [0, 0, 1.149],
-      cameraFov = 45,
-      minDistance = 0.5745,
-      maxDistance = 7.66,
+      minDistance = 5,
+      maxDistance = 50,
+      zoomSpeed = 0.6,
+      panSpeed = 0.5,
+      rotateSpeed = 0.4,
+      enablePan = true,
+      enableZoom = true,
+      enableRotate = true,
+      enableDamping = true,
+      dampingFactor = 0.05,
     },
     ref
   ) => {
     return (
-      <MercuryScene
+      <OrbitControls
         ref={ref}
-        cameraPosition={cameraPosition}
-        cameraFov={cameraFov}
+        makeDefault
+        enablePan={enablePan}
+        enableZoom={enableZoom}
+        enableRotate={enableRotate}
+        zoomSpeed={zoomSpeed}
+        panSpeed={panSpeed}
+        rotateSpeed={rotateSpeed}
         minDistance={minDistance}
         maxDistance={maxDistance}
-        brightness={brightness}
-      >
-        <MercurySphereRoot
-          radius={MERCURY_RADIUS}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-        />
-        {children}
-      </MercuryScene>
+        enableDamping={enableDamping}
+        dampingFactor={dampingFactor}
+      />
     );
   }
 );
 
-MercuryComponent.displayName = "Mercury";
+MercuryControls.displayName = "Mercury.Controls";
 
-export const Mercury = memo(MercuryComponent);
+/**
+ * Globe component - renders the main Mercury sphere
+ */
+const MercuryGlobe = React.forwardRef<any, MercuryGlobeProps>(
+  ({ segments = 128, children }, ref) => {
+    const { radius, rotationSpeed, axialTilt, textureUrl } = useMercury();
+
+    return (
+      <Sphere
+        ref={ref}
+        radius={radius}
+        textureUrl={textureUrl}
+        color={textureUrl ? "#ffffff" : "#8c7853"}
+        rotationSpeed={rotationSpeed}
+        rotation={axialTilt}
+        segments={segments}
+        roughness={0.95}
+        metalness={0.05}
+      >
+        {children}
+      </Sphere>
+    );
+  }
+);
+
+MercuryGlobe.displayName = "Mercury.Globe";
+
+/**
+ * Axis helper component - shows coordinate axes (for debugging)
+ */
+const MercuryAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+  const { radius } = useMercury();
+  const axisSize = size ?? radius * 3;
+
+  return <axesHelper ref={ref} args={[axisSize]} />;
+});
+
+MercuryAxis.displayName = "Mercury.Axis";
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export const Mercury = Object.assign(MercuryRoot, {
+  Root: MercuryRoot,
+  Canvas: MercuryCanvas,
+  Controls: MercuryControls,
+  Globe: MercuryGlobe,
+  Axis: MercuryAxis,
+});

@@ -1,268 +1,198 @@
 "use client";
 
-import { Suspense, useRef, memo, forwardRef } from "react";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber";
+import * as React from "react";
+import { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { Sphere } from "./primitives/sphere";
 
 // ============================================================================
-// Constants
+// Constants - Astronomically Accurate Values
 // ============================================================================
 
-/**
- * Neptune radius in scene units (relative to Earth)
- * @constant {number}
- */
-export const NEPTUNE_RADIUS = 3.88; // Relative to Earth (24,622 km actual)
-
-/**
- * Neptune actual radius in kilometers
- * @constant {number}
- */
-export const NEPTUNE_REAL_RADIUS_KM = 24622;
-
-/**
- * Neptune rotation period in Earth days (16 hours)
- * @constant {number}
- */
-export const NEPTUNE_ROTATION_PERIOD = 0.67;
-
-/**
- * Neptune orbital period around the Sun in Earth days (164.8 years)
- * @constant {number}
- */
-export const NEPTUNE_ORBITAL_PERIOD = 60190;
-
-/**
- * Neptune's axial tilt in degrees (similar to Earth)
- * @constant {number}
- */
-export const NEPTUNE_AXIAL_TILT = 28.3;
+export const NEPTUNE_RADIUS_KM = 24622;
+export const SCENE_SCALE = 0.001;
+export const NEPTUNE_RADIUS = NEPTUNE_RADIUS_KM * SCENE_SCALE;
+export const NEPTUNE_ROTATION_PERIOD_SECONDS = 57600.0; // 16 hours
+export const NEPTUNE_ORBITAL_PERIOD_DAYS = 60190; // 164.8 years
+export const NEPTUNE_AXIAL_TILT_DEG = 28.3;
 
 // ============================================================================
-// Internal Sphere Component
+// Context
 // ============================================================================
-interface NeptuneSphereProps {
+
+interface NeptuneContext {
   radius: number;
-  textureUrl?: string;
+  rotationSpeed: number;
+  axialTilt: [number, number, number];
   brightness: number;
-  enableRotation: boolean;
-  emissiveColor: string;
-  shininess: number;
-}
-
-const NeptuneSphere = memo(function NeptuneSphere({
-  radius,
-  textureUrl,
-  brightness,
-  enableRotation,
-  emissiveColor,
-  shininess,
-}: NeptuneSphereProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const texture = textureUrl
-    ? useLoader(THREE.TextureLoader, textureUrl)
-    : null;
-
-  // Apply axial tilt
-  useFrame(() => {
-    if (groupRef.current && groupRef.current.rotation.z === 0) {
-      groupRef.current.rotation.z = THREE.MathUtils.degToRad(NEPTUNE_AXIAL_TILT);
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[radius, 64, 32]} />
-      {texture ? (
-        <meshPhongMaterial
-          map={texture}
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.15 * brightness}
-        />
-      ) : (
-        <meshPhongMaterial
-          color="#4166f5"
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.15 * brightness}
-        />
-      )}
-      </mesh>
-    </group>
-  );
-});
-
-// ============================================================================
-// PRIMITIVES - Composable building blocks
-// ============================================================================
-
-/**
- * Props for the NeptuneSphereRoot component
- * @interface NeptuneSphereRootProps
- */
-export interface NeptuneSphereRootProps {
-  /** Radius of the Neptune sphere in scene units (default: NEPTUNE_RADIUS) */
-  radius?: number;
-  /** URL to the Neptune surface texture (optional - uses deep blue fallback) */
+  timeScale: number;
   textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Emissive color for the material (default: "#001166") */
-  emissiveColor?: string;
-  /** Material shininess value (default: 30) */
-  shininess?: number;
 }
 
-/**
- * NeptuneSphereRoot - The base Neptune sphere primitive
- *
- * Use this when you want full control over the Three.js scene setup.
- * Renders just the Neptune sphere with optional texture and materials.
- *
- * @example
- * Basic usage in custom scene:
- *
- * import { Canvas } from '@react-three/fiber';
- * import { NeptuneSphereRoot } from '@/components/ui/neptune';
- *
- * function MyScene() {
- *   return (
- *     <Canvas>
- *       <ambientLight />
- *       <NeptuneSphereRoot />
- *     </Canvas>
- *   );
- * }
- */
-export const NeptuneSphereRoot = forwardRef<
-  THREE.Group,
-  NeptuneSphereRootProps
->(
-  (
-    {
-      radius = NEPTUNE_RADIUS,
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      emissiveColor = "#001166",
-      shininess = 30,
-    },
-    ref
-  ) => {
-    return (
-      <group ref={ref}>
-        <NeptuneSphere
-          radius={radius}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-          emissiveColor={emissiveColor}
-          shininess={shininess}
-        />
-      </group>
-    );
-  }
-);
+const NeptuneContext = React.createContext<NeptuneContext | null>(null);
 
-NeptuneSphereRoot.displayName = "NeptuneSphereRoot";
+function useNeptune() {
+  const ctx = React.useContext(NeptuneContext);
+  if (!ctx) throw new Error("useNeptune must be used within Neptune.Root");
+  return ctx;
+}
 
-/**
- * Props for the NeptuneScene component
- * @interface NeptuneSceneProps
- */
-export interface NeptuneSceneProps {
-  /** Initial camera position in 3D space [x, y, z] (default: [0, 0, 11.64]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view in degrees (default: 45) */
-  cameraFov?: number;
-  /** Minimum zoom distance from target (default: 5.82) */
-  minDistance?: number;
-  /** Maximum zoom distance from target (default: 77.6) */
-  maxDistance?: number;
-  /** Overall scene brightness multiplier (default: 1.2) */
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface NeptuneRootProps {
+  /** Texture URL for Neptune surface map */
+  textureUrl?: string;
+  /** Neptune radius in scene units */
+  radius?: number;
+  /** Enable automatic rotation */
+  enableRotation?: boolean;
+  /** Time scale multiplier for rotation speed */
+  timeScale?: number;
+  /** Overall brightness multiplier */
   brightness?: number;
-  /** Child components to render within the scene */
   children?: React.ReactNode;
 }
 
+export interface NeptuneCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Camera position [x, y, z] */
+  cameraPosition?: [number, number, number];
+  /** Camera field of view */
+  cameraFov?: number;
+  /** Canvas height */
+  height?: string;
+  /** Canvas width */
+  width?: string;
+  children?: React.ReactNode;
+}
+
+export interface NeptuneControlsProps {
+  /** Minimum zoom distance */
+  minDistance?: number;
+  /** Maximum zoom distance */
+  maxDistance?: number;
+  /** Zoom speed */
+  zoomSpeed?: number;
+  /** Pan speed */
+  panSpeed?: number;
+  /** Rotate speed */
+  rotateSpeed?: number;
+  /** Enable pan */
+  enablePan?: boolean;
+  /** Enable zoom */
+  enableZoom?: boolean;
+  /** Enable rotate */
+  enableRotate?: boolean;
+  /** Enable damping */
+  enableDamping?: boolean;
+  /** Damping factor */
+  dampingFactor?: number;
+}
+
+export interface NeptuneGlobeProps {
+  /** Number of segments for sphere geometry */
+  segments?: number;
+  children?: React.ReactNode;
+}
+
+// ============================================================================
+// Primitives
+// ============================================================================
+
 /**
- * NeptuneScene - The Three.js scene primitive component
- *
- * Provides a complete Three.js scene with Canvas, lights, camera, and orbital controls.
- * Use this when you want a pre-configured scene but still need to add custom content.
- *
- * @example
- * Usage with custom meshes:
- *
- * import { NeptuneScene, NeptuneSphereRoot } from '@/components/ui/neptune';
- *
- * function CustomNeptune() {
- *   return (
- *     <NeptuneScene cameraPosition={[0, 0, 11.64]} brightness={1.5}>
- *       <NeptuneSphereRoot
- *         radius={3.88}
- *         textureUrl="/neptune.jpg"
- *         enableRotation={true}
- *       />
- *       <mesh position={[0, 5, 0]}>
- *         <sphereGeometry args={[0.5, 32, 32]} />
- *         <meshStandardMaterial color="white" />
- *       </mesh>
- *     </NeptuneScene>
- *   );
- * }
- *
- * @param props - Configuration props for the scene
- * @param ref - Forward ref to the container div element
- * @returns A complete Three.js scene ready to render
+ * Root component - provides context for all child components
  */
-export const NeptuneScene = forwardRef<HTMLDivElement, NeptuneSceneProps>(
+const NeptuneRoot = React.forwardRef<HTMLDivElement, NeptuneRootProps>(
   (
     {
-      cameraPosition = [0, 0, 11.64],
-      cameraFov = 45,
-      minDistance = 5.82,
-      maxDistance = 77.6,
-      brightness = 1.2,
+      textureUrl,
+      radius = NEPTUNE_RADIUS,
+      enableRotation = true,
+      timeScale = 1,
+      brightness = 1.3,
       children,
     },
     ref
   ) => {
+    const rotationSpeed = React.useMemo(() => {
+      if (!enableRotation) return 0;
+      return ((2 * Math.PI) / (NEPTUNE_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+    }, [enableRotation, timeScale]);
+
+    const axialTilt: [number, number, number] = React.useMemo(
+      () => [0, 0, THREE.MathUtils.degToRad(NEPTUNE_AXIAL_TILT_DEG)],
+      []
+    );
+
+    const contextValue: NeptuneContext = React.useMemo(
+      () => ({
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        textureUrl,
+      }),
+      [radius, rotationSpeed, axialTilt, brightness, timeScale, textureUrl]
+    );
+
     return (
-      <div ref={ref} className="relative h-full w-full">
+      <NeptuneContext.Provider value={contextValue}>
+        <div ref={ref} className="neptune-root relative h-full w-full">
+          {children}
+        </div>
+      </NeptuneContext.Provider>
+    );
+  }
+);
+
+NeptuneRoot.displayName = "Neptune.Root";
+
+/**
+ * Canvas component - wraps the Three.js canvas
+ */
+const NeptuneCanvas = React.forwardRef<HTMLDivElement, NeptuneCanvasProps>(
+  (
+    {
+      cameraPosition = [0, 30, 100],
+      cameraFov = 45,
+      height = "600px",
+      width = "100%",
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const { brightness } = useNeptune();
+
+    return (
+      <div ref={ref} className={className} {...props}>
         <Canvas
+          style={{
+            height: `${height}`,
+            width: `${width}`,
+          }}
           camera={{ position: cameraPosition, fov: cameraFov }}
-          gl={{ antialias: true }}
+          gl={{
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.0,
+          }}
         >
-          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
+          <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>
-            <ambientLight intensity={0.8 * brightness} />
+            <ambientLight intensity={0.4 * brightness} />
             <directionalLight
-              position={[5, 3, 5]}
-              intensity={1.5 * brightness}
+              position={[10, 5, 10]}
+              intensity={2.0 * brightness}
+              castShadow={false}
             />
-
-            <OrbitControls
-              enablePan
-              enableZoom
-              enableRotate
-              zoomSpeed={0.6}
-              panSpeed={0.5}
-              rotateSpeed={0.4}
-              minDistance={minDistance}
-              maxDistance={maxDistance}
-              enableDamping
-              dampingFactor={0.05}
-            />
-
             {children}
           </Suspense>
         </Canvas>
@@ -271,98 +201,95 @@ export const NeptuneScene = forwardRef<HTMLDivElement, NeptuneSceneProps>(
   }
 );
 
-NeptuneScene.displayName = "NeptuneScene";
-
-// ============================================================================
-// COMPOSED COMPONENT - Pre-configured for common use cases
-// ============================================================================
+NeptuneCanvas.displayName = "Neptune.Canvas";
 
 /**
- * Props for the main Neptune component
- * @interface NeptuneProps
+ * Controls component - adds orbit controls to the scene
  */
-export interface NeptuneProps {
-  /** URL to the Neptune surface texture (optional - uses deep blue fallback) */
-  textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.3) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Custom child components to render in the scene */
-  children?: React.ReactNode;
-  /** Camera position [x, y, z] (default: [0, 0, 11.64]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view (default: 45) */
-  cameraFov?: number;
-  /** Minimum camera zoom distance (default: 5.82) */
-  minDistance?: number;
-  /** Maximum camera zoom distance (default: 77.6) */
-  maxDistance?: number;
-}
-
-/**
- * Neptune - The main composed Neptune component
- *
- * A fully pre-configured Neptune visualization with sensible defaults.
- * Just drop it in and it works - no textures or setup required!
- *
- * @example
- * Simplest usage (works immediately):
- *
- * import { Neptune } from '@/components/ui/neptune';
- *
- * function App() {
- *   return <Neptune />;
- * }
- *
- * @example
- * With texture:
- *
- * function App() {
- *   return <Neptune textureUrl="/textures/neptune.jpg" />;
- * }
- */
-const NeptuneComponent = forwardRef<HTMLDivElement, NeptuneProps>(
+const NeptuneControls = React.forwardRef<any, NeptuneControlsProps>(
   (
     {
-      textureUrl,
-      brightness = 1.3,
-      enableRotation = true,
-      children,
-      cameraPosition = [0, 0, 11.64],
-      cameraFov = 45,
-      minDistance = 5.82,
-      maxDistance = 77.6,
+      minDistance = 30,
+      maxDistance = 200,
+      zoomSpeed = 0.6,
+      panSpeed = 0.5,
+      rotateSpeed = 0.4,
+      enablePan = true,
+      enableZoom = true,
+      enableRotate = true,
+      enableDamping = true,
+      dampingFactor = 0.05,
     },
     ref
   ) => {
     return (
-      <NeptuneScene
+      <OrbitControls
         ref={ref}
-        cameraPosition={cameraPosition}
-        cameraFov={cameraFov}
+        makeDefault
+        enablePan={enablePan}
+        enableZoom={enableZoom}
+        enableRotate={enableRotate}
+        zoomSpeed={zoomSpeed}
+        panSpeed={panSpeed}
+        rotateSpeed={rotateSpeed}
         minDistance={minDistance}
         maxDistance={maxDistance}
-        brightness={brightness}
-      >
-        <NeptuneSphereRoot
-          radius={NEPTUNE_RADIUS}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-        />
-        {children}
-      </NeptuneScene>
+        enableDamping={enableDamping}
+        dampingFactor={dampingFactor}
+      />
     );
   }
 );
 
-NeptuneComponent.displayName = "Neptune";
+NeptuneControls.displayName = "Neptune.Controls";
 
 /**
- * Neptune - Memoized Neptune component for optimal performance
- *
- * This is the main export. The component is memoized to prevent
- * unnecessary re-renders when parent components update.
+ * Globe component - renders the main Neptune sphere
  */
-export const Neptune = memo(NeptuneComponent);
+const NeptuneGlobe = React.forwardRef<any, NeptuneGlobeProps>(
+  ({ segments = 128, children }, ref) => {
+    const { radius, rotationSpeed, axialTilt, textureUrl } = useNeptune();
+
+    return (
+      <Sphere
+        ref={ref}
+        radius={radius}
+        textureUrl={textureUrl}
+        color={textureUrl ? "#ffffff" : "#4166f5"}
+        rotationSpeed={rotationSpeed}
+        rotation={axialTilt}
+        segments={segments}
+        roughness={0.7}
+        metalness={0.1}
+      >
+        {children}
+      </Sphere>
+    );
+  }
+);
+
+NeptuneGlobe.displayName = "Neptune.Globe";
+
+/**
+ * Axis helper component - shows coordinate axes (for debugging)
+ */
+const NeptuneAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+  const { radius } = useNeptune();
+  const axisSize = size ?? radius * 3;
+
+  return <axesHelper ref={ref} args={[axisSize]} />;
+});
+
+NeptuneAxis.displayName = "Neptune.Axis";
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export const Neptune = Object.assign(NeptuneRoot, {
+  Root: NeptuneRoot,
+  Canvas: NeptuneCanvas,
+  Controls: NeptuneControls,
+  Globe: NeptuneGlobe,
+  Axis: NeptuneAxis,
+});

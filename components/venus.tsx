@@ -1,265 +1,198 @@
 "use client";
 
-import { Suspense, useRef, memo, forwardRef } from "react";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber";
+import * as React from "react";
+import { Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { Sphere } from "./primitives/sphere";
 
 // ============================================================================
-// Constants
+// Constants - Astronomically Accurate Values
 // ============================================================================
 
-/**
- * Venus radius in scene units (relative to Earth)
- * @constant {number}
- */
-export const VENUS_RADIUS = 0.949; // Relative to Earth (6,051.8 km actual)
-
-/**
- * Venus actual radius in kilometers
- * @constant {number}
- */
-export const VENUS_REAL_RADIUS_KM = 6051.8;
-
-/**
- * Venus rotation period in Earth days (243 days - retrograde rotation)
- * @constant {number}
- */
-export const VENUS_ROTATION_PERIOD = 243; // Earth days (retrograde)
-
-/**
- * Venus orbital period around the Sun in Earth days
- * @constant {number}
- */
-export const VENUS_ORBITAL_PERIOD = 224.7; // Earth days
-
-/**
- * Venus's axial tilt in degrees (nearly upside down - retrograde rotation)
- * @constant {number}
- */
-export const VENUS_AXIAL_TILT = 177.4;
+export const VENUS_RADIUS_KM = 6051.8;
+export const SCENE_SCALE = 0.001;
+export const VENUS_RADIUS = VENUS_RADIUS_KM * SCENE_SCALE;
+export const VENUS_ROTATION_PERIOD_SECONDS = 20995200.0; // 243 days (retrograde)
+export const VENUS_ORBITAL_PERIOD_DAYS = 224.7;
+export const VENUS_AXIAL_TILT_DEG = 177.4; // Retrograde rotation
 
 // ============================================================================
-// Internal Sphere Component
+// Context
 // ============================================================================
-interface VenusSphereProps {
+
+interface VenusContext {
   radius: number;
-  textureUrl?: string;
+  rotationSpeed: number;
+  axialTilt: [number, number, number];
   brightness: number;
-  enableRotation: boolean;
-  emissiveColor: string;
-  shininess: number;
-}
-
-const VenusSphere = memo(function VenusSphere({
-  radius,
-  textureUrl,
-  brightness,
-  enableRotation,
-  emissiveColor,
-  shininess,
-}: VenusSphereProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const groupRef = useRef<THREE.Group>(null);
-  const texture = textureUrl
-    ? useLoader(THREE.TextureLoader, textureUrl)
-    : null;
-
-  // Apply axial tilt (Venus is nearly upside down)
-  useFrame(() => {
-    if (groupRef.current && groupRef.current.rotation.z === 0) {
-      groupRef.current.rotation.z = THREE.MathUtils.degToRad(VENUS_AXIAL_TILT);
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[radius, 64, 32]} />
-      {texture ? (
-        <meshPhongMaterial
-          map={texture}
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.15 * brightness}
-        />
-      ) : (
-        <meshPhongMaterial
-          color="#ffc649"
-          shininess={shininess}
-          emissive={emissiveColor}
-          emissiveIntensity={0.15 * brightness}
-        />
-      )}
-      </mesh>
-    </group>
-  );
-});
-
-// ============================================================================
-// PRIMITIVES - Composable building blocks
-// ============================================================================
-
-/**
- * Props for the VenusSphereRoot component
- * @interface VenusSphereRootProps
- */
-export interface VenusSphereRootProps {
-  /** Radius of the Venus sphere in scene units (default: VENUS_RADIUS) */
-  radius?: number;
-  /** URL to the Venus surface texture (optional - uses yellow-orange fallback) */
+  timeScale: number;
   textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Emissive color for the material (default: "#ff9944") */
-  emissiveColor?: string;
-  /** Material shininess value (default: 30) */
-  shininess?: number;
 }
 
-/**
- * VenusSphereRoot - The base Venus sphere primitive
- *
- * Use this when you want full control over the Three.js scene setup.
- * Renders just the Venus sphere with optional texture and materials.
- *
- * @example
- * Basic usage in custom scene:
- *
- * import { Canvas } from '@react-three/fiber';
- * import { VenusSphereRoot } from '@/components/ui/venus';
- *
- * function MyScene() {
- *   return (
- *     <Canvas>
- *       <ambientLight />
- *       <VenusSphereRoot />
- *     </Canvas>
- *   );
- * }
- */
-export const VenusSphereRoot = forwardRef<THREE.Group, VenusSphereRootProps>(
-  (
-    {
-      radius = VENUS_RADIUS,
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      emissiveColor = "#ff9944",
-      shininess = 30,
-    },
-    ref
-  ) => {
-    return (
-      <group ref={ref}>
-        <VenusSphere
-          radius={radius}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-          emissiveColor={emissiveColor}
-          shininess={shininess}
-        />
-      </group>
-    );
-  }
-);
+const VenusContext = React.createContext<VenusContext | null>(null);
 
-VenusSphereRoot.displayName = "VenusSphereRoot";
+function useVenus() {
+  const ctx = React.useContext(VenusContext);
+  if (!ctx) throw new Error("useVenus must be used within Venus.Root");
+  return ctx;
+}
 
-/**
- * Props for the VenusScene component
- * @interface VenusSceneProps
- */
-export interface VenusSceneProps {
-  /** Initial camera position in 3D space [x, y, z] (default: [0, 0, 2.847]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view in degrees (default: 45) */
-  cameraFov?: number;
-  /** Minimum zoom distance from target (default: 1.4235) */
-  minDistance?: number;
-  /** Maximum zoom distance from target (default: 18.98) */
-  maxDistance?: number;
-  /** Overall scene brightness multiplier (default: 1.2) */
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface VenusRootProps {
+  /** Texture URL for Venus surface map */
+  textureUrl?: string;
+  /** Venus radius in scene units */
+  radius?: number;
+  /** Enable automatic rotation */
+  enableRotation?: boolean;
+  /** Time scale multiplier for rotation speed */
+  timeScale?: number;
+  /** Overall brightness multiplier */
   brightness?: number;
-  /** Child components to render within the scene */
   children?: React.ReactNode;
 }
 
+export interface VenusCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Camera position [x, y, z] */
+  cameraPosition?: [number, number, number];
+  /** Camera field of view */
+  cameraFov?: number;
+  /** Canvas height */
+  height?: string;
+  /** Canvas width */
+  width?: string;
+  children?: React.ReactNode;
+}
+
+export interface VenusControlsProps {
+  /** Minimum zoom distance */
+  minDistance?: number;
+  /** Maximum zoom distance */
+  maxDistance?: number;
+  /** Zoom speed */
+  zoomSpeed?: number;
+  /** Pan speed */
+  panSpeed?: number;
+  /** Rotate speed */
+  rotateSpeed?: number;
+  /** Enable pan */
+  enablePan?: boolean;
+  /** Enable zoom */
+  enableZoom?: boolean;
+  /** Enable rotate */
+  enableRotate?: boolean;
+  /** Enable damping */
+  enableDamping?: boolean;
+  /** Damping factor */
+  dampingFactor?: number;
+}
+
+export interface VenusGlobeProps {
+  /** Number of segments for sphere geometry */
+  segments?: number;
+  children?: React.ReactNode;
+}
+
+// ============================================================================
+// Primitives
+// ============================================================================
+
 /**
- * VenusScene - The Three.js scene primitive component
- *
- * Provides a complete Three.js scene with Canvas, lights, camera, and orbital controls.
- * Use this when you want a pre-configured scene but still need to add custom content.
- *
- * @example
- * Usage with custom meshes:
- *
- * import { VenusScene, VenusSphereRoot } from '@/components/ui/venus';
- *
- * function CustomVenus() {
- *   return (
- *     <VenusScene cameraPosition={[0, 0, 2.847]} brightness={1.5}>
- *       <VenusSphereRoot
- *         radius={0.949}
- *         textureUrl="/venus.jpg"
- *         enableRotation={true}
- *       />
- *       <mesh position={[2, 0, 0]}>
- *         <sphereGeometry args={[0.1, 32, 32]} />
- *         <meshStandardMaterial color="red" />
- *       </mesh>
- *     </VenusScene>
- *   );
- * }
- *
- * @param props - Configuration props for the scene
- * @param ref - Forward ref to the container div element
- * @returns A complete Three.js scene ready to render
+ * Root component - provides context for all child components
  */
-export const VenusScene = forwardRef<HTMLDivElement, VenusSceneProps>(
+const VenusRoot = React.forwardRef<HTMLDivElement, VenusRootProps>(
   (
     {
-      cameraPosition = [0, 0, 2.847],
-      cameraFov = 45,
-      minDistance = 1.4235,
-      maxDistance = 18.98,
+      textureUrl,
+      radius = VENUS_RADIUS,
+      enableRotation = true,
+      timeScale = 1,
       brightness = 1.2,
       children,
     },
     ref
   ) => {
+    const rotationSpeed = React.useMemo(() => {
+      if (!enableRotation) return 0;
+      return ((2 * Math.PI) / (VENUS_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+    }, [enableRotation, timeScale]);
+
+    const axialTilt: [number, number, number] = React.useMemo(
+      () => [0, 0, THREE.MathUtils.degToRad(VENUS_AXIAL_TILT_DEG)],
+      []
+    );
+
+    const contextValue: VenusContext = React.useMemo(
+      () => ({
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        textureUrl,
+      }),
+      [radius, rotationSpeed, axialTilt, brightness, timeScale, textureUrl]
+    );
+
     return (
-      <div ref={ref} className="relative h-full w-full">
+      <VenusContext.Provider value={contextValue}>
+        <div ref={ref} className="venus-root relative h-full w-full">
+          {children}
+        </div>
+      </VenusContext.Provider>
+    );
+  }
+);
+
+VenusRoot.displayName = "Venus.Root";
+
+/**
+ * Canvas component - wraps the Three.js canvas
+ */
+const VenusCanvas = React.forwardRef<HTMLDivElement, VenusCanvasProps>(
+  (
+    {
+      cameraPosition = [0, 5, 20],
+      cameraFov = 45,
+      height = "600px",
+      width = "100%",
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const { brightness } = useVenus();
+
+    return (
+      <div ref={ref} className={className} {...props}>
         <Canvas
+          style={{
+            height: `${height}`,
+            width: `${width}`,
+          }}
           camera={{ position: cameraPosition, fov: cameraFov }}
-          gl={{ antialias: true }}
+          gl={{
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.0,
+          }}
         >
-          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
+          <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>
-            <ambientLight intensity={0.8 * brightness} />
+            <ambientLight intensity={0.4 * brightness} />
             <directionalLight
-              position={[5, 3, 5]}
-              intensity={1.5 * brightness}
+              position={[10, 5, 10]}
+              intensity={2.0 * brightness}
+              castShadow={false}
             />
-
-            <OrbitControls
-              enablePan
-              enableZoom
-              enableRotate
-              zoomSpeed={0.6}
-              panSpeed={0.5}
-              rotateSpeed={0.4}
-              minDistance={minDistance}
-              maxDistance={maxDistance}
-              enableDamping
-              dampingFactor={0.05}
-            />
-
             {children}
           </Suspense>
         </Canvas>
@@ -268,92 +201,95 @@ export const VenusScene = forwardRef<HTMLDivElement, VenusSceneProps>(
   }
 );
 
-VenusScene.displayName = "VenusScene";
-
-// ============================================================================
-// COMPOSED COMPONENT - Pre-configured for common use cases
-// ============================================================================
+VenusCanvas.displayName = "Venus.Canvas";
 
 /**
- * Props for the main Venus component
- * @interface VenusProps
+ * Controls component - adds orbit controls to the scene
  */
-export interface VenusProps {
-  /** URL to the Venus surface texture (optional - uses yellow-orange fallback) */
-  textureUrl?: string;
-  /** Overall brightness multiplier (default: 1.2) */
-  brightness?: number;
-  /** Enable automatic rotation (default: true) */
-  enableRotation?: boolean;
-  /** Custom child components to render in the scene */
-  children?: React.ReactNode;
-  /** Camera position [x, y, z] (default: [0, 0, 2.847]) */
-  cameraPosition?: [number, number, number];
-  /** Camera field of view (default: 45) */
-  cameraFov?: number;
-  /** Minimum camera zoom distance (default: 1.4235) */
-  minDistance?: number;
-  /** Maximum camera zoom distance (default: 18.98) */
-  maxDistance?: number;
-}
-
-/**
- * Venus - The main composed Venus component
- *
- * A fully pre-configured Venus visualization with sensible defaults.
- * Just drop it in and it works - no textures or setup required!
- *
- * @example
- * Simplest usage (works immediately):
- *
- * import { Venus } from '@/components/ui/venus';
- *
- * function App() {
- *   return <Venus />;
- * }
- *
- * @example
- * With texture:
- *
- * function App() {
- *   return <Venus textureUrl="/textures/venus.jpg" />;
- * }
- */
-const VenusComponent = forwardRef<HTMLDivElement, VenusProps>(
+const VenusControls = React.forwardRef<any, VenusControlsProps>(
   (
     {
-      textureUrl,
-      brightness = 1.2,
-      enableRotation = true,
-      children,
-      cameraPosition = [0, 0, 2.847],
-      cameraFov = 45,
-      minDistance = 1.4235,
-      maxDistance = 18.98,
+      minDistance = 8,
+      maxDistance = 100,
+      zoomSpeed = 0.6,
+      panSpeed = 0.5,
+      rotateSpeed = 0.4,
+      enablePan = true,
+      enableZoom = true,
+      enableRotate = true,
+      enableDamping = true,
+      dampingFactor = 0.05,
     },
     ref
   ) => {
     return (
-      <VenusScene
+      <OrbitControls
         ref={ref}
-        cameraPosition={cameraPosition}
-        cameraFov={cameraFov}
+        makeDefault
+        enablePan={enablePan}
+        enableZoom={enableZoom}
+        enableRotate={enableRotate}
+        zoomSpeed={zoomSpeed}
+        panSpeed={panSpeed}
+        rotateSpeed={rotateSpeed}
         minDistance={minDistance}
         maxDistance={maxDistance}
-        brightness={brightness}
-      >
-        <VenusSphereRoot
-          radius={VENUS_RADIUS}
-          textureUrl={textureUrl}
-          brightness={brightness}
-          enableRotation={enableRotation}
-        />
-        {children}
-      </VenusScene>
+        enableDamping={enableDamping}
+        dampingFactor={dampingFactor}
+      />
     );
   }
 );
 
-VenusComponent.displayName = "Venus";
+VenusControls.displayName = "Venus.Controls";
 
-export const Venus = memo(VenusComponent);
+/**
+ * Globe component - renders the main Venus sphere
+ */
+const VenusGlobe = React.forwardRef<any, VenusGlobeProps>(
+  ({ segments = 128, children }, ref) => {
+    const { radius, rotationSpeed, axialTilt, textureUrl } = useVenus();
+
+    return (
+      <Sphere
+        ref={ref}
+        radius={radius}
+        textureUrl={textureUrl}
+        color={textureUrl ? "#ffffff" : "#ffc649"}
+        rotationSpeed={rotationSpeed}
+        rotation={axialTilt}
+        segments={segments}
+        roughness={0.7}
+        metalness={0.1}
+      >
+        {children}
+      </Sphere>
+    );
+  }
+);
+
+VenusGlobe.displayName = "Venus.Globe";
+
+/**
+ * Axis helper component - shows coordinate axes (for debugging)
+ */
+const VenusAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+  const { radius } = useVenus();
+  const axisSize = size ?? radius * 3;
+
+  return <axesHelper ref={ref} args={[axisSize]} />;
+});
+
+VenusAxis.displayName = "Venus.Axis";
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export const Venus = Object.assign(VenusRoot, {
+  Root: VenusRoot,
+  Canvas: VenusCanvas,
+  Controls: VenusControls,
+  Globe: VenusGlobe,
+  Axis: VenusAxis,
+});

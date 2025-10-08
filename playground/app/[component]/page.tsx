@@ -10,6 +10,15 @@ import { PolarPlot } from "@/../components/polar-plot";
 import { Heatmap } from "@/../components/heatmap";
 import { Histogram } from "@/../components/histogram";
 import { GanttChart } from "@/../components/gantt-chart";
+import { Earth } from "@/../components/earth";
+import { Mars } from "@/../components/mars";
+import { Mercury } from "@/../components/mercury";
+import { Venus } from "@/../components/venus";
+import { Moon } from "@/../components/moon";
+import { Jupiter } from "@/../components/jupiter";
+import { Saturn } from "@/../components/saturn";
+import { Uranus } from "@/../components/uranus";
+import { Neptune } from "@/../components/neptune";
 import { Footer } from "@/components/footer";
 import { ComponentPreview } from "@/components/component-preview";
 import { CopyButton } from "@/components/copy-button";
@@ -1151,34 +1160,50 @@ const GanttChartExamples = () => {
         title="Ground Station Pass Schedule"
         description="Satellite contact windows with precise timing for ground station operations. Shows pass duration in minutes with 15-minute grid intervals. Use the controls above to change timezone and time window."
         preview={
-          <GanttChart
-            tasks={groundStationPasses}
-            timezone={timezone}
-            width={1000}
-            rowHeight={50}
-            timeWindowHours={timeWindowHours}
-            startTime={baseTime}
-            interactive={true}
-            variant="default"
-            onTaskClick={(task) => console.log("Clicked:", task.name)}
-          />
+          <div className="space-y-4">
+            <GanttChart
+              tasks={groundStationPasses}
+              timezone={timezone}
+              width={1000}
+              rowHeight={50}
+              timeWindowHours={timeWindowHours}
+              startTime={baseTime}
+              interactive={true}
+              variant="default"
+              onTaskClick={(task) => console.log("Clicked:", task.name)}
+            >
+              <GanttChart.Controls />
+              <GanttChart.Container>
+                <GanttChart.Viewport>
+                  <GanttChart.Grid />
+                  <GanttChart.Header />
+                  <GanttChart.Tasks />
+                  <GanttChart.CurrentTime />
+                </GanttChart.Viewport>
+                <GanttChart.LeftPanel />
+              </GanttChart.Container>
+            </GanttChart>
+          </div>
         }
         code={`<GanttChart
-  tasks={[
-    {
-      id: "p1",
-      name: "ISS Pass",
-      start: new Date(2024, 0, 1, 8, 30),
-      end: new Date(2024, 0, 1, 8, 45),
-      status: "completed",
-    },
-    // ... more passes
-  ]}
+  tasks={groundStationPasses}
   timezone="UTC"
   timeWindowHours={12}
-  startTime={new Date(2024, 0, 1, 8, 0)}
+  startTime={baseTime}
+  interactive
   onTaskClick={(task) => console.log(task)}
-/>`}
+>
+  <GanttChart.Controls />
+  <GanttChart.Container>
+    <GanttChart.Viewport>
+      <GanttChart.Grid />
+      <GanttChart.Header />
+      <GanttChart.Tasks />
+      <GanttChart.CurrentTime />
+    </GanttChart.Viewport>
+    <GanttChart.LeftPanel />
+  </GanttChart.Container>
+</GanttChart>`}
       />
 
       <ComponentPreview
@@ -1194,14 +1219,34 @@ const GanttChartExamples = () => {
             startTime={baseTime}
             interactive={true}
             variant="compact"
-          />
+          >
+            <GanttChart.Container>
+              <GanttChart.Viewport>
+                <GanttChart.Grid />
+                <GanttChart.Header />
+                <GanttChart.Tasks />
+                <GanttChart.CurrentTime />
+              </GanttChart.Viewport>
+              <GanttChart.LeftPanel />
+            </GanttChart.Container>
+          </GanttChart>
         }
         code={`<GanttChart
   tasks={multiSatPasses}
   timezone="UTC"
   timeWindowHours={8}
   variant="compact"
-/>`}
+>
+  <GanttChart.Container>
+    <GanttChart.Viewport>
+      <GanttChart.Grid />
+      <GanttChart.Header />
+      <GanttChart.Tasks />
+      <GanttChart.CurrentTime />
+    </GanttChart.Viewport>
+    <GanttChart.LeftPanel />
+  </GanttChart.Container>
+</GanttChart>`}
       />
 
       <ComponentPreview
@@ -1217,14 +1262,353 @@ const GanttChartExamples = () => {
             startTime={baseTime}
             interactive={true}
             variant="detailed"
-          />
+          >
+            <GanttChart.Container>
+              <GanttChart.Viewport>
+                <GanttChart.Grid />
+                <GanttChart.Header />
+                <GanttChart.Tasks />
+                <GanttChart.CurrentTime />
+              </GanttChart.Viewport>
+              <GanttChart.LeftPanel />
+            </GanttChart.Container>
+          </GanttChart>
         }
         code={`<GanttChart
   tasks={opsSchedule}
   timezone="UTC"
   timeWindowHours={24}
   variant="detailed"
-/>`}
+>
+  <GanttChart.Container>
+    <GanttChart.Viewport>
+      <GanttChart.Grid />
+      <GanttChart.Header />
+      <GanttChart.Tasks />
+      <GanttChart.CurrentTime />
+    </GanttChart.Viewport>
+    <GanttChart.LeftPanel />
+  </GanttChart.Container>
+</GanttChart>`}
+      />
+    </div>
+  );
+};
+
+const EarthExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Simple"
+        description="Clean Earth view without atmospheric effects or clouds. Perfect for geographic focus and data overlay applications."
+        preview={
+          <div className="w-full h-[600px]">
+            <Earth dayMapUrl="/day.jpg" enableRotation={false} brightness={1.2}>
+              <Earth.Canvas height="600px">
+                <Earth.Controls
+                  minDistance={10}
+                  maxDistance={50}
+                  enableRotate={true}
+                />
+                <Earth.Globe />
+              </Earth.Canvas>
+            </Earth>
+          </div>
+        }
+        code={`<Earth
+  dayMapUrl="/day.jpg"
+  enableRotation={false}
+  brightness={1.2}
+>
+  <Earth.Canvas height="600px">
+    <Earth.Controls />
+    <Earth.Globe />
+  </Earth.Canvas>
+</Earth>`}
+      />
+    </div>
+  );
+};
+
+const MarsExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Mars"
+        description="The Red Planet with accurate surface textures showing Olympus Mons, Valles Marineris, and polar ice caps."
+        preview={
+          <div className="w-full h-[600px]">
+            <Mars
+              textureUrl="/flat-mars.jpg"
+              enableRotation={false}
+              brightness={1.2}
+            >
+              <Mars.Canvas height="600px">
+                <Mars.Controls />
+                <Mars.Globe />
+              </Mars.Canvas>
+            </Mars>
+          </div>
+        }
+        code={`<Mars
+  textureUrl="/flat-mars.jpg"
+  enableRotation={false}
+  brightness={1.2}
+>
+  <Mars.Canvas height="600px">
+    <Mars.Controls />
+    <Mars.Globe />
+  </Mars.Canvas>
+</Mars>`}
+      />
+    </div>
+  );
+};
+
+const MercuryExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Mercury"
+        description="The smallest terrestrial planet with detailed cratered surface mapping from MESSENGER mission data."
+        preview={
+          <div className="w-full h-[600px]">
+            <Mercury
+              textureUrl="/flat-mercury.png"
+              enableRotation={false}
+              brightness={1.2}
+            >
+              <Mercury.Canvas height="600px">
+                <Mercury.Controls />
+                <Mercury.Globe />
+              </Mercury.Canvas>
+            </Mercury>
+          </div>
+        }
+        code={`<Mercury
+  textureUrl="/flat-mercury.png"
+  enableRotation={false}
+  brightness={1.2}
+>
+  <Mercury.Canvas height="600px">
+    <Mercury.Controls />
+    <Mercury.Globe />
+  </Mercury.Canvas>
+</Mercury>`}
+      />
+    </div>
+  );
+};
+
+const VenusExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Venus"
+        description="The cloud-shrouded planet showing the thick atmospheric patterns observed by orbital missions."
+        preview={
+          <div className="w-full h-[600px]">
+            <Venus
+              textureUrl="/flat-venus.jpg"
+              enableRotation={false}
+              brightness={1.2}
+            >
+              <Venus.Canvas height="600px">
+                <Venus.Controls />
+                <Venus.Globe />
+              </Venus.Canvas>
+            </Venus>
+          </div>
+        }
+        code={`<Venus
+  textureUrl="/flat-venus.jpg"
+  enableRotation={false}
+  brightness={1.2}
+>
+  <Venus.Canvas height="600px">
+    <Venus.Controls />
+    <Venus.Globe />
+  </Venus.Canvas>
+</Venus>`}
+      />
+    </div>
+  );
+};
+
+const MoonExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Moon"
+        description="Earth's Moon with detailed surface features including maria, highlands, and major craters."
+        preview={
+          <div className="w-full h-[600px]">
+            <Moon
+              textureUrl="/moon.jpg"
+              enableRotation={false}
+              brightness={1.2}
+            >
+              <Moon.Canvas height="600px">
+                <Moon.Controls />
+                <Moon.Globe />
+              </Moon.Canvas>
+            </Moon>
+          </div>
+        }
+        code={`<Moon
+  textureUrl="/moon.jpg"
+  enableRotation={false}
+  brightness={1.2}
+>
+  <Moon.Canvas height="600px">
+    <Moon.Controls />
+    <Moon.Globe />
+  </Moon.Canvas>
+</Moon>`}
+      />
+    </div>
+  );
+};
+
+const JupiterExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Jupiter"
+        description="The gas giant featuring the Great Red Spot and complex band structures in its atmosphere."
+        preview={
+          <div className="w-full h-[600px]">
+            <Jupiter
+              textureUrl="/flat-jupiter.jpg"
+              enableRotation={false}
+              brightness={1.1}
+            >
+              <Jupiter.Canvas height="600px">
+                <Jupiter.Controls />
+                <Jupiter.Globe />
+              </Jupiter.Canvas>
+            </Jupiter>
+          </div>
+        }
+        code={`<Jupiter
+  textureUrl="/flat-jupiter.jpg"
+  enableRotation={false}
+  brightness={1.1}
+>
+  <Jupiter.Canvas height="600px">
+    <Jupiter.Controls />
+    <Jupiter.Globe />
+  </Jupiter.Canvas>
+</Jupiter>`}
+      />
+    </div>
+  );
+};
+
+const SaturnExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Saturn"
+        description="The ringed planet with its distinctive atmospheric bands and hexagonal polar storm."
+        preview={
+          <div className="w-full h-[600px]">
+            <Saturn
+              textureUrl="/saturnmap.jpg"
+              enableRotation={false}
+              brightness={1.2}
+              showRings={true}
+            >
+              <Saturn.Canvas height="600px">
+                <Saturn.Controls />
+                <Saturn.Globe />
+                <Saturn.Rings />
+              </Saturn.Canvas>
+            </Saturn>
+          </div>
+        }
+        code={`<Saturn
+  textureUrl="/saturnmap.jpg"
+  enableRotation={false}
+  brightness={1.2}
+  showRings={true}
+>
+  <Saturn.Canvas height="600px">
+    <Saturn.Controls />
+    <Saturn.Globe />
+    <Saturn.Rings />
+  </Saturn.Canvas>
+</Saturn>`}
+      />
+    </div>
+  );
+};
+
+const UranusExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Uranus"
+        description="The ice giant with its unique blue-green coloration from atmospheric methane."
+        preview={
+          <div className="w-full h-[600px]">
+            <Uranus
+              textureUrl="/flat-uranus.jpg"
+              enableRotation={false}
+              brightness={1.2}
+            >
+              <Uranus.Canvas height="600px">
+                <Uranus.Controls />
+                <Uranus.Globe />
+              </Uranus.Canvas>
+            </Uranus>
+          </div>
+        }
+        code={`<Uranus
+  textureUrl="/flat-uranus.jpg"
+  enableRotation={false}
+  brightness={1.2}
+>
+  <Uranus.Canvas height="600px">
+    <Uranus.Controls />
+    <Uranus.Globe />
+  </Uranus.Canvas>
+</Uranus>`}
+      />
+    </div>
+  );
+};
+
+const NeptuneExamples = () => {
+  return (
+    <div className="space-y-12">
+      <ComponentPreview
+        title="Neptune"
+        description="The distant ice giant with its deep blue atmosphere and dynamic weather systems."
+        preview={
+          <div className="w-full h-[600px]">
+            <Neptune
+              textureUrl="/flat-neptune.jpg"
+              enableRotation={false}
+              brightness={1.3}
+            >
+              <Neptune.Canvas height="600px">
+                <Neptune.Controls />
+                <Neptune.Globe />
+              </Neptune.Canvas>
+            </Neptune>
+          </div>
+        }
+        code={`<Neptune
+  textureUrl="/flat-neptune.jpg"
+  enableRotation={false}
+  brightness={1.3}
+>
+  <Neptune.Canvas height="600px">
+    <Neptune.Controls />
+    <Neptune.Globe />
+  </Neptune.Canvas>
+</Neptune>`}
       />
     </div>
   );
@@ -1241,6 +1625,15 @@ const componentExamples: Record<string, React.ComponentType> = {
   heatmap: HeatmapExamples,
   histogram: HistogramExamples,
   "gantt-chart": GanttChartExamples,
+  earth: EarthExamples,
+  mars: MarsExamples,
+  mercury: MercuryExamples,
+  venus: VenusExamples,
+  moon: MoonExamples,
+  jupiter: JupiterExamples,
+  saturn: SaturnExamples,
+  uranus: UranusExamples,
+  neptune: NeptuneExamples,
 };
 
 // ============================================================================
@@ -1335,9 +1728,184 @@ export default function ComponentPage() {
           <ExampleComponent />
         </section>
       ) : null}
+      {component.textures && component.textures.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold mb-4">Texture Maps</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+            Download the required texture maps for this component.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {component.textures.map((texture: string) => {
+              const textureName = texture.split("/").pop() || texture;
+              return (
+                <a
+                  key={texture}
+                  href={texture}
+                  download={textureName}
+                  className="group relative aspect-square border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
+                >
+                  <img
+                    src={texture}
+                    alt={textureName}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <svg
+                        className="w-8 h-8 mx-auto mb-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
+                      </svg>
+                      <span className="text-xs font-medium">{textureName}</span>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="mb-12">
         <h2 className="text-2xl font-semibold mb-4">API Reference</h2>
+
+        {componentId === "earth" && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+              Primitive Components
+            </h3>
+            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+              Earth uses composable primitives following shadcn architecture:
+            </p>
+            <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Earth.Root
+                </code>{" "}
+                - Context provider (default export)
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Earth.Canvas
+                </code>{" "}
+                - Three.js canvas wrapper
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Earth.Controls
+                </code>{" "}
+                - Orbit controls for interaction
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Earth.Globe
+                </code>{" "}
+                - Main Earth sphere
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Earth.Atmosphere
+                </code>{" "}
+                - Atmospheric glow effect
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Earth.Clouds
+                </code>{" "}
+                - Cloud layer
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  Earth.Axis
+                </code>{" "}
+                - Debug axis helper
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {componentId === "gantt-chart" && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+              Primitive Components
+            </h3>
+            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+              GanttChart uses composable primitives following shadcn
+              architecture:
+            </p>
+            <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.Root
+                </code>{" "}
+                - Context provider (default export)
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.Container
+                </code>{" "}
+                - Main wrapper with border
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.Viewport
+                </code>{" "}
+                - Scrollable SVG area
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.Grid
+                </code>{" "}
+                - Timeline grid lines
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.Header
+                </code>{" "}
+                - Timeline header with hour markers
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.Tasks
+                </code>{" "}
+                - All task bars
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.CurrentTime
+                </code>{" "}
+                - Live time indicator
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.LeftPanel
+                </code>{" "}
+                - Sticky task names panel
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.Empty
+                </code>{" "}
+                - Empty state component
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  GanttChart.Controls
+                </code>{" "}
+                - Pan left/right, zoom, reset controls
+              </li>
+            </ul>
+          </div>
+        )}
+
         <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 dark:bg-zinc-900">
@@ -1349,122 +1917,170 @@ export default function ComponentPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {componentId === "earth" && (
+                <>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">dayMapUrl</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      URL to day surface texture map
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">nightMapUrl</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      URL to night lights emissive texture map
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">cloudsMapUrl</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      URL to cloud layer texture map
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">normalMapUrl</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      URL to normal/bump map for surface detail
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">specularMapUrl</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      URL to specular map for ocean reflectivity
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">radius</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">EARTH_RADIUS</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Earth radius in scene units (default: 6.371)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">enableRotation</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Enable automatic rotation based on time
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">timeScale</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">1</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Rotation speed multiplier (2 = 2x faster)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">brightness</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">1.0</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Overall scene brightness multiplier
+                    </td>
+                  </tr>
+                </>
+              )}
               {componentId === "gantt-chart" && (
                 <>
                   <tr>
                     <td className="p-3 font-mono text-xs">tasks</td>
-                    <td className="p-3 font-mono text-xs">GanttTask[]</td>
+                    <td className="p-3 font-mono text-xs">Task[]</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
                       required
                     </td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Array of tasks to display on the timeline
+                      Array of tasks with id, name, start, end, status, color,
+                      description
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-xs">groupBy</td>
-                    <td className="p-3 font-mono text-xs">
-                      "resource" | "none"
-                    </td>
-                    <td className="p-3 font-mono text-xs">"resource"</td>
+                    <td className="p-3 font-mono text-xs">timezone</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 font-mono text-xs">"UTC"</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Group tasks by resource/category
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-mono text-xs">timeWindow</td>
-                    <td className="p-3 font-mono text-xs">number</td>
-                    <td className="p-3 font-mono text-xs">43200000</td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Time window in milliseconds (default: 12 hours)
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-mono text-xs">startTime</td>
-                    <td className="p-3 font-mono text-xs">number</td>
-                    <td className="p-3 font-mono text-xs">Date.now()</td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Start time for the chart in milliseconds
+                      IANA timezone (e.g., "America/New_York", "Europe/London")
                     </td>
                   </tr>
                   <tr>
                     <td className="p-3 font-mono text-xs">width</td>
                     <td className="p-3 font-mono text-xs">number</td>
-                    <td className="p-3 font-mono text-xs">800</td>
+                    <td className="p-3 font-mono text-xs">1200</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
                       Chart width in pixels
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-xs">height</td>
+                    <td className="p-3 font-mono text-xs">rowHeight</td>
                     <td className="p-3 font-mono text-xs">number</td>
-                    <td className="p-3 font-mono text-xs">400</td>
+                    <td className="p-3 font-mono text-xs">48</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Chart height in pixels
+                      Height of each task row in pixels
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-xs">showNowLine</td>
+                    <td className="p-3 font-mono text-xs">timeWindowHours</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">12</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Visible time window in hours
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">startTime</td>
+                    <td className="p-3 font-mono text-xs">Date | number</td>
+                    <td className="p-3 font-mono text-xs">new Date()</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Chart start time (scrollable range extends 30 days)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">interactive</td>
                     <td className="p-3 font-mono text-xs">boolean</td>
                     <td className="p-3 font-mono text-xs">true</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Show current time indicator
+                      Enable hover tooltips and task interactions
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-xs">showControls</td>
-                    <td className="p-3 font-mono text-xs">boolean</td>
-                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 font-mono text-xs">onTaskClick</td>
+                    <td className="p-3 font-mono text-xs">
+                      (task: Task) =&gt; void
+                    </td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Show timeline navigation controls
+                      Callback when task is clicked
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-xs">responsive</td>
-                    <td className="p-3 font-mono text-xs">boolean</td>
-                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 font-mono text-xs">variant</td>
+                    <td className="p-3 font-mono text-xs">
+                      "default" | "compact" | "detailed"
+                    </td>
+                    <td className="p-3 font-mono text-xs">"default"</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Enable responsive width (fills container)
+                      Visual density: compact (160px), default (200px), detailed
+                      (240px)
                     </td>
                   </tr>
                   <tr>
-                    <td className="p-3 font-mono text-xs">loading</td>
-                    <td className="p-3 font-mono text-xs">boolean</td>
-                    <td className="p-3 font-mono text-xs">false</td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Show loading state
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-mono text-xs">emptyMessage</td>
+                    <td className="p-3 font-mono text-xs">className</td>
                     <td className="p-3 font-mono text-xs">string</td>
-                    <td className="p-3 font-mono text-xs">
-                      "No tasks scheduled"
-                    </td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Message to display when no tasks
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-mono text-xs">
-                      onTimeWindowChange
-                    </td>
-                    <td className="p-3 font-mono text-xs">
-                      (hours: number) =&gt; void
-                    </td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Callback when time window changes
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-mono text-xs">onStartTimeChange</td>
-                    <td className="p-3 font-mono text-xs">
-                      (time: number) =&gt; void
-                    </td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
-                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                      Callback when start time changes
+                      Additional CSS classes for the root element
                     </td>
                   </tr>
                 </>

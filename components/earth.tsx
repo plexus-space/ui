@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, memo, forwardRef, useMemo } from "react";
+import * as React from "react";
+import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -40,33 +41,214 @@ export function calculateEarthRotation(timeScale: number = 1): number {
 }
 
 // ============================================================================
-// Components
+// Context
 // ============================================================================
 
-export interface EarthSceneProps {
-  cameraPosition?: [number, number, number];
-  cameraFov?: number;
-  minDistance?: number;
-  maxDistance?: number;
+interface EarthContext {
+  radius: number;
+  rotationSpeed: number;
+  axialTilt: [number, number, number];
+  brightness: number;
+  timeScale: number;
+  dayMapUrl?: string;
+  nightMapUrl?: string;
+  cloudsMapUrl?: string;
+  normalMapUrl?: string;
+  specularMapUrl?: string;
+}
+
+const EarthContext = React.createContext<EarthContext | null>(null);
+
+function useEarth() {
+  const ctx = React.useContext(EarthContext);
+  if (!ctx) throw new Error("useEarth must be used within Earth.Root");
+  return ctx;
+}
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface EarthRootProps {
+  /** Texture URL for day map */
+  dayMapUrl?: string;
+  /** Texture URL for night lights map */
+  nightMapUrl?: string;
+  /** Texture URL for clouds map */
+  cloudsMapUrl?: string;
+  /** Texture URL for normal map */
+  normalMapUrl?: string;
+  /** Texture URL for specular map */
+  specularMapUrl?: string;
+  /** Earth radius in scene units */
+  radius?: number;
+  /** Enable automatic rotation */
+  enableRotation?: boolean;
+  /** Time scale multiplier for rotation speed */
+  timeScale?: number;
+  /** Overall brightness multiplier */
   brightness?: number;
   children?: React.ReactNode;
 }
 
-export const EarthScene = forwardRef<HTMLDivElement, EarthSceneProps>(
+export interface EarthCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Camera position [x, y, z] */
+  cameraPosition?: [number, number, number];
+  /** Camera field of view */
+  cameraFov?: number;
+  /** Canvas height */
+  height?: string;
+  /** Canvas width */
+  width?: string;
+  children?: React.ReactNode;
+}
+
+export interface EarthControlsProps {
+  /** Minimum zoom distance */
+  minDistance?: number;
+  /** Maximum zoom distance */
+  maxDistance?: number;
+  /** Zoom speed */
+  zoomSpeed?: number;
+  /** Pan speed */
+  panSpeed?: number;
+  /** Rotate speed */
+  rotateSpeed?: number;
+  /** Enable pan */
+  enablePan?: boolean;
+  /** Enable zoom */
+  enableZoom?: boolean;
+  /** Enable rotate */
+  enableRotate?: boolean;
+  /** Enable damping */
+  enableDamping?: boolean;
+  /** Damping factor */
+  dampingFactor?: number;
+}
+
+export interface EarthGlobeProps {
+  /** Number of segments for sphere geometry */
+  segments?: number;
+  children?: React.ReactNode;
+}
+
+export interface EarthAtmosphereProps {
+  /** Atmosphere color */
+  color?: string;
+  /** Atmosphere intensity */
+  intensity?: number;
+  /** Atmosphere falloff */
+  falloff?: number;
+  /** Atmosphere scale multiplier */
+  scale?: number;
+}
+
+export interface EarthCloudsProps {
+  /** Cloud layer height multiplier */
+  height?: number;
+  /** Cloud opacity */
+  opacity?: number;
+  /** Cloud rotation speed multiplier */
+  rotationSpeedMultiplier?: number;
+}
+
+// ============================================================================
+// Primitives
+// ============================================================================
+
+/**
+ * Root component - provides context for all child components
+ */
+const EarthRoot = React.forwardRef<HTMLDivElement, EarthRootProps>(
   (
     {
-      cameraPosition = [0, 5, 20],
-      cameraFov = 45,
-      minDistance = 8,
-      maxDistance = 100,
+      dayMapUrl,
+      nightMapUrl,
+      cloudsMapUrl,
+      normalMapUrl,
+      specularMapUrl,
+      radius = EARTH_RADIUS,
+      enableRotation = true,
+      timeScale = 1,
       brightness = 1.0,
       children,
     },
     ref
   ) => {
+    const rotationSpeed = React.useMemo(() => {
+      if (!enableRotation) return 0;
+      return ((2 * Math.PI) / (EARTH_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+    }, [enableRotation, timeScale]);
+
+    const axialTilt: [number, number, number] = React.useMemo(
+      () => [0, 0, THREE.MathUtils.degToRad(EARTH_AXIAL_TILT_DEG)],
+      []
+    );
+
+    const contextValue: EarthContext = React.useMemo(
+      () => ({
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        dayMapUrl,
+        nightMapUrl,
+        cloudsMapUrl,
+        normalMapUrl,
+        specularMapUrl,
+      }),
+      [
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        dayMapUrl,
+        nightMapUrl,
+        cloudsMapUrl,
+        normalMapUrl,
+        specularMapUrl,
+      ]
+    );
+
     return (
-      <div ref={ref} className="relative h-full w-full">
+      <EarthContext.Provider value={contextValue}>
+        <div ref={ref} className="earth-root relative h-full w-full">
+          {children}
+        </div>
+      </EarthContext.Provider>
+    );
+  }
+);
+
+EarthRoot.displayName = "Earth.Root";
+
+/**
+ * Canvas component - wraps the Three.js canvas
+ */
+const EarthCanvas = React.forwardRef<HTMLDivElement, EarthCanvasProps>(
+  (
+    {
+      cameraPosition = [0, 5, 20],
+      cameraFov = 45,
+      height = "600px",
+      width = "100%",
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const { brightness } = useEarth();
+
+    return (
+      <div ref={ref} className={className} {...props}>
         <Canvas
+          style={{
+            height: `${height}`,
+            width: `${width}`,
+          }}
           camera={{ position: cameraPosition, fov: cameraFov }}
           gl={{
             antialias: true,
@@ -74,28 +256,11 @@ export const EarthScene = forwardRef<HTMLDivElement, EarthSceneProps>(
             toneMappingExposure: 1.0,
           }}
         >
-          {/* @ts-ignore */}
           <color attach="background" args={[0, 0, 0]} />
-          {/* @ts-ignore */}
           <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>
             <ambientLight intensity={1.0 * brightness} color={0xffffff} />
-
-            <OrbitControls
-              makeDefault
-              enablePan
-              enableZoom
-              enableRotate
-              zoomSpeed={0.6}
-              panSpeed={0.5}
-              rotateSpeed={0.4}
-              minDistance={minDistance}
-              maxDistance={maxDistance}
-              enableDamping
-              dampingFactor={0.05}
-            />
-
             {children}
           </Suspense>
         </Canvas>
@@ -104,106 +269,147 @@ export const EarthScene = forwardRef<HTMLDivElement, EarthSceneProps>(
   }
 );
 
-EarthScene.displayName = "EarthScene";
+EarthCanvas.displayName = "Earth.Canvas";
 
-export interface EarthProps {
-  dayMapUrl?: string;
-  nightMapUrl?: string;
-  cloudsMapUrl?: string;
-  normalMapUrl?: string;
-  specularMapUrl?: string;
-  brightness?: number;
-  enableRotation?: boolean;
-  cameraPosition?: [number, number, number];
-  cameraFov?: number;
-  minDistance?: number;
-  maxDistance?: number;
-  timeScale?: number;
-  showAxis?: boolean;
-  showAtmosphere?: boolean;
-  showClouds?: boolean;
-  children?: React.ReactNode;
-}
-
-const EarthComponent = forwardRef<HTMLDivElement, EarthProps>(
+/**
+ * Controls component - adds orbit controls to the scene
+ */
+const EarthControls = React.forwardRef<any, EarthControlsProps>(
   (
     {
-      dayMapUrl,
-      nightMapUrl,
-      cloudsMapUrl,
-      normalMapUrl,
-      specularMapUrl,
-      brightness = 1.0,
-      enableRotation = true,
-      cameraPosition = [0, 5, 20],
-      cameraFov = 45,
       minDistance = 8,
       maxDistance = 100,
-      timeScale = 1,
-      showAxis = false,
-      showAtmosphere = true,
-      showClouds = true,
-      children,
+      zoomSpeed = 0.6,
+      panSpeed = 0.5,
+      rotateSpeed = 0.4,
+      enablePan = true,
+      enableZoom = true,
+      enableRotate = true,
+      enableDamping = true,
+      dampingFactor = 0.05,
     },
     ref
   ) => {
-    const rotationSpeed = useMemo(() => {
-      if (!enableRotation) return 0;
-      return (2 * Math.PI) / (EARTH_ROTATION_PERIOD_SECONDS * 60) * timeScale;
-    }, [enableRotation, timeScale]);
-
-    const axialTilt: [number, number, number] = useMemo(
-      () => [0, 0, THREE.MathUtils.degToRad(EARTH_AXIAL_TILT_DEG)],
-      []
-    );
-
     return (
-      <EarthScene
+      <OrbitControls
         ref={ref}
-        cameraPosition={cameraPosition}
-        cameraFov={cameraFov}
+        makeDefault
+        enablePan={enablePan}
+        enableZoom={enableZoom}
+        enableRotate={enableRotate}
+        zoomSpeed={zoomSpeed}
+        panSpeed={panSpeed}
+        rotateSpeed={rotateSpeed}
         minDistance={minDistance}
         maxDistance={maxDistance}
-        brightness={brightness}
-      >
-        <Sphere
-          radius={EARTH_RADIUS}
-          textureUrl={dayMapUrl}
-          normalMapUrl={normalMapUrl}
-          specularMapUrl={specularMapUrl}
-          emissiveMapUrl={nightMapUrl}
-          rotationSpeed={rotationSpeed}
-          rotation={axialTilt}
-          segments={128}
-        >
-          {showAtmosphere && (
-            <Atmosphere
-              color="#4488ff"
-              intensity={0.8}
-              falloff={3.5}
-              scale={1.02}
-            />
-          )}
-
-          {showClouds && cloudsMapUrl && (
-            <Clouds
-              textureUrl={cloudsMapUrl}
-              height={1.005}
-              opacity={0.5}
-              rotationSpeed={rotationSpeed * 0.8}
-            />
-          )}
-        </Sphere>
-
-        {showAxis && <axesHelper args={[EARTH_RADIUS * 3]} />}
-        {children}
-      </EarthScene>
+        enableDamping={enableDamping}
+        dampingFactor={dampingFactor}
+      />
     );
   }
 );
 
-EarthComponent.displayName = "Earth";
+EarthControls.displayName = "Earth.Controls";
 
-export const Earth = memo(EarthComponent);
+/**
+ * Globe component - renders the main Earth sphere
+ */
+const EarthGlobe = React.forwardRef<any, EarthGlobeProps>(
+  ({ segments = 128, children }, ref) => {
+    const {
+      radius,
+      rotationSpeed,
+      axialTilt,
+      dayMapUrl,
+      nightMapUrl,
+      normalMapUrl,
+      specularMapUrl,
+    } = useEarth();
+
+    return (
+      <Sphere
+        ref={ref}
+        radius={radius}
+        textureUrl={dayMapUrl}
+        normalMapUrl={normalMapUrl}
+        specularMapUrl={specularMapUrl}
+        emissiveMapUrl={nightMapUrl}
+        rotationSpeed={rotationSpeed}
+        rotation={axialTilt}
+        segments={segments}
+      >
+        {children}
+      </Sphere>
+    );
+  }
+);
+
+EarthGlobe.displayName = "Earth.Globe";
+
+/**
+ * Atmosphere component - renders the atmospheric glow
+ */
+const EarthAtmosphere = React.forwardRef<any, EarthAtmosphereProps>(
+  ({ color = "#4488ff", intensity = 0.8, falloff = 3.5, scale = 1.02 }) => {
+    return (
+      <Atmosphere
+        color={color}
+        intensity={intensity}
+        falloff={falloff}
+        scale={scale}
+      />
+    );
+  }
+);
+
+EarthAtmosphere.displayName = "Earth.Atmosphere";
+
+/**
+ * Clouds component - renders the cloud layer
+ */
+const EarthClouds = React.forwardRef<any, EarthCloudsProps>(
+  ({ height = 1.005, opacity = 0.5, rotationSpeedMultiplier = 0.8 }) => {
+    const { cloudsMapUrl, rotationSpeed } = useEarth();
+
+    if (!cloudsMapUrl) return null;
+
+    return (
+      <Clouds
+        textureUrl={cloudsMapUrl}
+        height={height}
+        opacity={opacity}
+        rotationSpeed={rotationSpeed * rotationSpeedMultiplier}
+      />
+    );
+  }
+);
+
+EarthClouds.displayName = "Earth.Clouds";
+
+/**
+ * Axis helper component - shows coordinate axes (for debugging)
+ */
+const EarthAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+  const { radius } = useEarth();
+  const axisSize = size ?? radius * 3;
+
+  return <axesHelper ref={ref} args={[axisSize]} />;
+});
+
+EarthAxis.displayName = "Earth.Axis";
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export const Earth = Object.assign(EarthRoot, {
+  Root: EarthRoot,
+  Canvas: EarthCanvas,
+  Controls: EarthControls,
+  Globe: EarthGlobe,
+  Atmosphere: EarthAtmosphere,
+  Clouds: EarthClouds,
+  Axis: EarthAxis,
+});
 
 export { getCurrentDayOfYear };

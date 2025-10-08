@@ -3,6 +3,8 @@ export const components = [
     id: "earth",
     name: "Earth",
     category: "Planetary Bodies",
+    description:
+      "Interactive 3D Earth with day/night textures, atmospheric glow, and cloud layers. Built with composable primitives following shadcn architecture for maximum flexibility.",
     textures: [
       "/day.jpg",
       "/night.jpg",
