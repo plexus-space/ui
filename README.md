@@ -34,10 +34,7 @@ import { SolarSystem } from "@/components/plexusui/solar-system";
 export default function App() {
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
-      <SolarSystem
-        showOrbitalPaths
-        animationSpeed={10}
-      />
+      <SolarSystem showOrbitalPaths animationSpeed={10} />
     </div>
   );
 }
@@ -241,12 +238,12 @@ components/             # All component source files (copied by CLI)
 packages/
 └── cli/                # CLI tool (only package published to npm)
 
-showcase/               # Demo application
+playground/               # Demo application
 ```
 
-## 🎨 Showcase
+## 🎨 playground
 
-See all components in action at the interactive showcase:
+See all components in action at the interactive playground:
 
 ```bash
 git clone https://github.com/plexus-space/ui.git
@@ -302,7 +299,7 @@ We welcome contributions! To add a new component:
 
 1. Create component in `packages/[component-name]/`
 2. Add to CLI registry in `packages/cli/src/commands/add.ts`
-3. Add to showcase
+3. Add to playground
 4. Submit a PR
 
 ## 📄 License

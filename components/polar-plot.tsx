@@ -11,6 +11,8 @@ import {
   forwardRef,
   memo,
 } from "react";
+import { ChartTooltip } from "./chart-tooltip";
+import { ChartLegend, type LegendItem } from "./chart-legend";
 
 // ============================================================================
 // Types
@@ -215,9 +217,9 @@ const PolarGrid = memo(({ radialTicks, angularTicks, showRadial, showAngular, an
             r={r}
             fill="none"
             stroke="currentColor"
-            strokeWidth={1}
+            strokeWidth={1.5}
             strokeDasharray="2,4"
-            opacity={animate ? 0 : 0.15}
+            opacity={animate ? 0 : 0.08}
             style={animate ? { animation: `fadeIn 0.3s ease ${i * 0.05}s forwards` } : undefined}
           />
         );
@@ -234,16 +236,16 @@ const PolarGrid = memo(({ radialTicks, angularTicks, showRadial, showAngular, an
             x2={x}
             y2={y}
             stroke="currentColor"
-            strokeWidth={1}
+            strokeWidth={0.5}
             strokeDasharray="2,4"
-            opacity={animate ? 0 : 0.15}
+            opacity={animate ? 0 : 0.08}
             style={animate ? { animation: `fadeIn 0.3s ease ${i * 0.03}s forwards` } : undefined}
           />
         );
       })}
       <style jsx>{`
         @keyframes fadeIn {
-          to { opacity: 0.15; }
+          to { opacity: 0.08; }
         }
       `}</style>
     </g>
@@ -281,9 +283,10 @@ const PolarAxes = memo(({ radialTicks, angularTicks, radialLabel, radialAxis, an
             <text
               x={centerX + 5}
               y={centerY - r + 4}
-              fontSize={11}
+              fontSize={10}
               fill="currentColor"
-              opacity={0.8}
+              opacity={0.7}
+              style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {formatTick(tick)}
             </text>
@@ -304,9 +307,10 @@ const PolarAxes = memo(({ radialTicks, angularTicks, radialLabel, radialAxis, an
               x={x}
               y={y}
               textAnchor="middle"
-              fontSize={11}
+              fontSize={10}
               fill="currentColor"
-              opacity={0.8}
+              opacity={0.7}
+              style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {displayAngle}
             </text>
@@ -352,7 +356,7 @@ const PolarLine = memo(({ series, seriesIdx, animate }: PolarLineProps) => {
   const pathRef = useRef<SVGPathElement>(null);
   const [pathLength, setPathLength] = useState(0);
 
-  const { data, color = "#3b82f6", strokeWidth = 2, dashed = false, filled = false } = series;
+  const { data, color = "#64748b", strokeWidth = 2, dashed = false, filled = false } = series;
 
   // Convert angle to degrees if needed
   const normalizeAngle = (angle: number) => {
@@ -446,110 +450,7 @@ const PolarLine = memo(({ series, seriesIdx, animate }: PolarLineProps) => {
 
 PolarLine.displayName = "PolarLine";
 
-interface LegendProps {
-  series: PolarSeries[];
-}
 
-const Legend = memo(({ series }: LegendProps) => {
-  const { width, centerY } = usePolar();
-
-  return (
-    <g transform={`translate(${width - 160}, ${centerY - series.length * 12})`}>
-      <rect
-        x={-10}
-        y={-5}
-        width={150}
-        height={series.length * 24 + 10}
-        fill="var(--background)"
-        stroke="currentColor"
-        strokeWidth={1}
-        strokeOpacity={0.3}
-        rx={4}
-      />
-      {series.map((s, i) => (
-        <g key={i} transform={`translate(0, ${i * 24})`}>
-          <line
-            x1={0}
-            y1={8}
-            x2={18}
-            y2={8}
-            stroke={s.color || "#3b82f6"}
-            strokeWidth={s.strokeWidth || 2}
-            strokeDasharray={s.dashed ? "4,4" : undefined}
-          />
-          {s.filled && (
-            <rect
-              x={0}
-              y={4}
-              width={18}
-              height={8}
-              fill={s.color || "#3b82f6"}
-              opacity={0.2}
-            />
-          )}
-          <text x={24} y={12} fontSize={12} fill="currentColor">
-            {s.name}
-          </text>
-        </g>
-      ))}
-    </g>
-  );
-});
-
-Legend.displayName = "Legend";
-
-interface TooltipProps {
-  series: PolarSeries[];
-}
-
-const Tooltip = memo(({ series }: TooltipProps) => {
-  const { toCartesian, radiusScale, hoveredPoint, angleUnit } = usePolar();
-
-  if (!hoveredPoint) return null;
-
-  const s = series[hoveredPoint.seriesIdx];
-  const point = s.data[hoveredPoint.pointIdx];
-
-  const normalizeAngle = (angle: number) => {
-    return angleUnit === "radians" ? (angle * 180) / Math.PI : angle;
-  };
-
-  const angle = normalizeAngle(point.angle);
-  const r = radiusScale(point.radius);
-  const { x, y } = toCartesian(angle, r);
-
-  const angleDisplay = angleUnit === "radians"
-    ? `${point.angle.toFixed(3)}rad`
-    : `${point.angle.toFixed(1)}°`;
-
-  const text = `${s.name}: θ=${angleDisplay}, r=${point.radius.toFixed(2)}`;
-
-  return (
-    <g>
-      <g transform={`translate(${x + 10}, ${y - 10})`}>
-        <rect
-          x={0}
-          y={-18}
-          width={text.length * 6.5}
-          height={22}
-          fill="var(--foreground)"
-          rx={3}
-        />
-        <text
-          x={4}
-          y={-3}
-          fill="var(--background)"
-          fontSize={11}
-          fontFamily="monospace"
-        >
-          {text}
-        </text>
-      </g>
-    </g>
-  );
-});
-
-Tooltip.displayName = "Tooltip";
 
 // ============================================================================
 // Main Component
@@ -659,6 +560,42 @@ export const PolarPlot = memo(
         [width, height, centerX, centerY, maxRadius, angleUnit, startAngle, direction, radiusScale, toCartesian, hoveredPoint]
       );
 
+      // Convert series to legend items
+      const legendItems: LegendItem[] = useMemo(
+        () => series.map(s => ({
+          name: s.name,
+          color: s.color || "#64748b",
+          strokeWidth: s.strokeWidth || 2,
+          dashed: s.dashed,
+          filled: s.filled,
+          symbol: "line" as const,
+        })),
+        [series]
+      );
+
+      // Tooltip content
+      const tooltipContent = useMemo(() => {
+        if (!hoveredPoint) return null;
+        const s = series[hoveredPoint.seriesIdx];
+        const point = s.data[hoveredPoint.pointIdx];
+        const angleDisplay = angleUnit === "radians"
+          ? `${point.angle.toFixed(3)}rad`
+          : `${point.angle.toFixed(1)}°`;
+        return `${s.name}: θ=${angleDisplay}, r=${point.radius.toFixed(2)}`;
+      }, [hoveredPoint, series, angleUnit]);
+
+      const tooltipPosition = useMemo(() => {
+        if (!hoveredPoint) return null;
+        const s = series[hoveredPoint.seriesIdx];
+        const point = s.data[hoveredPoint.pointIdx];
+        const normalizeAngle = (angle: number) => {
+          return angleUnit === "radians" ? (angle * 180) / Math.PI : angle;
+        };
+        const angle = normalizeAngle(point.angle);
+        const r = radiusScale(point.radius);
+        return toCartesian(angle, r);
+      }, [hoveredPoint, series, angleUnit, radiusScale, toCartesian]);
+
       return (
         <Context.Provider value={contextValue}>
           <svg ref={ref} width={width} height={height} className={className} style={{ userSelect: "none" }}>
@@ -679,8 +616,22 @@ export const PolarPlot = memo(
             {series.map((s, i) => (
               <PolarLine key={i} series={s} seriesIdx={i} animate={animate} />
             ))}
-            <Tooltip series={series} />
-            {showLegend && <Legend series={series} />}
+            {tooltipContent && tooltipPosition && (
+              <ChartTooltip
+                x={tooltipPosition.x}
+                y={tooltipPosition.y}
+                content={tooltipContent}
+                align="auto"
+                crosshairBounds={[centerX - maxRadius, centerY - maxRadius, centerX + maxRadius, centerY + maxRadius]}
+              />
+            )}
+            {showLegend && (
+              <ChartLegend
+                items={legendItems}
+                x={width - 160}
+                y={centerY - legendItems.length * 12}
+              />
+            )}
           </svg>
         </Context.Provider>
       );

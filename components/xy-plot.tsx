@@ -8,6 +8,8 @@ import {
   forwardRef,
   memo,
 } from "react";
+import { ChartTooltip } from "./chart-tooltip";
+import { ChartLegend, type LegendItem } from "./chart-legend";
 
 // ============================================================================
 // Types
@@ -250,9 +252,9 @@ const Grid = memo(({ xTicks, yTicks, animate }: GridProps) => {
           x2={xScale(tick)}
           y2={height - margin.bottom}
           stroke="currentColor"
-          strokeWidth={1}
+          strokeWidth={0.5}
           strokeDasharray="2,4"
-          opacity={animate ? 0 : 0.15}
+          opacity={animate ? 0 : 0.08}
           style={animate ? { animation: `fadeIn 0.3s ease ${i * 0.03}s forwards` } : undefined}
         />
       ))}
@@ -265,15 +267,15 @@ const Grid = memo(({ xTicks, yTicks, animate }: GridProps) => {
           x2={width - margin.right}
           y2={yScale(tick)}
           stroke="currentColor"
-          strokeWidth={1}
+          strokeWidth={0.5}
           strokeDasharray="2,4"
-          opacity={animate ? 0 : 0.15}
+          opacity={animate ? 0 : 0.08}
           style={animate ? { animation: `fadeIn 0.3s ease ${i * 0.03}s forwards` } : undefined}
         />
       ))}
       <style jsx>{`
         @keyframes fadeIn {
-          to { opacity: 0.15; }
+          to { opacity: 0.08; }
         }
       `}</style>
     </g>
@@ -331,9 +333,10 @@ const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: Ax
             x={xScale(tick)}
             y={height - margin.bottom + 20}
             textAnchor="middle"
-            fontSize={12}
+            fontSize={10}
             fill="currentColor"
-            opacity={0.9}
+            opacity={0.7}
+            style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {formatTick(tick, xAxis)}
           </text>
@@ -379,9 +382,10 @@ const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: Ax
             x={margin.left - 10}
             y={yScale(tick) + 4}
             textAnchor="end"
-            fontSize={12}
+            fontSize={10}
             fill="currentColor"
-            opacity={0.9}
+            opacity={0.7}
+            style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {formatTick(tick, yAxis)}
           </text>
@@ -649,33 +653,6 @@ const TrendlineComponent = memo(({ data, config, xDomain, animate }: TrendlinePr
 
 TrendlineComponent.displayName = "TrendlineComponent";
 
-interface TooltipProps {
-  data: Point[];
-}
-
-const Tooltip = memo(({ data }: TooltipProps) => {
-  const { xScale, yScale, hoveredPointIdx } = usePlot();
-
-  if (hoveredPointIdx === null) return null;
-
-  const point = data[hoveredPointIdx];
-  const x = xScale(point.x);
-  const y = yScale(point.y);
-  const text = `(${point.x.toFixed(3)}, ${point.y.toFixed(3)})`;
-
-  return (
-    <g>
-      <line x1={x} y1={20} x2={x} y2={380} stroke="currentColor" strokeWidth={1} strokeDasharray="3,3" opacity={0.4} pointerEvents="none" />
-      <line x1={60} y1={y} x2={740} y2={y} stroke="currentColor" strokeWidth={1} strokeDasharray="3,3" opacity={0.4} pointerEvents="none" />
-      <g transform={`translate(${x + 10}, ${y - 10})`}>
-        <rect x={0} y={-18} width={text.length * 7} height={22} fill="var(--foreground)" rx={3} />
-        <text x={4} y={-3} fill="var(--background)" fontSize={11} fontFamily="monospace">{text}</text>
-      </g>
-    </g>
-  );
-});
-
-Tooltip.displayName = "Tooltip";
 
 // ============================================================================
 // Main Component
@@ -721,7 +698,7 @@ export const XYPlot = memo(
         showGrid = true,
         pointStyle = "circle",
         pointSize = 3,
-        color = "#3b82f6",
+        color = "#64748b",
         showTrendline = false,
         animate = true,
         className = "",
@@ -764,6 +741,19 @@ export const XYPlot = memo(
         return { ...showTrendline, show: true };
       }, [showTrendline]);
 
+      // Tooltip content
+      const tooltipContent = useMemo(() => {
+        if (hoveredPointIdx === null) return null;
+        const point = data[hoveredPointIdx];
+        return `(${point.x.toFixed(3)}, ${point.y.toFixed(3)})`;
+      }, [hoveredPointIdx, data]);
+
+      const tooltipPosition = useMemo(() => {
+        if (hoveredPointIdx === null) return null;
+        const point = data[hoveredPointIdx];
+        return { x: xScale(point.x), y: yScale(point.y) };
+      }, [hoveredPointIdx, data, xScale, yScale]);
+
       return (
         <Context.Provider value={contextValue}>
           <svg ref={ref} width={width} height={height} className={className} style={{ userSelect: "none" }}>
@@ -787,7 +777,15 @@ export const XYPlot = memo(
               color={color}
               animate={animate}
             />
-            <Tooltip data={data} />
+            {tooltipContent && tooltipPosition && (
+              <ChartTooltip
+                x={tooltipPosition.x}
+                y={tooltipPosition.y}
+                content={tooltipContent}
+                showCrosshair
+                crosshairBounds={[margin.left, margin.top, width - margin.right, height - margin.bottom]}
+              />
+            )}
           </svg>
         </Context.Provider>
       );

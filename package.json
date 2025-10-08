@@ -5,10 +5,10 @@
   "description": "Monorepo for primitive-based aerospace component library with planetary visualization components for React Three Fiber",
   "workspaces": [
     "packages/cli",
-    "showcase"
+    "playground"
   ],
   "scripts": {
-    "dev": "npm run dev -w @plexusui/showcase",
+    "dev": "npm run dev -w @plexusui/playground",
     "build": "npm run build -w @plexusui/cli",
     "build:cli": "npm run build -w @plexusui/cli",
     "publish": "npm run build:cli && npm publish -w @plexusui/cli --access public"

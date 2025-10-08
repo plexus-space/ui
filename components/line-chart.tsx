@@ -7,83 +7,62 @@ import {
   useRef,
   useState,
   useEffect,
-  useCallback,
   forwardRef,
   memo,
 } from "react";
+import { ChartTooltip } from "./chart-tooltip";
+import { ChartLegend, type LegendItem } from "./chart-legend";
+import { CanvasRenderer } from "./canvas-renderer";
+import { decimate } from "./decimation";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-/**
- * A single point on the chart
- */
 export interface Point {
-  /** X value (typically time) */
   x: number;
-  /** Y value */
   y: number;
 }
 
-/**
- * A line series to plot
- */
 export interface Series {
-  /** Name shown in legend */
   name: string;
-  /** Array of data points */
   data: Point[];
-  /** Line color */
   color?: string;
-  /** Line thickness in pixels */
   strokeWidth?: number;
-  /** Dashed line style */
   dashed?: boolean;
+  filled?: boolean;
 }
 
-/**
- * Configuration for an axis
- */
 export interface Axis {
-  /** Axis label */
   label?: string;
-  /** Min/max values, or "auto" */
   domain?: [number, number] | "auto";
-  /** Format type: "number" | "time" */
   type?: "number" | "time";
-  /** Timezone for time formatting (IANA timezone, e.g., "UTC", "America/New_York") */
   timezone?: string;
-  /** Custom formatter function */
   formatter?: (value: number) => string;
 }
 
-/**
- * Props for the LineChart component
- */
 export interface LineChartProps {
-  /** Array of line series to plot */
   series: Series[];
-  /** X-axis configuration */
   xAxis?: Axis;
-  /** Y-axis configuration */
   yAxis?: Axis;
-  /** Chart width in pixels */
   width?: number;
-  /** Chart height in pixels */
   height?: number;
-  /** Show grid lines */
   showGrid?: boolean;
-  /** Show legend */
   showLegend?: boolean;
-  /** Enable animations */
   animate?: boolean;
-  /** Additional CSS classes */
+  /** Rendering mode: svg (default), canvas (faster for >1k points), or auto */
+  renderer?: "svg" | "canvas" | "auto";
+  /** Maximum points per series before decimation (default: 2000) */
+  maxPoints?: number;
+  /** Decimation strategy */
+  decimation?: "lttb" | "minmax" | "auto";
+  /** Enable magnetic crosshair that snaps to nearest point */
+  magneticCrosshair?: boolean;
   className?: string;
 }
 
 // ============================================================================
-// Context (Internal)
+// Context
 // ============================================================================
 
 interface ChartContext {
@@ -130,17 +109,9 @@ function formatValue(value: number): string {
   return value.toFixed(2);
 }
 
-/**
- * Format a timestamp for display with timezone support
- * @param timestamp - Unix timestamp in milliseconds
- * @param timezone - IANA timezone string (e.g., "UTC", "America/New_York")
- * @returns Formatted time string
- */
 function formatTime(timestamp: number, timezone: string = "UTC"): string {
   try {
     const date = new Date(timestamp);
-
-    // Format as HH:MM:SS in the specified timezone
     const formatter = new Intl.DateTimeFormat("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -148,35 +119,10 @@ function formatTime(timestamp: number, timezone: string = "UTC"): string {
       hour12: false,
       timeZone: timezone,
     });
-
     return formatter.format(date);
   } catch (error) {
-    // Fallback to UTC if timezone is invalid
     const date = new Date(timestamp);
     return date.toISOString().substr(11, 8);
-  }
-}
-
-/**
- * Format a timestamp as date with timezone support
- * @param timestamp - Unix timestamp in milliseconds
- * @param timezone - IANA timezone string
- * @returns Formatted date string
- */
-function formatDate(timestamp: number, timezone: string = "UTC"): string {
-  try {
-    const date = new Date(timestamp);
-
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      timeZone: timezone,
-    });
-
-    return formatter.format(date);
-  } catch (error) {
-    const date = new Date(timestamp);
-    return date.toISOString().substr(5, 5).replace("-", "/");
   }
 }
 
@@ -184,6 +130,30 @@ function getTicks(domain: [number, number], count: number = 5): number[] {
   const [min, max] = domain;
   const step = (max - min) / (count - 1);
   return Array.from({ length: count }, (_, i) => min + i * step);
+}
+
+/**
+ * Find nearest point to mouse position using binary search (for sorted x-values)
+ */
+function findNearestPoint(
+  data: Point[],
+  mouseX: number,
+  xScale: (x: number) => number
+): number {
+  if (data.length === 0) return -1;
+
+  let minDist = Infinity;
+  let nearestIdx = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    const dist = Math.abs(xScale(data[i].x) - mouseX);
+    if (dist < minDist) {
+      minDist = dist;
+      nearestIdx = i;
+    }
+  }
+
+  return nearestIdx;
 }
 
 // ============================================================================
@@ -202,7 +172,6 @@ const Grid = memo(({ xTicks, yTicks, animate }: GridProps) => {
 
   return (
     <g className="grid">
-      {/* Vertical lines */}
       {xTicks.map((tick, i) => (
         <line
           key={`vgrid-${i}`}
@@ -211,13 +180,12 @@ const Grid = memo(({ xTicks, yTicks, animate }: GridProps) => {
           x2={xScale(tick)}
           y2={height - margin.bottom}
           stroke="currentColor"
-          strokeWidth={1}
+          strokeWidth={0.5}
           strokeDasharray="2,4"
-          opacity={animate ? 0 : 0.15}
+          opacity={animate ? 0 : 0.08}
           style={animate ? { animation: `fadeIn 0.3s ease ${i * 0.03}s forwards` } : undefined}
         />
       ))}
-      {/* Horizontal lines */}
       {yTicks.map((tick, i) => (
         <line
           key={`hgrid-${i}`}
@@ -226,15 +194,15 @@ const Grid = memo(({ xTicks, yTicks, animate }: GridProps) => {
           x2={width - margin.right}
           y2={yScale(tick)}
           stroke="currentColor"
-          strokeWidth={1}
+          strokeWidth={0.5}
           strokeDasharray="2,4"
-          opacity={animate ? 0 : 0.15}
+          opacity={animate ? 0 : 0.08}
           style={animate ? { animation: `fadeIn 0.3s ease ${i * 0.03}s forwards` } : undefined}
         />
       ))}
       <style jsx>{`
         @keyframes fadeIn {
-          to { opacity: 0.15; }
+          to { opacity: 0.08; }
         }
       `}</style>
     </g>
@@ -257,20 +225,14 @@ const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: Ax
   const { width, height, xScale, yScale } = useChart();
   const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
-  // Format tick value based on axis configuration
   const formatTick = (value: number, axis?: Axis): string => {
-    // Use custom formatter if provided
     if (axis?.formatter) {
       return axis.formatter(value);
     }
-
-    // Use time formatting if axis type is "time"
     if (axis?.type === "time") {
       const timezone = axis.timezone || "UTC";
       return formatTime(value, timezone);
     }
-
-    // Default to numeric formatting
     return formatValue(value);
   };
 
@@ -288,7 +250,11 @@ const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: Ax
         style={animate ? { animation: "fadeIn 0.4s ease 0.2s forwards" } : undefined}
       />
       {xTicks.map((tick, i) => (
-        <g key={`xtick-${i}`} opacity={animate ? 0 : 1} style={animate ? { animation: `fadeIn 0.3s ease ${0.3 + i * 0.04}s forwards` } : undefined}>
+        <g
+          key={`xtick-${i}`}
+          opacity={animate ? 0 : 1}
+          style={animate ? { animation: `fadeIn 0.3s ease ${0.3 + i * 0.04}s forwards` } : undefined}
+        >
           <line
             x1={xScale(tick)}
             y1={height - margin.bottom}
@@ -301,9 +267,10 @@ const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: Ax
             x={xScale(tick)}
             y={height - margin.bottom + 20}
             textAnchor="middle"
-            fontSize={12}
+            fontSize={10}
             fill="currentColor"
-            opacity={0.9}
+            opacity={0.7}
+            style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {formatTick(tick, xAxis)}
           </text>
@@ -336,7 +303,11 @@ const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: Ax
         style={animate ? { animation: "fadeIn 0.4s ease 0.2s forwards" } : undefined}
       />
       {yTicks.map((tick, i) => (
-        <g key={`ytick-${i}`} opacity={animate ? 0 : 1} style={animate ? { animation: `fadeIn 0.3s ease ${0.3 + i * 0.04}s forwards` } : undefined}>
+        <g
+          key={`ytick-${i}`}
+          opacity={animate ? 0 : 1}
+          style={animate ? { animation: `fadeIn 0.3s ease ${0.3 + i * 0.04}s forwards` } : undefined}
+        >
           <line
             x1={margin.left - 6}
             y1={yScale(tick)}
@@ -349,9 +320,10 @@ const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: Ax
             x={margin.left - 10}
             y={yScale(tick) + 4}
             textAnchor="end"
-            fontSize={12}
+            fontSize={10}
             fill="currentColor"
-            opacity={0.9}
+            opacity={0.7}
+            style={{ fontVariantNumeric: "tabular-nums" }}
           >
             {formatTick(tick, yAxis)}
           </text>
@@ -384,174 +356,69 @@ const Axes = memo(({ xTicks, yTicks, xLabel, yLabel, xAxis, yAxis, animate }: Ax
 
 Axes.displayName = "Axes";
 
-interface LineProps {
-  series: Series;
-  seriesIdx: number;
-  animate: boolean;
+interface InteractionLayerProps {
+  series: Series[];
+  magneticCrosshair: boolean;
 }
 
-const Line = memo(({ series, seriesIdx, animate }: LineProps) => {
-  const { xScale, yScale, setHoveredPoint, hoveredPoint } = useChart();
-  const pathRef = useRef<SVGPathElement>(null);
-  const [pathLength, setPathLength] = useState(0);
+const InteractionLayer = memo(({ series, magneticCrosshair }: InteractionLayerProps) => {
+  const { width, height, xScale, setHoveredPoint } = useChart();
+  const margin = { top: 20, right: 20, bottom: 50, left: 60 };
 
-  const { data, color = "#3b82f6", strokeWidth = 2, dashed = false } = series;
+  const handleMouseMove = (e: React.MouseEvent<SVGRectElement>) => {
+    if (!magneticCrosshair) return;
 
-  const pathData = useMemo(() => {
-    if (data.length === 0) return "";
-    return "M " + data.map(p => `${xScale(p.x)},${yScale(p.y)}`).join(" L ");
-  }, [data, xScale, yScale]);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
 
-  useEffect(() => {
-    if (pathRef.current && animate) {
-      setPathLength(pathRef.current.getTotalLength());
+    // Find nearest point across all series
+    let nearestSeriesIdx = 0;
+    let nearestPointIdx = 0;
+    let minDist = Infinity;
+
+    series.forEach((s, seriesIdx) => {
+      const idx = findNearestPoint(s.data, mouseX, xScale);
+      if (idx >= 0) {
+        const dist = Math.abs(xScale(s.data[idx].x) - mouseX);
+        if (dist < minDist) {
+          minDist = dist;
+          nearestSeriesIdx = seriesIdx;
+          nearestPointIdx = idx;
+        }
+      }
+    });
+
+    if (minDist < 50) { // Snap radius
+      setHoveredPoint({ seriesIdx: nearestSeriesIdx, pointIdx: nearestPointIdx });
+    } else {
+      setHoveredPoint(null);
     }
-  }, [pathData, animate]);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredPoint(null);
+  };
 
   return (
-    <g className="line">
-      <path
-        ref={pathRef}
-        d={pathData}
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeDasharray={dashed ? "6,6" : animate ? pathLength : undefined}
-        strokeDashoffset={animate ? pathLength : 0}
-        style={animate ? { animation: `drawLine 1.2s ease-out ${seriesIdx * 0.15}s forwards` } : undefined}
-      />
-      {data.map((point, i) => {
-        const isHovered = hoveredPoint?.seriesIdx === seriesIdx && hoveredPoint?.pointIdx === i;
-        return (
-          <circle
-            key={i}
-            cx={xScale(point.x)}
-            cy={yScale(point.y)}
-            r={isHovered ? 5 : 3}
-            fill={color}
-            stroke="var(--background)"
-            strokeWidth={isHovered ? 2 : 1}
-            opacity={animate ? 0 : 1}
-            style={{
-              animation: animate ? `fadeIn 0.2s ease ${1.2 + seriesIdx * 0.15 + i * 0.01}s forwards` : undefined,
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={() => setHoveredPoint({ seriesIdx, pointIdx: i })}
-            onMouseLeave={() => setHoveredPoint(null)}
-          />
-        );
-      })}
-      <style jsx>{`
-        @keyframes drawLine {
-          to { stroke-dashoffset: 0; }
-        }
-        @keyframes fadeIn {
-          to { opacity: 1; }
-        }
-      `}</style>
-    </g>
+    <rect
+      x={margin.left}
+      y={margin.top}
+      width={width - margin.left - margin.right}
+      height={height - margin.top - margin.bottom}
+      fill="transparent"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ cursor: magneticCrosshair ? "crosshair" : "default" }}
+    />
   );
 });
 
-Line.displayName = "Line";
-
-interface LegendProps {
-  series: Series[];
-}
-
-const Legend = memo(({ series }: LegendProps) => {
-  const { width } = useChart();
-  const margin = { top: 20, right: 20 };
-
-  return (
-    <g transform={`translate(${width - margin.right - 10}, ${margin.top + 10})`}>
-      <rect
-        x={-10}
-        y={-5}
-        width={140}
-        height={series.length * 24 + 10}
-        fill="var(--background)"
-        stroke="currentColor"
-        strokeWidth={1}
-        strokeOpacity={0.3}
-        rx={4}
-      />
-      {series.map((s, i) => (
-        <g key={i} transform={`translate(0, ${i * 24})`}>
-          <line
-            x1={0}
-            y1={8}
-            x2={18}
-            y2={8}
-            stroke={s.color || "#3b82f6"}
-            strokeWidth={s.strokeWidth || 2}
-            strokeDasharray={s.dashed ? "4,4" : undefined}
-          />
-          <text x={24} y={12} fontSize={12} fill="currentColor">
-            {s.name}
-          </text>
-        </g>
-      ))}
-    </g>
-  );
-});
-
-Legend.displayName = "Legend";
-
-interface TooltipProps {
-  series: Series[];
-}
-
-const Tooltip = memo(({ series }: TooltipProps) => {
-  const { xScale, yScale, hoveredPoint } = useChart();
-
-  if (!hoveredPoint) return null;
-
-  const s = series[hoveredPoint.seriesIdx];
-  const point = s.data[hoveredPoint.pointIdx];
-  const x = xScale(point.x);
-  const y = yScale(point.y);
-  const text = `${s.name}: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`;
-
-  return (
-    <g>
-      <line x1={x} y1={20} x2={x} y2={380} stroke="currentColor" strokeWidth={1} strokeDasharray="3,3" opacity={0.4} pointerEvents="none" />
-      <line x1={60} y1={y} x2={740} y2={y} stroke="currentColor" strokeWidth={1} strokeDasharray="3,3" opacity={0.4} pointerEvents="none" />
-      <g transform={`translate(${x + 10}, ${y - 10})`}>
-        <rect x={0} y={-18} width={text.length * 6.5} height={22} fill="var(--foreground)" rx={3} />
-        <text x={4} y={-3} fill="var(--background)" fontSize={11} fontFamily="monospace">{text}</text>
-      </g>
-    </g>
-  );
-});
-
-Tooltip.displayName = "Tooltip";
+InteractionLayer.displayName = "InteractionLayer";
 
 // ============================================================================
 // Main Component
 // ============================================================================
 
-/**
- * A simple, animated line chart
- *
- * @example
- * ```tsx
- * <LineChart
- *   series={[
- *     {
- *       name: "Temperature",
- *       data: [{ x: 0, y: 20 }, { x: 1, y: 22 }, { x: 2, y: 19 }],
- *       color: "#ef4444"
- *     }
- *   ]}
- *   xAxis={{ label: "Time (s)" }}
- *   yAxis={{ label: "Temp (°C)" }}
- * />
- * ```
- */
 export const LineChart = memo(
   forwardRef<SVGSVGElement, LineChartProps>(
     (
@@ -564,18 +431,35 @@ export const LineChart = memo(
         showGrid = true,
         showLegend = true,
         animate = true,
+        renderer = "auto",
+        maxPoints = 2000,
+        decimation = "lttb",
+        magneticCrosshair = true,
         className = "",
       },
       ref
     ) => {
       const [hoveredPoint, setHoveredPoint] = useState<{ seriesIdx: number; pointIdx: number } | null>(null);
 
-      const margin = { top: 20, right: 20, bottom: 50, left: 60 };
+      const margin = useMemo(() => ({ top: 20, right: 20, bottom: 50, left: 60 }), []);
+
+      // Decimate data if needed
+      const processedSeries = useMemo(() => {
+        return series.map((s) => {
+          if (s.data.length <= maxPoints) {
+            return s;
+          }
+          return {
+            ...s,
+            data: decimate(s.data, maxPoints, decimation),
+          };
+        });
+      }, [series, maxPoints, decimation]);
 
       // Calculate domains
-      const allPoints = series.flatMap(s => s.data);
-      const xDomain = xAxis.domain === "auto" || !xAxis.domain ? getDomain(allPoints, p => p.x) : xAxis.domain;
-      const yDomain = yAxis.domain === "auto" || !yAxis.domain ? getDomain(allPoints, p => p.y) : yAxis.domain;
+      const allPoints = processedSeries.flatMap((s) => s.data);
+      const xDomain = xAxis.domain === "auto" || !xAxis.domain ? getDomain(allPoints, (p) => p.x) : xAxis.domain;
+      const yDomain = yAxis.domain === "auto" || !yAxis.domain ? getDomain(allPoints, (p) => p.y) : yAxis.domain;
 
       // Create scales
       const xScale = useMemo(
@@ -592,29 +476,100 @@ export const LineChart = memo(
       const yTicks = useMemo(() => getTicks(yDomain, 6), [yDomain]);
 
       const contextValue: ChartContext = useMemo(
-        () => ({ width, height, xScale, yScale, hoveredPoint, setHoveredPoint }),
+        () => ({
+          width,
+          height,
+          xScale,
+          yScale,
+          hoveredPoint,
+          setHoveredPoint,
+        }),
         [width, height, xScale, yScale, hoveredPoint]
       );
 
+      // Determine rendering mode
+      const useCanvas = useMemo(() => {
+        if (renderer === "canvas") return true;
+        if (renderer === "svg") return false;
+        // Auto: use canvas if any series has >1000 points
+        return processedSeries.some((s) => s.data.length > 1000);
+      }, [renderer, processedSeries]);
+
+      // Legend items
+      const legendItems: LegendItem[] = useMemo(
+        () =>
+          processedSeries.map((s) => ({
+            name: s.name,
+            color: s.color || "#64748b",
+            strokeWidth: s.strokeWidth || 2,
+            dashed: s.dashed,
+            filled: s.filled,
+            symbol: "line" as const,
+          })),
+        [processedSeries]
+      );
+
+      // Tooltip content
+      const tooltipContent = useMemo(() => {
+        if (!hoveredPoint) return null;
+        const s = processedSeries[hoveredPoint.seriesIdx];
+        const point = s.data[hoveredPoint.pointIdx];
+        return `${s.name}: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`;
+      }, [hoveredPoint, processedSeries]);
+
+      const tooltipPosition = useMemo(() => {
+        if (!hoveredPoint) return null;
+        const s = processedSeries[hoveredPoint.seriesIdx];
+        const point = s.data[hoveredPoint.pointIdx];
+        return { x: xScale(point.x), y: yScale(point.y) };
+      }, [hoveredPoint, processedSeries, xScale, yScale]);
+
       return (
         <Context.Provider value={contextValue}>
-          <svg ref={ref} width={width} height={height} className={className} style={{ userSelect: "none" }}>
-            {showGrid && <Grid xTicks={xTicks} yTicks={yTicks} animate={animate} />}
-            <Axes
-              xTicks={xTicks}
-              yTicks={yTicks}
-              xLabel={xAxis.label}
-              yLabel={yAxis.label}
-              xAxis={xAxis}
-              yAxis={yAxis}
-              animate={animate}
-            />
-            {series.map((s, i) => (
-              <Line key={i} series={s} seriesIdx={i} animate={animate} />
-            ))}
-            <Tooltip series={series} />
-            {showLegend && <Legend series={series} />}
-          </svg>
+          <div style={{ position: "relative", width, height }}>
+            {useCanvas && (
+              <CanvasRenderer
+                series={processedSeries.map((s) => ({
+                  ...s,
+                  color: s.color || "#64748b",
+                }))}
+                width={width}
+                height={height}
+                xScale={xScale}
+                yScale={yScale}
+                margin={margin}
+              />
+            )}
+            <svg
+              ref={ref}
+              width={width}
+              height={height}
+              className={className}
+              style={{ userSelect: "none", position: "absolute", top: 0, left: 0 }}
+            >
+              {showGrid && <Grid xTicks={xTicks} yTicks={yTicks} animate={animate} />}
+              <Axes
+                xTicks={xTicks}
+                yTicks={yTicks}
+                xLabel={xAxis.label}
+                yLabel={yAxis.label}
+                xAxis={xAxis}
+                yAxis={yAxis}
+                animate={animate}
+              />
+              <InteractionLayer series={processedSeries} magneticCrosshair={magneticCrosshair} />
+              {tooltipContent && tooltipPosition && (
+                <ChartTooltip
+                  x={tooltipPosition.x}
+                  y={tooltipPosition.y}
+                  content={tooltipContent}
+                  showCrosshair
+                  crosshairBounds={[margin.left, margin.top, width - margin.right, height - margin.bottom]}
+                />
+              )}
+              {showLegend && <ChartLegend items={legendItems} x={width - 160} y={margin.top + 10} />}
+            </svg>
+          </div>
         </Context.Provider>
       );
     }

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Mulish } from "next/font/google";
+import { Geist } from "next/font/google";
 import localFont from "next/font/local";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Plexus UI Aerospace - Component Showcase",
@@ -29,17 +28,15 @@ export const metadata: Metadata = {
   },
 };
 
-const arima = Mulish({
+const arima = Geist({
   subsets: ["latin"],
-  weight: "200",
-  display: "swap",
+  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
 const jgs = localFont({
   weight: "200",
   src: "../public/fonts/jgs_Font.ttf",
   variable: "--font-jgs",
-  display: "swap",
 });
 
 export default function RootLayout({
@@ -50,15 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${arima.className} ${jgs.variable} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ThemeToggle />
-          {children}
-        </ThemeProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
