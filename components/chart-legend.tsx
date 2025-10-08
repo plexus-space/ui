@@ -18,7 +18,11 @@ export interface LegendItem {
   /** Filled area (for polar/area charts) */
   filled?: boolean;
   /** Symbol shape (for scatter plots) */
-  symbol?: "line" | "circle" | "square" | "diamond" | "triangle";
+  symbol?: "line" | "circle" | "square" | "diamond" | "triangle" | "cross" | "plus";
+  /** Active state for toggleable series */
+  active?: boolean;
+  /** Click handler for individual items */
+  onClick?: () => void;
 }
 
 export interface ChartLegendProps {
@@ -143,6 +147,54 @@ const Symbol = memo(
           />
         );
 
+      case "cross":
+        return (
+          <g>
+            <line
+              x1={size / 2 - 4}
+              y1={centerY - 4}
+              x2={size / 2 + 4}
+              y2={centerY + 4}
+              stroke={color}
+              strokeWidth={2}
+              strokeLinecap="round"
+            />
+            <line
+              x1={size / 2 + 4}
+              y1={centerY - 4}
+              x2={size / 2 - 4}
+              y2={centerY + 4}
+              stroke={color}
+              strokeWidth={2}
+              strokeLinecap="round"
+            />
+          </g>
+        );
+
+      case "plus":
+        return (
+          <g>
+            <line
+              x1={size / 2}
+              y1={centerY - 5}
+              x2={size / 2}
+              y2={centerY + 5}
+              stroke={color}
+              strokeWidth={2}
+              strokeLinecap="round"
+            />
+            <line
+              x1={size / 2 - 5}
+              y1={centerY}
+              x2={size / 2 + 5}
+              y2={centerY}
+              stroke={color}
+              strokeWidth={2}
+              strokeLinecap="round"
+            />
+          </g>
+        );
+
       default:
         return null;
     }
@@ -176,18 +228,18 @@ export const ChartLegend = memo(
     x,
     y,
     orientation = "vertical",
-    spacing = 24,
+    spacing = 28,
     showBackground = true,
     onItemClick,
     className = "",
   }: ChartLegendProps) => {
-    // Calculate dimensions
-    const itemHeight = orientation === "vertical" ? spacing : 20;
-    const itemWidth = orientation === "horizontal" ? 120 : 140;
+    // Calculate dimensions with more spacing
+    const itemHeight = orientation === "vertical" ? spacing : 24;
+    const itemWidth = orientation === "horizontal" ? 140 : 160;
     const legendWidth =
       orientation === "horizontal" ? items.length * itemWidth : itemWidth;
     const legendHeight =
-      orientation === "vertical" ? items.length * spacing + 10 : 30;
+      orientation === "vertical" ? items.length * spacing + 16 : 36;
 
     // Default positioning based on position prop if x/y not provided
     let posX = x;
@@ -205,44 +257,68 @@ export const ChartLegend = memo(
         transform={`translate(${posX}, ${posY})`}
       >
         {showBackground && (
-          <rect
-            x={-10}
-            y={-5}
-            width={legendWidth}
-            height={legendHeight}
-            fill="var(--background)"
-            stroke="currentColor"
-            strokeWidth={1}
-            strokeOpacity={0.15}
-            rx={6}
-            filter="drop-shadow(0 1px 3px rgb(0 0 0 / 0.08))"
-          />
+          <>
+            <defs>
+              <filter id="legend-shadow">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                <feOffset dx="0" dy="2" result="offsetblur"/>
+                <feComponentTransfer>
+                  <feFuncA type="linear" slope="0.15"/>
+                </feComponentTransfer>
+                <feMerge>
+                  <feMergeNode/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <rect
+              x={-16}
+              y={-8}
+              width={legendWidth + 12}
+              height={legendHeight + 6}
+              fill="var(--background)"
+              fillOpacity={0.95}
+              stroke="currentColor"
+              strokeWidth={1}
+              strokeOpacity={0.1}
+              rx={8}
+              filter="url(#legend-shadow)"
+            />
+          </>
         )}
 
         {items.map((item, i) => {
           const xOffset = orientation === "horizontal" ? i * itemWidth : 0;
           const yOffset = orientation === "vertical" ? i * spacing : 0;
+          const isClickable = onItemClick || item.onClick;
+          const isActive = item.active !== undefined ? item.active : true;
 
           return (
             <g
               key={i}
               transform={`translate(${xOffset}, ${yOffset})`}
               style={{
-                cursor: onItemClick ? "pointer" : "default",
+                cursor: isClickable ? "pointer" : "default",
                 transition: "opacity 0.2s ease",
               }}
-              opacity={1}
-              onClick={() => onItemClick?.(item, i)}
+              opacity={isActive ? 1 : 0.4}
+              onClick={() => {
+                item.onClick?.();
+                onItemClick?.(item, i);
+              }}
               onMouseEnter={(e) => {
-                if (onItemClick) {
-                  e.currentTarget.setAttribute("opacity", "0.7");
+                if (isClickable) {
+                  e.currentTarget.setAttribute("opacity", isActive ? "0.7" : "0.6");
                 }
               }}
               onMouseLeave={(e) => {
-                if (onItemClick) {
-                  e.currentTarget.setAttribute("opacity", "1");
+                if (isClickable) {
+                  e.currentTarget.setAttribute("opacity", isActive ? "1" : "0.4");
                 }
               }}
+              role={isClickable ? "button" : undefined}
+              aria-pressed={isClickable ? isActive : undefined}
+              tabIndex={isClickable ? 0 : undefined}
             >
               <Symbol
                 symbol={item.symbol || "line"}
@@ -252,13 +328,17 @@ export const ChartLegend = memo(
                 filled={item.filled}
               />
               <text
-                x={24}
-                y={12}
-                fontSize={11}
+                x={26}
+                y={13}
+                fontSize={12}
                 fill="currentColor"
-                opacity={0.9}
+                opacity={0.95}
                 fontWeight={500}
-                style={{ userSelect: "none" }}
+                letterSpacing={0.3}
+                style={{
+                  userSelect: "none",
+                  textDecoration: !isActive ? "line-through" : "none",
+                }}
               >
                 {item.name}
               </text>

@@ -6,7 +6,11 @@ export const Footer = () => {
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Built with by{" "}
         <Link href="https://annschulte.me" className="underline">
-          ann
+          Ann
+        </Link>{" "}
+        at{" "}
+        <Link href="https://plexusaero.space" className="underline">
+          Plexus
         </Link>
         . Open source and customizable.
       </p>

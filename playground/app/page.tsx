@@ -9,7 +9,7 @@ export default function Home() {
         <h1 className="text-5xl font-bold text-foreground mb-4">
           Aerospace. Physics. Deep Tech. UI Components
         </h1>
-        <p className="max-w-2xl text-zinc-600 font-jgs uppercase dark:text-zinc-400 mb-4">
+        <p className="max-w-2xl text-zinc-600 font-geist-mono dark:text-zinc-400 mb-4">
           A set of purposefully designed components that you can customize,
           extend, and build on. Start here then make it your own. Open Source.
           Open Code.

@@ -15,7 +15,7 @@ export const Sidenav = () => {
           {["Planetary Bodies", "Orbital Mechanics", "Charts"].map(
             (category) => (
               <div key={category}>
-                <div className="mt-6 mb-2 px-3 text-xs font-jgs uppercase font-semibold text-zinc-400 dark:text-zinc-600 lowercase tracking-wider">
+                <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 ">
                   {category}
                 </div>
                 <div className="flex flex-col gap-1">

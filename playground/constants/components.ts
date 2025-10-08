@@ -83,4 +83,44 @@ export const components = [
       "High-performance line chart with multi-series support, real-time streaming, zoom/pan interactions, and GPU-accelerated rendering for large datasets.",
     textures: [],
   },
+  {
+    id: "scatter-plot",
+    name: "Scatter Plot",
+    category: "Charts",
+    description:
+      "XY scatter plot with multiple marker shapes, bubble chart support, trendlines, and customizable sizing. Perfect for correlation analysis and multi-dimensional data.",
+    textures: [],
+  },
+  {
+    id: "polar-plot",
+    name: "Polar Plot",
+    category: "Charts",
+    description:
+      "Polar coordinate visualization supporting radar charts, rose diagrams, and orbit phase plots. Ideal for directional data and cyclic patterns.",
+    textures: [],
+  },
+  {
+    id: "heatmap",
+    name: "Heatmap",
+    category: "Charts",
+    description:
+      "2D heatmap with perceptually uniform colormaps, customizable bins, and scientific color scales. Perfect for density visualization and correlation matrices.",
+    textures: [],
+  },
+  {
+    id: "histogram",
+    name: "Histogram",
+    category: "Charts",
+    description:
+      "Statistical histogram with automatic binning (Sturges' formula), multiple layout modes, and distribution analysis. Essential for data exploration.",
+    textures: [],
+  },
+  {
+    id: "gantt-chart",
+    name: "Gantt Chart",
+    category: "Charts",
+    description:
+      "Mission timeline and task scheduling visualization with resource allocation, priority levels, and interactive timeline views. Perfect for satellite pass planning.",
+    textures: [],
+  },
 ];

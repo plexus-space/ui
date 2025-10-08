@@ -137,29 +137,42 @@ export const ChartTooltip = memo(
         {/* Tooltip box - rendered last for proper z-index */}
         <g
           transform={`translate(${tooltipX}, ${tooltipY})`}
-          style={{
-            filter: "drop-shadow(0 4px 12px rgb(0 0 0 / 0.15))",
-          }}
         >
-          {/* Background with theme support */}
+          <defs>
+            <filter id="tooltip-shadow">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+              <feOffset dx="0" dy="2" result="offsetblur"/>
+              <feComponentTransfer>
+                <feFuncA type="linear" slope="0.2"/>
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          {/* Background with glassmorphism */}
           <rect
-            x={finalAlign.includes("left") ? -estimatedWidth : 0}
-            y={-18}
-            width={estimatedWidth}
-            height={22}
+            x={finalAlign.includes("left") ? -estimatedWidth - 4 : -2}
+            y={-22}
+            width={estimatedWidth + 8}
+            height={32}
             fill={bgColor}
             stroke="currentColor"
-            strokeWidth={0.5}
-            strokeOpacity={0.1}
-            rx={4}
-            opacity={0.95}
+            strokeWidth={1}
+            strokeOpacity={0.12}
+            rx={6}
+            opacity={0.98}
+            filter="url(#tooltip-shadow)"
           />
           <text
-            x={finalAlign.includes("left") ? -estimatedWidth + 4 : 4}
-            y={-3}
+            x={finalAlign.includes("left") ? -estimatedWidth : 4}
+            y={-2}
             fill={txtColor}
-            fontSize={10}
-            fontFamily="monospace"
+            fontSize={11}
+            fontFamily="ui-monospace, monospace"
+            fontWeight={500}
+            letterSpacing={0.2}
             style={{ fontVariantNumeric: "tabular-nums", userSelect: "none" }}
           >
             {content}

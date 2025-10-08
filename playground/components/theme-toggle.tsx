@@ -1,11 +1,11 @@
 "use client";
-
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
-  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -13,19 +13,16 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <button
-        className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-background"
-        aria-label="Toggle theme"
-      >
+      <Button variant="ghost" aria-label="Toggle theme">
         <div className="w-5 h-5" />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+      variant="ghost"
       aria-label="Toggle theme"
     >
       {theme === "dark" ? (
@@ -65,6 +62,6 @@ export function ThemeToggle() {
           <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
         </svg>
       )}
-    </button>
+    </Button>
   );
 }
