@@ -253,7 +253,7 @@ const EarthCanvas = React.forwardRef<HTMLDivElement, EarthCanvasProps>(
           gl={{
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: 1.0,
+            toneMappingExposure: 2.0,
           }}
         >
           <color attach="background" args={[0, 0, 0]} />
@@ -350,7 +350,10 @@ EarthGlobe.displayName = "Earth.Globe";
  * Atmosphere component - renders the atmospheric glow
  */
 const EarthAtmosphere = React.forwardRef<any, EarthAtmosphereProps>(
-  ({ color = "#4488ff", intensity = 0.8, falloff = 3.5, scale = 1.02 }) => {
+  (
+    { color = "#4488ff", intensity = 0.8, falloff = 3.5, scale = 1.02 },
+    ref
+  ) => {
     return (
       <Atmosphere
         color={color}
@@ -368,7 +371,7 @@ EarthAtmosphere.displayName = "Earth.Atmosphere";
  * Clouds component - renders the cloud layer
  */
 const EarthClouds = React.forwardRef<any, EarthCloudsProps>(
-  ({ height = 1.005, opacity = 0.5, rotationSpeedMultiplier = 0.8 }) => {
+  ({ height = 1.005, opacity = 0.5, rotationSpeedMultiplier = 0.8 }, ref) => {
     const { cloudsMapUrl, rotationSpeed } = useEarth();
 
     if (!cloudsMapUrl) return null;

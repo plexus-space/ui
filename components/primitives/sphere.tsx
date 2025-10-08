@@ -130,9 +130,9 @@ export const Sphere = forwardRef<THREE.Mesh, SphereProps>(
             emissiveMap={textures.emissiveMap}
             color={color}
             metalness={metalness}
-            roughness={roughness}
+            roughness={0.6}
             emissive={emissiveMapUrl ? 0xffffff : 0x000000}
-            emissiveIntensity={emissiveMapUrl ? 0.5 : 0}
+            emissiveIntensity={emissiveMapUrl ? 2.0 : 0}
           />
         </mesh>
         {children}
@@ -303,7 +303,9 @@ export function Ring({
   rotation = [Math.PI / 2, 0, 0],
   thetaSegments = 128,
 }: RingProps) {
-  const texture = textureUrl ? useLoader(THREE.TextureLoader, textureUrl) : null;
+  const texture = textureUrl
+    ? useLoader(THREE.TextureLoader, textureUrl)
+    : null;
 
   return (
     <mesh rotation={rotation}>
