@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build -w playground",
+  "buildCommand": "cd playground && npm run build",
   "outputDirectory": "playground/.next",
   "installCommand": "npm install",
-  "framework": "nextjs"
+  "framework": null
 }
