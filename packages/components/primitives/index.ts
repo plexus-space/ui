@@ -89,3 +89,66 @@ export {
   type EasingFunction,
   type TimingOptions,
 } from "./animation";
+
+// Animation Presets
+export {
+  orbitPresets,
+  cameraPresets,
+  dataPresets,
+  particlePresets,
+  uiPresets,
+  physicsPresets,
+  sequences,
+  getPreset,
+  listPresets,
+  blendPresets,
+  executeSequence,
+  type OrbitAnimationPreset,
+  type CameraAnimationPreset,
+  type DataAnimationPreset,
+  type ParticleAnimationPreset,
+  type UITransitionPreset,
+  type PhysicsPreset,
+  type AnimationStep,
+  type AnimationSequence,
+} from "./animation-presets";
+
+// WebAssembly Physics
+export {
+  createWASMPhysics,
+  supportsWASM,
+  isWASMLoaded,
+  simulateNBody,
+  detectCollisions,
+  benchmarkPhysics,
+  type WASMPhysicsModule,
+} from "./wasm-physics";
+
+// GPU Large Dataset Rendering
+export {
+  GPUParticleField,
+  GPUHeatmap,
+  GPULineField,
+  gpuFrustumCulling,
+  type GPUParticleFieldProps,
+  type GPUHeatmapProps,
+  type GPULineFieldProps,
+} from "./gpu-large-dataset";
+
+// Chart Primitives - Heatmap
+export {
+  Heatmap,
+  type HeatmapCell,
+  type CellShape,
+  type HeatmapRootProps,
+} from "../heatmap";
+
+// Chart Primitives - Polar Plot
+export {
+  PolarPlot,
+  type PolarPoint,
+  type PolarSeries,
+  type PolarAxis,
+  type PolarVariant,
+  type PolarPlotRootProps,
+} from "../polar-plot";

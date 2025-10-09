@@ -1,18 +1,8 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-  forwardRef,
-  memo,
-  useCallback,
-} from "react";
-import { ChartTooltip } from "./chart-tooltip";
-import { ChartLegend, type LegendItem } from "./chart-legend";
+import * as React from "react";
+import { cn } from "./lib";
+import { formatValue } from "./lib/chart-utils";
 
 // ============================================================================
 // Types
@@ -52,7 +42,9 @@ export interface PolarAxis {
   angleCount?: number;
 }
 
-export interface PolarPlotProps {
+export type PolarVariant = "polar" | "radar" | "rose";
+
+export interface PolarPlotRootProps {
   series: PolarSeries[];
   axis?: PolarAxis;
   width?: number;
@@ -61,23 +53,22 @@ export interface PolarPlotProps {
   showLegend?: boolean;
   animate?: boolean;
   /** Plot type */
-  variant?: "polar" | "radar" | "rose";
+  variant?: PolarVariant;
   /** Enable responsive container */
   responsive?: boolean;
-  /** Loading state */
-  loading?: boolean;
-  /** Empty state message */
-  emptyMessage?: string;
   /** Allow series visibility toggle */
   toggleableSeries?: boolean;
   className?: string;
+  children?: React.ReactNode;
 }
 
 // ============================================================================
 // Context
 // ============================================================================
 
-interface ChartContext {
+interface PolarPlotContext {
+  series: PolarSeries[];
+  axis: PolarAxis;
   width: number;
   height: number;
   centerX: number;
@@ -88,13 +79,19 @@ interface ChartContext {
   setHoveredPoint: (point: { seriesIdx: number; pointIdx: number } | null) => void;
   hiddenSeries: Set<number>;
   toggleSeries: (idx: number) => void;
+  variant: PolarVariant;
+  animate: boolean;
+  showGrid: boolean;
+  showLegend: boolean;
+  toggleableSeries: boolean;
+  responsive: boolean;
 }
 
-const Context = createContext<ChartContext | null>(null);
+const PolarPlotContext = React.createContext<PolarPlotContext | null>(null);
 
-function useChart() {
-  const ctx = useContext(Context);
-  if (!ctx) throw new Error("Must be used within PolarPlot");
+function usePolarPlot() {
+  const ctx = React.useContext(PolarPlotContext);
+  if (!ctx) throw new Error("usePolarPlot must be used within PolarPlot.Root");
   return ctx;
 }
 
@@ -103,9 +100,9 @@ function useChart() {
 // ============================================================================
 
 function useResizeObserver(ref: React.RefObject<HTMLElement>) {
-  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [size, setSize] = React.useState({ width: 0, height: 0 });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!ref.current) return;
 
     const observer = new ResizeObserver((entries) => {
@@ -138,13 +135,6 @@ function createRScale(domain: [number, number], maxRadius: number) {
   return (value: number) => slope * (value - d0);
 }
 
-function formatValue(value: number): string {
-  if (Math.abs(value) >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
-  if (Math.abs(value) >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
-  if (Math.abs(value) < 0.01 && value !== 0) return value.toExponential(1);
-  return value.toFixed(2);
-}
-
 // Convert polar to Cartesian coordinates
 function polarToCartesian(theta: number, r: number, centerX: number, centerY: number, rScale: (r: number) => number): { x: number; y: number } {
   const scaledR = rScale(r);
@@ -155,18 +145,177 @@ function polarToCartesian(theta: number, r: number, centerX: number, centerY: nu
 }
 
 // ============================================================================
-// Components
+// Primitives
 // ============================================================================
 
-interface PolarGridProps {
-  rings: number;
-  angleCount: number;
-  angleLabels?: string[];
-  animate: boolean;
-}
+/**
+ * Root component - provides context for all child components
+ */
+const PolarPlotRoot = React.forwardRef<HTMLDivElement, PolarPlotRootProps>(
+  (
+    {
+      series,
+      axis = {},
+      width = 600,
+      height = 600,
+      showGrid = true,
+      showLegend = true,
+      animate = true,
+      variant = "polar",
+      responsive = false,
+      toggleableSeries = false,
+      className,
+      children,
+    },
+    ref
+  ) => {
+    const [hoveredPoint, setHoveredPoint] = React.useState<{ seriesIdx: number; pointIdx: number } | null>(null);
+    const [hiddenSeries, setHiddenSeries] = React.useState<Set<number>>(new Set());
+    const containerRef = React.useRef<HTMLDivElement>(null);
 
-const PolarGrid = memo(({ rings, angleCount, angleLabels, animate }: PolarGridProps) => {
-  const { centerX, centerY, maxRadius, rScale } = useChart();
+    const containerSize = useResizeObserver(containerRef);
+    const actualWidth = responsive && containerSize.width > 0 ? containerSize.width : width;
+    const actualHeight = responsive && containerSize.height > 0 ? containerSize.height : height;
+
+    const toggleSeries = React.useCallback((idx: number) => {
+      setHiddenSeries((prev) => {
+        const next = new Set(prev);
+        if (next.has(idx)) {
+          next.delete(idx);
+        } else {
+          next.add(idx);
+        }
+        return next;
+      });
+    }, []);
+
+    // Calculate center and radius
+    const centerX = actualWidth / 2;
+    const centerY = actualHeight / 2;
+    const maxRadius = Math.min(actualWidth, actualHeight) / 2 - 60; // Leave space for labels
+
+    // Calculate radial domain
+    const allPoints = series.flatMap((s) => s.data);
+    const rDomain = axis.domain === "auto" || !axis.domain ? getRDomain(allPoints) : axis.domain;
+
+    const rScale = React.useMemo(
+      () => createRScale(rDomain, maxRadius),
+      [rDomain, maxRadius]
+    );
+
+    const contextValue: PolarPlotContext = React.useMemo(
+      () => ({
+        series,
+        axis,
+        width: actualWidth,
+        height: actualHeight,
+        centerX,
+        centerY,
+        maxRadius,
+        rScale,
+        hoveredPoint,
+        setHoveredPoint,
+        hiddenSeries,
+        toggleSeries,
+        variant,
+        animate,
+        showGrid,
+        showLegend,
+        toggleableSeries,
+        responsive,
+      }),
+      [series, axis, actualWidth, actualHeight, centerX, centerY, maxRadius, rScale, hoveredPoint, hiddenSeries, toggleSeries, variant, animate, showGrid, showLegend, toggleableSeries, responsive]
+    );
+
+    return (
+      <PolarPlotContext.Provider value={contextValue}>
+        <div
+          ref={(node) => {
+            if (typeof ref === "function") {
+              ref(node);
+            } else if (ref) {
+              ref.current = node;
+            }
+            if (node) {
+              (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+            }
+          }}
+          className={cn("polar-plot", className)}
+        >
+          {children}
+        </div>
+      </PolarPlotContext.Provider>
+    );
+  }
+);
+
+PolarPlotRoot.displayName = "PolarPlot.Root";
+
+/**
+ * Container component - wraps the SVG content
+ */
+const PolarPlotContainer = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { width, height, responsive } = usePolarPlot();
+
+  return (
+    <div
+      ref={ref}
+      className={cn("polar-plot-container", className)}
+      style={{
+        position: "relative",
+        width: responsive ? "100%" : `${width}px`,
+        height: responsive ? "100%" : `${height}px`,
+        display: responsive ? "block" : "inline-block",
+        minHeight: responsive ? "300px" : undefined,
+      }}
+      {...props}
+    />
+  );
+});
+
+PolarPlotContainer.displayName = "PolarPlot.Container";
+
+/**
+ * Viewport component - SVG canvas
+ */
+const PolarPlotViewport = React.forwardRef<
+  SVGSVGElement,
+  React.SVGAttributes<SVGSVGElement>
+>(({ className, children, ...props }, ref) => {
+  const { width, height, series } = usePolarPlot();
+
+  return (
+    <svg
+      ref={ref}
+      width={width}
+      height={height}
+      className={cn("polar-plot-svg", className)}
+      style={{ userSelect: "none" }}
+      role="img"
+      aria-label={`Polar plot with ${series.length} series`}
+      {...props}
+    >
+      {children}
+    </svg>
+  );
+});
+
+PolarPlotViewport.displayName = "PolarPlot.Viewport";
+
+/**
+ * Grid component - renders concentric circles and radial lines
+ */
+const PolarPlotGrid = React.forwardRef<
+  SVGGElement,
+  React.SVGAttributes<SVGGElement>
+>(({ className, ...props }, ref) => {
+  const { centerX, centerY, maxRadius, axis, animate } = usePolarPlot();
+
+  const rings = axis.rings ?? 5;
+  const angleCount = axis.angleCount ?? (axis.angleLabels?.length || 8);
 
   // Concentric circles (rings)
   const ringRadii = Array.from({ length: rings }, (_, i) => ((i + 1) / rings) * maxRadius);
@@ -175,7 +324,7 @@ const PolarGrid = memo(({ rings, angleCount, angleLabels, animate }: PolarGridPr
   const angles = Array.from({ length: angleCount }, (_, i) => (i / angleCount) * 2 * Math.PI);
 
   return (
-    <g className="polar-grid">
+    <g ref={ref} className={cn("polar-plot-grid", className)} {...props}>
       {/* Concentric circles */}
       {ringRadii.map((radius, i) => (
         <circle
@@ -207,8 +356,8 @@ const PolarGrid = memo(({ rings, angleCount, angleLabels, animate }: PolarGridPr
       ))}
 
       {/* Angle labels */}
-      {angleLabels && angles.map((angle, i) => {
-        if (i >= angleLabels.length) return null;
+      {axis.angleLabels && angles.map((angle, i) => {
+        if (i >= axis.angleLabels!.length) return null;
         const labelRadius = maxRadius + 20;
         const x = centerX + labelRadius * Math.cos(angle);
         const y = centerY - labelRadius * Math.sin(angle);
@@ -225,7 +374,7 @@ const PolarGrid = memo(({ rings, angleCount, angleLabels, animate }: PolarGridPr
             opacity={animate ? 0 : 0.7}
             style={animate ? { animation: `fadeIn 0.4s ease ${0.3 + i * 0.05}s forwards` } : undefined}
           >
-            {angleLabels[i]}
+            {axis.angleLabels[i]}
           </text>
         );
       })}
@@ -239,19 +388,19 @@ const PolarGrid = memo(({ rings, angleCount, angleLabels, animate }: PolarGridPr
   );
 });
 
-PolarGrid.displayName = "PolarGrid";
+PolarPlotGrid.displayName = "PolarPlot.Grid";
 
-interface PolarLinesProps {
-  series: PolarSeries[];
-  animate: boolean;
-  variant: "polar" | "radar" | "rose";
-}
-
-const PolarLines = memo(({ series, animate, variant }: PolarLinesProps) => {
-  const { centerX, centerY, rScale, hiddenSeries, setHoveredPoint } = useChart();
+/**
+ * Lines component - renders the data lines
+ */
+const PolarPlotLines = React.forwardRef<
+  SVGGElement,
+  React.SVGAttributes<SVGGElement>
+>(({ className, ...props }, ref) => {
+  const { series, centerX, centerY, rScale, hiddenSeries, setHoveredPoint, animate, variant } = usePolarPlot();
 
   return (
-    <g className="polar-lines">
+    <g ref={ref} className={cn("polar-plot-lines", className)} {...props}>
       {series.map((s, seriesIdx) => {
         if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
 
@@ -271,9 +420,7 @@ const PolarLines = memo(({ series, animate, variant }: PolarLinesProps) => {
         if (variant === "rose") {
           // Rose diagram: draw wedges
           s.data.forEach((point, i) => {
-            const nextPoint = s.data[(i + 1) % s.data.length];
             const angle1 = point.theta;
-            const angle2 = nextPoint.theta;
             const r1 = rScale(point.r);
 
             const x1 = centerX + r1 * Math.cos(angle1);
@@ -366,255 +513,282 @@ const PolarLines = memo(({ series, animate, variant }: PolarLinesProps) => {
   );
 });
 
-PolarLines.displayName = "PolarLines";
+PolarPlotLines.displayName = "PolarPlot.Lines";
 
-// ============================================================================
-// Main Component
-// ============================================================================
+/**
+ * Legend component
+ */
+const PolarPlotLegend = React.forwardRef<
+  SVGGElement,
+  React.SVGAttributes<SVGGElement>
+>(({ className, ...props }, ref) => {
+  const { series, width, hiddenSeries, toggleSeries, toggleableSeries } = usePolarPlot();
 
-export const PolarPlot = memo(
-  forwardRef<SVGSVGElement, PolarPlotProps>(
-    (
-      {
-        series,
-        axis = {},
-        width = 600,
-        height = 600,
-        showGrid = true,
-        showLegend = true,
-        animate = true,
-        variant = "polar",
-        responsive = false,
-        loading = false,
-        emptyMessage = "No data available",
-        toggleableSeries = false,
-        className = "",
-      },
-      ref
-    ) => {
-      const [hoveredPoint, setHoveredPoint] = useState<{ seriesIdx: number; pointIdx: number } | null>(null);
-      const [hiddenSeries, setHiddenSeries] = useState<Set<number>>(new Set());
-      const containerRef = useRef<HTMLDivElement>(null);
-      const svgRef = useRef<SVGSVGElement>(null);
+  return (
+    <g ref={ref} className={cn("polar-plot-legend", className)} {...props}>
+      {series.map((s, idx) => {
+        const x = width - 160;
+        const y = 20 + idx * 24;
+        const color = s.color || "#64748b";
+        const isHidden = hiddenSeries.has(idx);
 
-      const containerSize = useResizeObserver(containerRef);
-      const actualWidth = responsive && containerSize.width > 0 ? containerSize.width : width;
-      const actualHeight = responsive && containerSize.height > 0 ? containerSize.height : height;
-
-      const toggleSeries = useCallback((idx: number) => {
-        setHiddenSeries((prev) => {
-          const next = new Set(prev);
-          if (next.has(idx)) {
-            next.delete(idx);
-          } else {
-            next.add(idx);
-          }
-          return next;
-        });
-      }, []);
-
-      // Calculate center and radius
-      const centerX = actualWidth / 2;
-      const centerY = actualHeight / 2;
-      const maxRadius = Math.min(actualWidth, actualHeight) / 2 - 60; // Leave space for labels
-
-      // Calculate radial domain
-      const allPoints = series.flatMap((s) => s.data);
-      const rDomain = axis.domain === "auto" || !axis.domain ? getRDomain(allPoints) : axis.domain;
-
-      const rScale = useMemo(
-        () => createRScale(rDomain, maxRadius),
-        [rDomain, maxRadius]
-      );
-
-      const contextValue: ChartContext = useMemo(
-        () => ({
-          width: actualWidth,
-          height: actualHeight,
-          centerX,
-          centerY,
-          maxRadius,
-          rScale,
-          hoveredPoint,
-          setHoveredPoint,
-          hiddenSeries,
-          toggleSeries,
-        }),
-        [actualWidth, actualHeight, centerX, centerY, maxRadius, rScale, hoveredPoint, hiddenSeries, toggleSeries]
-      );
-
-      const legendItems: LegendItem[] = useMemo(
-        () =>
-          series.map((s, idx) => ({
-            name: s.name,
-            color: s.color || "#64748b",
-            symbol: "line" as const,
-            strokeWidth: s.strokeWidth || 2,
-            filled: s.filled,
-            active: !hiddenSeries.has(idx),
-            onClick: toggleableSeries ? () => toggleSeries(idx) : undefined,
-          })),
-        [series, hiddenSeries, toggleableSeries, toggleSeries]
-      );
-
-      const tooltipContent = useMemo(() => {
-        if (!hoveredPoint) return null;
-        const s = series[hoveredPoint.seriesIdx];
-        if (!s) return null;
-        const point = s.data[hoveredPoint.pointIdx];
-
-        const thetaDeg = (point.theta * 180 / Math.PI).toFixed(1);
-        const rLabel = formatValue(point.r);
-
-        let content = `${s.name}\nθ: ${thetaDeg}°\nr: ${rLabel}`;
-        if (point.label) {
-          content += `\n${point.label}`;
-        }
-
-        return content;
-      }, [hoveredPoint, series]);
-
-      const tooltipPosition = useMemo(() => {
-        if (!hoveredPoint) return null;
-        const s = series[hoveredPoint.seriesIdx];
-        if (!s) return null;
-        const point = s.data[hoveredPoint.pointIdx];
-        const { x, y } = polarToCartesian(point.theta, point.r, centerX, centerY, rScale);
-
-        return { x, y };
-      }, [hoveredPoint, series, centerX, centerY, rScale]);
-
-      const isEmpty = series.length === 0 || series.every(s => s.data.length === 0);
-
-      const rings = axis.rings ?? 5;
-      const angleCount = axis.angleCount ?? (axis.angleLabels?.length || 8);
-
-      return (
-        <Context.Provider value={contextValue}>
-          <div
-            ref={containerRef}
-            style={{
-              position: "relative",
-              width: responsive ? "100%" : `${width}px`,
-              height: responsive ? "100%" : `${height}px`,
-              display: responsive ? "block" : "inline-block",
-              minHeight: responsive ? "300px" : undefined,
-            }}
-            className={className}
+        return (
+          <g
+            key={idx}
+            onClick={toggleableSeries ? () => toggleSeries(idx) : undefined}
+            style={{ cursor: toggleableSeries ? "pointer" : "default" }}
+            opacity={isHidden ? 0.4 : 1}
           >
-            {loading && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "hsl(var(--background) / 0.9)",
-                  backdropFilter: "blur(4px)",
-                  zIndex: 10,
-                }}
-                role="status"
-                aria-live="polite"
-              >
-                <div style={{ textAlign: "center" }}>
-                  <div
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      border: "4px solid hsl(var(--muted) / 0.2)",
-                      borderTop: "4px solid hsl(var(--primary))",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite",
-                      margin: "0 auto 12px",
-                    }}
-                  />
-                  <div style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))" }}>Loading chart...</div>
-                </div>
-                <style jsx>{`
-                  @keyframes spin {
-                    to { transform: rotate(360deg); }
-                  }
-                `}</style>
-              </div>
+            <rect
+              x={x}
+              y={y - 8}
+              width={20}
+              height={3}
+              fill={color}
+              rx={1.5}
+            />
+            {s.filled && (
+              <rect
+                x={x}
+                y={y - 8}
+                width={20}
+                height={3}
+                fill={color}
+                opacity={0.3}
+                rx={1.5}
+              />
             )}
+            <text
+              x={x + 28}
+              y={y}
+              fontSize={11}
+              fill="currentColor"
+              opacity={0.8}
+            >
+              {s.name}
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
+});
 
-            {!loading && isEmpty && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexDirection: "column",
-                  gap: "12px",
-                }}
-                role="status"
-              >
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" opacity="0.3">
-                  <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                  <line x1="12" y1="2" x2="12" y2="22" strokeWidth="2" />
-                  <line x1="2" y1="12" x2="22" y2="12" strokeWidth="2" />
-                </svg>
-                <div style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))" }}>{emptyMessage}</div>
-              </div>
-            )}
+PolarPlotLegend.displayName = "PolarPlot.Legend";
 
-            {!loading && !isEmpty && (
-              <svg
-                ref={(node) => {
-                  if (typeof ref === "function") {
-                    ref(node);
-                  } else if (ref) {
-                    ref.current = node;
-                  }
-                  if (node) {
-                    (svgRef as React.MutableRefObject<SVGSVGElement | null>).current = node;
-                  }
-                }}
-                width={actualWidth}
-                height={actualHeight}
-                style={{ userSelect: "none" }}
-                role="img"
-                aria-label={`Polar plot with ${series.length} series`}
-              >
-                {showGrid && (
-                  <PolarGrid
-                    rings={rings}
-                    angleCount={angleCount}
-                    angleLabels={axis.angleLabels}
-                    animate={animate}
-                  />
-                )}
-                <PolarLines series={series} animate={animate} variant={variant} />
-                {tooltipContent && tooltipPosition && (
-                  <ChartTooltip
-                    x={tooltipPosition.x}
-                    y={tooltipPosition.y}
-                    content={tooltipContent}
-                  />
-                )}
-                {showLegend && (
-                  <ChartLegend
-                    items={legendItems}
-                    x={actualWidth - 160}
-                    y={20}
-                  />
-                )}
-              </svg>
-            )}
+/**
+ * Tooltip component - shows point information on hover
+ */
+const PolarPlotTooltip = React.forwardRef<
+  SVGGElement,
+  React.SVGAttributes<SVGGElement>
+>(({ className, ...props }, ref) => {
+  const { hoveredPoint, series, centerX, centerY, rScale } = usePolarPlot();
+
+  if (!hoveredPoint) return null;
+
+  const s = series[hoveredPoint.seriesIdx];
+  if (!s) return null;
+
+  const point = s.data[hoveredPoint.pointIdx];
+  const { x, y } = polarToCartesian(point.theta, point.r, centerX, centerY, rScale);
+
+  const thetaDeg = (point.theta * 180 / Math.PI).toFixed(1);
+  const rLabel = formatValue(point.r);
+
+  return (
+    <g ref={ref} className={cn("polar-plot-tooltip", className)} {...props}>
+      {/* Crosshair circle */}
+      <circle
+        cx={x}
+        cy={y}
+        r={6}
+        fill="none"
+        stroke={s.color || "#64748b"}
+        strokeWidth={2}
+        opacity={0.6}
+      >
+        <animate
+          attributeName="r"
+          from="6"
+          to="10"
+          dur="0.8s"
+          repeatCount="indefinite"
+        />
+        <animate
+          attributeName="opacity"
+          from="0.6"
+          to="0"
+          dur="0.8s"
+          repeatCount="indefinite"
+        />
+      </circle>
+      <circle
+        cx={x}
+        cy={y}
+        r={4}
+        fill={s.color || "#64748b"}
+        stroke="white"
+        strokeWidth={2}
+      />
+
+      {/* Tooltip box */}
+      <rect
+        x={x + 10}
+        y={y - 40}
+        width={160}
+        height={point.label ? 65 : 50}
+        rx={6}
+        fill="currentColor"
+        opacity={0.95}
+      />
+      <text
+        x={x + 18}
+        y={y - 24}
+        fontSize={11}
+        fontWeight={600}
+        fill="white"
+        style={{ mixBlendMode: "difference" }}
+      >
+        {s.name}
+      </text>
+      <text
+        x={x + 18}
+        y={y - 10}
+        fontSize={10}
+        fill="white"
+        opacity={0.8}
+        style={{ mixBlendMode: "difference" }}
+      >
+        θ: {thetaDeg}° | r: {rLabel}
+      </text>
+      {point.label && (
+        <text
+          x={x + 18}
+          y={y + 4}
+          fontSize={10}
+          fill="white"
+          opacity={0.8}
+          style={{ mixBlendMode: "difference" }}
+        >
+          {point.label}
+        </text>
+      )}
+    </g>
+  );
+});
+
+PolarPlotTooltip.displayName = "PolarPlot.Tooltip";
+
+/**
+ * Loading state component
+ */
+const PolarPlotLoading = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn("polar-plot-loading", className)}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "hsl(var(--background) / 0.9)",
+        backdropFilter: "blur(4px)",
+        zIndex: 10,
+      }}
+      role="status"
+      aria-live="polite"
+      {...props}
+    >
+      <div style={{ textAlign: "center" }}>
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            border: "4px solid hsl(var(--muted) / 0.2)",
+            borderTop: "4px solid hsl(var(--primary))",
+            borderRadius: "50%",
+            animation: "spin 1s linear infinite",
+            margin: "0 auto 12px",
+          }}
+        />
+        <div style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))" }}>Loading chart...</div>
+      </div>
+      <style jsx>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+});
+
+PolarPlotLoading.displayName = "PolarPlot.Loading";
+
+/**
+ * Empty state component
+ */
+const PolarPlotEmpty = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, children, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn("polar-plot-empty", className)}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        gap: "12px",
+      }}
+      role="status"
+      {...props}
+    >
+      {children || (
+        <>
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" opacity="0.3">
+            <circle cx="12" cy="12" r="10" strokeWidth="2" />
+            <line x1="12" y1="2" x2="12" y2="22" strokeWidth="2" />
+            <line x1="2" y1="12" x2="22" y2="12" strokeWidth="2" />
+          </svg>
+          <div style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))" }}>
+            No data available
           </div>
-        </Context.Provider>
-      );
-    }
-  )
-);
+        </>
+      )}
+    </div>
+  );
+});
 
-PolarPlot.displayName = "PolarPlot";
+PolarPlotEmpty.displayName = "PolarPlot.Empty";
+
+// ============================================================================
+// Exports
+// ============================================================================
+
+export const PolarPlot = {
+  Root: PolarPlotRoot,
+  Container: PolarPlotContainer,
+  Viewport: PolarPlotViewport,
+  Grid: PolarPlotGrid,
+  Lines: PolarPlotLines,
+  Legend: PolarPlotLegend,
+  Tooltip: PolarPlotTooltip,
+  Loading: PolarPlotLoading,
+  Empty: PolarPlotEmpty,
+};

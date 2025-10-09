@@ -5,10 +5,8 @@ import { useMemo, useState, useEffect } from "react";
 import { components } from "../../constants/components";
 
 import { LineChart } from "@plexusui/components/line-chart";
-import { ScatterPlot } from "@plexusui/components/scatter-plot";
 import { PolarPlot } from "@plexusui/components/polar-plot";
 import { Heatmap } from "@plexusui/components/heatmap";
-import { Histogram } from "@plexusui/components/histogram";
 import { GanttChart } from "@plexusui/components/gantt-chart";
 import { Earth } from "@plexusui/components/earth";
 import { Mars } from "@plexusui/components/mars";
@@ -557,153 +555,6 @@ useEffect(() => {
   );
 };
 
-const ScatterPlotExamples = () => {
-  // Orbital velocity vs altitude (correlation)
-  const orbitalData = Array.from({ length: 50 }, (_, i) => {
-    const altitude = i * 10;
-    const earthRadius = 6371;
-    const mu = 398600;
-    const r = earthRadius + altitude;
-    const velocity = Math.sqrt(mu / r);
-    return { x: altitude, y: velocity };
-  });
-
-  // Random scatter with trendline
-  const correlatedData = Array.from({ length: 100 }, (_, i) => ({
-    x: i,
-    y: i * 0.5 + Math.random() * 20,
-  }));
-
-  // Bubble chart (3D data)
-  const bubbleData = Array.from({ length: 30 }, () => ({
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: Math.random() * 50 + 10,
-  }));
-
-  // Multi-series scatter
-  const series1 = Array.from({ length: 40 }, () => ({
-    x: Math.random() * 50 + 10,
-    y: Math.random() * 50 + 10,
-  }));
-
-  const series2 = Array.from({ length: 40 }, () => ({
-    x: Math.random() * 50 + 40,
-    y: Math.random() * 50 + 40,
-  }));
-
-  return (
-    <div className="space-y-12">
-      <ComponentPreview
-        title="Orbital Mechanics: Velocity vs Altitude"
-        description="Scatter plot showing the inverse relationship between orbital velocity and altitude using the vis-viva equation."
-        preview={
-          <ScatterPlot
-            series={[
-              {
-                name: "Orbital Velocity",
-                data: orbitalData,
-                color: "#3b82f6",
-                symbol: "circle",
-                size: 6,
-                trendline: true,
-              },
-            ]}
-            xAxis={{ label: "Altitude (km)" }}
-            yAxis={{ label: "Velocity (km/s)" }}
-            width={850}
-            height={400}
-            showGrid={true}
-            showLegend={false}
-          />
-        }
-        code={`<ScatterPlot
-  series={[{
-    name: "Orbital Velocity",
-    data: orbitalData,
-    color: "#3b82f6",
-    trendline: true,
-  }]}
-  xAxis={{ label: "Altitude (km)" }}
-  yAxis={{ label: "Velocity (km/s)" }}
-/>`}
-      />
-
-      <ComponentPreview
-        title="Bubble Chart"
-        description="Three-dimensional data visualization where marker size represents a third variable. Perfect for multi-parameter analysis."
-        preview={
-          <ScatterPlot
-            series={[
-              {
-                name: "Satellites",
-                data: bubbleData,
-                color: "#8b5cf6",
-                symbol: "circle",
-                sizeScale: [4, 20],
-                opacity: 0.6,
-              },
-            ]}
-            xAxis={{ label: "Apogee (km)" }}
-            yAxis={{ label: "Perigee (km)" }}
-            width={850}
-            height={400}
-            showGrid={true}
-            showLegend={false}
-          />
-        }
-        code={`<ScatterPlot
-  series={[{
-    name: "Satellites",
-    data: bubbleData,
-    sizeScale: [4, 20], // Min/max bubble size
-    opacity: 0.6,
-  }]}
-  xAxis={{ label: "Apogee (km)" }}
-  yAxis={{ label: "Perigee (km)" }}
-/>`}
-      />
-
-      <ComponentPreview
-        title="Multi-Series Clustering"
-        description="Visualize data clusters with different marker shapes and colors for distinct groups."
-        preview={
-          <ScatterPlot
-            series={[
-              {
-                name: "Cluster A",
-                data: series1,
-                color: "#10b981",
-                symbol: "circle",
-              },
-              {
-                name: "Cluster B",
-                data: series2,
-                color: "#f59e0b",
-                symbol: "diamond",
-              },
-            ]}
-            xAxis={{ label: "Feature 1" }}
-            yAxis={{ label: "Feature 2" }}
-            width={850}
-            height={400}
-            showGrid={true}
-            showLegend={true}
-            toggleableSeries={true}
-          />
-        }
-        code={`<ScatterPlot
-  series={[
-    { name: "Cluster A", data: series1, symbol: "circle" },
-    { name: "Cluster B", data: series2, symbol: "diamond" },
-  ]}
-  toggleableSeries={true}
-/>`}
-      />
-    </div>
-  );
-};
-
 const PolarPlotExamples = () => {
   // Antenna radiation pattern
   const radiationPattern = Array.from({ length: 36 }, (_, i) => {
@@ -735,7 +586,7 @@ const PolarPlotExamples = () => {
         title="Antenna Radiation Pattern"
         description="Polar plot showing the directional gain pattern of an antenna. Essential for RF analysis and link budget calculations."
         preview={
-          <PolarPlot
+          <PolarPlot.Root
             series={[
               {
                 name: "Gain Pattern",
@@ -763,9 +614,17 @@ const PolarPlotExamples = () => {
             height={600}
             showLegend={false}
             variant="polar"
-          />
+          >
+            <PolarPlot.Container>
+              <PolarPlot.Viewport>
+                <PolarPlot.Grid />
+                <PolarPlot.Lines />
+                <PolarPlot.Tooltip />
+              </PolarPlot.Viewport>
+            </PolarPlot.Container>
+          </PolarPlot.Root>
         }
-        code={`<PolarPlot
+        code={`<PolarPlot.Root
   series={[{
     name: "Gain Pattern",
     data: radiationPattern,
@@ -777,14 +636,22 @@ const PolarPlotExamples = () => {
     rings: 5,
   }}
   variant="polar"
-/>`}
+>
+  <PolarPlot.Container>
+    <PolarPlot.Viewport>
+      <PolarPlot.Grid />
+      <PolarPlot.Lines />
+      <PolarPlot.Tooltip />
+    </PolarPlot.Viewport>
+  </PolarPlot.Container>
+</PolarPlot.Root>`}
       />
 
       <ComponentPreview
         title="Spacecraft Subsystem Health Radar"
         description="Radar chart displaying multiple subsystem health metrics. Perfect for multi-dimensional comparisons at a glance."
         preview={
-          <PolarPlot
+          <PolarPlot.Root
             series={[
               {
                 name: "Health Status",
@@ -812,23 +679,39 @@ const PolarPlotExamples = () => {
             height={600}
             showLegend={false}
             variant="radar"
-          />
+          >
+            <PolarPlot.Container>
+              <PolarPlot.Viewport>
+                <PolarPlot.Grid />
+                <PolarPlot.Lines />
+                <PolarPlot.Tooltip />
+              </PolarPlot.Viewport>
+            </PolarPlot.Container>
+          </PolarPlot.Root>
         }
-        code={`<PolarPlot
+        code={`<PolarPlot.Root
   series={[{
     name: "Health Status",
     data: subsystemHealth,
     filled: true,
   }]}
   variant="radar"
-/>`}
+>
+  <PolarPlot.Container>
+    <PolarPlot.Viewport>
+      <PolarPlot.Grid />
+      <PolarPlot.Lines />
+      <PolarPlot.Tooltip />
+    </PolarPlot.Viewport>
+  </PolarPlot.Container>
+</PolarPlot.Root>`}
       />
 
       <ComponentPreview
         title="Rose Diagram"
         description="Rose diagram for directional data like wind direction or orbital phase distribution."
         preview={
-          <PolarPlot
+          <PolarPlot.Root
             series={[
               {
                 name: "Wind Distribution",
@@ -847,16 +730,32 @@ const PolarPlotExamples = () => {
             height={600}
             showLegend={false}
             variant="rose"
-          />
+          >
+            <PolarPlot.Container>
+              <PolarPlot.Viewport>
+                <PolarPlot.Grid />
+                <PolarPlot.Lines />
+                <PolarPlot.Tooltip />
+              </PolarPlot.Viewport>
+            </PolarPlot.Container>
+          </PolarPlot.Root>
         }
-        code={`<PolarPlot
+        code={`<PolarPlot.Root
   series={[{
     name: "Wind Distribution",
     data: windData,
     filled: true,
   }]}
   variant="rose"
-/>`}
+>
+  <PolarPlot.Container>
+    <PolarPlot.Viewport>
+      <PolarPlot.Grid />
+      <PolarPlot.Lines />
+      <PolarPlot.Tooltip />
+    </PolarPlot.Viewport>
+  </PolarPlot.Container>
+</PolarPlot.Root>`}
       />
     </div>
   );
@@ -886,7 +785,7 @@ const HeatmapExamples = () => {
         title="Terrain Elevation Map"
         description="2D elevation heatmap using the viridis colormap for terrain visualization."
         preview={
-          <Heatmap
+          <Heatmap.Root
             data={terrainData}
             xAxisLabel="East-West (km)"
             yAxisLabel="North-South (km)"
@@ -895,20 +794,38 @@ const HeatmapExamples = () => {
             height={600}
             showColorbar={true}
             showGrid={false}
-          />
+          >
+            <Heatmap.Container>
+              <Heatmap.Viewport>
+                <Heatmap.Cells />
+                <Heatmap.Axes />
+                <Heatmap.Colorbar />
+                <Heatmap.Tooltip />
+              </Heatmap.Viewport>
+            </Heatmap.Container>
+          </Heatmap.Root>
         }
-        code={`<Heatmap
+        code={`<Heatmap.Root
   data={terrainData}
   colormap="viridis"
   showColorbar={true}
-/>`}
+>
+  <Heatmap.Container>
+    <Heatmap.Viewport>
+      <Heatmap.Cells />
+      <Heatmap.Axes />
+      <Heatmap.Colorbar />
+      <Heatmap.Tooltip />
+    </Heatmap.Viewport>
+  </Heatmap.Container>
+</Heatmap.Root>`}
       />
 
       <ComponentPreview
         title="Ground Station Contact Schedule"
         description="Time-series heatmap showing satellite contact opportunities across days and hours."
         preview={
-          <Heatmap
+          <Heatmap.Root
             data={contactHeatmap}
             xLabels={["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]}
             yLabels={Array.from({ length: 24 }, (_, i) => `${i}:00`)}
@@ -919,22 +836,40 @@ const HeatmapExamples = () => {
             height={600}
             showColorbar={true}
             showValues={true}
-          />
+          >
+            <Heatmap.Container>
+              <Heatmap.Viewport>
+                <Heatmap.Cells />
+                <Heatmap.Axes />
+                <Heatmap.Colorbar />
+                <Heatmap.Tooltip />
+              </Heatmap.Viewport>
+            </Heatmap.Container>
+          </Heatmap.Root>
         }
-        code={`<Heatmap
+        code={`<Heatmap.Root
   data={contactHeatmap}
   xLabels={["Sun", "Mon", "Tue", ...]}
   yLabels={["0:00", "1:00", ...]}
   colormap="plasma"
   showValues={true}
-/>`}
+>
+  <Heatmap.Container>
+    <Heatmap.Viewport>
+      <Heatmap.Cells />
+      <Heatmap.Axes />
+      <Heatmap.Colorbar />
+      <Heatmap.Tooltip />
+    </Heatmap.Viewport>
+  </Heatmap.Container>
+</Heatmap.Root>`}
       />
 
       <ComponentPreview
         title="Honeycomb Heatmap"
         description="Hexagonal cell layout for a modern, space-efficient visualization. Perfect for compact data displays."
         preview={
-          <Heatmap
+          <Heatmap.Root
             data={terrainData.slice(0, 12).map((row) => row.slice(0, 12))}
             colormap="inferno"
             width={850}
@@ -943,174 +878,33 @@ const HeatmapExamples = () => {
             cellShape="hexagon"
             cellGap={0.1}
             showGrid={false}
-          />
+          >
+            <Heatmap.Container>
+              <Heatmap.Viewport>
+                <Heatmap.Cells />
+                <Heatmap.Axes />
+                <Heatmap.Colorbar />
+                <Heatmap.Tooltip />
+              </Heatmap.Viewport>
+            </Heatmap.Container>
+          </Heatmap.Root>
         }
-        code={`<Heatmap
+        code={`<Heatmap.Root
   data={terrainData}
   colormap="inferno"
   cellShape="hexagon"
   cellGap={0.1}
   showGrid={false}
-/>`}
-      />
-    </div>
-  );
-};
-
-const HistogramExamples = () => {
-  // Normal distribution
-  const normalData = Array.from(
-    { length: 1000 },
-    () =>
-      (Math.random() + Math.random() + Math.random() + Math.random() - 2) * 50 +
-      100
-  );
-
-  // Bimodal distribution
-  const bimodalData = [
-    ...Array.from({ length: 500 }, () => Math.random() * 30 + 20),
-    ...Array.from({ length: 500 }, () => Math.random() * 30 + 70),
-  ];
-
-  // Orbital period distribution
-  const orbitalPeriods = [
-    ...Array.from({ length: 300 }, () => Math.random() * 10 + 90),
-    ...Array.from({ length: 200 }, () => Math.random() * 20 + 400),
-    ...Array.from({ length: 100 }, () => Math.random() * 100 + 1400),
-  ];
-
-  // Multi-series comparison
-  const leo = Array.from({ length: 400 }, () => Math.random() * 20 + 90);
-  const meo = Array.from({ length: 300 }, () => Math.random() * 100 + 400);
-
-  return (
-    <div className="space-y-12">
-      <ComponentPreview
-        title="Normal Distribution"
-        description="Classic bell curve histogram showing a normal distribution. Demonstrates automatic binning using Sturges' formula."
-        preview={
-          <Histogram
-            series={[
-              {
-                name: "Measurements",
-                data: normalData,
-                color: "#3b82f6",
-                bins: 30,
-              },
-            ]}
-            xAxis={{ label: "Value" }}
-            yAxis={{ label: "Frequency" }}
-            width={850}
-            height={400}
-            showLegend={false}
-            layout="overlapping"
-          />
-        }
-        code={`<Histogram
-  series={[{
-    name: "Measurements",
-    data: normalData,
-    bins: 30,
-  }]}
-  xAxis={{ label: "Value" }}
-  yAxis={{ label: "Frequency" }}
-/>`}
-      />
-
-      <ComponentPreview
-        title="Bimodal Distribution"
-        description="Histogram revealing two distinct peaks in the data distribution. Important for identifying data clusters."
-        preview={
-          <Histogram
-            series={[
-              {
-                name: "Dataset",
-                data: bimodalData,
-                color: "#10b981",
-                bins: 25,
-              },
-            ]}
-            xAxis={{ label: "Value" }}
-            width={850}
-            height={400}
-            showLegend={false}
-          />
-        }
-        code={`<Histogram
-  series={[{
-    name: "Dataset",
-    data: bimodalData,
-    bins: 25,
-  }]}
-/>`}
-      />
-
-      <ComponentPreview
-        title="Orbital Period Distribution"
-        description="Satellite orbital period histogram showing LEO, MEO, and GEO populations. Logarithmic distribution common in space datasets."
-        preview={
-          <Histogram
-            series={[
-              {
-                name: "Orbital Periods",
-                data: orbitalPeriods,
-                color: "#8b5cf6",
-                bins: 20,
-              },
-            ]}
-            xAxis={{ label: "Orbital Period (minutes)" }}
-            yAxis={{ label: "Number of Satellites" }}
-            width={850}
-            height={400}
-            showLegend={false}
-          />
-        }
-        code={`<Histogram
-  series={[{
-    name: "Orbital Periods",
-    data: orbitalPeriods,
-    bins: 20,
-  }]}
-  xAxis={{ label: "Orbital Period (minutes)" }}
-/>`}
-      />
-
-      <ComponentPreview
-        title="Grouped Comparison"
-        description="Compare multiple distributions side-by-side with grouped layout. LEO vs MEO orbital periods."
-        preview={
-          <Histogram
-            series={[
-              {
-                name: "LEO",
-                data: leo,
-                color: "#3b82f6",
-                bins: 15,
-              },
-              {
-                name: "MEO",
-                data: meo,
-                color: "#ef4444",
-                bins: 15,
-              },
-            ]}
-            xAxis={{ label: "Orbital Period (minutes)" }}
-            yAxis={{ label: "Count" }}
-            width={850}
-            height={400}
-            showLegend={true}
-            layout="grouped"
-            toggleableSeries={true}
-          />
-        }
-        code={`<Histogram
-  series={[
-    { name: "LEO", data: leo, bins: 15 },
-    { name: "MEO", data: meo, bins: 15 },
-  ]}
-  layout="grouped"
-  toggleableSeries={true}
-/>`}
+>
+  <Heatmap.Container>
+    <Heatmap.Viewport>
+      <Heatmap.Cells />
+      <Heatmap.Axes />
+      <Heatmap.Colorbar />
+      <Heatmap.Tooltip />
+    </Heatmap.Viewport>
+  </Heatmap.Container>
+</Heatmap.Root>`}
       />
     </div>
   );
@@ -1746,10 +1540,8 @@ const NeptuneExamples = () => {
 
 const componentExamples: Record<string, React.ComponentType> = {
   "line-chart": LineChartExamples,
-  "scatter-plot": ScatterPlotExamples,
   "polar-plot": PolarPlotExamples,
   heatmap: HeatmapExamples,
-  histogram: HistogramExamples,
   "gantt-chart": GanttChartExamples,
   earth: EarthExamples,
   mars: MarsExamples,

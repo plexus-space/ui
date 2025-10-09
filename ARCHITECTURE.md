@@ -36,7 +36,6 @@ packages/
 │       ├── earth.tsx            # Uses: lib + sphere primitive
 │       ├── mars.tsx             # Uses: lib + sphere primitive
 │       ├── line-chart.tsx       # Uses: lib (chart-utils)
-│       ├── scatter-plot.tsx     # Uses: lib (chart-utils)
 │       └── solar-system.tsx     # Uses: lib + multiple planet components
 │
 └── cli/                 # CLI tool (published to npm)
@@ -100,7 +99,7 @@ Plexus UI strictly separates concerns into three layers:
 ```typescript
 // ✅ Belongs in components/
 - Earth, Mars, Jupiter (uses lib + sphere primitive)
-- LineChart, ScatterPlot (uses lib/chart-utils)
+- LineChart (uses lib/chart-utils)
 - SolarSystem (composes multiple planet components)
 ```
 
@@ -167,7 +166,7 @@ High-level components built from primitives:
 
 - **Dependencies**: `lib`, chart utilities
 - **Pattern**: React context + SVG/Canvas rendering
-- **Example**: LineChart, ScatterPlot, Heatmap
+- **Example**: LineChart, Heatmap
 
 ## Dependency Resolution
 
@@ -411,11 +410,3 @@ import { EARTH_RADIUS_KM } from "./lib/astronomical-constants";
 const point: Point = { x: 10, y: 20 };
 const radius: number = EARTH_RADIUS_KM; // Type-safe!
 ```
-
-## Enhancements
-
-- [ ] WebAssembly for heavy physics calculations
-- [ ] WebGPU primitives for large datasets
-- [ ] Shared theme system
-- [ ] Animation presets library
-- [ ] More astronomical constants (moons, asteroids)

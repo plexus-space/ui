@@ -19,3 +19,6 @@ export * from "./astronomical-constants";
 
 // Three.js / R3F utilities
 export * from "./three-utils";
+
+// Theme system
+export * from "./theme";

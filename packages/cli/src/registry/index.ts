@@ -1,21 +1,24 @@
 import { Registry } from "./schema.js";
 
-const BASE_URL = "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components";
+const BASE_URL =
+  "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components";
 
 export const registry: Registry = {
   // ============================================================================
   // Shared Library (Foundation - no dependencies)
   // ============================================================================
-  "lib": {
+  lib: {
     name: "lib",
     type: "components:lib",
-    description: "Shared utility functions, constants, and helpers",
+    description:
+      "Shared utility functions, constants, helpers, and theme system",
     files: [
       `${BASE_URL}/lib/index.ts`,
       `${BASE_URL}/lib/utils.ts`,
       `${BASE_URL}/lib/chart-utils.ts`,
       `${BASE_URL}/lib/astronomical-constants.ts`,
       `${BASE_URL}/lib/three-utils.ts`,
+      `${BASE_URL}/lib/theme.ts`,
     ],
     dependencies: ["react"],
     category: "lib",
@@ -123,7 +126,16 @@ export const registry: Registry = {
     description: "Complete solar system with all planets",
     files: [`${BASE_URL}/solar-system.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["earth", "mars", "mercury", "venus", "jupiter", "saturn", "uranus", "neptune"],
+    registryDependencies: [
+      "earth",
+      "mars",
+      "mercury",
+      "venus",
+      "jupiter",
+      "saturn",
+      "uranus",
+      "neptune",
+    ],
     category: "3d",
   },
 
@@ -146,21 +158,7 @@ export const registry: Registry = {
     registryDependencies: ["lib"],
     category: "charts",
   },
-  "scatter-plot": {
-    name: "scatter-plot",
-    type: "components:chart",
-    description: "XY scatter plot with multiple datasets and trendlines",
-    files: [
-      `${BASE_URL}/scatter-plot.tsx`,
-      `${BASE_URL}/canvas-renderer.tsx`,
-      `${BASE_URL}/chart-legend.tsx`,
-      `${BASE_URL}/chart-tooltip.tsx`,
-      `${BASE_URL}/chart-export.ts`,
-    ],
-    dependencies: ["react"],
-    registryDependencies: ["lib"],
-    category: "charts",
-  },
+
   "polar-plot": {
     name: "polar-plot",
     type: "components:chart",
@@ -188,20 +186,7 @@ export const registry: Registry = {
     registryDependencies: ["lib"],
     category: "charts",
   },
-  histogram: {
-    name: "histogram",
-    type: "components:chart",
-    description: "Distribution histogram with multiple series",
-    files: [
-      `${BASE_URL}/histogram.tsx`,
-      `${BASE_URL}/canvas-renderer.tsx`,
-      `${BASE_URL}/chart-legend.tsx`,
-      `${BASE_URL}/chart-tooltip.tsx`,
-    ],
-    dependencies: ["react"],
-    registryDependencies: ["lib"],
-    category: "charts",
-  },
+
   "gantt-chart": {
     name: "gantt-chart",
     type: "components:chart",
@@ -218,7 +203,8 @@ export const registry: Registry = {
   sphere: {
     name: "sphere",
     type: "components:primitive",
-    description: "Base sphere primitive with texture support (Sphere, Atmosphere, Clouds, Ring)",
+    description:
+      "Base sphere primitive with texture support (Sphere, Atmosphere, Clouds, Ring)",
     files: [`${BASE_URL}/primitives/sphere.tsx`],
     dependencies: ["react", "@react-three/fiber", "three"],
     registryDependencies: [], // Primitives are standalone
@@ -233,13 +219,34 @@ export const registry: Registry = {
     registryDependencies: [], // Pure utilities
     category: "primitives",
   },
+  "animation-presets": {
+    name: "animation-presets",
+    type: "components:primitive",
+    description:
+      "Ready-to-use animation presets for orbital, camera, data, and UI animations",
+    files: [`${BASE_URL}/primitives/animation-presets.ts`],
+    dependencies: [],
+    registryDependencies: ["animation"],
+    category: "primitives",
+  },
   physics: {
     name: "physics",
     type: "components:primitive",
-    description: "Physics engine with integrators (Euler, Verlet, RK4) and forces",
+    description:
+      "Physics engine with integrators (Euler, Verlet, RK4) and forces",
     files: [`${BASE_URL}/primitives/physics.ts`],
     dependencies: [],
     registryDependencies: [], // Pure utilities
+    category: "primitives",
+  },
+  "wasm-physics": {
+    name: "wasm-physics",
+    type: "components:primitive",
+    description:
+      "WebAssembly-accelerated physics for N-body simulations and collision detection",
+    files: [`${BASE_URL}/primitives/wasm-physics.ts`],
+    dependencies: [],
+    registryDependencies: ["physics"],
     category: "primitives",
   },
   "gpu-renderer": {
@@ -253,6 +260,16 @@ export const registry: Registry = {
     ],
     dependencies: ["react", "three"],
     registryDependencies: [],
+    category: "primitives",
+  },
+  "gpu-large-dataset": {
+    name: "gpu-large-dataset",
+    type: "components:primitive",
+    description:
+      "GPU-optimized rendering for millions of particles and large datasets",
+    files: [`${BASE_URL}/primitives/gpu-large-dataset.tsx`],
+    dependencies: ["react"],
+    registryDependencies: ["gpu-renderer"],
     category: "primitives",
   },
   "visual-effects": {

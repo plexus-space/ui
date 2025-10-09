@@ -3,16 +3,17 @@ export const registry = {
     // ============================================================================
     // Shared Library (Foundation - no dependencies)
     // ============================================================================
-    "lib": {
+    lib: {
         name: "lib",
         type: "components:lib",
-        description: "Shared utility functions, constants, and helpers",
+        description: "Shared utility functions, constants, helpers, and theme system",
         files: [
             `${BASE_URL}/lib/index.ts`,
             `${BASE_URL}/lib/utils.ts`,
             `${BASE_URL}/lib/chart-utils.ts`,
             `${BASE_URL}/lib/astronomical-constants.ts`,
             `${BASE_URL}/lib/three-utils.ts`,
+            `${BASE_URL}/lib/theme.ts`,
         ],
         dependencies: ["react"],
         category: "lib",
@@ -118,7 +119,16 @@ export const registry = {
         description: "Complete solar system with all planets",
         files: [`${BASE_URL}/solar-system.tsx`],
         dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        registryDependencies: ["earth", "mars", "mercury", "venus", "jupiter", "saturn", "uranus", "neptune"],
+        registryDependencies: [
+            "earth",
+            "mars",
+            "mercury",
+            "venus",
+            "jupiter",
+            "saturn",
+            "uranus",
+            "neptune",
+        ],
         category: "3d",
     },
     // ============================================================================
@@ -135,21 +145,6 @@ export const registry = {
             `${BASE_URL}/chart-tooltip.tsx`,
             `${BASE_URL}/chart-export.ts`,
             `${BASE_URL}/decimation.ts`,
-        ],
-        dependencies: ["react"],
-        registryDependencies: ["lib"],
-        category: "charts",
-    },
-    "scatter-plot": {
-        name: "scatter-plot",
-        type: "components:chart",
-        description: "XY scatter plot with multiple datasets and trendlines",
-        files: [
-            `${BASE_URL}/scatter-plot.tsx`,
-            `${BASE_URL}/canvas-renderer.tsx`,
-            `${BASE_URL}/chart-legend.tsx`,
-            `${BASE_URL}/chart-tooltip.tsx`,
-            `${BASE_URL}/chart-export.ts`,
         ],
         dependencies: ["react"],
         registryDependencies: ["lib"],
@@ -177,20 +172,6 @@ export const registry = {
             `${BASE_URL}/heatmap.tsx`,
             `${BASE_URL}/colormaps.ts`,
             `${BASE_URL}/chart-export.ts`,
-        ],
-        dependencies: ["react"],
-        registryDependencies: ["lib"],
-        category: "charts",
-    },
-    histogram: {
-        name: "histogram",
-        type: "components:chart",
-        description: "Distribution histogram with multiple series",
-        files: [
-            `${BASE_URL}/histogram.tsx`,
-            `${BASE_URL}/canvas-renderer.tsx`,
-            `${BASE_URL}/chart-legend.tsx`,
-            `${BASE_URL}/chart-tooltip.tsx`,
         ],
         dependencies: ["react"],
         registryDependencies: ["lib"],
@@ -226,6 +207,15 @@ export const registry = {
         registryDependencies: [], // Pure utilities
         category: "primitives",
     },
+    "animation-presets": {
+        name: "animation-presets",
+        type: "components:primitive",
+        description: "Ready-to-use animation presets for orbital, camera, data, and UI animations",
+        files: [`${BASE_URL}/primitives/animation-presets.ts`],
+        dependencies: [],
+        registryDependencies: ["animation"],
+        category: "primitives",
+    },
     physics: {
         name: "physics",
         type: "components:primitive",
@@ -233,6 +223,15 @@ export const registry = {
         files: [`${BASE_URL}/primitives/physics.ts`],
         dependencies: [],
         registryDependencies: [], // Pure utilities
+        category: "primitives",
+    },
+    "wasm-physics": {
+        name: "wasm-physics",
+        type: "components:primitive",
+        description: "WebAssembly-accelerated physics for N-body simulations and collision detection",
+        files: [`${BASE_URL}/primitives/wasm-physics.ts`],
+        dependencies: [],
+        registryDependencies: ["physics"],
         category: "primitives",
     },
     "gpu-renderer": {
@@ -246,6 +245,15 @@ export const registry = {
         ],
         dependencies: ["react", "three"],
         registryDependencies: [],
+        category: "primitives",
+    },
+    "gpu-large-dataset": {
+        name: "gpu-large-dataset",
+        type: "components:primitive",
+        description: "GPU-optimized rendering for millions of particles and large datasets",
+        files: [`${BASE_URL}/primitives/gpu-large-dataset.tsx`],
+        dependencies: ["react"],
+        registryDependencies: ["gpu-renderer"],
         category: "primitives",
     },
     "visual-effects": {
