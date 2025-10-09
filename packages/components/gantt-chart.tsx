@@ -12,20 +12,16 @@ function cn(...classes: (string | undefined | null | false)[]) {
 function formatInTimeZone(
   date: Date,
   timezone: string,
-  format: string
+  _format: string,
+  use12Hour: boolean = false
 ): string {
   const options: Intl.DateTimeFormatOptions = {
     timeZone: timezone,
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    hour12: use12Hour,
   };
   return new Intl.DateTimeFormat("en-US", options).format(date);
-}
-
-function toZonedTime(date: Date, timezone: string): Date {
-  const dateString = date.toLocaleString("en-US", { timeZone: timezone });
-  return new Date(dateString);
 }
 
 // ============================================================================
@@ -48,7 +44,7 @@ export interface GanttChartRootProps {
   tasks: Task[];
   /** Timezone for date formatting (e.g., "America/Los_Angeles", "UTC") */
   timezone?: string;
-  /** Chart width in pixels */
+  /** Chart width in pixels (optional - will use container width if not provided) */
   width?: number;
   /** Height of each task row */
   rowHeight?: number;
@@ -61,7 +57,8 @@ export interface GanttChartRootProps {
   /** Callback when task is clicked */
   onTaskClick?: (task: Task) => void;
   /** Visual variant */
-  variant?: "default" | "compact" | "detailed";
+  variant?: "default" | "compact" | "detailed";  /** Use 12-hour time format (default: false for 24-hour) */
+  use12HourFormat?: boolean;
   className?: string;
   children?: React.ReactNode;
 }
@@ -87,6 +84,10 @@ interface GanttContext {
   extendedWidth: number;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   initialScrollPosition: Date;
+  zoomLevel: number;
+  setZoomLevel: (level: number) => void;
+  timeWindowHours: number;
+  use12HourFormat: boolean;
 }
 
 const GanttContext = React.createContext<GanttContext | null>(null);
@@ -140,7 +141,23 @@ interface TimelineHeaderProps {
 
 const TimelineHeader = React.memo(
   ({ width, leftPanelWidth }: TimelineHeaderProps) => {
-    const { startTime, endTime, xScale, timezone } = useGantt();
+    const { startTime, endTime, xScale, timezone, use12HourFormat } = useGantt();
+
+    // Calculate pixels per hour to determine label density
+    const timelineWidth = width - leftPanelWidth;
+    const totalHours = differenceInMinutes(endTime, startTime) / 60;
+    const pixelsPerHour = timelineWidth / totalHours;
+
+    // Determine hour interval based on available space
+    // More space = show more labels, less space = show fewer labels
+    const hourInterval = React.useMemo(() => {
+      if (pixelsPerHour >= 80) return 1; // Show all hours
+      if (pixelsPerHour >= 40) return 2; // Show every 2 hours
+      if (pixelsPerHour >= 25) return 3; // Show every 3 hours
+      if (pixelsPerHour >= 20) return 4; // Show every 4 hours
+      if (pixelsPerHour >= 12) return 6; // Show every 6 hours
+      return 12; // Show every 12 hours
+    }, [pixelsPerHour]);
 
     // Generate hour markers
     const hours = React.useMemo(() => {
@@ -202,20 +219,54 @@ const TimelineHeader = React.memo(
         {/* Hour labels */}
         {hours.map((hour, i) => {
           const x = xScale(hour);
-          const label = formatInTimeZone(hour, timezone, "HH:mm");
-          const isEvenHour = hour.getHours() % 2 === 0;
+          const isMidnight = hour.getHours() === 0;
+          const currentHour = hour.getHours();
+
+          // Only show labels at the determined interval
+          // Always show midnight, or show if hour matches interval
+          const shouldShowLabel = isMidnight || currentHour % hourInterval === 0;
+
+          if (!shouldShowLabel) return null;
+
+          // Format the label
+          const timeLabel = formatInTimeZone(hour, timezone, "HH:mm", use12HourFormat);
+          const dateLabel = isMidnight
+            ? new Intl.DateTimeFormat("en-US", {
+                timeZone: timezone,
+                month: "short",
+                day: "numeric",
+              }).format(hour)
+            : null;
+
+          // Adjust font sizes based on zoom level
+          const timeFontSize = pixelsPerHour >= 40 ? 10 : pixelsPerHour >= 20 ? 9 : 8;
+          const dateFontSize = pixelsPerHour >= 40 ? 9 : 8;
 
           return (
             <g key={i}>
+              {/* Date label for midnight */}
+              {dateLabel && (
+                <text
+                  x={x + 4}
+                  y={14}
+                  fontSize={dateFontSize}
+                  fontWeight={700}
+                  fill="currentColor"
+                  opacity={0.7}
+                >
+                  {dateLabel}
+                </text>
+              )}
+              {/* Time label */}
               <text
                 x={x + 4}
-                y={25}
-                fontSize={10}
-                fontWeight={isEvenHour ? 600 : 400}
+                y={dateLabel ? 32 : 25}
+                fontSize={timeFontSize}
+                fontWeight={isMidnight ? 700 : 600}
                 fill="currentColor"
-                opacity={0.5}
+                opacity={isMidnight ? 0.8 : 0.6}
               >
-                {label}
+                {timeLabel}
               </text>
             </g>
           );
@@ -243,6 +294,7 @@ const TaskRow = React.memo(
       setHoveredTask,
       onTaskClick,
       timezone,
+      use12HourFormat,
     } = useGantt();
 
     const y = 40 + index * rowHeight;
@@ -357,35 +409,37 @@ const TaskRow = React.memo(
           {/* Tooltip on hover */}
           {isHovered && (
             <g>
+              {/* Tooltip background with dark fill */}
               <rect
-                x={x1}
-                y={y - 28}
-                width={180}
-                height={24}
-                rx={4}
-                fill="currentColor"
-                opacity={0.95}
+                x={x1 - 4}
+                y={y - 40}
+                width={Math.max(barWidth + 8, 200)}
+                height={36}
+                rx={6}
+                fill="#000000"
+                opacity={0.9}
+                stroke="rgba(255, 255, 255, 0.2)"
+                strokeWidth={1}
               />
+              {/* Task name */}
               <text
-                x={x1 + 8}
-                y={y - 14}
-                fontSize={10}
-                fontWeight={500}
-                fill="white"
-                style={{ mixBlendMode: "difference" }}
+                x={x1 + 4}
+                y={y - 24}
+                fontSize={11}
+                fontWeight={600}
+                fill="#ffffff"
               >
                 {task.name}
               </text>
+              {/* Time and duration */}
               <text
-                x={x1 + 8}
-                y={y - 4}
-                fontSize={9}
-                fill="white"
-                opacity={0.7}
-                style={{ mixBlendMode: "difference" }}
+                x={x1 + 4}
+                y={y - 12}
+                fontSize={10}
+                fill="#ffffff"
+                opacity={0.8}
               >
-                {formatInTimeZone(start, timezone, "HH:mm")} -{" "}
-                {formatInTimeZone(end, timezone, "HH:mm")} ({durationMinutes}m)
+                {formatInTimeZone(start, timezone, "HH:mm", use12HourFormat)} → {formatInTimeZone(end, timezone, "HH:mm", use12HourFormat)} ({durationMinutes}m)
               </text>
             </g>
           )}
@@ -404,7 +458,7 @@ interface GridLinesProps {
 
 const GridLines = React.memo(
   ({ leftPanelWidth, totalHeight }: GridLinesProps) => {
-    const { startTime, endTime, xScale } = useGantt();
+    const { startTime, endTime, xScale, tasks, rowHeight, extendedWidth } = useGantt();
 
     // Generate 15-minute intervals
     const intervals = React.useMemo(() => {
@@ -424,12 +478,13 @@ const GridLines = React.memo(
 
     return (
       <g>
+        {/* Vertical time grid lines */}
         {intervals.map((interval, i) => {
           const x = xScale(interval.time);
 
           return (
             <line
-              key={i}
+              key={`v-${i}`}
               x1={x}
               y1={40}
               x2={x}
@@ -437,6 +492,23 @@ const GridLines = React.memo(
               stroke="currentColor"
               strokeWidth={interval.isHour ? 1 : 0.5}
               opacity={interval.isHour ? 0.1 : 0.05}
+            />
+          );
+        })}
+
+        {/* Horizontal row divider lines */}
+        {tasks.map((_, i) => {
+          const y = 40 + (i + 1) * rowHeight;
+          return (
+            <line
+              key={`h-${i}`}
+              x1={leftPanelWidth}
+              y1={y}
+              x2={extendedWidth}
+              y2={y}
+              stroke="currentColor"
+              strokeWidth={1}
+              opacity={0.05}
             />
           );
         })}
@@ -470,25 +542,61 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
     {
       tasks,
       timezone = "UTC",
-      width = 1200,
+      width: providedWidth,
       rowHeight = 48,
       timeWindowHours = 12,
       startTime: providedStartTime,
       interactive = true,
       onTaskClick,
       variant = "default",
+      use12HourFormat = false,
       className,
       children,
     },
     ref
   ) => {
     const [hoveredTask, setHoveredTask] = React.useState<string | null>(null);
+    const [zoomLevel, setZoomLevel] = React.useState(1);
+    const [containerWidth, setContainerWidth] = React.useState(
+      providedWidth || 1200
+    );
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+    const rootRef = React.useRef<HTMLDivElement>(null);
+
+    // Observe container width for responsiveness
+    React.useEffect(() => {
+      // If width is explicitly provided, use it and don't observe
+      if (providedWidth) {
+        setContainerWidth(providedWidth);
+        return;
+      }
+
+      const element = rootRef.current;
+      if (!element) return;
+
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
+          if (width > 0) {
+            setContainerWidth(width);
+          }
+        }
+      });
+
+      observer.observe(element);
+      return () => observer.disconnect();
+    }, [providedWidth]);
+
+    // Use containerWidth instead of fixed width
+    const width = containerWidth;
 
     // Layout
     const leftPanelWidth =
       variant === "detailed" ? 240 : variant === "compact" ? 160 : 200;
     const totalHeight = 40 + tasks.length * rowHeight;
+
+    // Apply zoom to time window
+    const effectiveTimeWindowHours = timeWindowHours / zoomLevel;
 
     // Calculate total scrollable time range
     const totalScrollDays = 30;
@@ -496,9 +604,13 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
 
     // Calculate time window
     const { startTime, endTime, initialScrollPosition } = React.useMemo(() => {
+      const now = new Date();
       const baseStart = providedStartTime
         ? normalizeDate(providedStartTime)
-        : new Date();
+        : now;
+
+      // Create a scrollable timeline centered around the base time
+      // Start 15 days before, end 15 days after
       const start = addHours(baseStart, -(totalScrollDays / 2) * 24);
       const end = addHours(start, totalScrollHours);
 
@@ -509,7 +621,7 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
       };
     }, [providedStartTime, totalScrollDays, totalScrollHours]);
 
-    const pixelsPerHour = (width - leftPanelWidth) / timeWindowHours;
+    const pixelsPerHour = (width - leftPanelWidth) / effectiveTimeWindowHours;
     const extendedWidth = leftPanelWidth + totalScrollHours * pixelsPerHour;
 
     const xScale = React.useMemo(
@@ -536,6 +648,10 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
         extendedWidth,
         scrollContainerRef,
         initialScrollPosition,
+        zoomLevel,
+        setZoomLevel,
+        timeWindowHours: effectiveTimeWindowHours,
+        use12HourFormat,
       }),
       [
         tasks,
@@ -553,12 +669,32 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
         width,
         extendedWidth,
         initialScrollPosition,
+        zoomLevel,
+        effectiveTimeWindowHours,
+        use12HourFormat,
       ]
+    );
+
+    // Combine refs
+    const combinedRef = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        rootRef.current = node;
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref) {
+          ref.current = node;
+        }
+      },
+      [ref]
     );
 
     return (
       <GanttContext.Provider value={contextValue}>
-        <div ref={ref} className={cn("gantt-chart", className)}>
+        <div
+          ref={combinedRef}
+          className={cn("gantt-chart", className)}
+          style={{ width: providedWidth ? `${providedWidth}px` : "100%" }}
+        >
           {children}
         </div>
       </GanttContext.Provider>
@@ -575,15 +711,13 @@ const GanttChartContainer = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => {
-  const { width } = useGantt();
-
   return (
     <div
       ref={ref}
       className={cn("gantt-chart-container", className)}
       style={{
         position: "relative",
-        width: `${width}px`,
+        width: "100%",
         borderRadius: "8px",
         border: "1px solid rgba(0, 0, 0, 0.1)",
       }}
@@ -607,21 +741,29 @@ const GanttChartViewport = React.forwardRef<
     totalHeight,
     xScale,
     leftPanelWidth,
-    initialScrollPosition,
+    timeWindowHours,
   } = useGantt();
 
-  // Set initial scroll position
+  // Set initial scroll position to show "now" with ~1 hour of history visible
   React.useEffect(() => {
     if (!scrollContainerRef.current) return;
 
-    const livePlusOneHour = addHours(initialScrollPosition, 1);
-    const scrollPosition = xScale(livePlusOneHour) - leftPanelWidth;
+    const container = scrollContainerRef.current;
+    const viewportWidth = container.clientWidth - leftPanelWidth;
 
-    scrollContainerRef.current.scrollTo({
+    // Calculate the pixel width for 1 hour of time
+    const oneHourInPixels = viewportWidth / timeWindowHours;
+
+    // Always scroll to the actual current time, not initialScrollPosition
+    const actualNow = new Date();
+    const nowPosition = xScale(actualNow);
+    const scrollPosition = nowPosition - leftPanelWidth - oneHourInPixels;
+
+    container.scrollTo({
       left: Math.max(0, scrollPosition),
       behavior: "auto",
     });
-  }, []);
+  }, [xScale, leftPanelWidth, timeWindowHours]);
 
   return (
     <div
@@ -718,16 +860,28 @@ const GanttChartCurrentTime = React.forwardRef<
   SVGGElement,
   React.SVGAttributes<SVGGElement>
 >(({ className, ...props }, ref) => {
+  const [currentTime, setCurrentTime] = React.useState<Date | null>(null);
   const [isMounted, setIsMounted] = React.useState(false);
-  const { startTime, endTime, xScale, timezone, totalHeight } = useGantt();
+  const { startTime, endTime, xScale, totalHeight } = useGantt();
 
+  // Set initial time and mounted state on client only
   React.useEffect(() => {
     setIsMounted(true);
+    setCurrentTime(new Date());
+
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  if (!isMounted) return null;
+  // Don't render until mounted on client to avoid hydration mismatch
+  if (!isMounted || !currentTime) return null;
 
-  const now = toZonedTime(new Date(), timezone);
+  // Use raw Date object - no timezone conversion needed
+  // The xScale already handles the positioning correctly
+  const now = currentTime;
   if (now < startTime || now > endTime) return null;
 
   const x = xScale(now);
@@ -775,6 +929,7 @@ const GanttChartLeftPanel = React.forwardRef<
         width: `${leftPanelWidth}px`,
         height: `${totalHeight}px`,
         pointerEvents: "none",
+        zIndex: 10,
       }}
       {...props}
     >
@@ -952,13 +1107,71 @@ const GanttChartControls = React.forwardRef<
     },
     ref
   ) => {
-    const { scrollContainerRef, width } = useGantt();
+    const {
+      scrollContainerRef,
+      width,
+      zoomLevel,
+      setZoomLevel,
+      xScale,
+      leftPanelWidth,
+      timeWindowHours,
+    } = useGantt();
+
+    const [shouldScrollToNow, setShouldScrollToNow] = React.useState(false);
+
+    // Effect to scroll to "now" after zoom has been reset
+    React.useEffect(() => {
+      if (!shouldScrollToNow || zoomLevel !== 1) return;
+
+      if (scrollContainerRef.current) {
+        const viewportWidth = scrollContainerRef.current.clientWidth - leftPanelWidth;
+        const oneHourInPixels = viewportWidth / timeWindowHours;
+
+        // Always scroll to actual current time
+        const actualNow = new Date();
+        const nowPosition = xScale(actualNow);
+        const scrollPosition = nowPosition - leftPanelWidth - oneHourInPixels;
+
+        scrollContainerRef.current.scrollTo({
+          left: Math.max(0, scrollPosition),
+          behavior: "smooth",
+        });
+
+        setShouldScrollToNow(false);
+      }
+    }, [shouldScrollToNow, zoomLevel, xScale, leftPanelWidth, timeWindowHours, scrollContainerRef]);
 
     const handleZoomIn = () => {
+      const currentScroll = scrollContainerRef.current?.scrollLeft || 0;
+      const currentCenter = currentScroll + (scrollContainerRef.current?.clientWidth || 0) / 2;
+
+      setZoomLevel(Math.min(zoomLevel * 1.5, 4));
+
+      // Adjust scroll to maintain center point
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          const newScroll = currentCenter * 1.5 - (scrollContainerRef.current.clientWidth / 2);
+          scrollContainerRef.current.scrollLeft = newScroll;
+        }
+      }, 0);
+
       onZoomIn?.();
     };
 
     const handleZoomOut = () => {
+      const currentScroll = scrollContainerRef.current?.scrollLeft || 0;
+      const currentCenter = currentScroll + (scrollContainerRef.current?.clientWidth || 0) / 2;
+
+      setZoomLevel(Math.max(zoomLevel / 1.5, 0.25));
+
+      // Adjust scroll to maintain center point
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          const newScroll = currentCenter / 1.5 - (scrollContainerRef.current.clientWidth / 2);
+          scrollContainerRef.current.scrollLeft = Math.max(0, newScroll);
+        }
+      }, 0);
+
       onZoomOut?.();
     };
 
@@ -983,6 +1196,12 @@ const GanttChartControls = React.forwardRef<
     };
 
     const handleResetView = () => {
+      // Reset zoom to 1
+      setZoomLevel(1);
+
+      // Trigger scroll to "now" (will happen in useEffect after zoom resets)
+      setShouldScrollToNow(true);
+
       onResetView?.();
     };
 

@@ -1,0 +1,62 @@
+"use client";
+
+import React, { createContext, useContext, useState, useEffect } from "react";
+
+export const colorSchemes = {
+  green: "#44FF07",
+  blue: "#3700FF",
+  violet: "#FB13F3",
+  cyan: "#00D4FF",
+  orange: "#FF6B35",
+} as const;
+
+export type ColorSchemeName = keyof typeof colorSchemes;
+
+interface ColorSchemeContextValue {
+  colorScheme: ColorSchemeName;
+  setColorScheme: (scheme: ColorSchemeName) => void;
+  color: string;
+}
+
+const ColorSchemeContext = createContext<ColorSchemeContextValue | undefined>(
+  undefined
+);
+
+export function ColorSchemeProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [colorScheme, setColorScheme] = useState<ColorSchemeName>("green");
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("color-scheme") as ColorSchemeName;
+    if (saved && colorSchemes[saved]) {
+      setColorScheme(saved);
+    }
+  }, []);
+
+  // Save to localStorage when changed
+  useEffect(() => {
+    localStorage.setItem("color-scheme", colorScheme);
+  }, [colorScheme]);
+
+  const color = colorSchemes[colorScheme];
+
+  return (
+    <ColorSchemeContext.Provider
+      value={{ colorScheme, setColorScheme, color }}
+    >
+      {children}
+    </ColorSchemeContext.Provider>
+  );
+}
+
+export function useColorScheme() {
+  const context = useContext(ColorSchemeContext);
+  if (!context) {
+    throw new Error("useColorScheme must be used within ColorSchemeProvider");
+  }
+  return context;
+}

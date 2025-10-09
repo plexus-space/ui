@@ -19,10 +19,12 @@ export function ComponentPreview({
   const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 w-full">
       {title && <h3 className="text-lg font-semibold">{title}</h3>}
       {description && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          {description}
+        </p>
       )}
 
       {/* Tabs */}

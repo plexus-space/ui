@@ -596,8 +596,22 @@ const PolarPlotTooltip = React.forwardRef<
   const rLabel = formatValue(point.r);
 
   return (
-    <g ref={ref} className={cn("polar-plot-tooltip", className)} {...props}>
-      {/* Crosshair circle */}
+    <g
+      ref={ref}
+      className={cn("polar-plot-tooltip", className)}
+      style={{ pointerEvents: "none" }}
+      {...props}
+    >
+      {/* Point indicator - static circles to avoid flicker */}
+      <circle
+        cx={x}
+        cy={y}
+        r={8}
+        fill="none"
+        stroke={s.color || "#64748b"}
+        strokeWidth={2}
+        opacity={0.3}
+      />
       <circle
         cx={x}
         cy={y}
@@ -605,23 +619,8 @@ const PolarPlotTooltip = React.forwardRef<
         fill="none"
         stroke={s.color || "#64748b"}
         strokeWidth={2}
-        opacity={0.6}
-      >
-        <animate
-          attributeName="r"
-          from="6"
-          to="10"
-          dur="0.8s"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="opacity"
-          from="0.6"
-          to="0"
-          dur="0.8s"
-          repeatCount="indefinite"
-        />
-      </circle>
+        opacity={0.5}
+      />
       <circle
         cx={x}
         cy={y}

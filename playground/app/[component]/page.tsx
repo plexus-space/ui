@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useMemo, useState, useEffect } from "react";
 import { components } from "../../constants/components";
+import { useColorScheme } from "@/components/color-scheme-provider";
 
 import { LineChart } from "@plexusui/components/line-chart";
 import { PolarPlot } from "@plexusui/components/polar-plot";
@@ -46,19 +47,18 @@ function seededRandom(seed: number) {
 // ============================================================================
 
 const LineChartExamples = () => {
-  const fftData = useMemo(
-    () => {
-      const random = seededRandom(12345);
-      return Array.from({ length: 128 }, (_, i) => {
-        const freq = (i / 128) * 50;
-        const peak1 = 80 * Math.exp(-Math.pow((freq - 5) / 1, 2));
-        const peak2 = 40 * Math.exp(-Math.pow((freq - 10) / 1.5, 2));
-        const peak3 = 20 * Math.exp(-Math.pow((freq - 15) / 2, 2));
-        return { x: freq, y: peak1 + peak2 + peak3 + random() * 2 };
-      });
-    },
-    []
-  );
+  const { color } = useColorScheme();
+
+  const fftData = useMemo(() => {
+    const random = seededRandom(12345);
+    return Array.from({ length: 128 }, (_, i) => {
+      const freq = (i / 128) * 50;
+      const peak1 = 80 * Math.exp(-Math.pow((freq - 5) / 1, 2));
+      const peak2 = 40 * Math.exp(-Math.pow((freq - 10) / 1.5, 2));
+      const peak3 = 20 * Math.exp(-Math.pow((freq - 15) / 2, 2));
+      return { x: freq, y: peak1 + peak2 + peak3 + random() * 2 };
+    });
+  }, []);
 
   // Damped Oscillation
   const dampedOscillation = useMemo(
@@ -67,22 +67,22 @@ const LineChartExamples = () => {
         const t = i / 10;
         const omega = 2;
         const gamma = 0.1;
-        return { x: t, y: Math.exp(-gamma * t) * Math.cos(omega * t) * 50 + 50 };
+        return {
+          x: t,
+          y: Math.exp(-gamma * t) * Math.cos(omega * t) * 50 + 50,
+        };
       }),
     []
   );
 
   // Noisy Signal
-  const noisySignal = useMemo(
-    () => {
-      const random = seededRandom(54321);
-      return Array.from({ length: 100 }, (_, i) => {
-        const t = i / 10;
-        return { x: t, y: 30 * Math.sin(t) + 50 + (random() - 0.5) * 10 };
-      });
-    },
-    []
-  );
+  const noisySignal = useMemo(() => {
+    const random = seededRandom(54321);
+    return Array.from({ length: 100 }, (_, i) => {
+      const t = i / 10;
+      return { x: t, y: 30 * Math.sin(t) + 50 + (random() - 0.5) * 10 };
+    });
+  }, []);
 
   const filteredSignal = useMemo(
     () =>
@@ -107,20 +107,13 @@ const LineChartExamples = () => {
   );
 
   // High-volume data (50,000 points)
-  const highVolumeData = useMemo(
-    () => {
-      const random = seededRandom(99999);
-      return Array.from({ length: 50000 }, (_, i) => ({
-        x: i / 100,
-        y:
-          Math.sin(i / 100) * 30 +
-          Math.sin(i / 10) * 10 +
-          random() * 5 +
-          50,
-      }));
-    },
-    []
-  );
+  const highVolumeData = useMemo(() => {
+    const random = seededRandom(99999);
+    return Array.from({ length: 50000 }, (_, i) => ({
+      x: i / 100,
+      y: Math.sin(i / 100) * 30 + Math.sin(i / 10) * 10 + random() * 5 + 50,
+    }));
+  }, []);
 
   // Streaming data
   const [streamingData, setStreamingData] = useState(() =>
@@ -157,7 +150,7 @@ const LineChartExamples = () => {
               {
                 name: "Magnitude",
                 data: fftData,
-                color: "#06b6d4",
+                color: color,
                 strokeWidth: 2,
                 filled: true,
               },
@@ -214,7 +207,7 @@ const LineChartExamples = () => {
               {
                 name: "Displacement",
                 data: dampedOscillation,
-                color: "#a855f7",
+                color: color,
                 strokeWidth: 2.5,
               },
             ]}
@@ -273,7 +266,7 @@ const LineChartExamples = () => {
               {
                 name: "Filtered Signal",
                 data: filteredSignal,
-                color: "#10b981",
+                color: color,
                 strokeWidth: 2.5,
               },
             ]}
@@ -335,7 +328,7 @@ const LineChartExamples = () => {
               {
                 name: "Velocity",
                 data: orbitalVelocity,
-                color: "#3b82f6",
+                color: color,
                 strokeWidth: 2.5,
               },
             ]}
@@ -389,7 +382,7 @@ const LineChartExamples = () => {
                 {
                   name: "Live Telemetry",
                   data: streamingData,
-                  color: "#10b981",
+                  color: color,
                 },
               ]}
               xAxis={{ label: "Time" }}
@@ -451,7 +444,7 @@ useEffect(() => {
           <div className="space-y-2">
             <LineChart.Root
               series={[
-                { name: "Sensor Data", data: highVolumeData, color: "#8b5cf6" },
+                { name: "Sensor Data", data: highVolumeData, color: color },
               ]}
               xAxis={{ label: "Time (s)" }}
               yAxis={{ label: "Signal" }}
@@ -485,116 +478,13 @@ useEffect(() => {
   decimation="lttb"
 />`}
       />
-
-      {/* Variants */}
-      <ComponentPreview
-        title="Chart Variants"
-        description="Different visual styles for various use cases: minimal, scientific, and dashboard variants."
-        preview={
-          <div className="space-y-6">
-            <div>
-              <p className="text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
-                Minimal
-              </p>
-              <LineChart.Root
-                series={[
-                  {
-                    name: "Data",
-                    data: dampedOscillation.slice(0, 100),
-                    color: "#64748b",
-                  },
-                ]}
-                width={850}
-                height={200}
-                variant="minimal"
-              >
-                <LineChart.Container>
-                  <LineChart.Viewport>
-                    <LineChart.Axes />
-                    <LineChart.Lines />
-                  </LineChart.Viewport>
-                </LineChart.Container>
-              </LineChart.Root>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
-                Scientific
-              </p>
-              <LineChart.Root
-                series={[
-                  {
-                    name: "Data",
-                    data: dampedOscillation.slice(0, 100),
-                    color: "#3b82f6",
-                  },
-                ]}
-                width={850}
-                height={200}
-                variant="scientific"
-              >
-                <LineChart.Container>
-                  <LineChart.Viewport>
-                    <LineChart.Grid />
-                    <LineChart.Axes />
-                    <LineChart.Points radius={3} />
-                    <LineChart.Interaction />
-                    <LineChart.Tooltip />
-                  </LineChart.Viewport>
-                </LineChart.Container>
-              </LineChart.Root>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">
-                Dashboard
-              </p>
-              <LineChart.Root
-                series={[
-                  {
-                    name: "Data",
-                    data: dampedOscillation.slice(0, 100),
-                    color: "#10b981",
-                  },
-                ]}
-                width={850}
-                height={200}
-                variant="dashboard"
-              >
-                <LineChart.Container>
-                  <LineChart.Viewport>
-                    <LineChart.Grid />
-                    <LineChart.Axes />
-                    <LineChart.Lines />
-                    <LineChart.Interaction />
-                    <LineChart.Tooltip />
-                  </LineChart.Viewport>
-                </LineChart.Container>
-              </LineChart.Root>
-            </div>
-          </div>
-        }
-        code={`// Minimal variant
-<LineChart
-  series={[...]}
-  variant="minimal"
-/>
-
-// Scientific variant (shows data points)
-<LineChart
-  series={[...]}
-  variant="scientific"
-/>
-
-// Dashboard variant (thick lines)
-<LineChart
-  series={[...]}
-  variant="dashboard"
-/>`}
-      />
     </div>
   );
 };
 
 const PolarPlotExamples = () => {
+  const { color } = useColorScheme();
+
   // Antenna radiation pattern
   const radiationPattern = useMemo(
     () =>
@@ -620,30 +510,27 @@ const PolarPlotExamples = () => {
   );
 
   // Wind rose (directional data)
-  const windData = useMemo(
-    () => {
-      const random = seededRandom(11111);
-      return Array.from({ length: 16 }, (_, i) => {
-        const theta = (i / 16) * 2 * Math.PI;
-        const r = random() * 0.5 + 0.3;
-        return { theta, r };
-      });
-    },
-    []
-  );
+  const windData = useMemo(() => {
+    const random = seededRandom(11111);
+    return Array.from({ length: 16 }, (_, i) => {
+      const theta = (i / 16) * 2 * Math.PI;
+      const r = random() * 0.5 + 0.3;
+      return { theta, r };
+    });
+  }, []);
 
   return (
     <div className="space-y-12">
       <ComponentPreview
         title="Antenna Radiation Pattern"
-        description="Polar plot showing the directional gain pattern of an antenna. Essential for RF analysis and link budget calculations."
+        description="Polar plot showing the directional gain pattern of an antenna."
         preview={
           <PolarPlot.Root
             series={[
               {
                 name: "Gain Pattern",
                 data: radiationPattern,
-                color: "#06b6d4",
+                color: color,
                 filled: true,
                 closed: true,
               },
@@ -708,7 +595,7 @@ const PolarPlotExamples = () => {
               {
                 name: "Health Status",
                 data: subsystemHealth,
-                color: "#10b981",
+                color: color,
                 filled: true,
                 closed: true,
                 strokeWidth: 3,
@@ -768,7 +655,7 @@ const PolarPlotExamples = () => {
               {
                 name: "Wind Distribution",
                 data: windData,
-                color: "#a855f7",
+                color: color,
                 filled: true,
                 closed: true,
               },
@@ -817,31 +704,25 @@ const HeatmapExamples = () => {
   // Correlation matrix
 
   // Terrain elevation
-  const terrainData = useMemo(
-    () => {
-      const random = seededRandom(22222);
-      return Array.from({ length: 20 }, (_, y) =>
-        Array.from({ length: 20 }, (_, x) => {
-          const dx = x - 10;
-          const dy = y - 10;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          return 100 * Math.exp(-(dist * dist) / 50) + random() * 10;
-        })
-      );
-    },
-    []
-  );
+  const terrainData = useMemo(() => {
+    const random = seededRandom(22222);
+    return Array.from({ length: 20 }, (_, y) =>
+      Array.from({ length: 20 }, (_, x) => {
+        const dx = x - 10;
+        const dy = y - 10;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        return 100 * Math.exp(-(dist * dist) / 50) + random() * 10;
+      })
+    );
+  }, []);
 
   // Time-series heatmap (ground station contacts)
-  const contactHeatmap = useMemo(
-    () => {
-      const random = seededRandom(33333);
-      return Array.from({ length: 24 }, (_, hour) =>
-        Array.from({ length: 7 }, (_, day) => Math.floor(random() * 10))
-      );
-    },
-    []
-  );
+  const contactHeatmap = useMemo(() => {
+    const random = seededRandom(33333);
+    return Array.from({ length: 24 }, (_, hour) =>
+      Array.from({ length: 7 }, (_, day) => Math.floor(random() * 10))
+    );
+  }, []);
 
   return (
     <div className="space-y-12">
@@ -975,6 +856,7 @@ const HeatmapExamples = () => {
 };
 
 const GanttChartExamples = () => {
+  const { color } = useColorScheme();
   const [timezone, setTimezone] = useState("UTC");
   const [timeWindowHours, setTimeWindowHours] = useState(12);
 
@@ -992,102 +874,93 @@ const GanttChartExamples = () => {
   const groundStationPasses = [
     {
       id: "p1",
-      name: "ISS Pass",
-      start: new Date(baseTime.getTime() + 30 * 60000), // 08:30
-      end: new Date(baseTime.getTime() + 45 * 60000), // 08:45
+      name: "Sentinel-1A",
+      start: new Date(baseTime.getTime() - 120 * 60000), // 06:00
+      end: new Date(baseTime.getTime() - 108 * 60000), // 06:12
       status: "completed" as const,
-      description: "Low elevation pass",
+      description: "SAR data downlink",
+      color: color,
     },
     {
       id: "p2",
-      name: "NOAA-18 Downlink",
-      start: new Date(baseTime.getTime() + 140 * 60000), // 10:20
-      end: new Date(baseTime.getTime() + 152 * 60000), // 10:32
-      status: "in-progress" as const,
-      description: "Weather data acquisition",
+      name: "ISS Pass",
+      start: new Date(baseTime.getTime() - 60 * 60000), // 07:00
+      end: new Date(baseTime.getTime() - 45 * 60000), // 07:15
+      status: "completed" as const,
+      description: "Low elevation pass",
+      color: color,
     },
     {
       id: "p3",
-      name: "Starlink Command",
-      start: new Date(baseTime.getTime() + 255 * 60000), // 12:15
-      end: new Date(baseTime.getTime() + 268 * 60000), // 12:28
-      status: "planned" as const,
-      description: "Telemetry uplink",
+      name: "NOAA-19",
+      start: new Date(baseTime.getTime() - 15 * 60000), // 07:45
+      end: new Date(baseTime.getTime() - 3 * 60000), // 07:57
+      status: "completed" as const,
+      description: "Weather imagery",
+      color: color,
     },
     {
       id: "p4",
+      name: "NOAA-18 Downlink",
+      start: new Date(baseTime.getTime() + 20 * 60000), // 08:20
+      end: new Date(baseTime.getTime() + 32 * 60000), // 08:32
+      status: "in-progress" as const,
+      description: "Weather data acquisition",
+      color: color,
+    },
+    {
+      id: "p5",
+      name: "TerraSAR-X",
+      start: new Date(baseTime.getTime() + 95 * 60000), // 09:35
+      end: new Date(baseTime.getTime() + 108 * 60000), // 09:48
+      status: "planned" as const,
+      description: "Radar imaging pass",
+      color: color,
+    },
+    {
+      id: "p6",
+      name: "Starlink Command",
+      start: new Date(baseTime.getTime() + 175 * 60000), // 10:55
+      end: new Date(baseTime.getTime() + 188 * 60000), // 11:08
+      status: "planned" as const,
+      description: "Telemetry uplink",
+      color: color,
+    },
+    {
+      id: "p7",
+      name: "Aqua",
+      start: new Date(baseTime.getTime() + 255 * 60000), // 12:15
+      end: new Date(baseTime.getTime() + 270 * 60000), // 12:30
+      status: "planned" as const,
+      description: "MODIS data collection",
+      color: color,
+    },
+    {
+      id: "p8",
       name: "Landsat 9 TLM",
-      start: new Date(baseTime.getTime() + 395 * 60000), // 14:35
-      end: new Date(baseTime.getTime() + 410 * 60000), // 14:50
+      start: new Date(baseTime.getTime() + 335 * 60000), // 13:35
+      end: new Date(baseTime.getTime() + 350 * 60000), // 13:50
       status: "planned" as const,
       description: "Earth observation data",
-    },
-  ];
-
-  // Multi-satellite tracking
-  const multiSatPasses = [
-    {
-      id: "m1",
-      name: "GOES-16",
-      start: new Date(baseTime.getTime() + 0),
-      end: new Date(baseTime.getTime() + 25 * 60000),
-      status: "in-progress" as const,
+      color: color,
     },
     {
-      id: "m2",
-      name: "Sentinel-2",
-      start: new Date(baseTime.getTime() + 90 * 60000),
-      end: new Date(baseTime.getTime() + 105 * 60000),
+      id: "p9",
+      name: "MetOp-B",
+      start: new Date(baseTime.getTime() + 425 * 60000), // 15:05
+      end: new Date(baseTime.getTime() + 437 * 60000), // 15:17
       status: "planned" as const,
+      description: "Meteorological data",
+      color: color,
     },
     {
-      id: "m3",
-      name: "Terra",
-      start: new Date(baseTime.getTime() + 180 * 60000),
-      end: new Date(baseTime.getTime() + 195 * 60000),
+      id: "p10",
+      name: "Sentinel-3B",
+      start: new Date(baseTime.getTime() + 510 * 60000), // 16:30
+      end: new Date(baseTime.getTime() + 523 * 60000), // 16:43
       status: "planned" as const,
-    },
-    {
-      id: "m4",
-      name: "Aqua",
-      start: new Date(baseTime.getTime() + 285 * 60000),
-      end: new Date(baseTime.getTime() + 298 * 60000),
-      status: "planned" as const,
-    },
-    {
-      id: "m5",
-      name: "MetOp-C",
-      start: new Date(baseTime.getTime() + 420 * 60000),
-      end: new Date(baseTime.getTime() + 433 * 60000),
-      status: "planned" as const,
-    },
-  ];
-
-  // 24-hour operations
-  const opsSchedule = [
-    {
-      id: "o1",
-      name: "Deep Space Network",
-      start: new Date(baseTime.getTime()),
-      end: new Date(baseTime.getTime() + 240 * 60000),
-      status: "in-progress" as const,
-      description: "Voyager 1 contact",
-    },
-    {
-      id: "o2",
-      name: "GPS Constellation",
-      start: new Date(baseTime.getTime() + 300 * 60000),
-      end: new Date(baseTime.getTime() + 480 * 60000),
-      status: "planned" as const,
-      description: "Navigation updates",
-    },
-    {
-      id: "o3",
-      name: "Hubble Telemetry",
-      start: new Date(baseTime.getTime() + 540 * 60000),
-      end: new Date(baseTime.getTime() + 720 * 60000),
-      status: "planned" as const,
-      description: "Science data downlink",
+      description: "Ocean monitoring",
+      color: color,
     },
   ];
 
@@ -1148,15 +1021,16 @@ const GanttChartExamples = () => {
             <GanttChart
               tasks={groundStationPasses}
               timezone={timezone}
-              width={1000}
               rowHeight={50}
               timeWindowHours={timeWindowHours}
               startTime={baseTime}
               interactive={true}
-              variant="default"
               onTaskClick={(task) => console.log("Clicked:", task.name)}
+              variant="compact"
             >
-              <GanttChart.Controls />
+              <div className="flex justify-end p-4 w-full">
+                <GanttChart.Controls />
+              </div>
               <GanttChart.Container>
                 <GanttChart.Viewport>
                   <GanttChart.Grid />
@@ -1169,111 +1043,31 @@ const GanttChartExamples = () => {
             </GanttChart>
           </div>
         }
-        code={`<GanttChart
-  tasks={groundStationPasses}
-  timezone="UTC"
-  timeWindowHours={12}
-  startTime={baseTime}
-  interactive
-  onTaskClick={(task) => console.log(task)}
->
-  <GanttChart.Controls />
-  <GanttChart.Container>
-    <GanttChart.Viewport>
-      <GanttChart.Grid />
-      <GanttChart.Header />
-      <GanttChart.Tasks />
-      <GanttChart.CurrentTime />
-    </GanttChart.Viewport>
-    <GanttChart.LeftPanel />
-  </GanttChart.Container>
-</GanttChart>`}
-      />
-
-      <ComponentPreview
-        title="Multi-Satellite Tracking"
-        description="Compact view for tracking multiple satellites simultaneously. Ideal for operations centers monitoring several assets. Timezone and time window controlled by settings above."
-        preview={
-          <GanttChart
-            tasks={multiSatPasses}
-            timezone={timezone}
-            width={1000}
-            rowHeight={42}
-            timeWindowHours={timeWindowHours}
-            startTime={baseTime}
-            interactive={true}
-            variant="compact"
-          >
-            <GanttChart.Container>
-              <GanttChart.Viewport>
-                <GanttChart.Grid />
-                <GanttChart.Header />
-                <GanttChart.Tasks />
-                <GanttChart.CurrentTime />
-              </GanttChart.Viewport>
-              <GanttChart.LeftPanel />
-            </GanttChart.Container>
-          </GanttChart>
-        }
-        code={`<GanttChart
-  tasks={multiSatPasses}
-  timezone="UTC"
-  timeWindowHours={8}
-  variant="compact"
->
-  <GanttChart.Container>
-    <GanttChart.Viewport>
-      <GanttChart.Grid />
-      <GanttChart.Header />
-      <GanttChart.Tasks />
-      <GanttChart.CurrentTime />
-    </GanttChart.Viewport>
-    <GanttChart.LeftPanel />
-  </GanttChart.Container>
-</GanttChart>`}
-      />
-
-      <ComponentPreview
-        title="Operations View"
-        description="Full operations schedule with detailed descriptions. Perfect for mission control planning and coordination. Timezone and time window controlled by settings above."
-        preview={
-          <GanttChart
-            tasks={opsSchedule}
-            timezone={timezone}
-            width={1000}
-            rowHeight={55}
-            timeWindowHours={timeWindowHours}
-            startTime={baseTime}
-            interactive={true}
-            variant="detailed"
-          >
-            <GanttChart.Container>
-              <GanttChart.Viewport>
-                <GanttChart.Grid />
-                <GanttChart.Header />
-                <GanttChart.Tasks />
-                <GanttChart.CurrentTime />
-              </GanttChart.Viewport>
-              <GanttChart.LeftPanel />
-            </GanttChart.Container>
-          </GanttChart>
-        }
-        code={`<GanttChart
-  tasks={opsSchedule}
-  timezone="UTC"
-  timeWindowHours={24}
-  variant="detailed"
->
-  <GanttChart.Container>
-    <GanttChart.Viewport>
-      <GanttChart.Grid />
-      <GanttChart.Header />
-      <GanttChart.Tasks />
-      <GanttChart.CurrentTime />
-    </GanttChart.Viewport>
-    <GanttChart.LeftPanel />
-  </GanttChart.Container>
-</GanttChart>`}
+        code={`<div className="space-y-4">
+  <GanttChart
+    tasks={groundStationPasses}
+    timezone={timezone}
+    rowHeight={50}
+    timeWindowHours={timeWindowHours}
+    startTime={baseTime}
+    interactive={true}
+    onTaskClick={(task) => console.log("Clicked:", task.name)}
+    variant="compact"
+  >
+    <div className="flex justify-end p-4 w-full">
+      <GanttChart.Controls />
+    </div>
+    <GanttChart.Container>
+      <GanttChart.Viewport>
+        <GanttChart.Grid />
+        <GanttChart.Header />
+        <GanttChart.Tasks />
+        <GanttChart.CurrentTime />
+      </GanttChart.Viewport>
+      <GanttChart.LeftPanel />
+    </GanttChart.Container>
+  </GanttChart>
+</div>`}
       />
     </div>
   );

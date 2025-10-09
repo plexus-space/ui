@@ -10,31 +10,6 @@
  * ```
  */
 
-// WebGPU Rendering
-export {
-  GPURenderer,
-  useGPURenderer,
-  createComputePipeline,
-  createBufferWithData,
-  readBuffer,
-  type GPURendererContext,
-  type GPURendererProps,
-} from "./gpu-renderer";
-
-export {
-  useGPUFFT,
-  useGPUConvolution,
-  type GPUComputeFFTProps,
-} from "./gpu-compute";
-
-export {
-  GPULineRenderer,
-  GPUScatterRenderer,
-  type GPULineRendererProps,
-  type GPUScatterRendererProps,
-  type Point as GPUPoint,
-} from "./gpu-line-renderer";
-
 // 3D Primitives
 export {
   Sphere,
@@ -123,17 +98,6 @@ export {
   benchmarkPhysics,
   type WASMPhysicsModule,
 } from "./wasm-physics";
-
-// GPU Large Dataset Rendering
-export {
-  GPUParticleField,
-  GPUHeatmap,
-  GPULineField,
-  gpuFrustumCulling,
-  type GPUParticleFieldProps,
-  type GPUHeatmapProps,
-  type GPULineFieldProps,
-} from "./gpu-large-dataset";
 
 // Chart Primitives - Heatmap
 export {

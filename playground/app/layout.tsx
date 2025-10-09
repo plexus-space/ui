@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist, Open_Sans, Space_Grotesk } from "next/font/google";
+import { Open_Sans, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/app/providers";
 import { Sidenav } from "@/components/sidenav";
 import { TopNav } from "@/components/top-nav";

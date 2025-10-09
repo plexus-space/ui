@@ -334,7 +334,7 @@ export function MotionTrail({
   if (!geometry) return null;
 
   return (
-    <line geometry={geometry}>
+    <line>
       <lineBasicMaterial
         vertexColors
         linewidth={width}
@@ -444,7 +444,12 @@ export function ParticleEmitter({
   return (
     <points ref={meshRef}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={0} array={new Float32Array(0)} itemSize={3} />
+        <bufferAttribute
+          attach="attributes-position"
+          count={0}
+          array={new Float32Array(0)}
+          itemSize={3}
+        />
       </bufferGeometry>
       <pointsMaterial
         color={color}

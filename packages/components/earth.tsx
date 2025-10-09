@@ -9,11 +9,7 @@ import { Sphere, Atmosphere, Clouds } from "./primitives/sphere";
 import {
   EARTH_RADIUS_KM,
   EARTH_ROTATION_PERIOD_SECONDS,
-  EARTH_ORBITAL_PERIOD_DAYS,
   EARTH_AXIAL_TILT_DEG,
-  ASTRONOMICAL_UNIT_KM,
-  SUN_RADIUS_KM,
-  SCENE_SCALE,
   kmToSceneUnits,
   calculateRotationSpeed,
   getCurrentDayOfYear,
@@ -252,7 +248,6 @@ const EarthCanvas = React.forwardRef<HTMLDivElement, EarthCanvasProps>(
           }}
         >
           <color attach="background" args={[0, 0, 0]} />
-          <fog attach="fog" args={[0x000511, 50, 200]} />
 
           <Suspense fallback={null}>
             <ambientLight intensity={1.0 * brightness} color={0xffffff} />

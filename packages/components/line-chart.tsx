@@ -678,7 +678,12 @@ const LineChartTooltip = React.forwardRef<
   const offsetY = py > height / 2 ? -tooltipHeight - 10 : 10;
 
   return (
-    <g ref={ref} className={cn("line-chart-tooltip", className)} {...props}>
+    <g
+      ref={ref}
+      className={cn("line-chart-tooltip", className)}
+      style={{ pointerEvents: "none" }}
+      {...props}
+    >
       {/* Crosshair */}
       <line
         x1={px}
@@ -701,7 +706,16 @@ const LineChartTooltip = React.forwardRef<
         opacity={0.3}
       />
 
-      {/* Point indicator */}
+      {/* Point indicator - static circles to avoid flicker */}
+      <circle
+        cx={px}
+        cy={py}
+        r={8}
+        fill="none"
+        stroke={color}
+        strokeWidth={2}
+        opacity={0.3}
+      />
       <circle
         cx={px}
         cy={py}
@@ -709,23 +723,8 @@ const LineChartTooltip = React.forwardRef<
         fill="none"
         stroke={color}
         strokeWidth={2}
-        opacity={0.6}
-      >
-        <animate
-          attributeName="r"
-          from="6"
-          to="10"
-          dur="0.8s"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="opacity"
-          from="0.6"
-          to="0"
-          dur="0.8s"
-          repeatCount="indefinite"
-        />
-      </circle>
+        opacity={0.5}
+      />
       <circle
         cx={px}
         cy={py}
@@ -796,6 +795,7 @@ const LineChartInteraction = React.forwardRef<
     xScale,
     yScale,
     setHoveredPoint,
+    hoveredPoint,
     magneticCrosshair,
     snapRadius,
     hiddenSeries,
@@ -834,14 +834,29 @@ const LineChartInteraction = React.forwardRef<
         });
       });
 
-      if (minDist < snapRadius) {
-        setHoveredPoint({
-          seriesIdx: nearestSeriesIdx,
-          pointIdx: nearestPointIdx,
-        });
-      } else {
-        setHoveredPoint(null);
+      // Add hysteresis: use a larger radius to "release" than to "capture"
+      // This prevents flickering when mouse is near the edge
+      const currentSnapRadius = snapRadius;
+      const releaseRadius = snapRadius * 1.3; // 30% larger for release
+
+      if (minDist < currentSnapRadius) {
+        // Only update if it's a different point
+        if (
+          hoveredPoint?.seriesIdx !== nearestSeriesIdx ||
+          hoveredPoint?.pointIdx !== nearestPointIdx
+        ) {
+          setHoveredPoint({
+            seriesIdx: nearestSeriesIdx,
+            pointIdx: nearestPointIdx,
+          });
+        }
+      } else if (minDist > releaseRadius) {
+        // Only clear if we're far enough away
+        if (hoveredPoint !== null) {
+          setHoveredPoint(null);
+        }
       }
+      // If between currentSnapRadius and releaseRadius, maintain current state
     },
     [
       magneticCrosshair,
@@ -850,6 +865,7 @@ const LineChartInteraction = React.forwardRef<
       yScale,
       snapRadius,
       hiddenSeries,
+      hoveredPoint,
       setHoveredPoint,
     ]
   );
