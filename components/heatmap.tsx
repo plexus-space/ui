@@ -284,7 +284,7 @@ const HeatmapCells = memo(
           const isHovered =
             hoveredCell?.x === cell.x && hoveredCell?.y === cell.y;
 
-          let cellElement: JSX.Element;
+          let cellElement: React.JSX.Element;
           let centerX: number;
           let centerY: number;
 
