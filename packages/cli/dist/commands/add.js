@@ -4,133 +4,36 @@ import ora from "ora";
 import * as fs from "fs-extra";
 import * as path from "path";
 import https from "https";
-const AVAILABLE_COMPONENTS = [
-    "earth",
-    "mars",
-    "mercury",
-    "venus",
-    "moon",
-    "jupiter",
-    "saturn",
-    "uranus",
-    "neptune",
-    "orbital-path",
-    "line-chart",
-    "scatter-plot",
-    "polar-plot",
-    "heatmap",
-    "histogram",
-    "gantt-chart",
-];
-const COMPONENT_REGISTRY = {
-    earth: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/earth.tsx",
-        filename: "earth.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    mars: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/mars.tsx",
-        filename: "mars.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    mercury: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/mercury.tsx",
-        filename: "mercury.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    venus: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/venus.tsx",
-        filename: "venus.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    moon: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/moon.tsx",
-        filename: "moon.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    jupiter: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/jupiter.tsx",
-        filename: "jupiter.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    saturn: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/saturn.tsx",
-        filename: "saturn.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    uranus: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/uranus.tsx",
-        filename: "uranus.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    neptune: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/neptune.tsx",
-        filename: "neptune.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        primitives: ["sphere"],
-    },
-    "orbital-path": {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/orbital-path.tsx",
-        filename: "orbital-path.tsx",
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    },
-    "line-chart": {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/line-chart.tsx",
-        filename: "line-chart.tsx",
-        dependencies: ["react"],
-    },
-    "scatter-plot": {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/scatter-plot.tsx",
-        filename: "scatter-plot.tsx",
-        dependencies: ["react"],
-    },
-    "polar-plot": {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/polar-plot.tsx",
-        filename: "polar-plot.tsx",
-        dependencies: ["react"],
-    },
-    heatmap: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/heatmap.tsx",
-        filename: "heatmap.tsx",
-        dependencies: ["react"],
-    },
-    histogram: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/histogram.tsx",
-        filename: "histogram.tsx",
-        dependencies: ["react"],
-    },
-    "gantt-chart": {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/gantt-chart.tsx",
-        filename: "gantt-chart.tsx",
-        dependencies: ["react", "date-fns"],
-    },
-};
-const PRIMITIVES_REGISTRY = {
-    sphere: {
-        sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/primitives/sphere.tsx",
-        filename: "sphere.tsx",
-    },
-};
+import { registry, getComponent } from "../registry/index.js";
 async function downloadFile(url) {
     return new Promise((resolve, reject) => {
-        https.get(url, (res) => {
-            if (res.statusCode !== 200) {
+        https
+            .get(url, (res) => {
+            if (res.statusCode === 302 || res.statusCode === 301) {
+                // Follow redirect
+                https.get(res.headers.location, (res2) => {
+                    if (res2.statusCode !== 200) {
+                        reject(new Error(`Failed to download: ${res2.statusCode} ${res2.statusMessage}`));
+                        return;
+                    }
+                    let data = "";
+                    res2.on("data", (chunk) => (data += chunk));
+                    res2.on("end", () => resolve(data));
+                    res2.on("error", reject);
+                });
+            }
+            else if (res.statusCode !== 200) {
                 reject(new Error(`Failed to download: ${res.statusCode} ${res.statusMessage}`));
                 return;
             }
-            let data = "";
-            res.on("data", (chunk) => (data += chunk));
-            res.on("end", () => resolve(data));
-            res.on("error", reject);
-        }).on("error", reject);
+            else {
+                let data = "";
+                res.on("data", (chunk) => (data += chunk));
+                res.on("end", () => resolve(data));
+                res.on("error", reject);
+            }
+        })
+            .on("error", reject);
     });
 }
 async function detectProjectStructure() {
@@ -170,16 +73,21 @@ async function detectProjectStructure() {
     };
 }
 export async function add(components) {
+    const availableComponents = Object.keys(registry);
     // If no components specified, prompt
     if (components.length === 0) {
         const response = await prompts({
             type: "multiselect",
             name: "components",
             message: "Which components would you like to add?",
-            choices: AVAILABLE_COMPONENTS.map((c) => ({
-                title: c.charAt(0).toUpperCase() + c.slice(1).replace("-", " "),
-                value: c,
-            })),
+            choices: availableComponents.map((c) => {
+                const config = getComponent(c);
+                return {
+                    title: `${c} ${config?.description ? `- ${config.description}` : ""}`,
+                    value: c,
+                    description: config?.category,
+                };
+            }),
             min: 1,
         });
         if (!response.components || response.components.length === 0) {
@@ -189,10 +97,10 @@ export async function add(components) {
         components = response.components;
     }
     // Validate components
-    const invalidComponents = components.filter((c) => !AVAILABLE_COMPONENTS.includes(c.toLowerCase()));
+    const invalidComponents = components.filter((c) => !availableComponents.includes(c.toLowerCase()));
     if (invalidComponents.length > 0) {
         console.log(chalk.red(`\n❌ Invalid components: ${invalidComponents.join(", ")}`));
-        console.log(chalk.dim(`Available: ${AVAILABLE_COMPONENTS.join(", ")}`));
+        console.log(chalk.dim(`Available: ${availableComponents.join(", ")}`));
         return;
     }
     const spinner = ora("Setting up components...").start();
@@ -201,77 +109,95 @@ export async function add(components) {
         const { componentsDir } = await detectProjectStructure();
         // Create components directory
         await fs.ensureDir(componentsDir);
-        spinner.text = "Downloading components...";
-        // Collect all primitives needed
-        const primitivesNeeded = new Set();
-        components.forEach((c) => {
-            const config = COMPONENT_REGISTRY[c];
-            if (config?.primitives) {
-                config.primitives.forEach((p) => primitivesNeeded.add(p));
-            }
-        });
-        // Download primitives first
-        if (primitivesNeeded.size > 0) {
-            const primitivesDir = path.join(componentsDir, "primitives");
-            await fs.ensureDir(primitivesDir);
-            for (const primitive of primitivesNeeded) {
-                const config = PRIMITIVES_REGISTRY[primitive];
-                if (!config)
-                    continue;
-                spinner.text = `Adding primitive: ${primitive}...`;
-                try {
-                    const content = await downloadFile(config.sourceUrl);
-                    const destPath = path.join(primitivesDir, config.filename);
-                    await fs.outputFile(destPath, content);
-                }
-                catch (err) {
-                    spinner.fail(`Failed to download primitive: ${primitive}`);
-                    throw new Error(`Could not download ${primitive}: ${err}`);
-                }
+        spinner.text = "Resolving dependencies...";
+        // Collect all components including registry dependencies
+        const allComponentsToInstall = new Set(components);
+        const processedComponents = new Set();
+        function collectDependencies(componentName) {
+            if (processedComponents.has(componentName))
+                return;
+            processedComponents.add(componentName);
+            const config = getComponent(componentName);
+            if (!config)
+                return;
+            // Add registry dependencies (other plexus components this depends on)
+            if (config.registryDependencies) {
+                config.registryDependencies.forEach((dep) => {
+                    allComponentsToInstall.add(dep);
+                    collectDependencies(dep);
+                });
             }
         }
+        components.forEach(collectDependencies);
+        spinner.text = "Downloading components...";
         // Download and save each component
-        for (const component of components) {
-            const config = COMPONENT_REGISTRY[component];
+        const installedComponents = [];
+        for (const component of allComponentsToInstall) {
+            const config = getComponent(component);
             if (!config)
                 continue;
             spinner.text = `Adding ${component}...`;
             try {
-                const content = await downloadFile(config.sourceUrl);
-                const destPath = path.join(componentsDir, config.filename);
-                await fs.outputFile(destPath, content);
+                // Download all files for this component
+                for (const fileUrl of config.files) {
+                    const content = await downloadFile(fileUrl);
+                    // Extract filename from URL
+                    const filename = fileUrl.split("/").pop();
+                    // Determine destination path
+                    let destPath;
+                    if (fileUrl.includes("/primitives/")) {
+                        // Primitive component - put in primitives folder
+                        const primitivesDir = path.join(componentsDir, "primitives");
+                        await fs.ensureDir(primitivesDir);
+                        destPath = path.join(primitivesDir, filename);
+                    }
+                    else {
+                        // Regular component
+                        destPath = path.join(componentsDir, filename);
+                    }
+                    await fs.outputFile(destPath, content);
+                }
+                installedComponents.push(component);
             }
             catch (err) {
-                spinner.fail(`Failed to download ${component}`);
-                throw new Error(`Could not download ${component}: ${err}`);
+                spinner.warn(`Failed to download ${component}`);
+                console.error(chalk.dim(`  Error: ${err instanceof Error ? err.message : "Unknown error"}`));
             }
         }
         spinner.succeed(chalk.green("Components added!"));
         // Collect all unique dependencies
         const allDeps = new Set();
-        components.forEach((c) => {
-            const config = COMPONENT_REGISTRY[c];
+        const allDevDeps = new Set();
+        installedComponents.forEach((c) => {
+            const config = getComponent(c);
             if (config) {
-                config.dependencies.forEach((dep) => allDeps.add(dep));
+                config.dependencies?.forEach((dep) => allDeps.add(dep));
+                config.devDependencies?.forEach((dep) => allDevDeps.add(dep));
             }
         });
-        // Show next steps
+        // Show results
         console.log(chalk.dim("\n✨ Components copied to:"));
         console.log(chalk.cyan(`   ${componentsDir}\n`));
+        console.log(chalk.dim("📦 Installed components:"));
+        installedComponents.forEach((c) => {
+            const config = getComponent(c);
+            console.log(chalk.cyan(`   • ${c}${config?.description ? ` - ${config.description}` : ""}`));
+        });
         if (allDeps.size > 0) {
-            console.log(chalk.dim("📦 Install dependencies:"));
+            console.log(chalk.dim("\n📦 Install dependencies:"));
             console.log(chalk.cyan(`   npm install ${Array.from(allDeps).join(" ")}\n`));
+        }
+        if (allDevDeps.size > 0) {
+            console.log(chalk.dim("📦 Install dev dependencies:"));
+            console.log(chalk.cyan(`   npm install -D ${Array.from(allDevDeps).join(" ")}\n`));
         }
         console.log(chalk.dim("🎨 Import and use:"));
         components.forEach((c) => {
-            const fileName = COMPONENT_REGISTRY[c].filename
-                .replace(".tsx", "")
-                .replace(".ts", "");
             const componentName = c
                 .split("-")
                 .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
                 .join("");
-            console.log(chalk.cyan(`   import { ${componentName} } from '@/components/plexusui/${fileName}'`));
+            console.log(chalk.cyan(`   import { ${componentName} } from '@/components/plexusui/${c}'`));
         });
     }
     catch (error) {

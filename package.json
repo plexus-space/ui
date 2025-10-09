@@ -9,9 +9,12 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @plexusui/playground",
+    "dev:playground": "npm run dev -w @plexusui/playground",
     "build": "npm run build -w @plexusui/cli",
     "build:cli": "npm run build -w @plexusui/cli",
-    "publish": "npm run build:cli && npm publish -w @plexusui/cli --access public"
+    "build:playground": "npm run build -w @plexusui/playground",
+    "publish": "npm run build:cli && npm publish -w @plexusui/cli --access public",
+    "lint": "npm run lint -w @plexusui/playground"
   },
   "keywords": [
     "monorepo",

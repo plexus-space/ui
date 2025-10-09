@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Plexus UI Configuration",
+  "description": "Configuration schema for Plexus UI component library",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON schema reference"
+    },
+    "style": {
+      "type": "string",
+      "enum": ["default", "minimal", "space"],
+      "default": "default",
+      "description": "Visual style variant for components"
+    },
+    "rsc": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable React Server Components support"
+    },
+    "tsx": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use TypeScript (.tsx) files"
+    },
+    "tailwind": {
+      "type": "object",
+      "description": "Tailwind CSS configuration",
+      "properties": {
+        "config": {
+          "type": "string",
+          "default": "tailwind.config.ts",
+          "description": "Path to Tailwind config file"
+        },
+        "css": {
+          "type": "string",
+          "default": "app/globals.css",
+          "description": "Path to global CSS file"
+        },
+        "baseColor": {
+          "type": "string",
+          "enum": ["slate", "gray", "zinc", "neutral", "stone"],
+          "default": "zinc",
+          "description": "Base color palette"
+        },
+        "cssVariables": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use CSS variables for theming"
+        },
+        "prefix": {
+          "type": "string",
+          "default": "",
+          "description": "Prefix for Tailwind utilities"
+        }
+      }
+    },
+    "iconLibrary": {
+      "type": "string",
+      "enum": ["lucide", "heroicons", "radix-icons"],
+      "default": "lucide",
+      "description": "Icon library to use"
+    },
+    "aliases": {
+      "type": "object",
+      "description": "Import path aliases",
+      "properties": {
+        "components": {
+          "type": "string",
+          "default": "@/components",
+          "description": "Path alias for components directory"
+        },
+        "utils": {
+          "type": "string",
+          "default": "@/lib/utils",
+          "description": "Path alias for utilities"
+        },
+        "ui": {
+          "type": "string",
+          "default": "@/components/ui",
+          "description": "Path alias for UI components"
+        },
+        "plexusui": {
+          "type": "string",
+          "default": "@/components/plexusui",
+          "description": "Path alias for Plexus UI components"
+        },
+        "lib": {
+          "type": "string",
+          "default": "@/lib",
+          "description": "Path alias for lib directory"
+        },
+        "hooks": {
+          "type": "string",
+          "default": "@/hooks",
+          "description": "Path alias for hooks directory"
+        }
+      }
+    },
+    "three": {
+      "type": "object",
+      "description": "Three.js and R3F configuration",
+      "properties": {
+        "enableShadows": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable shadows in 3D scenes"
+        },
+        "toneMapping": {
+          "type": "string",
+          "enum": ["None", "Linear", "Reinhard", "Cineon", "ACESFilmic"],
+          "default": "ACESFilmic",
+          "description": "Tone mapping algorithm"
+        },
+        "antialias": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable antialiasing"
+        },
+        "pixelRatio": {
+          "type": "number",
+          "default": 1,
+          "minimum": 1,
+          "maximum": 3,
+          "description": "Device pixel ratio (higher = better quality, lower performance)"
+        }
+      }
+    },
+    "registries": {
+      "type": "object",
+      "description": "Custom component registries",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": []
+}
