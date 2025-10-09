@@ -61,18 +61,15 @@ export default function Home() {
     <div className="max-w-7xl mx-auto px-8 py-12">
       <div className="mb-16">
         <div className="flex items-center gap-4 mb-4">
+          <h1 className="text-6xl text-foreground">Plexus UI</h1>
           <Image src="/main.png" alt="Plexus UI Logo" width={80} height={80} />
-          <h1 className="text-6xl font-bold text-foreground">
-            Plexus UI
-          </h1>
         </div>
         <p className="text-2xl text-zinc-600 dark:text-zinc-400 mb-4">
           Aerospace. Physics. Deep Tech.
         </p>
         <p className="max-w-3xl text-lg text-zinc-600 dark:text-zinc-400 mb-8">
-          A shadcn-style component library for aerospace visualization. Copy the code,
-          customize it, and build your own mission control dashboards, orbital mechanics
-          visualizations, and data analysis tools.
+          Copy the code, customize it, and build your own mission control
+          dashboards, orbital mechanics visualizations, and data analysis tools.
         </p>
         <div className="flex gap-4">
           <a
@@ -134,21 +131,27 @@ export default function Home() {
         <h2 className="text-2xl font-bold mb-4">Quick Start</h2>
         <div className="space-y-4">
           <div>
-            <p className="text-zinc-600 dark:text-zinc-400 mb-2">1. Initialize your project</p>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-2">
+              1. Initialize your project
+            </p>
             <code className="block bg-zinc-900 dark:bg-black text-white px-4 py-2 rounded font-mono text-sm">
               npx @plexusui/cli init
             </code>
           </div>
           <div>
-            <p className="text-zinc-600 dark:text-zinc-400 mb-2">2. Add components</p>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-2">
+              2. Add components
+            </p>
             <code className="block bg-zinc-900 dark:bg-black text-white px-4 py-2 rounded font-mono text-sm">
               npx @plexusui/cli add earth mars orbital-path
             </code>
           </div>
           <div>
-            <p className="text-zinc-600 dark:text-zinc-400 mb-2">3. Use them in your app</p>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-2">
+              3. Use them in your app
+            </p>
             <code className="block bg-zinc-900 dark:bg-black text-white px-4 py-2 rounded font-mono text-sm whitespace-pre">
-{`import { Earth } from '@/components/plexusui/earth'
+              {`import { Earth } from '@/components/plexusui/earth'
 
 export default function App() {
   return <Earth />

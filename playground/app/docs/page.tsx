@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer";
 export default function Docs() {
   return (
     <section className="max-w-5xl mx-auto px-8 py-12">
-      <div className="mb-12">
+      <div className="mb-12 flex flex-col gap-2">
         <h1 className="text-4xl font-bold mb-4">Documentation</h1>
         <p className="text-zinc-600  dark:text-zinc-400 mb-4">
           Install cli and use it to add components to your project - get all the

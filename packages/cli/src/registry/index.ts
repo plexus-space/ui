@@ -4,6 +4,24 @@ const BASE_URL = "https://raw.githubusercontent.com/plexus-space/ui/main/package
 
 export const registry: Registry = {
   // ============================================================================
+  // Shared Library (Foundation - no dependencies)
+  // ============================================================================
+  "lib": {
+    name: "lib",
+    type: "components:lib",
+    description: "Shared utility functions, constants, and helpers",
+    files: [
+      `${BASE_URL}/lib/index.ts`,
+      `${BASE_URL}/lib/utils.ts`,
+      `${BASE_URL}/lib/chart-utils.ts`,
+      `${BASE_URL}/lib/astronomical-constants.ts`,
+      `${BASE_URL}/lib/three-utils.ts`,
+    ],
+    dependencies: ["react"],
+    category: "lib",
+  },
+
+  // ============================================================================
   // 3D Planetary Components
   // ============================================================================
   earth: {
@@ -12,7 +30,7 @@ export const registry: Registry = {
     description: "Earth with rotation, atmosphere, and clouds",
     files: [`${BASE_URL}/earth.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
   mars: {
@@ -21,7 +39,7 @@ export const registry: Registry = {
     description: "Mars with surface features",
     files: [`${BASE_URL}/mars.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
   mercury: {
@@ -30,7 +48,7 @@ export const registry: Registry = {
     description: "Mercury visualization",
     files: [`${BASE_URL}/mercury.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
   venus: {
@@ -39,7 +57,7 @@ export const registry: Registry = {
     description: "Venus with atmosphere",
     files: [`${BASE_URL}/venus.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
   moon: {
@@ -48,7 +66,7 @@ export const registry: Registry = {
     description: "Earth's Moon",
     files: [`${BASE_URL}/moon.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
   jupiter: {
@@ -57,7 +75,7 @@ export const registry: Registry = {
     description: "Jupiter with atmospheric bands",
     files: [`${BASE_URL}/jupiter.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
   saturn: {
@@ -66,7 +84,7 @@ export const registry: Registry = {
     description: "Saturn with rings",
     files: [`${BASE_URL}/saturn.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
   uranus: {
@@ -75,7 +93,7 @@ export const registry: Registry = {
     description: "Uranus with rings",
     files: [`${BASE_URL}/uranus.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
   neptune: {
@@ -84,7 +102,7 @@ export const registry: Registry = {
     description: "Neptune with atmospheric features",
     files: [`${BASE_URL}/neptune.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere"],
+    registryDependencies: ["sphere", "lib"],
     category: "3d",
   },
 
@@ -125,6 +143,7 @@ export const registry: Registry = {
       `${BASE_URL}/decimation.ts`,
     ],
     dependencies: ["react"],
+    registryDependencies: ["lib"],
     category: "charts",
   },
   "scatter-plot": {
@@ -139,6 +158,7 @@ export const registry: Registry = {
       `${BASE_URL}/chart-export.ts`,
     ],
     dependencies: ["react"],
+    registryDependencies: ["lib"],
     category: "charts",
   },
   "polar-plot": {
@@ -152,6 +172,7 @@ export const registry: Registry = {
       `${BASE_URL}/chart-tooltip.tsx`,
     ],
     dependencies: ["react"],
+    registryDependencies: ["lib"],
     category: "charts",
   },
   heatmap: {
@@ -164,6 +185,7 @@ export const registry: Registry = {
       `${BASE_URL}/chart-export.ts`,
     ],
     dependencies: ["react"],
+    registryDependencies: ["lib"],
     category: "charts",
   },
   histogram: {
@@ -177,6 +199,7 @@ export const registry: Registry = {
       `${BASE_URL}/chart-tooltip.tsx`,
     ],
     dependencies: ["react"],
+    registryDependencies: ["lib"],
     category: "charts",
   },
   "gantt-chart": {
@@ -185,54 +208,60 @@ export const registry: Registry = {
     description: "Gantt chart for mission planning and timelines",
     files: [`${BASE_URL}/gantt-chart.tsx`],
     dependencies: ["react", "date-fns"],
+    registryDependencies: ["lib"],
     category: "charts",
   },
 
   // ============================================================================
-  // Primitives
+  // Primitives (Low-level building blocks - minimal dependencies)
   // ============================================================================
   sphere: {
     name: "sphere",
     type: "components:primitive",
-    description: "Base sphere primitive with texture support",
+    description: "Base sphere primitive with texture support (Sphere, Atmosphere, Clouds, Ring)",
     files: [`${BASE_URL}/primitives/sphere.tsx`],
     dependencies: ["react", "@react-three/fiber", "three"],
+    registryDependencies: [], // Primitives are standalone
     category: "primitives",
   },
   animation: {
     name: "animation",
     type: "components:primitive",
-    description: "Animation utilities and easing functions",
+    description: "Spring physics, easing functions, and animation helpers",
     files: [`${BASE_URL}/primitives/animation.ts`],
     dependencies: [],
+    registryDependencies: [], // Pure utilities
     category: "primitives",
   },
   physics: {
     name: "physics",
     type: "components:primitive",
-    description: "Physics calculations for orbital mechanics",
+    description: "Physics engine with integrators (Euler, Verlet, RK4) and forces",
     files: [`${BASE_URL}/primitives/physics.ts`],
     dependencies: [],
+    registryDependencies: [], // Pure utilities
     category: "primitives",
   },
   "gpu-renderer": {
     name: "gpu-renderer",
     type: "components:primitive",
-    description: "GPU-accelerated rendering utilities",
+    description: "GPU-accelerated rendering with WebGPU",
     files: [
       `${BASE_URL}/primitives/gpu-renderer.tsx`,
       `${BASE_URL}/primitives/gpu-compute.tsx`,
       `${BASE_URL}/primitives/gpu-line-renderer.tsx`,
     ],
     dependencies: ["react", "three"],
+    registryDependencies: [],
     category: "primitives",
   },
   "visual-effects": {
     name: "visual-effects",
     type: "components:primitive",
-    description: "Visual effects (bloom, glow, etc.)",
+    description: "Visual effects (bloom, glow, atmospheric scattering)",
     files: [`${BASE_URL}/primitives/visual-effects.tsx`],
     dependencies: ["react", "@react-three/fiber", "three"],
+    registryDependencies: [],
     category: "primitives",
   },
 };

@@ -1,20 +1,20 @@
 "use client";
 
 import * as React from "react";
-
-// Utility function for class names
-function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(" ");
-}
+import { cn } from "./lib";
+import {
+  getDomain,
+  createScale,
+  formatValue,
+  formatTime,
+  getTicks,
+  generateSmoothPath,
+  type Point,
+} from "./lib/chart-utils";
 
 // ============================================================================
 // Types
 // ============================================================================
-
-export interface Point {
-  x: number;
-  y: number;
-}
 
 export interface Series {
   name: string;
@@ -101,114 +101,13 @@ function useLineChart() {
 }
 
 // ============================================================================
-// Utilities
+// Local Utilities (not generic enough for lib)
 // ============================================================================
-
-function getDomain(
-  points: Point[],
-  accessor: (p: Point) => number,
-  addPadding: boolean = true
-): [number, number] {
-  if (points.length === 0) return [0, 1];
-  const values = points.map(accessor);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-
-  if (!addPadding) return [min, max];
-
-  const padding = (max - min) * 0.1 || 1;
-  return [min - padding, max + padding];
-}
-
-function createScale(
-  domain: [number, number],
-  range: [number, number]
-): (value: number) => number {
-  const [d0, d1] = domain;
-  const [r0, r1] = range;
-  const slope = (r1 - r0) / (d1 - d0);
-  return (value: number) => r0 + slope * (value - d0);
-}
-
-function formatValue(value: number): string {
-  if (Math.abs(value) >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
-  if (Math.abs(value) >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
-  if (Math.abs(value) < 0.01 && value !== 0) return value.toExponential(1);
-  return value.toFixed(2);
-}
-
-function formatTime(timestamp: number, timezone: string = "UTC"): string {
-  try {
-    const date = new Date(timestamp);
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-      timeZone: timezone,
-    });
-    return formatter.format(date);
-  } catch (error) {
-    const date = new Date(timestamp);
-    return date.toISOString().substring(11, 19);
-  }
-}
-
-function getTicks(domain: [number, number], count: number = 5): number[] {
-  const [min, max] = domain;
-  const step = (max - min) / (count - 1);
-  return Array.from({ length: count }, (_, i) => min + i * step);
-}
 
 function decimateData(data: Point[], maxPoints: number): Point[] {
   if (data.length <= maxPoints) return data;
   const threshold = Math.ceil(data.length / maxPoints);
   return data.filter((_, i) => i % threshold === 0);
-}
-
-function generateSmoothPath(
-  points: Point[],
-  xScale: (x: number) => number,
-  yScale: (y: number) => number
-): string {
-  if (points.length < 2) return "";
-  if (points.length === 2) {
-    const x1 = xScale(points[0].x);
-    const y1 = yScale(points[0].y);
-    const x2 = xScale(points[1].x);
-    const y2 = yScale(points[1].y);
-    return `M ${x1} ${y1} L ${x2} ${y2}`;
-  }
-
-  let path = "";
-  const tension = 0.3;
-
-  for (let i = 0; i < points.length; i++) {
-    const p0 = points[Math.max(0, i - 1)];
-    const p1 = points[i];
-    const p2 = points[Math.min(points.length - 1, i + 1)];
-    const p3 = points[Math.min(points.length - 1, i + 2)];
-
-    const x1 = xScale(p1.x);
-    const y1 = yScale(p1.y);
-    const x2 = xScale(p2.x);
-    const y2 = yScale(p2.y);
-
-    if (i === 0) {
-      path = `M ${x1} ${y1}`;
-    }
-
-    if (i < points.length - 1) {
-      const cp1x = x1 + (xScale(p2.x) - xScale(p0.x)) * tension;
-      const cp1y = y1 + (yScale(p2.y) - yScale(p0.y)) * tension;
-      const cp2x = x2 - (xScale(p3.x) - xScale(p1.x)) * tension;
-      const cp2y = y2 - (yScale(p3.y) - yScale(p1.y)) * tension;
-
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${x2} ${y2}`;
-    }
-  }
-
-  return path;
 }
 
 // ============================================================================

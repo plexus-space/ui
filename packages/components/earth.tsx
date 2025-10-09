@@ -6,34 +6,29 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Sphere, Atmosphere, Clouds } from "./primitives/sphere";
+import {
+  EARTH_RADIUS_KM,
+  EARTH_ROTATION_PERIOD_SECONDS,
+  EARTH_ORBITAL_PERIOD_DAYS,
+  EARTH_AXIAL_TILT_DEG,
+  ASTRONOMICAL_UNIT_KM,
+  SUN_RADIUS_KM,
+  SCENE_SCALE,
+  kmToSceneUnits,
+  calculateRotationSpeed,
+  getCurrentDayOfYear,
+  degToRad,
+} from "./lib";
 
 // ============================================================================
-// Constants - Astronomically Accurate Values
+// Derived Constants
 // ============================================================================
 
-export const EARTH_RADIUS_KM = 6371.0;
-export const SCENE_SCALE = 0.001;
-export const EARTH_RADIUS = EARTH_RADIUS_KM * SCENE_SCALE;
-export const EARTH_ROTATION_PERIOD_SECONDS = 86164.0905;
-export const EARTH_ORBITAL_PERIOD_DAYS = 365.256363004;
-export const EARTH_AXIAL_TILT_DEG = 23.4392811;
-export const ASTRONOMICAL_UNIT_KM = 149597870.7;
-export const SUN_RADIUS_KM = 695700;
+export const EARTH_RADIUS = kmToSceneUnits(EARTH_RADIUS_KM);
 
 // ============================================================================
 // Utilities
 // ============================================================================
-
-function getCurrentDayOfYear(): { dayOfYear: number; fractionOfDay: number } {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const diff = now.getTime() - start.getTime();
-  const oneDay = 1000 * 60 * 60 * 24;
-  const dayOfYear = Math.floor(diff / oneDay);
-  const fractionOfDay =
-    (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
-  return { dayOfYear, fractionOfDay };
-}
 
 export function calculateEarthRotation(timeScale: number = 1): number {
   const { fractionOfDay } = getCurrentDayOfYear();
@@ -177,11 +172,11 @@ const EarthRoot = React.forwardRef<HTMLDivElement, EarthRootProps>(
   ) => {
     const rotationSpeed = React.useMemo(() => {
       if (!enableRotation) return 0;
-      return ((2 * Math.PI) / (EARTH_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+      return calculateRotationSpeed(EARTH_ROTATION_PERIOD_SECONDS, timeScale);
     }, [enableRotation, timeScale]);
 
     const axialTilt: [number, number, number] = React.useMemo(
-      () => [0, 0, THREE.MathUtils.degToRad(EARTH_AXIAL_TILT_DEG)],
+      () => [0, 0, degToRad(EARTH_AXIAL_TILT_DEG)],
       []
     );
 
