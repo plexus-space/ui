@@ -8,14 +8,9 @@ export const registry = {
         type: "components:lib",
         description: "Shared utility functions, constants, helpers, and theme system",
         files: [
-            `${BASE_URL}/lib/index.ts`,
-            `${BASE_URL}/lib/utils.ts`,
-            `${BASE_URL}/lib/chart-utils.ts`,
-            `${BASE_URL}/lib/astronomical-constants.ts`,
-            `${BASE_URL}/lib/three-utils.ts`,
-            `${BASE_URL}/lib/theme.ts`,
+            `${BASE_URL}/lib/plexusui-utils.ts`,
         ],
-        dependencies: ["react"],
+        dependencies: ["react", "three"],
         category: "lib",
     },
     // ============================================================================

@@ -162,11 +162,24 @@ export async function add(components: string[]) {
 
     spinner.text = "Downloading components...";
 
+    // Check if lib already exists
+    const libUtilsPath = path.join(componentsDir, "lib", "plexusui-utils.ts");
+    const libExists = await fs.pathExists(libUtilsPath);
+
     // Download and save each component
     const installedComponents: string[] = [];
+    const skippedComponents: string[] = [];
+
     for (const component of allComponentsToInstall) {
       const config = getComponent(component);
       if (!config) continue;
+
+      // Skip lib if it already exists
+      if (component === "lib" && libExists) {
+        spinner.text = `Skipping ${component} (already exists)...`;
+        skippedComponents.push(component);
+        continue;
+      }
 
       spinner.text = `Adding ${component}...`;
 
@@ -228,6 +241,13 @@ export async function add(components: string[]) {
       const config = getComponent(c);
       console.log(chalk.cyan(`   • ${c}${config?.description ? ` - ${config.description}` : ""}`));
     });
+
+    if (skippedComponents.length > 0) {
+      console.log(chalk.dim("\n⏭️  Skipped (already exists):"));
+      skippedComponents.forEach((c) => {
+        console.log(chalk.yellow(`   • ${c}`));
+      });
+    }
 
     if (allDeps.size > 0) {
       console.log(chalk.dim("\n📦 Install dependencies:"));
