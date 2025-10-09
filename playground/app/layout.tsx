@@ -24,8 +24,23 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Plexus UI - Playground",
     description:
-      "Primitive-based aerospace component library for React Three Fiber",
+      "Primitive-based deep tech & physics component library. Build stunning 3D planetary visualizations and aerospace UI with composable primitives.",
     type: "website",
+    images: [
+      {
+        url: "/main.png",
+        width: 1200,
+        height: 630,
+        alt: "Plexus UI - Deep Tech Components",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Plexus UI - Playground",
+    description:
+      "Primitive-based deep tech & physics component library. Build stunning 3D planetary visualizations.",
+    images: ["/main.png"],
   },
 };
 
