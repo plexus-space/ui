@@ -30,106 +30,106 @@ const COMPONENT_REGISTRY: Record<
 > = {
   earth: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/earth.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/earth.tsx",
     filename: "earth.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   mars: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/mars.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/mars.tsx",
     filename: "mars.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   mercury: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/mercury.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/mercury.tsx",
     filename: "mercury.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   venus: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/venus.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/venus.tsx",
     filename: "venus.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   moon: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/moon.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/moon.tsx",
     filename: "moon.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   jupiter: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/jupiter.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/jupiter.tsx",
     filename: "jupiter.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   saturn: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/saturn.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/saturn.tsx",
     filename: "saturn.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   uranus: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/uranus.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/uranus.tsx",
     filename: "uranus.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   neptune: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/neptune.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/neptune.tsx",
     filename: "neptune.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
     primitives: ["sphere"],
   },
   "orbital-path": {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/orbital-path.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/orbital-path.tsx",
     filename: "orbital-path.tsx",
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
   },
   "line-chart": {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/line-chart.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/line-chart.tsx",
     filename: "line-chart.tsx",
     dependencies: ["react"],
   },
   "scatter-plot": {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/scatter-plot.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/scatter-plot.tsx",
     filename: "scatter-plot.tsx",
     dependencies: ["react"],
   },
   "polar-plot": {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/polar-plot.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/polar-plot.tsx",
     filename: "polar-plot.tsx",
     dependencies: ["react"],
   },
   heatmap: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/heatmap.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/heatmap.tsx",
     filename: "heatmap.tsx",
     dependencies: ["react"],
   },
   histogram: {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/histogram.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/histogram.tsx",
     filename: "histogram.tsx",
     dependencies: ["react"],
   },
   "gantt-chart": {
     sourceUrl:
-      "https://raw.githubusercontent.com/plexus-space/ui/main/components/gantt-chart.tsx",
+      "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/gantt-chart.tsx",
     filename: "gantt-chart.tsx",
     dependencies: ["react", "date-fns"],
   },
@@ -137,7 +137,7 @@ const COMPONENT_REGISTRY: Record<
 
 const PRIMITIVES_REGISTRY: Record<string, { sourceUrl: string; filename: string }> = {
   sphere: {
-    sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/components/primitives/sphere.tsx",
+    sourceUrl: "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/primitives/sphere.tsx",
     filename: "sphere.tsx",
   },
 };

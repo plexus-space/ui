@@ -4,7 +4,7 @@
   "private": true,
   "description": "Monorepo for primitive-based aerospace component library with planetary visualization components for React Three Fiber",
   "workspaces": [
-    "packages/cli",
+    "packages/*",
     "playground"
   ],
   "scripts": {
@@ -33,14 +33,7 @@
     "type": "git",
     "url": "https://github.com/plexus-space/ui.git"
   },
-  "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
-  },
   "devDependencies": {
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@types/three": "^0.160.0",
     "typescript": "^5.4.5"
   }
 }
