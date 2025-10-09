@@ -103,11 +103,18 @@ export function createScale(
 
 /**
  * Generate evenly spaced tick values
+ * Rounds tick values to ensure stability across renders
  */
 export function getTicks(domain: [number, number], count: number = 5): number[] {
   const [min, max] = domain;
   const step = (max - min) / (count - 1);
-  return Array.from({ length: count }, (_, i) => min + i * step);
+
+  // Round each tick to avoid floating point drift across renders
+  return Array.from({ length: count }, (_, i) => {
+    const tick = min + i * step;
+    // Round to 10 decimal places to maintain precision while ensuring consistency
+    return Math.round(tick * 1e10) / 1e10;
+  });
 }
 
 // ============================================================================
@@ -116,13 +123,17 @@ export function getTicks(domain: [number, number], count: number = 5): number[] 
 
 /**
  * Format number values for display
+ * Uses deterministic rounding to ensure consistent SSR/client rendering
  */
 export function formatValue(value: number): string {
-  if (Math.abs(value) >= 1e9) return `${(value / 1e9).toFixed(1)}B`;
-  if (Math.abs(value) >= 1e6) return `${(value / 1e6).toFixed(1)}M`;
-  if (Math.abs(value) >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
-  if (Math.abs(value) < 0.01 && value !== 0) return value.toExponential(1);
-  return value.toFixed(2);
+  // Round to avoid floating point precision issues during SSR hydration
+  const rounded = Math.round(value * 100) / 100;
+
+  if (Math.abs(rounded) >= 1e9) return `${(rounded / 1e9).toFixed(1)}B`;
+  if (Math.abs(rounded) >= 1e6) return `${(rounded / 1e6).toFixed(1)}M`;
+  if (Math.abs(rounded) >= 1e3) return `${(rounded / 1e3).toFixed(1)}K`;
+  if (Math.abs(rounded) < 0.01 && rounded !== 0) return rounded.toExponential(1);
+  return rounded.toFixed(2);
 }
 
 /**
