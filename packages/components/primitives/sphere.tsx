@@ -40,6 +40,12 @@ export interface SphereProps {
   emissiveMapUrl?: string;
   /** Base color if no texture */
   color?: THREE.ColorRepresentation;
+  /** Emissive color */
+  emissiveColor?: THREE.ColorRepresentation;
+  /** Emissive intensity */
+  emissiveIntensity?: number;
+  /** Use unlit material (meshBasicMaterial) - ignores lighting for full brightness */
+  unlit?: boolean;
   /** Rotation speed (radians per frame) */
   rotationSpeed?: number;
   /** Initial rotation offset */
@@ -68,6 +74,9 @@ export const Sphere = forwardRef<THREE.Mesh, SphereProps>(
       specularMapUrl,
       emissiveMapUrl,
       color = 0xffffff,
+      emissiveColor,
+      emissiveIntensity,
+      unlit = false,
       rotationSpeed = 0,
       rotation = [0, 0, 0],
       segments = 64,
@@ -122,18 +131,26 @@ export const Sphere = forwardRef<THREE.Mesh, SphereProps>(
       <group ref={groupRef}>
         <mesh ref={meshRef}>
           <sphereGeometry args={[radius, segments, segments / 2]} />
-          <meshStandardMaterial
-            map={textures.map}
-            normalMap={textures.normalMap}
-            bumpMap={textures.bumpMap}
-            roughnessMap={textures.roughnessMap}
-            emissiveMap={textures.emissiveMap}
-            color={color}
-            metalness={metalness}
-            roughness={0.6}
-            emissive={emissiveMapUrl ? 0xffffff : 0x000000}
-            emissiveIntensity={emissiveMapUrl ? 2.0 : 0}
-          />
+          {unlit ? (
+            <meshBasicMaterial
+              map={textures.map}
+              color={color}
+              toneMapped={false}
+            />
+          ) : (
+            <meshStandardMaterial
+              map={textures.map}
+              normalMap={textures.normalMap}
+              bumpMap={textures.bumpMap}
+              roughnessMap={textures.roughnessMap}
+              emissiveMap={textures.emissiveMap}
+              color={color}
+              metalness={metalness}
+              roughness={0.6}
+              emissive={emissiveColor ?? (emissiveMapUrl ? 0xffffff : 0x000000)}
+              emissiveIntensity={emissiveIntensity ?? (emissiveMapUrl ? 2.0 : 0)}
+            />
+          )}
         </mesh>
         {children}
       </group>

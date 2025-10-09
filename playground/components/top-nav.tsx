@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { SimpleLogo } from "./logo";
 import { ThemeToggle } from "./theme-toggle";
 import Link from "next/link";
+import { Github } from "lucide-react";
 
 export const TopNav = () => {
   return (
@@ -22,9 +23,14 @@ export const TopNav = () => {
           </Button>
         </Link>
       </div>
-      <div className="flex items-center gap-3">
-        <Input type="text" placeholder="Search..." className="w-64" />
+      <div className="flex items-center">
+        <Input type="text" placeholder="Search..." className="w-64 mr-2" />
         <ThemeToggle />
+        <Link href="https://github.com/plexus-space/ui">
+          <Button variant="ghost" size="sm">
+            <Github />
+          </Button>
+        </Link>
       </div>
     </div>
   );
