@@ -3,6 +3,5 @@
   "buildCommand": "npm run build -w playground",
   "outputDirectory": "playground/.next",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./playground ./packages/components"
+  "framework": "nextjs"
 }
