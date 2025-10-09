@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "./lib";
 import {
+  cn,
   getDomain,
   createScale,
   formatValue,
@@ -10,7 +10,7 @@ import {
   getTicks,
   generateSmoothPath,
   type Point,
-} from "./lib/chart-utils";
+} from "./lib";
 
 // ============================================================================
 // Types

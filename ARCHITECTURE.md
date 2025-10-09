@@ -240,7 +240,7 @@ import {
   kmToSceneUnits,
   calculateRotationSpeed,
   degToRad,
-} from "./lib";
+} from "./lib/plexus";
 
 // 3. Import from Layer 2 (primitives)
 import { Sphere, Atmosphere, Clouds } from "./primitives/sphere";
@@ -404,9 +404,6 @@ npx @plexusui/cli init
 All utilities are fully typed:
 
 ```typescript
-import type { Point, Axis } from "./lib/chart-utils";
-import { EARTH_RADIUS_KM } from "./lib/astronomical-constants";
-
 const point: Point = { x: 10, y: 20 };
 const radius: number = EARTH_RADIUS_KM; // Type-safe!
 ```

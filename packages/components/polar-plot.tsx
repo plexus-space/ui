@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "./lib";
-import { formatValue } from "./lib/chart-utils";
+import { cn, formatValue } from "./lib";
 
 // ============================================================================
 // Types

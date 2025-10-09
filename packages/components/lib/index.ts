@@ -8,17 +8,8 @@
  * ```
  */
 
-// General utilities
-export * from "./utils";
+// Re-export everything from the consolidated utils file
+export * from "./plexusui-utils";
 
-// Chart-specific utilities
-export * from "./chart-utils";
-
-// Astronomical constants and calculations
-export * from "./astronomical-constants";
-
-// Three.js / R3F utilities
-export * from "./three-utils";
-
-// Theme system
-export * from "./theme";
+// Note: theme.ts is kept as a separate file but not exported by default
+// If you need theme utilities, import directly: import { theme } from './lib/theme';
