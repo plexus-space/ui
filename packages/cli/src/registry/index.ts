@@ -14,6 +14,7 @@ export const registry: Registry = {
       "Shared utility functions, constants, helpers, and theme system",
     files: [
       `${BASE_URL}/lib/plexusui-utils.ts`,
+      `${BASE_URL}/lib/index.ts`,
     ],
     dependencies: ["react", "three"],
     category: "lib",
