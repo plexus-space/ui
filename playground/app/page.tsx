@@ -65,8 +65,7 @@ export default function Home() {
 
         <p className="max-w-3xl text-lg text-zinc-600 dark:text-zinc-400 mb-8">
           A set of thoughtfully designed components that you can customize,
-          extend, and build on. Start here then make it your own. Open Source.
-          Open Code.
+          extend, and build on. Start here then make it your own.
         </p>
         <div className="flex gap-4">
           <a
