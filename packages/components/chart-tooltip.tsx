@@ -1,7 +1,6 @@
 "use client";
 
 import { memo } from "react";
-import { useTheme } from "./use-theme";
 
 // ============================================================================
 // Types
@@ -63,8 +62,7 @@ export const ChartTooltip = memo(
     theme: themeProp = "auto",
     className = "",
   }: TooltipProps) => {
-    const detectedTheme = useTheme();
-    const theme = themeProp === "auto" ? detectedTheme : themeProp;
+    const theme = themeProp === "auto" ? "auto" : themeProp;
     // Auto-align logic
     let finalAlign = align;
     if (align === "auto" && crosshairBounds) {
@@ -135,19 +133,17 @@ export const ChartTooltip = memo(
         )}
 
         {/* Tooltip box - rendered last for proper z-index */}
-        <g
-          transform={`translate(${tooltipX}, ${tooltipY})`}
-        >
+        <g transform={`translate(${tooltipX}, ${tooltipY})`}>
           <defs>
             <filter id="tooltip-shadow">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-              <feOffset dx="0" dy="2" result="offsetblur"/>
+              <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+              <feOffset dx="0" dy="2" result="offsetblur" />
               <feComponentTransfer>
-                <feFuncA type="linear" slope="0.2"/>
+                <feFuncA type="linear" slope="0.2" />
               </feComponentTransfer>
               <feMerge>
-                <feMergeNode/>
-                <feMergeNode in="SourceGraphic"/>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
           </defs>

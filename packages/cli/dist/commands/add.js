@@ -145,14 +145,20 @@ export async function add(components) {
                     const filename = fileUrl.split("/").pop();
                     // Determine destination path
                     let destPath;
-                    if (fileUrl.includes("/primitives/")) {
+                    if (fileUrl.includes("/lib/")) {
+                        // Library files - put in lib folder
+                        const libDir = path.join(componentsDir, "lib");
+                        await fs.ensureDir(libDir);
+                        destPath = path.join(libDir, filename);
+                    }
+                    else if (fileUrl.includes("/primitives/")) {
                         // Primitive component - put in primitives folder
                         const primitivesDir = path.join(componentsDir, "primitives");
                         await fs.ensureDir(primitivesDir);
                         destPath = path.join(primitivesDir, filename);
                     }
                     else {
-                        // Regular component
+                        // Regular component - put at root
                         destPath = path.join(componentsDir, filename);
                     }
                     await fs.outputFile(destPath, content);

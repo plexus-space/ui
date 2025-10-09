@@ -58,6 +58,7 @@ export function useResizeObserver(ref: RefObject<HTMLElement>) {
 
 /**
  * Calculate domain (min/max) for a set of points
+ * Rounds domain values to ensure consistent SSR/client rendering
  */
 export function getDomain(
   points: Point[],
@@ -73,11 +74,15 @@ export function getDomain(
   if (!addPadding) return [min, max];
 
   const padding = (max - min) * 0.1 || 1;
-  return [min - padding, max + padding];
+  // Round domain values to avoid floating point precision issues during SSR
+  const minDomain = Math.round((min - padding) * 1e6) / 1e6;
+  const maxDomain = Math.round((max + padding) * 1e6) / 1e6;
+  return [minDomain, maxDomain];
 }
 
 /**
  * Create a scale function that maps domain to range
+ * Rounds output to avoid SSR hydration mismatches
  */
 export function createScale(
   domain: [number, number],
@@ -93,12 +98,19 @@ export function createScale(
     const slope = (r1 - r0) / (logMax - logMin);
     return (value: number) => {
       const logValue = Math.log10(Math.max(value, 0.0001));
-      return r0 + slope * (logValue - logMin);
+      const result = r0 + slope * (logValue - logMin);
+      // Round to avoid floating point precision issues during SSR
+      return Math.round(result * 1e10) / 1e10;
     };
   }
 
   const slope = (r1 - r0) / (d1 - d0);
-  return (value: number) => r0 + slope * (value - d0);
+  return (value: number) => {
+    const result = r0 + slope * (value - d0);
+    // Round to 6 decimal places to avoid floating point precision issues during SSR
+    // Using fewer decimals to ensure server/client consistency
+    return Math.round(result * 1e6) / 1e6;
+  };
 }
 
 /**
@@ -112,8 +124,8 @@ export function getTicks(domain: [number, number], count: number = 5): number[] 
   // Round each tick to avoid floating point drift across renders
   return Array.from({ length: count }, (_, i) => {
     const tick = min + i * step;
-    // Round to 10 decimal places to maintain precision while ensuring consistency
-    return Math.round(tick * 1e10) / 1e10;
+    // Round to 6 decimal places to ensure server/client consistency
+    return Math.round(tick * 1e6) / 1e6;
   });
 }
 

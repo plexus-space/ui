@@ -29,57 +29,96 @@ import {
 } from "@/components/ui/select";
 
 // ============================================================================
+// Seeded Random (for consistent SSR/client rendering)
+// ============================================================================
+
+// Simple seeded random number generator for deterministic pseudo-random values
+function seededRandom(seed: number) {
+  let state = seed;
+  return () => {
+    state = (state * 9301 + 49297) % 233280;
+    return state / 233280;
+  };
+}
+
+// ============================================================================
 // Component Examples
 // ============================================================================
 
 const LineChartExamples = () => {
-  const fftData = Array.from({ length: 128 }, (_, i) => {
-    const freq = (i / 128) * 50;
-    const peak1 = 80 * Math.exp(-Math.pow((freq - 5) / 1, 2));
-    const peak2 = 40 * Math.exp(-Math.pow((freq - 10) / 1.5, 2));
-    const peak3 = 20 * Math.exp(-Math.pow((freq - 15) / 2, 2));
-    return { x: freq, y: peak1 + peak2 + peak3 + Math.random() * 2 };
-  });
+  const fftData = useMemo(
+    () => {
+      const random = seededRandom(12345);
+      return Array.from({ length: 128 }, (_, i) => {
+        const freq = (i / 128) * 50;
+        const peak1 = 80 * Math.exp(-Math.pow((freq - 5) / 1, 2));
+        const peak2 = 40 * Math.exp(-Math.pow((freq - 10) / 1.5, 2));
+        const peak3 = 20 * Math.exp(-Math.pow((freq - 15) / 2, 2));
+        return { x: freq, y: peak1 + peak2 + peak3 + random() * 2 };
+      });
+    },
+    []
+  );
 
   // Damped Oscillation
-  const dampedOscillation = Array.from({ length: 200 }, (_, i) => {
-    const t = i / 10;
-    const omega = 2;
-    const gamma = 0.1;
-    return { x: t, y: Math.exp(-gamma * t) * Math.cos(omega * t) * 50 + 50 };
-  });
+  const dampedOscillation = useMemo(
+    () =>
+      Array.from({ length: 200 }, (_, i) => {
+        const t = i / 10;
+        const omega = 2;
+        const gamma = 0.1;
+        return { x: t, y: Math.exp(-gamma * t) * Math.cos(omega * t) * 50 + 50 };
+      }),
+    []
+  );
 
   // Noisy Signal
-  const noisySignal = Array.from({ length: 100 }, (_, i) => {
-    const t = i / 10;
-    return { x: t, y: 30 * Math.sin(t) + 50 + (Math.random() - 0.5) * 10 };
-  });
+  const noisySignal = useMemo(
+    () => {
+      const random = seededRandom(54321);
+      return Array.from({ length: 100 }, (_, i) => {
+        const t = i / 10;
+        return { x: t, y: 30 * Math.sin(t) + 50 + (random() - 0.5) * 10 };
+      });
+    },
+    []
+  );
 
-  const filteredSignal = Array.from({ length: 100 }, (_, i) => {
-    const t = i / 10;
-    return { x: t, y: 30 * Math.sin(t) + 50 };
-  });
+  const filteredSignal = useMemo(
+    () =>
+      Array.from({ length: 100 }, (_, i) => {
+        const t = i / 10;
+        return { x: t, y: 30 * Math.sin(t) + 50 };
+      }),
+    []
+  );
 
   // Orbital Velocity
-  const orbitalVelocity = Array.from({ length: 100 }, (_, i) => {
-    const altitude = i * 5;
-    const earthRadius = 6371;
-    const mu = 398600;
-    const r = earthRadius + altitude;
-    return { x: altitude, y: Math.sqrt(mu / r) };
-  });
+  const orbitalVelocity = useMemo(
+    () =>
+      Array.from({ length: 100 }, (_, i) => {
+        const altitude = i * 5;
+        const earthRadius = 6371;
+        const mu = 398600;
+        const r = earthRadius + altitude;
+        return { x: altitude, y: Math.sqrt(mu / r) };
+      }),
+    []
+  );
 
   // High-volume data (50,000 points)
   const highVolumeData = useMemo(
-    () =>
-      Array.from({ length: 50000 }, (_, i) => ({
+    () => {
+      const random = seededRandom(99999);
+      return Array.from({ length: 50000 }, (_, i) => ({
         x: i / 100,
         y:
           Math.sin(i / 100) * 30 +
           Math.sin(i / 10) * 10 +
-          Math.random() * 5 +
+          random() * 5 +
           50,
-      })),
+      }));
+    },
     []
   );
 
@@ -557,28 +596,41 @@ useEffect(() => {
 
 const PolarPlotExamples = () => {
   // Antenna radiation pattern
-  const radiationPattern = Array.from({ length: 36 }, (_, i) => {
-    const theta = (i / 36) * 2 * Math.PI;
-    const r = 0.5 + 0.5 * Math.abs(Math.cos(2 * theta));
-    return { theta, r };
-  });
+  const radiationPattern = useMemo(
+    () =>
+      Array.from({ length: 36 }, (_, i) => {
+        const theta = (i / 36) * 2 * Math.PI;
+        const r = 0.5 + 0.5 * Math.abs(Math.cos(2 * theta));
+        return { theta, r };
+      }),
+    []
+  );
 
   // Radar chart for spacecraft subsystems
-  const subsystemHealth = [
-    { theta: 0, r: 0.9, label: "Power" },
-    { theta: Math.PI / 3, r: 0.7, label: "Propulsion" },
-    { theta: (2 * Math.PI) / 3, r: 0.85, label: "Thermal" },
-    { theta: Math.PI, r: 0.95, label: "Comm" },
-    { theta: (4 * Math.PI) / 3, r: 0.6, label: "ADCS" },
-    { theta: (5 * Math.PI) / 3, r: 0.8, label: "CDH" },
-  ];
+  const subsystemHealth = useMemo(
+    () => [
+      { theta: 0, r: 0.9, label: "Power" },
+      { theta: Math.PI / 3, r: 0.7, label: "Propulsion" },
+      { theta: (2 * Math.PI) / 3, r: 0.85, label: "Thermal" },
+      { theta: Math.PI, r: 0.95, label: "Comm" },
+      { theta: (4 * Math.PI) / 3, r: 0.6, label: "ADCS" },
+      { theta: (5 * Math.PI) / 3, r: 0.8, label: "CDH" },
+    ],
+    []
+  );
 
   // Wind rose (directional data)
-  const windData = Array.from({ length: 16 }, (_, i) => {
-    const theta = (i / 16) * 2 * Math.PI;
-    const r = Math.random() * 0.5 + 0.3;
-    return { theta, r };
-  });
+  const windData = useMemo(
+    () => {
+      const random = seededRandom(11111);
+      return Array.from({ length: 16 }, (_, i) => {
+        const theta = (i / 16) * 2 * Math.PI;
+        const r = random() * 0.5 + 0.3;
+        return { theta, r };
+      });
+    },
+    []
+  );
 
   return (
     <div className="space-y-12">
@@ -765,18 +817,30 @@ const HeatmapExamples = () => {
   // Correlation matrix
 
   // Terrain elevation
-  const terrainData = Array.from({ length: 20 }, (_, y) =>
-    Array.from({ length: 20 }, (_, x) => {
-      const dx = x - 10;
-      const dy = y - 10;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      return 100 * Math.exp(-(dist * dist) / 50) + Math.random() * 10;
-    })
+  const terrainData = useMemo(
+    () => {
+      const random = seededRandom(22222);
+      return Array.from({ length: 20 }, (_, y) =>
+        Array.from({ length: 20 }, (_, x) => {
+          const dx = x - 10;
+          const dy = y - 10;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          return 100 * Math.exp(-(dist * dist) / 50) + random() * 10;
+        })
+      );
+    },
+    []
   );
 
   // Time-series heatmap (ground station contacts)
-  const contactHeatmap = Array.from({ length: 24 }, (_, hour) =>
-    Array.from({ length: 7 }, (_, day) => Math.floor(Math.random() * 10))
+  const contactHeatmap = useMemo(
+    () => {
+      const random = seededRandom(33333);
+      return Array.from({ length: 24 }, (_, hour) =>
+        Array.from({ length: 7 }, (_, day) => Math.floor(random() * 10))
+      );
+    },
+    []
   );
 
   return (
