@@ -13,7 +13,11 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" aria-label="Toggle theme">
+      <Button
+        className="cursor-pointer"
+        variant="ghost"
+        aria-label="Toggle theme"
+      >
         <div className="w-5 h-5" />
       </Button>
     );
@@ -24,6 +28,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       variant="ghost"
       aria-label="Toggle theme"
+      className="cursor-pointer"
     >
       {theme === "dark" ? (
         <svg

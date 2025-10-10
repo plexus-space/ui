@@ -69,7 +69,7 @@ export interface UranusCanvasProps
   width?: string;
 }
 
-export interface UranusControlsProps extends React.ComponentPropsWithRef<"group"> {
+export interface UranusControlsProps extends Record<string, any> {
   /** Minimum zoom distance */
   minDistance?: number;
   /** Maximum zoom distance */
@@ -92,9 +92,10 @@ export interface UranusControlsProps extends React.ComponentPropsWithRef<"group"
   dampingFactor?: number;
 }
 
-export interface UranusGlobeProps extends React.ComponentPropsWithRef<"group"> {
+export interface UranusGlobeProps extends Record<string, any> {
   /** Number of segments for sphere geometry */
   segments?: number;
+  children?: React.ReactNode;
 }
 
 // ============================================================================
@@ -118,7 +119,9 @@ const UranusRoot = React.forwardRef<HTMLDivElement, UranusRootProps>(
   ) => {
     const rotationSpeed = React.useMemo(() => {
       if (!enableRotation) return 0;
-      return ((2 * Math.PI) / (URANUS_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+      return (
+        ((2 * Math.PI) / (URANUS_ROTATION_PERIOD_SECONDS * 60)) * timeScale
+      );
     }, [enableRotation, timeScale]);
 
     const axialTilt: [number, number, number] = React.useMemo(
@@ -276,12 +279,10 @@ UranusGlobe.displayName = "Uranus.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-export interface UranusAxisProps extends React.ComponentPropsWithRef<"group"> {
-  /** Size of the axes helper */
-  size?: number;
-}
-
-const UranusAxis = React.forwardRef<any, UranusAxisProps>(({ size, ...props }, ref) => {
+const UranusAxis = React.forwardRef<
+  any,
+  { size?: number } & Record<string, any>
+>(({ size, ...props }, ref) => {
   const { radius } = useUranus();
   const axisSize = size ?? radius * 3;
 

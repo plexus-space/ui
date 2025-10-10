@@ -276,12 +276,14 @@ MarsGlobe.displayName = "Mars.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const MarsAxis = React.forwardRef<any, { size?: number }>(({ size, ...props }, ref) => {
-  const { radius } = useMars();
-  const axisSize = size ?? radius * 3;
+const MarsAxis = React.forwardRef<any, { size?: number }>(
+  ({ size, ...props }, ref) => {
+    const { radius } = useMars();
+    const axisSize = size ?? radius * 3;
 
-  return <axesHelper ref={ref} args={[axisSize]} {...props} />;
-});
+    return <axesHelper ref={ref} args={[axisSize]} {...props} />;
+  }
+);
 
 MarsAxis.displayName = "Mars.Axis";
 

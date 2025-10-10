@@ -57,8 +57,7 @@ export interface MoonRootProps {
   children?: React.ReactNode;
 }
 
-export interface MoonCanvasProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface MoonCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */

@@ -57,7 +57,8 @@ export interface MercuryRootProps {
   children?: React.ReactNode;
 }
 
-export interface MercuryCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface MercuryCanvasProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */
@@ -118,7 +119,9 @@ const MercuryRoot = React.forwardRef<HTMLDivElement, MercuryRootProps>(
   ) => {
     const rotationSpeed = React.useMemo(() => {
       if (!enableRotation) return 0;
-      return ((2 * Math.PI) / (MERCURY_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+      return (
+        ((2 * Math.PI) / (MERCURY_ROTATION_PERIOD_SECONDS * 60)) * timeScale
+      );
     }, [enableRotation, timeScale]);
 
     const axialTilt: [number, number, number] = React.useMemo(
@@ -276,7 +279,10 @@ MercuryGlobe.displayName = "Mercury.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const MercuryAxis = React.forwardRef<any, { size?: number } & Record<string, any>>(({ size, ...props }, ref) => {
+const MercuryAxis = React.forwardRef<
+  any,
+  { size?: number } & Record<string, any>
+>(({ size, ...props }, ref) => {
   const { radius } = useMercury();
   const axisSize = size ?? radius * 3;
 

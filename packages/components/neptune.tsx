@@ -57,7 +57,8 @@ export interface NeptuneRootProps {
   children?: React.ReactNode;
 }
 
-export interface NeptuneCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface NeptuneCanvasProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */
@@ -68,18 +69,22 @@ export interface NeptuneCanvasProps extends React.HTMLAttributes<HTMLDivElement>
   width?: string;
 }
 
-export interface NeptuneControlsProps extends Omit<React.ComponentProps<typeof OrbitControls>, keyof {
-  minDistance?: number;
-  maxDistance?: number;
-  zoomSpeed?: number;
-  panSpeed?: number;
-  rotateSpeed?: number;
-  enablePan?: boolean;
-  enableZoom?: boolean;
-  enableRotate?: boolean;
-  enableDamping?: boolean;
-  dampingFactor?: number;
-}> {
+export interface NeptuneControlsProps
+  extends Omit<
+    React.ComponentProps<typeof OrbitControls>,
+    keyof {
+      minDistance?: number;
+      maxDistance?: number;
+      zoomSpeed?: number;
+      panSpeed?: number;
+      rotateSpeed?: number;
+      enablePan?: boolean;
+      enableZoom?: boolean;
+      enableRotate?: boolean;
+      enableDamping?: boolean;
+      dampingFactor?: number;
+    }
+  > {
   /** Minimum zoom distance */
   minDistance?: number;
   /** Maximum zoom distance */
@@ -102,9 +107,13 @@ export interface NeptuneControlsProps extends Omit<React.ComponentProps<typeof O
   dampingFactor?: number;
 }
 
-export interface NeptuneGlobeProps extends Omit<React.ComponentProps<typeof Sphere>, keyof {
-  segments?: number;
-}> {
+export interface NeptuneGlobeProps
+  extends Omit<
+    React.ComponentProps<typeof Sphere>,
+    keyof {
+      segments?: number;
+    }
+  > {
   /** Number of segments for sphere geometry */
   segments?: number;
 }
@@ -135,7 +144,9 @@ const NeptuneRoot = React.forwardRef<HTMLDivElement, NeptuneRootProps>(
   ) => {
     const rotationSpeed = React.useMemo(() => {
       if (!enableRotation) return 0;
-      return ((2 * Math.PI) / (NEPTUNE_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+      return (
+        ((2 * Math.PI) / (NEPTUNE_ROTATION_PERIOD_SECONDS * 60)) * timeScale
+      );
     }, [enableRotation, timeScale]);
 
     const axialTilt: [number, number, number] = React.useMemo(
@@ -293,12 +304,14 @@ NeptuneGlobe.displayName = "Neptune.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const NeptuneAxis = React.forwardRef<any, NeptuneAxisProps>(({ size, ...props }, ref) => {
-  const { radius } = useNeptune();
-  const axisSize = size ?? radius * 3;
+const NeptuneAxis = React.forwardRef<any, NeptuneAxisProps>(
+  ({ size, ...props }, ref) => {
+    const { radius } = useNeptune();
+    const axisSize = size ?? radius * 3;
 
-  return <axesHelper ref={ref} args={[axisSize]} {...props} />;
-});
+    return <axesHelper ref={ref} args={[axisSize]} {...props} />;
+  }
+);
 
 NeptuneAxis.displayName = "Neptune.Axis";
 

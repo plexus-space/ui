@@ -57,8 +57,7 @@ export interface VenusRootProps {
   children?: React.ReactNode;
 }
 
-export interface VenusCanvasProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface VenusCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */
