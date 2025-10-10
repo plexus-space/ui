@@ -858,9 +858,13 @@ const ScatterPlotInteraction = React.forwardRef<
       const svg = e.currentTarget.ownerSVGElement;
       if (!svg) return;
 
-      const rect = svg.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      // Use SVG coordinate transformation to handle viewBox scaling correctly
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const svgP = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+      const mouseX = svgP.x;
+      const mouseY = svgP.y;
 
       let nearestSeriesIdx = 0;
       let nearestPointIdx = 0;
@@ -927,9 +931,13 @@ const ScatterPlotInteraction = React.forwardRef<
       const svg = e.currentTarget.ownerSVGElement;
       if (!svg) return;
 
-      const rect = svg.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      // Use SVG coordinate transformation to handle viewBox scaling correctly
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const svgP = pt.matrixTransform(svg.getScreenCTM()?.inverse());
+      const mouseX = svgP.x;
+      const mouseY = svgP.y;
 
       let nearestSeriesIdx = 0;
       let nearestPointIdx = 0;

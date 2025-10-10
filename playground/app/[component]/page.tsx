@@ -1714,7 +1714,7 @@ const EarthExamples = () => {
                   maxDistance={50}
                   enableRotate={true}
                 />
-                <Earth.Globe />
+                <Earth.Globe radius={1} />
               </Earth.Canvas>
             </Earth>
           </div>
@@ -1998,7 +1998,7 @@ const NeptuneExamples = () => {
             >
               <Neptune.Canvas height="600px">
                 <Neptune.Controls />
-                <Neptune.Globe />
+                <Neptune.Globe radius={1} />
               </Neptune.Canvas>
             </Neptune>
           </div>
