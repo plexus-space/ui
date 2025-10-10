@@ -8,6 +8,7 @@ export const colorSchemes = {
   violet: "#FB13F3",
   cyan: "#00D4FF",
   orange: "#FF6B35",
+  yellow: "#bdf92e",
 } as const;
 
 export type ColorSchemeName = keyof typeof colorSchemes;
@@ -45,9 +46,7 @@ export function ColorSchemeProvider({
   const color = colorSchemes[colorScheme];
 
   return (
-    <ColorSchemeContext.Provider
-      value={{ colorScheme, setColorScheme, color }}
-    >
+    <ColorSchemeContext.Provider value={{ colorScheme, setColorScheme, color }}>
       {children}
     </ColorSchemeContext.Provider>
   );

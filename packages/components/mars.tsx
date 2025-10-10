@@ -66,7 +66,6 @@ export interface MarsCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
 export interface MarsControlsProps {
@@ -162,6 +161,7 @@ const MarsCanvas = React.forwardRef<HTMLDivElement, MarsCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -170,7 +170,7 @@ const MarsCanvas = React.forwardRef<HTMLDivElement, MarsCanvasProps>(
     const { brightness } = useMars();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -219,6 +219,7 @@ const MarsControls = React.forwardRef<any, MarsControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
@@ -236,6 +237,7 @@ const MarsControls = React.forwardRef<any, MarsControlsProps>(
         maxDistance={maxDistance}
         enableDamping={enableDamping}
         dampingFactor={dampingFactor}
+        {...props}
       />
     );
   }
@@ -247,7 +249,7 @@ MarsControls.displayName = "Mars.Controls";
  * Globe component - renders the main Mars sphere
  */
 const MarsGlobe = React.forwardRef<any, MarsGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const { radius, rotationSpeed, axialTilt, textureUrl } = useMars();
 
     return (
@@ -261,6 +263,7 @@ const MarsGlobe = React.forwardRef<any, MarsGlobeProps>(
         segments={segments}
         roughness={0.9}
         metalness={0.1}
+        {...props}
       >
         {children}
       </Sphere>
@@ -273,11 +276,11 @@ MarsGlobe.displayName = "Mars.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const MarsAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+const MarsAxis = React.forwardRef<any, { size?: number }>(({ size, ...props }, ref) => {
   const { radius } = useMars();
   const axisSize = size ?? radius * 3;
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
+  return <axesHelper ref={ref} args={[axisSize]} {...props} />;
 });
 
 MarsAxis.displayName = "Mars.Axis";

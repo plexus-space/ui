@@ -66,10 +66,20 @@ export interface NeptuneCanvasProps extends React.HTMLAttributes<HTMLDivElement>
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
-export interface NeptuneControlsProps {
+export interface NeptuneControlsProps extends Omit<React.ComponentProps<typeof OrbitControls>, keyof {
+  minDistance?: number;
+  maxDistance?: number;
+  zoomSpeed?: number;
+  panSpeed?: number;
+  rotateSpeed?: number;
+  enablePan?: boolean;
+  enableZoom?: boolean;
+  enableRotate?: boolean;
+  enableDamping?: boolean;
+  dampingFactor?: number;
+}> {
   /** Minimum zoom distance */
   minDistance?: number;
   /** Maximum zoom distance */
@@ -92,10 +102,16 @@ export interface NeptuneControlsProps {
   dampingFactor?: number;
 }
 
-export interface NeptuneGlobeProps {
+export interface NeptuneGlobeProps extends Omit<React.ComponentProps<typeof Sphere>, keyof {
+  segments?: number;
+}> {
   /** Number of segments for sphere geometry */
   segments?: number;
-  children?: React.ReactNode;
+}
+
+export interface NeptuneAxisProps {
+  /** Size of the axis helper */
+  size?: number;
 }
 
 // ============================================================================
@@ -162,6 +178,7 @@ const NeptuneCanvas = React.forwardRef<HTMLDivElement, NeptuneCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -170,7 +187,7 @@ const NeptuneCanvas = React.forwardRef<HTMLDivElement, NeptuneCanvasProps>(
     const { brightness } = useNeptune();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -219,6 +236,7 @@ const NeptuneControls = React.forwardRef<any, NeptuneControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
@@ -236,6 +254,7 @@ const NeptuneControls = React.forwardRef<any, NeptuneControlsProps>(
         maxDistance={maxDistance}
         enableDamping={enableDamping}
         dampingFactor={dampingFactor}
+        {...props}
       />
     );
   }
@@ -247,7 +266,7 @@ NeptuneControls.displayName = "Neptune.Controls";
  * Globe component - renders the main Neptune sphere
  */
 const NeptuneGlobe = React.forwardRef<any, NeptuneGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const { radius, rotationSpeed, axialTilt, textureUrl } = useNeptune();
 
     return (
@@ -261,6 +280,7 @@ const NeptuneGlobe = React.forwardRef<any, NeptuneGlobeProps>(
         segments={segments}
         roughness={0.7}
         metalness={0.1}
+        {...props}
       >
         {children}
       </Sphere>
@@ -273,11 +293,11 @@ NeptuneGlobe.displayName = "Neptune.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const NeptuneAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+const NeptuneAxis = React.forwardRef<any, NeptuneAxisProps>(({ size, ...props }, ref) => {
   const { radius } = useNeptune();
   const axisSize = size ?? radius * 3;
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
+  return <axesHelper ref={ref} args={[axisSize]} {...props} />;
 });
 
 NeptuneAxis.displayName = "Neptune.Axis";

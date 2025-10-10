@@ -253,10 +253,12 @@ PolarPlotRoot.displayName = "PolarPlot.Root";
 /**
  * Container component - wraps the SVG content
  */
+export interface PolarPlotContainerProps extends React.HTMLAttributes<HTMLDivElement> {}
+
 const PolarPlotContainer = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  PolarPlotContainerProps
+>(({ className, style, children, ...props }, ref) => {
   const { width, height, responsive } = usePolarPlot();
 
   return (
@@ -269,9 +271,12 @@ const PolarPlotContainer = React.forwardRef<
         height: responsive ? "100%" : `${height}px`,
         display: responsive ? "block" : "inline-block",
         minHeight: responsive ? "300px" : undefined,
+        ...style,
       }}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 });
 
@@ -280,9 +285,11 @@ PolarPlotContainer.displayName = "PolarPlot.Container";
 /**
  * Viewport component - SVG canvas
  */
+export interface PolarPlotViewportProps extends React.SVGProps<SVGSVGElement> {}
+
 const PolarPlotViewport = React.forwardRef<
   SVGSVGElement,
-  React.SVGAttributes<SVGSVGElement>
+  PolarPlotViewportProps
 >(({ className, children, ...props }, ref) => {
   const { width, height, series } = usePolarPlot();
 
@@ -307,10 +314,12 @@ PolarPlotViewport.displayName = "PolarPlot.Viewport";
 /**
  * Grid component - renders concentric circles and radial lines
  */
+export interface PolarPlotGridProps extends React.SVGProps<SVGGElement> {}
+
 const PolarPlotGrid = React.forwardRef<
   SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
+  PolarPlotGridProps
+>(({ className, children, ...props }, ref) => {
   const { centerX, centerY, maxRadius, axis, animate } = usePolarPlot();
 
   const rings = axis.rings ?? 5;
@@ -392,10 +401,12 @@ PolarPlotGrid.displayName = "PolarPlot.Grid";
 /**
  * Lines component - renders the data lines
  */
+export interface PolarPlotLinesProps extends React.SVGProps<SVGGElement> {}
+
 const PolarPlotLines = React.forwardRef<
   SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
+  PolarPlotLinesProps
+>(({ className, children, ...props }, ref) => {
   const { series, centerX, centerY, rScale, hiddenSeries, setHoveredPoint, animate, variant } = usePolarPlot();
 
   return (
@@ -517,10 +528,12 @@ PolarPlotLines.displayName = "PolarPlot.Lines";
 /**
  * Legend component
  */
+export interface PolarPlotLegendProps extends React.SVGProps<SVGGElement> {}
+
 const PolarPlotLegend = React.forwardRef<
   SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
+  PolarPlotLegendProps
+>(({ className, children, ...props }, ref) => {
   const { series, width, hiddenSeries, toggleSeries, toggleableSeries } = usePolarPlot();
 
   return (
@@ -578,10 +591,12 @@ PolarPlotLegend.displayName = "PolarPlot.Legend";
 /**
  * Tooltip component - shows point information on hover
  */
+export interface PolarPlotTooltipProps extends React.SVGProps<SVGGElement> {}
+
 const PolarPlotTooltip = React.forwardRef<
   SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
+  PolarPlotTooltipProps
+>(({ className, children, ...props }, ref) => {
   const { hoveredPoint, series, centerX, centerY, rScale } = usePolarPlot();
 
   if (!hoveredPoint) return null;
@@ -681,10 +696,12 @@ PolarPlotTooltip.displayName = "PolarPlot.Tooltip";
 /**
  * Loading state component
  */
+export interface PolarPlotLoadingProps extends React.HTMLAttributes<HTMLDivElement> {}
+
 const PolarPlotLoading = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  PolarPlotLoadingProps
+>(({ className, style, children, ...props }, ref) => {
   return (
     <div
       ref={ref}
@@ -701,25 +718,28 @@ const PolarPlotLoading = React.forwardRef<
         background: "hsl(var(--background) / 0.9)",
         backdropFilter: "blur(4px)",
         zIndex: 10,
+        ...style,
       }}
       role="status"
       aria-live="polite"
       {...props}
     >
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            border: "4px solid hsl(var(--muted) / 0.2)",
-            borderTop: "4px solid hsl(var(--primary))",
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite",
-            margin: "0 auto 12px",
-          }}
-        />
-        <div style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))" }}>Loading chart...</div>
-      </div>
+      {children || (
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              border: "4px solid hsl(var(--muted) / 0.2)",
+              borderTop: "4px solid hsl(var(--primary))",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 12px",
+            }}
+          />
+          <div style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))" }}>Loading chart...</div>
+        </div>
+      )}
       <style jsx>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
@@ -734,10 +754,12 @@ PolarPlotLoading.displayName = "PolarPlot.Loading";
 /**
  * Empty state component
  */
+export interface PolarPlotEmptyProps extends React.HTMLAttributes<HTMLDivElement> {}
+
 const PolarPlotEmpty = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => {
+  PolarPlotEmptyProps
+>(({ className, style, children, ...props }, ref) => {
   return (
     <div
       ref={ref}
@@ -753,6 +775,7 @@ const PolarPlotEmpty = React.forwardRef<
         justifyContent: "center",
         flexDirection: "column",
         gap: "12px",
+        ...style,
       }}
       role="status"
       {...props}

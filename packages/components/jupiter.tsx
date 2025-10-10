@@ -57,7 +57,8 @@ export interface JupiterRootProps {
   children?: React.ReactNode;
 }
 
-export interface JupiterCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface JupiterCanvasProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */
@@ -66,10 +67,13 @@ export interface JupiterCanvasProps extends React.HTMLAttributes<HTMLDivElement>
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
-export interface JupiterControlsProps {
+export interface JupiterControlsProps
+  extends Omit<
+    React.ComponentPropsWithRef<typeof OrbitControls>,
+    keyof React.ComponentPropsWithRef<typeof OrbitControls>
+  > {
   /** Minimum zoom distance */
   minDistance?: number;
   /** Maximum zoom distance */
@@ -92,10 +96,20 @@ export interface JupiterControlsProps {
   dampingFactor?: number;
 }
 
-export interface JupiterGlobeProps {
+export interface JupiterGlobeProps
+  extends Omit<
+    React.ComponentPropsWithRef<typeof Sphere>,
+    | "radius"
+    | "textureUrl"
+    | "color"
+    | "rotationSpeed"
+    | "rotation"
+    | "segments"
+    | "roughness"
+    | "metalness"
+  > {
   /** Number of segments for sphere geometry */
   segments?: number;
-  children?: React.ReactNode;
 }
 
 // ============================================================================
@@ -119,7 +133,9 @@ const JupiterRoot = React.forwardRef<HTMLDivElement, JupiterRootProps>(
   ) => {
     const rotationSpeed = React.useMemo(() => {
       if (!enableRotation) return 0;
-      return ((2 * Math.PI) / (JUPITER_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+      return (
+        ((2 * Math.PI) / (JUPITER_ROTATION_PERIOD_SECONDS * 60)) * timeScale
+      );
     }, [enableRotation, timeScale]);
 
     const axialTilt: [number, number, number] = React.useMemo(
@@ -162,6 +178,7 @@ const JupiterCanvas = React.forwardRef<HTMLDivElement, JupiterCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -170,7 +187,7 @@ const JupiterCanvas = React.forwardRef<HTMLDivElement, JupiterCanvasProps>(
     const { brightness } = useJupiter();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -218,12 +235,14 @@ const JupiterControls = React.forwardRef<any, JupiterControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
     return (
       <OrbitControls
         ref={ref}
+        {...props}
         makeDefault
         enablePan={enablePan}
         enableZoom={enableZoom}
@@ -246,12 +265,13 @@ JupiterControls.displayName = "Jupiter.Controls";
  * Globe component - renders the main Jupiter sphere
  */
 const JupiterGlobe = React.forwardRef<any, JupiterGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const { radius, rotationSpeed, axialTilt, textureUrl } = useJupiter();
 
     return (
       <Sphere
         ref={ref}
+        {...props}
         radius={radius}
         textureUrl={textureUrl}
         color={textureUrl ? "#ffffff" : "#c88b3a"}
@@ -272,12 +292,18 @@ JupiterGlobe.displayName = "Jupiter.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const JupiterAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
-  const { radius } = useJupiter();
-  const axisSize = size ?? radius * 3;
+export interface JupiterAxisProps {
+  size?: number;
+}
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
-});
+const JupiterAxis = React.forwardRef<any, JupiterAxisProps>(
+  ({ size, ...props }, ref) => {
+    const { radius } = useJupiter();
+    const axisSize = size ?? radius * 3;
+
+    return <axesHelper ref={ref} args={[axisSize]} {...props} />;
+  }
+);
 
 JupiterAxis.displayName = "Jupiter.Axis";
 

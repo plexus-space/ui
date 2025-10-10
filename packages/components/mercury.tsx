@@ -66,10 +66,9 @@ export interface MercuryCanvasProps extends React.HTMLAttributes<HTMLDivElement>
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
-export interface MercuryControlsProps {
+export interface MercuryControlsProps extends Record<string, any> {
   /** Minimum zoom distance */
   minDistance?: number;
   /** Maximum zoom distance */
@@ -92,7 +91,7 @@ export interface MercuryControlsProps {
   dampingFactor?: number;
 }
 
-export interface MercuryGlobeProps {
+export interface MercuryGlobeProps extends Record<string, any> {
   /** Number of segments for sphere geometry */
   segments?: number;
   children?: React.ReactNode;
@@ -162,6 +161,7 @@ const MercuryCanvas = React.forwardRef<HTMLDivElement, MercuryCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -170,7 +170,7 @@ const MercuryCanvas = React.forwardRef<HTMLDivElement, MercuryCanvasProps>(
     const { brightness } = useMercury();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -219,6 +219,7 @@ const MercuryControls = React.forwardRef<any, MercuryControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
@@ -236,6 +237,7 @@ const MercuryControls = React.forwardRef<any, MercuryControlsProps>(
         maxDistance={maxDistance}
         enableDamping={enableDamping}
         dampingFactor={dampingFactor}
+        {...props}
       />
     );
   }
@@ -247,7 +249,7 @@ MercuryControls.displayName = "Mercury.Controls";
  * Globe component - renders the main Mercury sphere
  */
 const MercuryGlobe = React.forwardRef<any, MercuryGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const { radius, rotationSpeed, axialTilt, textureUrl } = useMercury();
 
     return (
@@ -261,6 +263,7 @@ const MercuryGlobe = React.forwardRef<any, MercuryGlobeProps>(
         segments={segments}
         roughness={0.95}
         metalness={0.05}
+        {...props}
       >
         {children}
       </Sphere>
@@ -273,11 +276,11 @@ MercuryGlobe.displayName = "Mercury.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const MercuryAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+const MercuryAxis = React.forwardRef<any, { size?: number } & Record<string, any>>(({ size, ...props }, ref) => {
   const { radius } = useMercury();
   const axisSize = size ?? radius * 3;
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
+  return <axesHelper ref={ref} args={[axisSize]} {...props} />;
 });
 
 MercuryAxis.displayName = "Mercury.Axis";

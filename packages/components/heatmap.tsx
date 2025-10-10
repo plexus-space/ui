@@ -359,7 +359,9 @@ const HeatmapRoot = React.forwardRef<HTMLDivElement, HeatmapRootProps>(
               ref.current = node;
             }
             if (node) {
-              (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+              (
+                containerRef as React.MutableRefObject<HTMLDivElement | null>
+              ).current = node;
             }
           }}
           className={cn("heatmap", className)}
@@ -376,10 +378,13 @@ HeatmapRoot.displayName = "Heatmap.Root";
 /**
  * Container component - wraps the SVG content
  */
+export interface HeatmapContainerProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
+
 const HeatmapContainer = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  HeatmapContainerProps
+>(({ className, style, children, ...props }, ref) => {
   const { width, height, responsive } = useHeatmap();
 
   return (
@@ -392,9 +397,12 @@ const HeatmapContainer = React.forwardRef<
         height: responsive ? "100%" : `${height}px`,
         display: responsive ? "block" : "inline-block",
         minHeight: responsive ? "300px" : undefined,
+        ...style,
       }}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 });
 
@@ -403,695 +411,726 @@ HeatmapContainer.displayName = "Heatmap.Container";
 /**
  * Viewport component - SVG canvas
  */
-const HeatmapViewport = React.forwardRef<
-  SVGSVGElement,
-  React.SVGAttributes<SVGSVGElement>
->(({ className, children, ...props }, ref) => {
-  const { width, height } = useHeatmap();
+export interface HeatmapViewportProps extends React.SVGProps<SVGSVGElement> {}
 
-  return (
-    <svg
-      ref={ref}
-      width={width}
-      height={height}
-      className={cn("heatmap-svg", className)}
-      style={{ userSelect: "none" }}
-      role="img"
-      aria-label="Heatmap visualization"
-      {...props}
-    >
-      {children}
-    </svg>
-  );
-});
+const HeatmapViewport = React.forwardRef<SVGSVGElement, HeatmapViewportProps>(
+  ({ className, children, ...props }, ref) => {
+    const { width, height } = useHeatmap();
+
+    return (
+      <svg
+        ref={ref}
+        width={width}
+        height={height}
+        className={cn("heatmap-svg", className)}
+        style={{ userSelect: "none" }}
+        role="img"
+        aria-label="Heatmap visualization"
+        {...props}
+      >
+        {children}
+      </svg>
+    );
+  }
+);
 
 HeatmapViewport.displayName = "Heatmap.Viewport";
 
 /**
  * Cells component - renders the heatmap cells
  */
-const HeatmapCells = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const {
-    cells,
-    gridWidth,
-    gridHeight,
-    colormap,
-    domain,
-    showValues,
-    cellShape,
-    cellGap,
-    animate,
-    valueFormatter,
-    margin,
-    plotWidth,
-    plotHeight,
-    cellWidth,
-    cellHeight,
-    xScale,
-    yScale,
-    hoveredCell,
-    setHoveredCell,
-  } = useHeatmap();
+export interface HeatmapCellsProps extends React.SVGProps<SVGGElement> {}
 
-  return (
-    <g ref={ref} className={cn("heatmap-cells", className)} {...props}>
-      <defs>
-        {/* Glow filter for hover effect */}
-        <filter id="cell-glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        {/* Shadow for depth */}
-        <filter id="cell-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.15" />
-        </filter>
-      </defs>
+const HeatmapCells = React.forwardRef<SVGGElement, HeatmapCellsProps>(
+  ({ className, children, ...props }, ref) => {
+    const {
+      cells,
+      gridWidth,
+      gridHeight,
+      colormap,
+      domain,
+      showValues,
+      cellShape,
+      cellGap,
+      animate,
+      valueFormatter,
+      margin,
+      plotWidth,
+      plotHeight,
+      cellWidth,
+      cellHeight,
+      xScale,
+      yScale,
+      hoveredCell,
+      setHoveredCell,
+    } = useHeatmap();
 
-      {cells.map((cell, i) => {
-        const color = mapDomainToColor(
-          cell.value,
-          domain[0],
-          domain[1],
-          colormap
-        );
+    return (
+      <g ref={ref} className={cn("heatmap-cells", className)} {...props}>
+        <defs>
+          {/* Glow filter for hover effect */}
+          <filter id="cell-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          {/* Shadow for depth */}
+          <filter id="cell-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="1" stdDeviation="2" floodOpacity="0.15" />
+          </filter>
+        </defs>
 
-        // Determine text color based on luminance
-        const rgb = parseInt(color.slice(1), 16);
-        const r = (rgb >> 16) & 0xff;
-        const g = (rgb >> 8) & 0xff;
-        const b = rgb & 0xff;
-        const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-        const textColor = luminance > 128 ? "#000000" : "#ffffff";
-
-        const isHovered =
-          hoveredCell?.x === cell.x && hoveredCell?.y === cell.y;
-
-        let cellElement: React.JSX.Element;
-        let centerX: number;
-        let centerY: number;
-
-        if (cellShape === "hexagon") {
-          // Calculate hexagon radius to fit all hexagons in the plot area
-          const maxRadius = Math.min(
-            plotWidth / ((gridWidth - 1) * 1.5 + 2),
-            plotHeight / ((gridHeight - 1) * Math.sqrt(3) + Math.sqrt(3))
-          ) * 0.95;
-
-          const { cx, cy } = getHexPosition(cell.x, cell.y, maxRadius);
-          centerX = margin.left + cx + maxRadius;
-          centerY = margin.top + cy + maxRadius * Math.sqrt(3) / 2;
-
-          const path = getHexagonPath(centerX, centerY, maxRadius, cellGap);
-
-          cellElement = (
-            <path
-              d={path}
-              fill={color}
-              stroke="none"
-              filter={isHovered ? "url(#cell-glow)" : "url(#cell-shadow)"}
-              style={{
-                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
+        {cells.map((cell, i) => {
+          const color = mapDomainToColor(
+            cell.value,
+            domain[0],
+            domain[1],
+            colormap
           );
-        } else {
-          // Square shape with subtle rounded corners
-          const x = xScale(cell.x);
-          const y = yScale(cell.y);
-          const gap = cellGap * Math.min(cellWidth, cellHeight);
-          const w = cellWidth - gap;
-          const h = cellHeight - gap;
-          const cornerRadius = Math.min(w, h) * 0.04;
 
-          centerX = x + cellWidth / 2;
-          centerY = y + cellHeight / 2;
+          // Determine text color based on luminance
+          const rgb = parseInt(color.slice(1), 16);
+          const r = (rgb >> 16) & 0xff;
+          const g = (rgb >> 8) & 0xff;
+          const b = rgb & 0xff;
+          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+          const textColor = luminance > 128 ? "#000000" : "#ffffff";
 
-          cellElement = (
-            <rect
-              x={x + gap / 2}
-              y={y + gap / 2}
-              width={w}
-              height={h}
-              rx={cornerRadius}
-              ry={cornerRadius}
-              fill={color}
-              stroke="none"
-              filter={isHovered ? "url(#cell-glow)" : "url(#cell-shadow)"}
-              style={{
-                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
-          );
-        }
+          const isHovered =
+            hoveredCell?.x === cell.x && hoveredCell?.y === cell.y;
 
-        return (
-          <g
-            key={`cell-${cell.x}-${cell.y}`}
-            opacity={animate ? 0 : 1}
-            style={
-              animate
-                ? {
-                    animation: `fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${
-                      i * 0.008
-                    }s forwards`,
-                  }
-                : undefined
-            }
-            onMouseEnter={() => setHoveredCell({ x: cell.x, y: cell.y })}
-            onMouseLeave={() => setHoveredCell(null)}
-            cursor="pointer"
-          >
-            {cellElement}
-            {showValues && (
-              <text
-                x={centerX}
-                y={centerY}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={Math.min(cellWidth, cellHeight) / 4.5}
-                fill={textColor}
-                opacity={0.95}
-                fontWeight={500}
+          let cellElement: React.JSX.Element;
+          let centerX: number;
+          let centerY: number;
+
+          if (cellShape === "hexagon") {
+            // Calculate hexagon radius to fit all hexagons in the plot area
+            const maxRadius =
+              Math.min(
+                plotWidth / ((gridWidth - 1) * 1.5 + 2),
+                plotHeight / ((gridHeight - 1) * Math.sqrt(3) + Math.sqrt(3))
+              ) * 0.95;
+
+            const { cx, cy } = getHexPosition(cell.x, cell.y, maxRadius);
+            centerX = margin.left + cx + maxRadius;
+            centerY = margin.top + cy + (maxRadius * Math.sqrt(3)) / 2;
+
+            const path = getHexagonPath(centerX, centerY, maxRadius, cellGap);
+
+            cellElement = (
+              <path
+                d={path}
+                fill={color}
+                stroke="none"
+                filter={isHovered ? "url(#cell-glow)" : "url(#cell-shadow)"}
                 style={{
-                  pointerEvents: "none",
-                  fontVariantNumeric: "tabular-nums",
-                  textShadow: `0 1px 2px ${
-                    luminance > 128
-                      ? "rgba(0,0,0,0.1)"
-                      : "rgba(255,255,255,0.1)"
-                  }`,
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
-              >
-                {valueFormatter
-                  ? valueFormatter(cell.value)
-                  : formatValue(cell.value)}
-              </text>
-            )}
-          </g>
-        );
-      })}
-      <style jsx>{`
-        @keyframes fadeIn {
-          to {
-            opacity: 1;
+              />
+            );
+          } else {
+            // Square shape with subtle rounded corners
+            const x = xScale(cell.x);
+            const y = yScale(cell.y);
+            const gap = cellGap * Math.min(cellWidth, cellHeight);
+            const w = cellWidth - gap;
+            const h = cellHeight - gap;
+            const cornerRadius = Math.min(w, h) * 0.04;
+
+            centerX = x + cellWidth / 2;
+            centerY = y + cellHeight / 2;
+
+            cellElement = (
+              <rect
+                x={x + gap / 2}
+                y={y + gap / 2}
+                width={w}
+                height={h}
+                rx={cornerRadius}
+                ry={cornerRadius}
+                fill={color}
+                stroke="none"
+                filter={isHovered ? "url(#cell-glow)" : "url(#cell-shadow)"}
+                style={{
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              />
+            );
           }
-        }
-      `}</style>
-    </g>
-  );
-});
+
+          return (
+            <g
+              key={`cell-${cell.x}-${cell.y}`}
+              opacity={animate ? 0 : 1}
+              style={
+                animate
+                  ? {
+                      animation: `fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${
+                        i * 0.008
+                      }s forwards`,
+                    }
+                  : undefined
+              }
+              onMouseEnter={() => setHoveredCell({ x: cell.x, y: cell.y })}
+              onMouseLeave={() => setHoveredCell(null)}
+              cursor="pointer"
+            >
+              {cellElement}
+              {showValues && (
+                <text
+                  x={centerX}
+                  y={centerY}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={Math.min(cellWidth, cellHeight) / 4.5}
+                  fill={textColor}
+                  opacity={0.95}
+                  fontWeight={500}
+                  style={{
+                    pointerEvents: "none",
+                    fontVariantNumeric: "tabular-nums",
+                    textShadow: `0 1px 2px ${
+                      luminance > 128
+                        ? "rgba(0,0,0,0.1)"
+                        : "rgba(255,255,255,0.1)"
+                    }`,
+                  }}
+                >
+                  {valueFormatter
+                    ? valueFormatter(cell.value)
+                    : formatValue(cell.value)}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        <style jsx>{`
+          @keyframes fadeIn {
+            to {
+              opacity: 1;
+            }
+          }
+        `}</style>
+      </g>
+    );
+  }
+);
 
 HeatmapCells.displayName = "Heatmap.Cells";
 
 /**
  * Axes component - renders axis labels
  */
-const HeatmapAxes = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const {
-    xLabels,
-    yLabels,
-    xAxisLabel,
-    yAxisLabel,
-    gridWidth,
-    gridHeight,
-    animate,
-    margin,
-    width,
-    height,
-    cellWidth,
-    cellHeight,
-    xScale,
-    yScale,
-  } = useHeatmap();
+export interface HeatmapAxesProps extends React.SVGProps<SVGGElement> {}
 
-  return (
-    <g ref={ref} className={cn("heatmap-axes", className)} {...props}>
-      {/* X-axis labels */}
-      {xLabels &&
-        xLabels.map((label, i) => (
+const HeatmapAxes = React.forwardRef<SVGGElement, HeatmapAxesProps>(
+  ({ className, children, ...props }, ref) => {
+    const {
+      xLabels,
+      yLabels,
+      xAxisLabel,
+      yAxisLabel,
+      gridWidth,
+      gridHeight,
+      animate,
+      margin,
+      width,
+      height,
+      cellWidth,
+      cellHeight,
+      xScale,
+      yScale,
+    } = useHeatmap();
+
+    return (
+      <g ref={ref} className={cn("heatmap-axes", className)} {...props}>
+        {/* X-axis labels */}
+        {xLabels &&
+          xLabels.map((label, i) => (
+            <text
+              key={`xlabel-${i}`}
+              x={xScale(i) + cellWidth / 2}
+              y={height - margin.bottom + 15}
+              textAnchor="middle"
+              fontSize={11}
+              fontWeight={500}
+              fill="currentColor"
+              opacity={animate ? 0 : 0.75}
+              style={
+                animate
+                  ? {
+                      animation: `fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1) ${
+                        0.3 + i * 0.025
+                      }s forwards`,
+                    }
+                  : undefined
+              }
+            >
+              {label}
+            </text>
+          ))}
+
+        {/* X-axis title */}
+        {xAxisLabel && (
           <text
-            key={`xlabel-${i}`}
-            x={xScale(i) + cellWidth / 2}
-            y={height - margin.bottom + 15}
+            x={(margin.left + width - margin.right) / 2}
+            y={height - 5}
             textAnchor="middle"
-            fontSize={11}
-            fontWeight={500}
+            fontSize={13}
+            fontWeight={600}
             fill="currentColor"
-            opacity={animate ? 0 : 0.75}
+            opacity={animate ? 0 : 0.9}
             style={
               animate
                 ? {
-                    animation: `fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1) ${
-                      0.3 + i * 0.025
-                    }s forwards`,
+                    animation:
+                      "fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards",
                   }
                 : undefined
             }
           >
-            {label}
+            {xAxisLabel}
           </text>
-        ))}
+        )}
 
-      {/* X-axis title */}
-      {xAxisLabel && (
-        <text
-          x={(margin.left + width - margin.right) / 2}
-          y={height - 5}
-          textAnchor="middle"
-          fontSize={13}
-          fontWeight={600}
-          fill="currentColor"
-          opacity={animate ? 0 : 0.9}
-          style={
-            animate
-              ? { animation: "fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards" }
-              : undefined
-          }
-        >
-          {xAxisLabel}
-        </text>
-      )}
+        {/* Y-axis labels */}
+        {yLabels &&
+          yLabels.map((label, i) => (
+            <text
+              key={`ylabel-${i}`}
+              x={margin.left - 10}
+              y={yScale(i) + cellHeight / 2}
+              textAnchor="end"
+              dominantBaseline="middle"
+              fontSize={11}
+              fontWeight={500}
+              fill="currentColor"
+              opacity={animate ? 0 : 0.75}
+              style={
+                animate
+                  ? {
+                      animation: `fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1) ${
+                        0.3 + i * 0.025
+                      }s forwards`,
+                    }
+                  : undefined
+              }
+            >
+              {label}
+            </text>
+          ))}
 
-      {/* Y-axis labels */}
-      {yLabels &&
-        yLabels.map((label, i) => (
+        {/* Y-axis title */}
+        {yAxisLabel && (
           <text
-            key={`ylabel-${i}`}
-            x={margin.left - 10}
-            y={yScale(i) + cellHeight / 2}
-            textAnchor="end"
-            dominantBaseline="middle"
-            fontSize={11}
-            fontWeight={500}
+            x={margin.left - 45}
+            y={(margin.top + height - margin.bottom) / 2}
+            textAnchor="middle"
+            fontSize={13}
+            fontWeight={600}
             fill="currentColor"
-            opacity={animate ? 0 : 0.75}
+            transform={`rotate(-90 ${margin.left - 45} ${
+              (margin.top + height - margin.bottom) / 2
+            })`}
+            opacity={animate ? 0 : 0.9}
             style={
               animate
                 ? {
-                    animation: `fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1) ${
-                      0.3 + i * 0.025
-                    }s forwards`,
+                    animation:
+                      "fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards",
                   }
                 : undefined
             }
           >
-            {label}
+            {yAxisLabel}
           </text>
-        ))}
+        )}
 
-      {/* Y-axis title */}
-      {yAxisLabel && (
-        <text
-          x={margin.left - 45}
-          y={(margin.top + height - margin.bottom) / 2}
-          textAnchor="middle"
-          fontSize={13}
-          fontWeight={600}
-          fill="currentColor"
-          transform={`rotate(-90 ${margin.left - 45} ${
-            (margin.top + height - margin.bottom) / 2
-          })`}
-          opacity={animate ? 0 : 0.9}
-          style={
-            animate
-              ? { animation: "fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards" }
-              : undefined
+        <style jsx>{`
+          @keyframes fadeIn {
+            to {
+              opacity: 1;
+            }
           }
-        >
-          {yAxisLabel}
-        </text>
-      )}
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          to {
-            opacity: 1;
+          @keyframes fadeInSlide {
+            from {
+              opacity: 0;
+              transform: translateY(8px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-        }
-        @keyframes fadeInSlide {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-    </g>
-  );
-});
+        `}</style>
+      </g>
+    );
+  }
+);
 
 HeatmapAxes.displayName = "Heatmap.Axes";
 
 /**
  * Colorbar component - renders the color scale legend
  */
-const HeatmapColorbar = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const { colormap, domain, margin, animate, width, height } = useHeatmap();
+export interface HeatmapColorbarProps extends React.SVGProps<SVGGElement> {}
 
-  const colorbarWidth = 24;
-  const colorbarHeight = height - margin.top - margin.bottom;
-  const colorbarX = width - margin.right + 30;
-  const colorbarY = margin.top;
+const HeatmapColorbar = React.forwardRef<SVGGElement, HeatmapColorbarProps>(
+  ({ className, children, ...props }, ref) => {
+    const { colormap, domain, margin, animate, width, height } = useHeatmap();
 
-  const gradient = generateGradient(colormap, "to bottom");
+    const colorbarWidth = 24;
+    const colorbarHeight = height - margin.top - margin.bottom;
+    const colorbarX = width - margin.right + 30;
+    const colorbarY = margin.top;
 
-  const ticks = [domain[0], (domain[0] + domain[1]) / 2, domain[1]];
+    const gradient = generateGradient(colormap, "to bottom");
 
-  return (
-    <g
-      ref={ref}
-      className={cn("heatmap-colorbar", className)}
-      opacity={animate ? 0 : 1}
-      style={
-        animate ? { animation: "fadeInSlide 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards" } : undefined
-      }
-      {...props}
-    >
-      <defs>
-        <filter id="colorbar-shadow">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.2" />
-        </filter>
-      </defs>
-      <rect
-        x={colorbarX}
-        y={colorbarY}
-        width={colorbarWidth}
-        height={colorbarHeight}
-        fill={gradient
-          .replace("linear-gradient(to bottom, ", "")
-          .replace(")", "")}
-        stroke="currentColor"
-        strokeWidth={1.5}
-        strokeOpacity={0.2}
-        rx={4}
-        filter="url(#colorbar-shadow)"
-      />
-      {ticks.map((tick, i) => {
-        const tickY = colorbarY + (i / (ticks.length - 1)) * colorbarHeight;
-        return (
-          <g key={`tick-${i}`}>
-            <line
-              x1={colorbarX + colorbarWidth}
-              y1={tickY}
-              x2={colorbarX + colorbarWidth + 6}
-              y2={tickY}
-              stroke="currentColor"
-              strokeWidth={1.5}
-              opacity={0.4}
-            />
-            <text
-              x={colorbarX + colorbarWidth + 12}
-              y={tickY}
-              dominantBaseline="middle"
-              fontSize={11}
-              fontWeight={500}
-              fill="currentColor"
-              opacity={0.75}
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
-              {formatValue(tick)}
-            </text>
-          </g>
-        );
-      })}
-      <style jsx>{`
-        @keyframes fadeInSlide {
-          from {
-            opacity: 0;
-            transform: translateX(12px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
+    const ticks = [domain[0], (domain[0] + domain[1]) / 2, domain[1]];
+
+    return (
+      <g
+        ref={ref}
+        className={cn("heatmap-colorbar", className)}
+        opacity={animate ? 0 : 1}
+        style={
+          animate
+            ? {
+                animation:
+                  "fadeInSlide 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards",
+              }
+            : undefined
         }
-      `}</style>
-    </g>
-  );
-});
+        {...props}
+      >
+        <defs>
+          <filter id="colorbar-shadow">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.2" />
+          </filter>
+        </defs>
+        <rect
+          x={colorbarX}
+          y={colorbarY}
+          width={colorbarWidth}
+          height={colorbarHeight}
+          fill={gradient
+            .replace("linear-gradient(to bottom, ", "")
+            .replace(")", "")}
+          stroke="currentColor"
+          strokeWidth={1.5}
+          strokeOpacity={0.2}
+          rx={4}
+          filter="url(#colorbar-shadow)"
+        />
+        {ticks.map((tick, i) => {
+          const tickY = colorbarY + (i / (ticks.length - 1)) * colorbarHeight;
+          return (
+            <g key={`tick-${i}`}>
+              <line
+                x1={colorbarX + colorbarWidth}
+                y1={tickY}
+                x2={colorbarX + colorbarWidth + 6}
+                y2={tickY}
+                stroke="currentColor"
+                strokeWidth={1.5}
+                opacity={0.4}
+              />
+              <text
+                x={colorbarX + colorbarWidth + 12}
+                y={tickY}
+                dominantBaseline="middle"
+                fontSize={11}
+                fontWeight={500}
+                fill="currentColor"
+                opacity={0.75}
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {formatValue(tick)}
+              </text>
+            </g>
+          );
+        })}
+        <style jsx>{`
+          @keyframes fadeInSlide {
+            from {
+              opacity: 0;
+              transform: translateX(12px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+        `}</style>
+      </g>
+    );
+  }
+);
 
 HeatmapColorbar.displayName = "Heatmap.Colorbar";
 
 /**
  * Tooltip component - shows cell information on hover
  */
-const HeatmapTooltip = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const {
-    hoveredCell,
-    cells,
-    xLabels,
-    yLabels,
-    valueFormatter,
-    xScale,
-    yScale,
-    cellWidth,
-    cellHeight,
-    cellShape,
-    margin,
-    plotWidth,
-    plotHeight,
-    gridWidth,
-    gridHeight,
-  } = useHeatmap();
+export interface HeatmapTooltipProps extends React.SVGProps<SVGGElement> {}
 
-  if (!hoveredCell) return null;
+const HeatmapTooltip = React.forwardRef<SVGGElement, HeatmapTooltipProps>(
+  ({ className, children, ...props }, ref) => {
+    const {
+      hoveredCell,
+      cells,
+      xLabels,
+      yLabels,
+      valueFormatter,
+      xScale,
+      yScale,
+      cellWidth,
+      cellHeight,
+      cellShape,
+      margin,
+      plotWidth,
+      plotHeight,
+      gridWidth,
+      gridHeight,
+    } = useHeatmap();
 
-  const cell = cells.find(
-    (c) => c.x === hoveredCell.x && c.y === hoveredCell.y
-  );
-  if (!cell) return null;
+    if (!hoveredCell) return null;
 
-  const xLabel = xLabels?.[cell.x] || `X: ${cell.x}`;
-  const yLabel = yLabels?.[cell.y] || `Y: ${cell.y}`;
-  const valueLabel = valueFormatter
-    ? valueFormatter(cell.value)
-    : formatValue(cell.value);
+    const cell = cells.find(
+      (c) => c.x === hoveredCell.x && c.y === hoveredCell.y
+    );
+    if (!cell) return null;
 
-  let tooltipX: number;
-  let tooltipY: number;
+    const xLabel = xLabels?.[cell.x] || `X: ${cell.x}`;
+    const yLabel = yLabels?.[cell.y] || `Y: ${cell.y}`;
+    const valueLabel = valueFormatter
+      ? valueFormatter(cell.value)
+      : formatValue(cell.value);
 
-  if (cellShape === "hexagon") {
-    const maxRadius = Math.min(
-      plotWidth / ((gridWidth - 1) * 1.5 + 2),
-      plotHeight / ((gridHeight - 1) * Math.sqrt(3) + Math.sqrt(3))
-    ) * 0.95;
-    const { cx, cy } = getHexPosition(hoveredCell.x, hoveredCell.y, maxRadius);
-    tooltipX = margin.left + cx + maxRadius;
-    tooltipY = margin.top + cy + maxRadius * Math.sqrt(3) / 2;
-  } else {
-    tooltipX = xScale(hoveredCell.x) + cellWidth / 2;
-    tooltipY = yScale(hoveredCell.y) + cellHeight / 2;
-  }
+    let tooltipX: number;
+    let tooltipY: number;
 
-  return (
-    <g ref={ref} className={cn("heatmap-tooltip", className)} {...props}>
-      <rect
-        x={tooltipX + 10}
-        y={tooltipY - 40}
-        width={160}
-        height={cell.label ? 65 : 50}
-        rx={6}
-        fill="currentColor"
-        opacity={0.95}
-      />
-      <text
-        x={tooltipX + 18}
-        y={tooltipY - 24}
-        fontSize={11}
-        fontWeight={600}
-        fill="white"
-        style={{ mixBlendMode: "difference" }}
-      >
-        {xLabel} × {yLabel}
-      </text>
-      <text
-        x={tooltipX + 18}
-        y={tooltipY - 10}
-        fontSize={10}
-        fill="white"
-        opacity={0.8}
-        style={{ mixBlendMode: "difference" }}
-      >
-        Value: {valueLabel}
-      </text>
-      {cell.label && (
+    if (cellShape === "hexagon") {
+      const maxRadius =
+        Math.min(
+          plotWidth / ((gridWidth - 1) * 1.5 + 2),
+          plotHeight / ((gridHeight - 1) * Math.sqrt(3) + Math.sqrt(3))
+        ) * 0.95;
+      const { cx, cy } = getHexPosition(
+        hoveredCell.x,
+        hoveredCell.y,
+        maxRadius
+      );
+      tooltipX = margin.left + cx + maxRadius;
+      tooltipY = margin.top + cy + (maxRadius * Math.sqrt(3)) / 2;
+    } else {
+      tooltipX = xScale(hoveredCell.x) + cellWidth / 2;
+      tooltipY = yScale(hoveredCell.y) + cellHeight / 2;
+    }
+
+    return (
+      <g ref={ref} className={cn("heatmap-tooltip", className)} {...props}>
+        <rect
+          x={tooltipX + 10}
+          y={tooltipY - 40}
+          width={160}
+          height={cell.label ? 65 : 50}
+          rx={6}
+          fill="currentColor"
+          opacity={0.95}
+        />
         <text
           x={tooltipX + 18}
-          y={tooltipY + 4}
+          y={tooltipY - 24}
+          fontSize={11}
+          fontWeight={600}
+          fill="white"
+          style={{ mixBlendMode: "difference" }}
+        >
+          {xLabel} × {yLabel}
+        </text>
+        <text
+          x={tooltipX + 18}
+          y={tooltipY - 10}
           fontSize={10}
           fill="white"
           opacity={0.8}
           style={{ mixBlendMode: "difference" }}
         >
-          {cell.label}
+          Value: {valueLabel}
         </text>
-      )}
-    </g>
-  );
-});
+        {cell.label && (
+          <text
+            x={tooltipX + 18}
+            y={tooltipY + 4}
+            fontSize={10}
+            fill="white"
+            opacity={0.8}
+            style={{ mixBlendMode: "difference" }}
+          >
+            {cell.label}
+          </text>
+        )}
+      </g>
+    );
+  }
+);
 
 HeatmapTooltip.displayName = "Heatmap.Tooltip";
 
 /**
  * Loading state component
  */
-const HeatmapLoading = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  const { width, height } = useHeatmap();
+export interface HeatmapLoadingProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
 
-  return (
-    <div
-      ref={ref}
-      className={cn("heatmap-loading", className)}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "hsl(var(--background) / 0.95)",
-        backdropFilter: "blur(8px)",
-        zIndex: 10,
-      }}
-      role="status"
-      aria-live="polite"
-      {...props}
-    >
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            position: "relative",
-            width: "48px",
-            height: "48px",
-            margin: "0 auto 16px",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              border: "3px solid hsl(var(--muted) / 0.15)",
-              borderTop: "3px solid hsl(var(--primary))",
-              borderRadius: "50%",
-              animation: "spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              border: "3px solid transparent",
-              borderBottom: "3px solid hsl(var(--primary) / 0.6)",
-              borderRadius: "50%",
-              animation: "spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse",
-            }}
-          />
-        </div>
-        <div
-          style={{
-            fontSize: "14px",
-            fontWeight: 500,
-            color: "hsl(var(--foreground))",
-            opacity: 0.8,
-          }}
-        >
-          Loading heatmap...
-        </div>
-      </div>
-      <style jsx>{`
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
+const HeatmapLoading = React.forwardRef<HTMLDivElement, HeatmapLoadingProps>(
+  ({ className, style, children, ...props }, ref) => {
+    const { width, height } = useHeatmap();
+
+    return (
+      <div
+        ref={ref}
+        className={cn("heatmap-loading", className)}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "hsl(var(--background) / 0.95)",
+          backdropFilter: "blur(8px)",
+          zIndex: 10,
+          ...style,
+        }}
+        role="status"
+        aria-live="polite"
+        {...props}
+      >
+        {children || (
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                position: "relative",
+                width: "48px",
+                height: "48px",
+                margin: "0 auto 16px",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  width: "100%",
+                  height: "100%",
+                  border: "3px solid hsl(var(--muted) / 0.15)",
+                  borderTop: "3px solid hsl(var(--primary))",
+                  borderRadius: "50%",
+                  animation: "spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  width: "100%",
+                  height: "100%",
+                  border: "3px solid transparent",
+                  borderBottom: "3px solid hsl(var(--primary) / 0.6)",
+                  borderRadius: "50%",
+                  animation:
+                    "spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse",
+                }}
+              />
+            </div>
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: 500,
+                color: "hsl(var(--foreground))",
+                opacity: 0.8,
+              }}
+            >
+              Loading heatmap...
+            </div>
+          </div>
+        )}
+        <style jsx>{`
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
           }
-        }
-      `}</style>
-    </div>
-  );
-});
+        `}</style>
+      </div>
+    );
+  }
+);
 
 HeatmapLoading.displayName = "Heatmap.Loading";
 
 /**
  * Empty state component
  */
-const HeatmapEmpty = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => {
-  const { width, height } = useHeatmap();
+export interface HeatmapEmptyProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
 
-  return (
-    <div
-      ref={ref}
-      className={cn("heatmap-empty", className)}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: "12px",
-      }}
-      role="status"
-      {...props}
-    >
-      {children || (
-        <>
-          <svg
-            width="64"
-            height="64"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            opacity="0.3"
-          >
-            <rect x="3" y="3" width="7" height="7" strokeWidth="2" />
-            <rect x="3" y="14" width="7" height="7" strokeWidth="2" />
-            <rect x="14" y="3" width="7" height="7" strokeWidth="2" />
-            <rect x="14" y="14" width="7" height="7" strokeWidth="2" />
-          </svg>
-          <div
-            style={{
-              fontSize: "14px",
-              color: "hsl(var(--muted-foreground))",
-            }}
-          >
-            No data available
-          </div>
-        </>
-      )}
-    </div>
-  );
-});
+const HeatmapEmpty = React.forwardRef<HTMLDivElement, HeatmapEmptyProps>(
+  ({ className, style, children, ...props }, ref) => {
+    const { width, height } = useHeatmap();
+
+    return (
+      <div
+        ref={ref}
+        className={cn("heatmap-empty", className)}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          gap: "12px",
+          ...style,
+        }}
+        role="status"
+        {...props}
+      >
+        {children || (
+          <>
+            <svg
+              width="64"
+              height="64"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              opacity="0.3"
+            >
+              <rect x="3" y="3" width="7" height="7" strokeWidth="2" />
+              <rect x="3" y="14" width="7" height="7" strokeWidth="2" />
+              <rect x="14" y="3" width="7" height="7" strokeWidth="2" />
+              <rect x="14" y="14" width="7" height="7" strokeWidth="2" />
+            </svg>
+            <div
+              style={{
+                fontSize: "14px",
+                color: "hsl(var(--muted-foreground))",
+              }}
+            >
+              No data available
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+);
 
 HeatmapEmpty.displayName = "Heatmap.Empty";
 

@@ -9,6 +9,8 @@ import { LineChart } from "@plexusui/components/line-chart";
 import { PolarPlot } from "@plexusui/components/polar-plot";
 import { Heatmap } from "@plexusui/components/heatmap";
 import { GanttChart } from "@plexusui/components/gantt-chart";
+import { ScatterPlot } from "@plexusui/components/scatter-plot";
+import { BarChart } from "@plexusui/components/bar-chart";
 import { Earth } from "@plexusui/components/earth";
 import { Mars } from "@plexusui/components/mars";
 import { Mercury } from "@plexusui/components/mercury";
@@ -145,31 +147,31 @@ const LineChartExamples = () => {
         title="FFT Magnitude Spectrum"
         description="Frequency domain analysis showing harmonic peaks at 5Hz, 10Hz, and 15Hz. Common in signal processing and vibration analysis."
         preview={
-          <LineChart.Root
-            series={[
-              {
-                name: "Magnitude",
-                data: fftData,
-                color: color,
-                strokeWidth: 2,
-                filled: true,
-              },
-            ]}
-            xAxis={{ label: "Frequency (Hz)" }}
-            yAxis={{ label: "Magnitude (dB)" }}
-            width={850}
-            height={350}
-          >
-            <LineChart.Container>
-              <LineChart.Viewport>
-                <LineChart.Grid />
-                <LineChart.Axes />
-                <LineChart.Lines />
-                <LineChart.Interaction />
-                <LineChart.Tooltip />
-              </LineChart.Viewport>
-            </LineChart.Container>
-          </LineChart.Root>
+          <div className="w-full">
+            <LineChart.Root
+              series={[
+                {
+                  name: "Magnitude",
+                  data: fftData,
+                  color: color,
+                  strokeWidth: 2,
+                  filled: true,
+                },
+              ]}
+              xAxis={{ label: "Frequency (Hz)" }}
+              yAxis={{ label: "Magnitude (dB)" }}
+            >
+              <LineChart.Container>
+                <LineChart.Viewport>
+                  <LineChart.Grid />
+                  <LineChart.Axes />
+                  <LineChart.Lines />
+                  <LineChart.Interaction />
+                  <LineChart.Tooltip />
+                </LineChart.Viewport>
+              </LineChart.Container>
+            </LineChart.Root>
+          </div>
         }
         code={`<LineChart.Root
   series={[
@@ -202,30 +204,30 @@ const LineChartExamples = () => {
         title="Damped Harmonic Oscillator"
         description="Exponential decay with oscillation (γ = 0.1, ω = 2 rad/s). Common in mechanical systems, RLC circuits, and vibration damping."
         preview={
-          <LineChart.Root
-            series={[
-              {
-                name: "Displacement",
-                data: dampedOscillation,
-                color: color,
-                strokeWidth: 2.5,
-              },
-            ]}
-            xAxis={{ label: "Time (s)" }}
-            yAxis={{ label: "Amplitude" }}
-            width={850}
-            height={350}
-          >
-            <LineChart.Container>
-              <LineChart.Viewport>
-                <LineChart.Grid />
-                <LineChart.Axes />
-                <LineChart.Lines />
-                <LineChart.Interaction />
-                <LineChart.Tooltip />
-              </LineChart.Viewport>
-            </LineChart.Container>
-          </LineChart.Root>
+          <div className="w-full">
+            <LineChart.Root
+              series={[
+                {
+                  name: "Displacement",
+                  data: dampedOscillation,
+                  color: color,
+                  strokeWidth: 2.5,
+                },
+              ]}
+              xAxis={{ label: "Time (s)" }}
+              yAxis={{ label: "Amplitude" }}
+            >
+              <LineChart.Container>
+                <LineChart.Viewport>
+                  <LineChart.Grid />
+                  <LineChart.Axes />
+                  <LineChart.Lines />
+                  <LineChart.Interaction />
+                  <LineChart.Tooltip />
+                </LineChart.Viewport>
+              </LineChart.Container>
+            </LineChart.Root>
+          </div>
         }
         code={`<LineChart.Root
   series={[{
@@ -253,39 +255,40 @@ const LineChartExamples = () => {
       {/* Signal Processing */}
       <ComponentPreview
         title="Signal Processing: Noise Reduction"
-        description="Raw signal with noise vs filtered output. Demonstrates digital filtering and noise reduction techniques."
+        description="Raw signal with noise vs filtered output. Demonstrates digital filtering and noise reduction techniques. Uses unified tooltip to compare both signals at the same x-coordinate."
         preview={
-          <LineChart.Root
-            series={[
-              {
-                name: "Noisy Signal",
-                data: noisySignal,
-                color: "#71717a",
-                strokeWidth: 1.5,
-              },
-              {
-                name: "Filtered Signal",
-                data: filteredSignal,
-                color: color,
-                strokeWidth: 2.5,
-              },
-            ]}
-            xAxis={{ label: "Time (s)" }}
-            yAxis={{ label: "Voltage (V)" }}
-            width={850}
-            height={350}
-          >
-            <LineChart.Container>
-              <LineChart.Viewport>
-                <LineChart.Grid />
-                <LineChart.Axes />
-                <LineChart.Lines />
-                <LineChart.Interaction />
-                <LineChart.Tooltip />
-                <LineChart.Legend />
-              </LineChart.Viewport>
-            </LineChart.Container>
-          </LineChart.Root>
+          <div className="w-full">
+            <LineChart.Root
+              series={[
+                {
+                  name: "Noisy Signal",
+                  data: noisySignal,
+                  color: "#71717a",
+                  strokeWidth: 1.5,
+                },
+                {
+                  name: "Filtered Signal",
+                  data: filteredSignal,
+                  color: color,
+                  strokeWidth: 2.5,
+                },
+              ]}
+              xAxis={{ label: "Time (s)" }}
+              yAxis={{ label: "Voltage (V)" }}
+              unifiedTooltip={true}
+            >
+              <LineChart.Container>
+                <LineChart.Viewport>
+                  <LineChart.Grid />
+                  <LineChart.Axes />
+                  <LineChart.Lines />
+                  <LineChart.Interaction />
+                  <LineChart.Tooltip />
+                  <LineChart.Legend />
+                </LineChart.Viewport>
+              </LineChart.Container>
+            </LineChart.Root>
+          </div>
         }
         code={`<LineChart.Root
   series={[
@@ -304,6 +307,7 @@ const LineChartExamples = () => {
   yAxis={{ label: "Voltage (V)" }}
   width={850}
   height={350}
+  unifiedTooltip={true}
 >
   <LineChart.Container>
     <LineChart.Viewport>
@@ -323,30 +327,30 @@ const LineChartExamples = () => {
         title="Orbital Velocity vs Altitude"
         description="Earth orbital mechanics using v = √(μ/r). Shows how orbital velocity decreases with altitude."
         preview={
-          <LineChart.Root
-            series={[
-              {
-                name: "Velocity",
-                data: orbitalVelocity,
-                color: color,
-                strokeWidth: 2.5,
-              },
-            ]}
-            xAxis={{ label: "Altitude (km)" }}
-            yAxis={{ label: "Orbital Velocity (km/s)" }}
-            width={850}
-            height={350}
-          >
-            <LineChart.Container>
-              <LineChart.Viewport>
-                <LineChart.Grid />
-                <LineChart.Axes />
-                <LineChart.Lines />
-                <LineChart.Interaction />
-                <LineChart.Tooltip />
-              </LineChart.Viewport>
-            </LineChart.Container>
-          </LineChart.Root>
+          <div className="w-full">
+            <LineChart.Root
+              series={[
+                {
+                  name: "Velocity",
+                  data: orbitalVelocity,
+                  color: color,
+                  strokeWidth: 2.5,
+                },
+              ]}
+              xAxis={{ label: "Altitude (km)" }}
+              yAxis={{ label: "Orbital Velocity (km/s)" }}
+            >
+              <LineChart.Container>
+                <LineChart.Viewport>
+                  <LineChart.Grid />
+                  <LineChart.Axes />
+                  <LineChart.Lines />
+                  <LineChart.Interaction />
+                  <LineChart.Tooltip />
+                </LineChart.Viewport>
+              </LineChart.Container>
+            </LineChart.Root>
+          </div>
         }
         code={`<LineChart.Root
   series={[{
@@ -376,7 +380,7 @@ const LineChartExamples = () => {
         title="Real-Time Telemetry Streaming"
         description="Live data streaming with a sliding window. Updates at 10Hz. Perfect for telemetry displays and real-time monitoring."
         preview={
-          <div>
+          <div className="w-full">
             <LineChart.Root
               series={[
                 {
@@ -387,8 +391,6 @@ const LineChartExamples = () => {
               ]}
               xAxis={{ label: "Time" }}
               yAxis={{ label: "Value" }}
-              width={850}
-              height={350}
               animate={false}
             >
               <LineChart.Container>
@@ -441,15 +443,13 @@ useEffect(() => {
         title="High-Volume Data (50,000 Points)"
         description="Rendering 50,000 data points with automatic decimation (LTTB) and Canvas rendering for smooth 60fps performance."
         preview={
-          <div className="space-y-2">
+          <div className="w-full space-y-2">
             <LineChart.Root
               series={[
                 { name: "Sensor Data", data: highVolumeData, color: color },
               ]}
               xAxis={{ label: "Time (s)" }}
               yAxis={{ label: "Signal" }}
-              width={850}
-              height={300}
               maxPoints={2000}
             >
               <LineChart.Container>
@@ -525,43 +525,49 @@ const PolarPlotExamples = () => {
         title="Antenna Radiation Pattern"
         description="Polar plot showing the directional gain pattern of an antenna."
         preview={
-          <PolarPlot.Root
-            series={[
-              {
-                name: "Gain Pattern",
-                data: radiationPattern,
-                color: color,
-                filled: true,
-                closed: true,
-              },
-            ]}
-            axis={{
-              label: "Gain (dB)",
-              angleLabels: [
-                "0°",
-                "45°",
-                "90°",
-                "135°",
-                "180°",
-                "225°",
-                "270°",
-                "315°",
-              ],
-              rings: 5,
-            }}
-            width={600}
-            height={600}
-            showLegend={false}
-            variant="polar"
-          >
-            <PolarPlot.Container>
-              <PolarPlot.Viewport>
-                <PolarPlot.Grid />
-                <PolarPlot.Lines />
-                <PolarPlot.Tooltip />
-              </PolarPlot.Viewport>
-            </PolarPlot.Container>
-          </PolarPlot.Root>
+          <div className="flex justify-center w-full">
+            <div
+              className="w-full max-w-[600px]"
+              style={{ aspectRatio: "1/1" }}
+            >
+              <PolarPlot.Root
+                series={[
+                  {
+                    name: "Gain Pattern",
+                    data: radiationPattern,
+                    color: color,
+                    filled: true,
+                    closed: true,
+                  },
+                ]}
+                axis={{
+                  label: "Gain (dB)",
+                  angleLabels: [
+                    "0°",
+                    "45°",
+                    "90°",
+                    "135°",
+                    "180°",
+                    "225°",
+                    "270°",
+                    "315°",
+                  ],
+                  rings: 5,
+                }}
+                showLegend={false}
+                variant="polar"
+                responsive={true}
+              >
+                <PolarPlot.Container>
+                  <PolarPlot.Viewport>
+                    <PolarPlot.Grid />
+                    <PolarPlot.Lines />
+                    <PolarPlot.Tooltip />
+                  </PolarPlot.Viewport>
+                </PolarPlot.Container>
+              </PolarPlot.Root>
+            </div>
+          </div>
         }
         code={`<PolarPlot.Root
   series={[{
@@ -590,43 +596,49 @@ const PolarPlotExamples = () => {
         title="Spacecraft Subsystem Health Radar"
         description="Radar chart displaying multiple subsystem health metrics. Perfect for multi-dimensional comparisons at a glance."
         preview={
-          <PolarPlot.Root
-            series={[
-              {
-                name: "Health Status",
-                data: subsystemHealth,
-                color: color,
-                filled: true,
-                closed: true,
-                strokeWidth: 3,
-              },
-            ]}
-            axis={{
-              label: "Health Score",
-              angleLabels: [
-                "Power",
-                "Propulsion",
-                "Thermal",
-                "Comm",
-                "ADCS",
-                "CDH",
-              ],
-              rings: 4,
-              angleCount: 6,
-            }}
-            width={600}
-            height={600}
-            showLegend={false}
-            variant="radar"
-          >
-            <PolarPlot.Container>
-              <PolarPlot.Viewport>
-                <PolarPlot.Grid />
-                <PolarPlot.Lines />
-                <PolarPlot.Tooltip />
-              </PolarPlot.Viewport>
-            </PolarPlot.Container>
-          </PolarPlot.Root>
+          <div className="flex justify-center w-full">
+            <div
+              className="w-full max-w-[600px]"
+              style={{ aspectRatio: "1/1" }}
+            >
+              <PolarPlot.Root
+                series={[
+                  {
+                    name: "Health Status",
+                    data: subsystemHealth,
+                    color: color,
+                    filled: true,
+                    closed: true,
+                    strokeWidth: 3,
+                  },
+                ]}
+                axis={{
+                  label: "Health Score",
+                  angleLabels: [
+                    "Power",
+                    "Propulsion",
+                    "Thermal",
+                    "Comm",
+                    "ADCS",
+                    "CDH",
+                  ],
+                  rings: 4,
+                  angleCount: 6,
+                }}
+                showLegend={false}
+                variant="radar"
+                responsive={true}
+              >
+                <PolarPlot.Container>
+                  <PolarPlot.Viewport>
+                    <PolarPlot.Grid />
+                    <PolarPlot.Lines />
+                    <PolarPlot.Tooltip />
+                  </PolarPlot.Viewport>
+                </PolarPlot.Container>
+              </PolarPlot.Root>
+            </div>
+          </div>
         }
         code={`<PolarPlot.Root
   series={[{
@@ -650,34 +662,40 @@ const PolarPlotExamples = () => {
         title="Rose Diagram"
         description="Rose diagram for directional data like wind direction or orbital phase distribution."
         preview={
-          <PolarPlot.Root
-            series={[
-              {
-                name: "Wind Distribution",
-                data: windData,
-                color: color,
-                filled: true,
-                closed: true,
-              },
-            ]}
-            axis={{
-              label: "Frequency",
-              rings: 4,
-              angleCount: 16,
-            }}
-            width={600}
-            height={600}
-            showLegend={false}
-            variant="rose"
-          >
-            <PolarPlot.Container>
-              <PolarPlot.Viewport>
-                <PolarPlot.Grid />
-                <PolarPlot.Lines />
-                <PolarPlot.Tooltip />
-              </PolarPlot.Viewport>
-            </PolarPlot.Container>
-          </PolarPlot.Root>
+          <div className="flex justify-center w-full">
+            <div
+              className="w-full max-w-[600px]"
+              style={{ aspectRatio: "1/1" }}
+            >
+              <PolarPlot.Root
+                series={[
+                  {
+                    name: "Wind Distribution",
+                    data: windData,
+                    color: color,
+                    filled: true,
+                    closed: true,
+                  },
+                ]}
+                axis={{
+                  label: "Frequency",
+                  rings: 4,
+                  angleCount: 16,
+                }}
+                showLegend={false}
+                variant="rose"
+                responsive={true}
+              >
+                <PolarPlot.Container>
+                  <PolarPlot.Viewport>
+                    <PolarPlot.Grid />
+                    <PolarPlot.Lines />
+                    <PolarPlot.Tooltip />
+                  </PolarPlot.Viewport>
+                </PolarPlot.Container>
+              </PolarPlot.Root>
+            </div>
+          </div>
         }
         code={`<PolarPlot.Root
   series={[{
@@ -730,25 +748,28 @@ const HeatmapExamples = () => {
         title="Terrain Elevation Map"
         description="2D elevation heatmap using the viridis colormap for terrain visualization."
         preview={
-          <Heatmap.Root
-            data={terrainData}
-            xAxisLabel="East-West (km)"
-            yAxisLabel="North-South (km)"
-            colormap="viridis"
-            width={850}
-            height={600}
-            showColorbar={true}
-            showGrid={false}
-          >
-            <Heatmap.Container>
-              <Heatmap.Viewport>
-                <Heatmap.Cells />
-                <Heatmap.Axes />
-                <Heatmap.Colorbar />
-                <Heatmap.Tooltip />
-              </Heatmap.Viewport>
-            </Heatmap.Container>
-          </Heatmap.Root>
+          <div className="flex justify-center w-full">
+            <div className="w-full max-w-[850px]">
+              <Heatmap.Root
+                data={terrainData}
+                xAxisLabel="East-West (km)"
+                yAxisLabel="North-South (km)"
+                colormap="viridis"
+                showColorbar={true}
+                showGrid={false}
+                responsive={true}
+              >
+                <Heatmap.Container>
+                  <Heatmap.Viewport>
+                    <Heatmap.Cells />
+                    <Heatmap.Axes />
+                    <Heatmap.Colorbar />
+                    <Heatmap.Tooltip />
+                  </Heatmap.Viewport>
+                </Heatmap.Container>
+              </Heatmap.Root>
+            </div>
+          </div>
         }
         code={`<Heatmap.Root
   data={terrainData}
@@ -770,27 +791,30 @@ const HeatmapExamples = () => {
         title="Ground Station Contact Schedule"
         description="Time-series heatmap showing satellite contact opportunities across days and hours."
         preview={
-          <Heatmap.Root
-            data={contactHeatmap}
-            xLabels={["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]}
-            yLabels={Array.from({ length: 24 }, (_, i) => `${i}:00`)}
-            xAxisLabel="Day of Week"
-            yAxisLabel="Hour (UTC)"
-            colormap="plasma"
-            width={850}
-            height={600}
-            showColorbar={true}
-            showValues={true}
-          >
-            <Heatmap.Container>
-              <Heatmap.Viewport>
-                <Heatmap.Cells />
-                <Heatmap.Axes />
-                <Heatmap.Colorbar />
-                <Heatmap.Tooltip />
-              </Heatmap.Viewport>
-            </Heatmap.Container>
-          </Heatmap.Root>
+          <div className="flex justify-center w-full">
+            <div className="w-full max-w-[850px]">
+              <Heatmap.Root
+                data={contactHeatmap}
+                xLabels={["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]}
+                yLabels={Array.from({ length: 24 }, (_, i) => `${i}:00`)}
+                xAxisLabel="Day of Week"
+                yAxisLabel="Hour (UTC)"
+                colormap="plasma"
+                showColorbar={true}
+                showValues={true}
+                responsive={true}
+              >
+                <Heatmap.Container>
+                  <Heatmap.Viewport>
+                    <Heatmap.Cells />
+                    <Heatmap.Axes />
+                    <Heatmap.Colorbar />
+                    <Heatmap.Tooltip />
+                  </Heatmap.Viewport>
+                </Heatmap.Container>
+              </Heatmap.Root>
+            </div>
+          </div>
         }
         code={`<Heatmap.Root
   data={contactHeatmap}
@@ -814,25 +838,28 @@ const HeatmapExamples = () => {
         title="Honeycomb Heatmap"
         description="Hexagonal cell layout for a modern, space-efficient visualization. Perfect for compact data displays."
         preview={
-          <Heatmap.Root
-            data={terrainData.slice(0, 12).map((row) => row.slice(0, 12))}
-            colormap="inferno"
-            width={850}
-            height={600}
-            showColorbar={true}
-            cellShape="hexagon"
-            cellGap={0.1}
-            showGrid={false}
-          >
-            <Heatmap.Container>
-              <Heatmap.Viewport>
-                <Heatmap.Cells />
-                <Heatmap.Axes />
-                <Heatmap.Colorbar />
-                <Heatmap.Tooltip />
-              </Heatmap.Viewport>
-            </Heatmap.Container>
-          </Heatmap.Root>
+          <div className="flex justify-center w-full">
+            <div className="w-full max-w-[850px]">
+              <Heatmap.Root
+                data={terrainData.slice(0, 12).map((row) => row.slice(0, 12))}
+                colormap="inferno"
+                showColorbar={true}
+                cellShape="hexagon"
+                cellGap={0.1}
+                showGrid={false}
+                responsive={true}
+              >
+                <Heatmap.Container>
+                  <Heatmap.Viewport>
+                    <Heatmap.Cells />
+                    <Heatmap.Axes />
+                    <Heatmap.Colorbar />
+                    <Heatmap.Tooltip />
+                  </Heatmap.Viewport>
+                </Heatmap.Container>
+              </Heatmap.Root>
+            </div>
+          </div>
         }
         code={`<Heatmap.Root
   data={terrainData}
@@ -1068,6 +1095,605 @@ const GanttChartExamples = () => {
     </GanttChart.Container>
   </GanttChart>
 </div>`}
+      />
+    </div>
+  );
+};
+
+const ScatterPlotExamples = () => {
+  const { color } = useColorScheme();
+
+  // Correlation dataset
+  const correlationData = useMemo(() => {
+    const random = seededRandom(42);
+    return Array.from({ length: 100 }, (_, i) => {
+      const x = random() * 100;
+      const noise = (random() - 0.5) * 20;
+      return { x, y: 0.8 * x + 20 + noise };
+    });
+  }, []);
+
+  // Clustered data (3 clusters)
+  const clusteredData = useMemo(() => {
+    const random = seededRandom(123);
+    const clusters = [
+      { cx: 30, cy: 30, color: color },
+      { cx: 70, cy: 50, color: "#ef4444" },
+      { cx: 50, cy: 80, color: "#f59e0b" },
+    ];
+
+    return clusters.map((cluster, clusterIdx) => ({
+      name: `Cluster ${clusterIdx + 1}`,
+      data: Array.from({ length: 50 }, () => ({
+        x: cluster.cx + (random() - 0.5) * 20,
+        y: cluster.cy + (random() - 0.5) * 20,
+      })),
+      color: cluster.color,
+      radius: 4,
+      opacity: 0.7,
+    }));
+  }, [color]);
+
+  // Experimental data with labels
+  const experimentalData = useMemo(() => {
+    const random = seededRandom(999);
+    return Array.from({ length: 30 }, (_, i) => ({
+      x: i * 3,
+      y: 50 + Math.sin(i / 3) * 20 + (random() - 0.5) * 10,
+      label: `Point ${i + 1}`,
+    }));
+  }, []);
+
+  // Altitude vs Velocity (orbital mechanics)
+  const orbitalData = useMemo(() => {
+    return Array.from({ length: 50 }, (_, i) => {
+      const altitude = i * 10 + 200; // km
+      const earthRadius = 6371;
+      const mu = 398600; // km³/s²
+      const r = earthRadius + altitude;
+      const velocity = Math.sqrt(mu / r);
+      return { x: altitude, y: velocity };
+    });
+  }, []);
+
+  // Temperature vs Pressure (thermodynamics)
+  const thermoData = useMemo(() => {
+    const random = seededRandom(777);
+    return Array.from({ length: 40 }, (_, i) => {
+      const temp = 273 + i * 5; // Kelvin
+      const pressure = (temp / 273) * 101.325 + (random() - 0.5) * 10; // kPa
+      return { x: temp, y: pressure };
+    });
+  }, []);
+
+  return (
+    <div className="space-y-12">
+      {/* Basic Scatter Plot with Correlation */}
+      <ComponentPreview
+        title="Linear Correlation with Regression"
+        description="Scatter plot showing strong positive correlation (R² ≈ 0.85). The regression line helps identify trends and outliers in experimental data."
+        preview={
+          <div className="w-full">
+            <ScatterPlot.Root
+              series={[
+                {
+                  name: "Data Points",
+                  data: correlationData,
+                  color: color,
+                  radius: 5,
+                  opacity: 0.7,
+                },
+              ]}
+              xAxis={{ label: "Independent Variable" }}
+              yAxis={{ label: "Dependent Variable" }}
+              showRegression={true}
+            >
+              <ScatterPlot.Container>
+                <ScatterPlot.Viewport>
+                  <ScatterPlot.Grid />
+                  <ScatterPlot.Axes />
+                  <ScatterPlot.Regression />
+                  <ScatterPlot.Points />
+                  <ScatterPlot.Interaction />
+                  <ScatterPlot.Tooltip />
+                </ScatterPlot.Viewport>
+              </ScatterPlot.Container>
+            </ScatterPlot.Root>
+          </div>
+        }
+        code={`<ScatterPlot.Root
+  series={[
+    {
+      name: "Data Points",
+      data: correlationData,
+      color: "#06b6d4",
+      radius: 5,
+      opacity: 0.7,
+    },
+  ]}
+  xAxis={{ label: "Independent Variable" }}
+  yAxis={{ label: "Dependent Variable" }}
+  showRegression={true}
+  width={850}
+  height={400}
+>
+  <ScatterPlot.Container>
+    <ScatterPlot.Viewport>
+      <ScatterPlot.Grid />
+      <ScatterPlot.Axes />
+      <ScatterPlot.Regression />
+      <ScatterPlot.Points />
+      <ScatterPlot.Interaction />
+      <ScatterPlot.Tooltip />
+    </ScatterPlot.Viewport>
+  </ScatterPlot.Container>
+</ScatterPlot.Root>`}
+      />
+
+      {/* Multi-series Clustering */}
+      <ComponentPreview
+        title="Multi-cluster Point Cloud"
+        description="Visualizing multiple clusters in 2D space. Common in machine learning classification, particle tracking, and spatial analysis. Uses responsive HTML legend for better UX."
+        preview={
+          <div className="w-full">
+            <ScatterPlot.Root
+              series={clusteredData}
+              xAxis={{ label: "Feature 1" }}
+              yAxis={{ label: "Feature 2" }}
+            >
+              <ScatterPlot.LegendHTML interactive={true} />
+              <ScatterPlot.Container>
+                <ScatterPlot.Viewport>
+                  <ScatterPlot.Grid />
+                  <ScatterPlot.Axes />
+                  <ScatterPlot.Points />
+                  <ScatterPlot.Interaction />
+                  <ScatterPlot.Tooltip />
+                </ScatterPlot.Viewport>
+              </ScatterPlot.Container>
+            </ScatterPlot.Root>
+          </div>
+        }
+        code={`<ScatterPlot.Root
+  series={clusteredData}
+  xAxis={{ label: "Feature 1" }}
+  yAxis={{ label: "Feature 2" }}
+>
+  <ScatterPlot.LegendHTML interactive={true} />
+  <ScatterPlot.Container>
+    <ScatterPlot.Viewport>
+      <ScatterPlot.Grid />
+      <ScatterPlot.Axes />
+      <ScatterPlot.Points />
+      <ScatterPlot.Interaction />
+      <ScatterPlot.Tooltip />
+    </ScatterPlot.Viewport>
+  </ScatterPlot.Container>
+</ScatterPlot.Root>`}
+      />
+
+      {/* Orbital Mechanics */}
+      <ComponentPreview
+        title="Orbital Velocity vs Altitude"
+        description="Relationship between circular orbital velocity and altitude above Earth. Shows inverse square root relationship from orbital mechanics."
+        preview={
+          <div className="w-full">
+            <ScatterPlot.Root
+              series={[
+                {
+                  name: "Circular Orbit",
+                  data: orbitalData,
+                  color: color,
+                  radius: 4,
+                  opacity: 0.8,
+                },
+              ]}
+              xAxis={{ label: "Altitude (km)" }}
+              yAxis={{ label: "Velocity (km/s)" }}
+              showRegression={false}
+            >
+              <ScatterPlot.Container>
+                <ScatterPlot.Viewport>
+                  <ScatterPlot.Grid />
+                  <ScatterPlot.Axes />
+                  <ScatterPlot.Points />
+                  <ScatterPlot.Interaction />
+                  <ScatterPlot.Tooltip />
+                </ScatterPlot.Viewport>
+              </ScatterPlot.Container>
+            </ScatterPlot.Root>
+          </div>
+        }
+        code={`<ScatterPlot.Root
+  series={[
+    {
+      name: "Circular Orbit",
+      data: orbitalData,
+      color: "#06b6d4",
+      radius: 4,
+    },
+  ]}
+  xAxis={{ label: "Altitude (km)" }}
+  yAxis={{ label: "Velocity (km/s)" }}
+  width={850}
+  height={400}
+>
+  <ScatterPlot.Container>
+    <ScatterPlot.Viewport>
+      <ScatterPlot.Grid />
+      <ScatterPlot.Axes />
+      <ScatterPlot.Points />
+      <ScatterPlot.Interaction />
+      <ScatterPlot.Tooltip />
+    </ScatterPlot.Viewport>
+  </ScatterPlot.Container>
+</ScatterPlot.Root>`}
+      />
+
+      {/* Thermodynamics */}
+      <ComponentPreview
+        title="Temperature-Pressure Relationship"
+        description="Gas behavior following ideal gas law (P ∝ T). Linear relationship with experimental scatter demonstrates real-world measurement noise."
+        preview={
+          <div className="w-full">
+            <ScatterPlot.Root
+              series={[
+                {
+                  name: "Measurements",
+                  data: thermoData,
+                  color: color,
+                  radius: 5,
+                  opacity: 0.7,
+                },
+              ]}
+              xAxis={{ label: "Temperature (K)" }}
+              yAxis={{ label: "Pressure (kPa)" }}
+              showRegression={true}
+            >
+              <ScatterPlot.Container>
+                <ScatterPlot.Viewport>
+                  <ScatterPlot.Grid />
+                  <ScatterPlot.Axes />
+                  <ScatterPlot.Regression />
+                  <ScatterPlot.Points />
+                  <ScatterPlot.Interaction />
+                  <ScatterPlot.Tooltip />
+                </ScatterPlot.Viewport>
+              </ScatterPlot.Container>
+            </ScatterPlot.Root>
+          </div>
+        }
+        code={`<ScatterPlot.Root
+  series={[
+    {
+      name: "Measurements",
+      data: thermoData,
+      color: "#06b6d4",
+      radius: 5,
+      opacity: 0.7,
+    },
+  ]}
+  xAxis={{ label: "Temperature (K)" }}
+  yAxis={{ label: "Pressure (kPa)" }}
+  showRegression={true}
+  width={850}
+  height={400}
+>
+  <ScatterPlot.Container>
+    <ScatterPlot.Viewport>
+      <ScatterPlot.Grid />
+      <ScatterPlot.Axes />
+      <ScatterPlot.Regression />
+      <ScatterPlot.Points />
+      <ScatterPlot.Interaction />
+      <ScatterPlot.Tooltip />
+    </ScatterPlot.Viewport>
+  </ScatterPlot.Container>
+</ScatterPlot.Root>`}
+      />
+    </div>
+  );
+};
+
+const BarChartExamples = () => {
+  const { color } = useColorScheme();
+
+  // Monthly sales data
+  const salesData = useMemo(() => {
+    return [
+      { category: "Jan", value: 45 },
+      { category: "Feb", value: 52 },
+      { category: "Mar", value: 61 },
+      { category: "Apr", value: 58 },
+      { category: "May", value: 67 },
+      { category: "Jun", value: 73 },
+    ];
+  }, []);
+
+  // Multi-series revenue data for grouped bars
+  const revenueData = useMemo(() => {
+    return [
+      {
+        name: "Product A",
+        data: [
+          { category: "Q1", value: 120 },
+          { category: "Q2", value: 135 },
+          { category: "Q3", value: 148 },
+          { category: "Q4", value: 162 },
+        ],
+        color: color,
+      },
+      {
+        name: "Product B",
+        data: [
+          { category: "Q1", value: 95 },
+          { category: "Q2", value: 108 },
+          { category: "Q3", value: 121 },
+          { category: "Q4", value: 134 },
+        ],
+        color: "#ef4444",
+      },
+      {
+        name: "Product C",
+        data: [
+          { category: "Q1", value: 78 },
+          { category: "Q2", value: 85 },
+          { category: "Q3", value: 92 },
+          { category: "Q4", value: 101 },
+        ],
+        color: "#f59e0b",
+      },
+    ];
+  }, [color]);
+
+  // Stacked data - mission phases
+  const missionData = useMemo(() => {
+    return [
+      {
+        name: "Planning",
+        data: [
+          { category: "Phase 1", value: 120 },
+          { category: "Phase 2", value: 80 },
+          { category: "Phase 3", value: 60 },
+          { category: "Phase 4", value: 40 },
+        ],
+        color: color,
+      },
+      {
+        name: "Execution",
+        data: [
+          { category: "Phase 1", value: 80 },
+          { category: "Phase 2", value: 140 },
+          { category: "Phase 3", value: 160 },
+          { category: "Phase 4", value: 120 },
+        ],
+        color: "#10b981",
+      },
+      {
+        name: "Analysis",
+        data: [
+          { category: "Phase 1", value: 40 },
+          { category: "Phase 2", value: 60 },
+          { category: "Phase 3", value: 80 },
+          { category: "Phase 4", value: 140 },
+        ],
+        color: "#3b82f6",
+      },
+    ];
+  }, [color]);
+
+  // Horizontal bar data - satellite performance
+  const satelliteData = useMemo(() => {
+    return [
+      {
+        name: "Satellites",
+        data: [
+          { category: "GOES-16", value: 98.5 },
+          { category: "NOAA-20", value: 96.2 },
+          { category: "Landsat 9", value: 99.1 },
+          { category: "Sentinel-2", value: 94.8 },
+          { category: "Terra", value: 97.3 },
+        ],
+        color: color,
+      },
+    ];
+  }, [color]);
+
+  return (
+    <div className="space-y-12">
+      {/* Simple Vertical Bar Chart */}
+      <ComponentPreview
+        title="Vertical Bar Chart"
+        description="Basic vertical bar chart showing monthly sales data. Clean and straightforward visualization for categorical data with single series."
+        preview={
+          <div className="w-full">
+            <BarChart.Root
+              series={[
+                {
+                  name: "Sales",
+                  data: salesData,
+                  color: color,
+                },
+              ]}
+              xAxis={{ label: "Month" }}
+              yAxis={{ label: "Sales ($K)" }}
+              orientation="vertical"
+              mode="grouped"
+              animate={false}
+            >
+              <BarChart.Container>
+                <BarChart.Viewport>
+                  <BarChart.Grid />
+                  <BarChart.Axes />
+                  <BarChart.Bars />
+                  <BarChart.Interaction />
+                  <BarChart.Tooltip />
+                </BarChart.Viewport>
+              </BarChart.Container>
+            </BarChart.Root>
+          </div>
+        }
+        code={`<BarChart.Root
+  series={[
+    {
+      name: "Sales",
+      data: salesData,
+      color: "#3b82f6",
+    },
+  ]}
+  xAxis={{ label: "Month" }}
+  yAxis={{ label: "Sales ($K)" }}
+  orientation="vertical"
+  mode="grouped"
+>
+  <BarChart.Container>
+    <BarChart.Viewport>
+      <BarChart.Grid />
+      <BarChart.Axes />
+      <BarChart.Bars />
+      <BarChart.Interaction />
+      <BarChart.Tooltip />
+    </BarChart.Viewport>
+  </BarChart.Container>
+</BarChart.Root>`}
+      />
+
+      {/* Grouped Bar Chart */}
+      <ComponentPreview
+        title="Grouped Bar Chart"
+        description="Multiple series displayed side-by-side for easy comparison. Perfect for comparing multiple products or categories across time periods."
+        preview={
+          <div className="w-full">
+            <BarChart.Root
+              series={revenueData}
+              xAxis={{ label: "Quarter" }}
+              yAxis={{ label: "Revenue ($K)" }}
+              orientation="vertical"
+              mode="grouped"
+              barWidth={0.7}
+              barGap={0.05}
+              animate={false}
+            >
+              <BarChart.Container>
+                <BarChart.Viewport>
+                  <BarChart.Grid />
+                  <BarChart.Axes />
+                  <BarChart.Bars />
+                  <BarChart.Interaction />
+                  <BarChart.Tooltip />
+                </BarChart.Viewport>
+              </BarChart.Container>
+            </BarChart.Root>
+          </div>
+        }
+        code={`<BarChart.Root
+  series={revenueData}
+  xAxis={{ label: "Quarter" }}
+  yAxis={{ label: "Revenue ($K)" }}
+  orientation="vertical"
+  mode="grouped"
+  barWidth={0.7}
+>
+  <BarChart.Container>
+    <BarChart.Viewport>
+      <BarChart.Grid />
+      <BarChart.Axes />
+      <BarChart.Bars />
+      <BarChart.Interaction />
+      <BarChart.Tooltip />
+    </BarChart.Viewport>
+  </BarChart.Container>
+</BarChart.Root>`}
+      />
+
+      {/* Stacked Bar Chart */}
+      <ComponentPreview
+        title="Stacked Bar Chart"
+        description="Stacked bars showing the composition of totals across categories. Ideal for showing part-to-whole relationships over time or across categories."
+        preview={
+          <div className="w-full">
+            <BarChart.Root
+              series={missionData}
+              xAxis={{ label: "Mission Phase" }}
+              yAxis={{ label: "Hours Allocated" }}
+              orientation="vertical"
+              mode="stacked"
+              animate={false}
+            >
+              <BarChart.Container>
+                <BarChart.Viewport>
+                  <BarChart.Grid />
+                  <BarChart.Axes />
+                  <BarChart.Bars />
+                  <BarChart.Interaction />
+                  <BarChart.Tooltip />
+                </BarChart.Viewport>
+              </BarChart.Container>
+            </BarChart.Root>
+          </div>
+        }
+        code={`<BarChart.Root
+  series={missionData}
+  xAxis={{ label: "Mission Phase" }}
+  yAxis={{ label: "Hours Allocated" }}
+  orientation="vertical"
+  mode="stacked"
+>
+  <BarChart.Container>
+    <BarChart.Viewport>
+      <BarChart.Grid />
+      <BarChart.Axes />
+      <BarChart.Bars />
+      <BarChart.Interaction />
+      <BarChart.Tooltip />
+    </BarChart.Viewport>
+  </BarChart.Container>
+</BarChart.Root>`}
+      />
+
+      {/* Horizontal Bar Chart */}
+      <ComponentPreview
+        title="Horizontal Bar Chart"
+        description="Horizontal orientation is ideal for comparing values with longer category labels. Perfect for rankings, ratings, or performance metrics."
+        preview={
+          <div className="w-full">
+            <BarChart.Root
+              series={satelliteData}
+              xAxis={{ label: "Uptime (%)" }}
+              yAxis={{ label: "Satellite" }}
+              orientation="horizontal"
+              mode="grouped"
+              animate={false}
+            >
+              <BarChart.Container>
+                <BarChart.Viewport>
+                  <BarChart.Grid />
+                  <BarChart.Axes />
+                  <BarChart.Bars />
+                  <BarChart.Interaction />
+                  <BarChart.Tooltip />
+                </BarChart.Viewport>
+              </BarChart.Container>
+            </BarChart.Root>
+          </div>
+        }
+        code={`<BarChart.Root
+  series={satelliteData}
+  xAxis={{ label: "Uptime (%)" }}
+  yAxis={{ label: "Satellite" }}
+  orientation="horizontal"
+  mode="grouped"
+>
+  <BarChart.Container>
+    <BarChart.Viewport>
+      <BarChart.Grid />
+      <BarChart.Axes />
+      <BarChart.Bars />
+      <BarChart.Interaction />
+      <BarChart.Tooltip />
+    </BarChart.Viewport>
+  </BarChart.Container>
+</BarChart.Root>`}
       />
     </div>
   );
@@ -1401,6 +2027,8 @@ const componentExamples: Record<string, React.ComponentType> = {
   "polar-plot": PolarPlotExamples,
   heatmap: HeatmapExamples,
   "gantt-chart": GanttChartExamples,
+  "scatter-plot": ScatterPlotExamples,
+  "bar-chart": BarChartExamples,
   earth: EarthExamples,
   mars: MarsExamples,
   mercury: MercuryExamples,
@@ -1559,7 +2187,7 @@ export default function ComponentPage() {
               Primitive Components
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-              Earth uses composable primitives following shadcn architecture:
+              Earth uses composable primitives following architecture:
             </p>
             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
               <li>
@@ -1614,8 +2242,7 @@ export default function ComponentPage() {
               Primitive Components
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-              GanttChart uses composable primitives following shadcn
-              architecture:
+              GanttChart uses composable primitives following architecture:
             </p>
             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
               <li>
@@ -1688,8 +2315,7 @@ export default function ComponentPage() {
               Primitive Components
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-              LineChart uses composable primitives following shadcn
-              architecture:
+              LineChart uses composable primitives following architecture:
             </p>
             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
               <li>
@@ -1785,6 +2411,86 @@ export default function ComponentPage() {
           </div>
         )}
 
+        {componentId === "polar-plot" && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900 dark:text-blue-100">
+              Primitive Components
+            </h3>
+            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+              PolarPlot uses composable primitives following architecture:
+            </p>
+            <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Root
+                </code>{" "}
+                - Context provider with polar coordinate system (default export)
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Container
+                </code>{" "}
+                - Main wrapper with sizing
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Viewport
+                </code>{" "}
+                - SVG canvas for rendering
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Grid
+                </code>{" "}
+                - Concentric circles and radial lines
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Lines
+                </code>{" "}
+                - Data lines/paths in polar coordinates
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Legend
+                </code>{" "}
+                - Series legend with optional toggle
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Tooltip
+                </code>{" "}
+                - Interactive hover tooltip showing θ and r values
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Loading
+                </code>{" "}
+                - Loading state component
+              </li>
+              <li>
+                <code className="bg-blue-100 dark:bg-blue-900 px-1.5 py-0.5 rounded">
+                  PolarPlot.Empty
+                </code>{" "}
+                - Empty state component
+              </li>
+            </ul>
+            <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/30 rounded border border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-900 dark:text-blue-100 font-medium mb-1">
+                Composable Architecture
+              </p>
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                Mix and match primitives to create custom polar charts. Switch
+                between polar, radar, and rose variants using the{" "}
+                <code className="bg-blue-200 dark:bg-blue-800 px-1 py-0.5 rounded text-xs">
+                  variant
+                </code>{" "}
+                prop on the Root component.
+              </p>
+            </div>
+          </div>
+        )}
+
         {(componentId === "mars" ||
           componentId === "mercury" ||
           componentId === "venus" ||
@@ -1798,7 +2504,7 @@ export default function ComponentPage() {
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
               {componentId.charAt(0).toUpperCase() + componentId.slice(1)} uses
-              composable primitives following shadcn architecture:
+              composable primitives following architecture:
             </p>
             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
               <li>
@@ -1846,7 +2552,7 @@ export default function ComponentPage() {
               Primitive Components
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-              Saturn uses composable primitives following shadcn architecture:
+              Saturn uses composable primitives following architecture:
             </p>
             <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
               <li>
@@ -2198,6 +2904,102 @@ export default function ComponentPage() {
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
                     <td className="p-3 text-zinc-600 dark:text-zinc-400">
                       Custom value formatting function
+                    </td>
+                  </tr>
+                </>
+              )}
+              {componentId === "polar-plot" && (
+                <>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">series</td>
+                    <td className="p-3 font-mono text-xs">PolarSeries[]</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      required
+                    </td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Array of data series with theta, r coordinates
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">axis</td>
+                    <td className="p-3 font-mono text-xs">PolarAxis</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Radial domain, rings, angle labels configuration
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">width</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">600</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Chart width in pixels
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">height</td>
+                    <td className="p-3 font-mono text-xs">number</td>
+                    <td className="p-3 font-mono text-xs">600</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Chart height in pixels
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">showGrid</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Show concentric circles and radial lines
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">showLegend</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Show series legend
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">animate</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">true</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Enable entrance animations
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">variant</td>
+                    <td className="p-3 font-mono text-xs">
+                      "polar" | "radar" | "rose"
+                    </td>
+                    <td className="p-3 font-mono text-xs">"polar"</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Plot type: standard polar, radar chart, or rose diagram
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">responsive</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">false</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Enable responsive container
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">toggleableSeries</td>
+                    <td className="p-3 font-mono text-xs">boolean</td>
+                    <td className="p-3 font-mono text-xs">false</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Allow series visibility toggle via legend
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-mono text-xs">className</td>
+                    <td className="p-3 font-mono text-xs">string</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">-</td>
+                    <td className="p-3 text-zinc-600 dark:text-zinc-400">
+                      Additional CSS classes for the root element
                     </td>
                   </tr>
                 </>

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Plexus UI follows a **shadcn-like architecture** where components are copied to the user's project rather than installed as npm packages. This provides maximum flexibility and customization.
+Plexus UI follows a **copy code architecture** where components are copied to the user's project rather than installed as npm packages. This provides maximum flexibility and customization.
 
 The project is a **monorepo** with three main sections:
 
@@ -83,7 +83,7 @@ ui-aerospace/
 │   │   └── ...
 │   ├── components/         # UI components for demo app
 │   │   ├── plexusui/      # Installed Plexus UI components
-│   │   ├── ui/            # shadcn/ui components
+│   │   ├── ui/
 │   │   ├── sidenav.tsx
 │   │   ├── top-nav.tsx
 │   │   └── ...
@@ -116,6 +116,7 @@ The lib layer consolidates all utilities into a single file for easier copying:
 ```
 
 **Files**:
+
 - `plexusui-utils.ts` - Main utilities file (auto-copied with components)
 - `index.ts` - Barrel export: `export * from "./plexusui-utils"`
 - Additional specialized files (astronomical-constants.ts, chart-utils.ts, etc.)
@@ -134,17 +135,20 @@ The lib layer consolidates all utilities into a single file for easier copying:
 **Primitives are composable, reusable building blocks:**
 
 #### 3D Primitives
+
 - **sphere.tsx** - `Sphere`, `Atmosphere`, `Clouds`, `Ring` components
   - Base for all planetary visualizations
   - Composable architecture (Atmosphere + Clouds nest inside Sphere)
 
 #### Animation & Physics
+
 - **animation.ts** - Spring physics (`updateSpring`, `SPRING_PRESETS`), easing functions
 - **animation-presets.ts** - Pre-configured animations (orbit, camera, particle, UI)
 - **physics.ts** - Physics engine (Euler, Verlet, RK4 integrators), force functions
 - **wasm-physics.ts** - WebAssembly acceleration for N-body and collision detection
 
 #### GPU Rendering
+
 - **gpu-renderer.tsx** - WebGPU rendering (`GPURenderer`, `useGPURenderer`)
 - **gpu-compute.tsx** - GPU compute pipelines (FFT, convolution)
 - **gpu-line-renderer.tsx** - GPU-accelerated line and scatter rendering
@@ -197,6 +201,7 @@ export const Earth = Object.assign(EarthRoot, {
 ```
 
 **Usage**:
+
 ```tsx
 <Earth timeScale={1} brightness={1.2}>
   <Earth.Canvas cameraPosition={[0, 5, 20]}>
@@ -210,6 +215,7 @@ export const Earth = Object.assign(EarthRoot, {
 ```
 
 #### 3D Planetary Components
+
 - **earth.tsx** - Earth with rotation, atmosphere, clouds
 - **mars.tsx, mercury.tsx, venus.tsx, moon.tsx** - Inner planets
 - **jupiter.tsx, saturn.tsx, uranus.tsx, neptune.tsx** - Outer planets
@@ -218,12 +224,14 @@ export const Earth = Object.assign(EarthRoot, {
 **Common dependencies**: `["sphere", "lib"]`
 
 #### Chart Components
+
 - **line-chart.tsx** - Multi-series line chart with zoom and real-time support
 - **polar-plot.tsx** - Polar/radar plots for radiation patterns
 - **heatmap.tsx** - 2D heatmap with scientific colormaps
 - **gantt-chart.tsx** - Timeline charts for mission planning
 
 **Chart support files** (shared by multiple charts):
+
 - `canvas-renderer.tsx` - Canvas-based rendering
 - `chart-legend.tsx` - Chart legend component
 - `chart-tooltip.tsx` - Interactive tooltips
@@ -245,11 +253,13 @@ export const Earth = Object.assign(EarthRoot, {
 ### Commands
 
 1. **init** - Initialize project
+
    - Creates `components.json` config file
    - Detects project structure (Next.js app/pages router, React)
    - Sets up component installation path
 
 2. **add [components...]** - Add components with automatic dependency resolution
+
    - Downloads from GitHub (raw.githubusercontent.com)
    - Resolves registry dependencies recursively
    - Organizes files into correct directories (lib/, primitives/, root)
@@ -257,6 +267,7 @@ export const Earth = Object.assign(EarthRoot, {
    - Skips lib if already installed
 
 3. **list [--category]** - List available components
+
    - Categories: 3d, charts, orbital, primitives, lib
    - Shows component descriptions and categories
 
@@ -274,11 +285,9 @@ export const registry: Registry = {
   lib: {
     name: "lib",
     type: "components:lib",
-    description: "Shared utility functions, constants, helpers, and theme system",
-    files: [
-      `${BASE_URL}/lib/plexusui-utils.ts`,
-      `${BASE_URL}/lib/index.ts`,
-    ],
+    description:
+      "Shared utility functions, constants, helpers, and theme system",
+    files: [`${BASE_URL}/lib/plexusui-utils.ts`, `${BASE_URL}/lib/index.ts`],
     dependencies: ["react", "three"],
     category: "lib",
   },
@@ -343,6 +352,7 @@ npm install react @react-three/fiber @react-three/drei three
 ```
 
 **Dependency rules**:
+
 - **Layer 1 (lib)**: No registry dependencies
 - **Layer 2 (primitives)**: No registry dependencies or other primitives only
 - **Layer 3 (components)**: May depend on lib + primitives + other components
@@ -362,6 +372,7 @@ if (fileUrl.includes("/lib/")) {
 ```
 
 Result:
+
 ```
 components/plexusui/
 ├── lib/
@@ -385,15 +396,18 @@ components/plexusui/
 ### Key Features
 
 1. **Component Installation**
+
    - Uses CLI to install components to `playground/components/plexusui/`
    - Configured via `components.json`
 
 2. **Demo Pages**
+
    - Each component has a dedicated demo page
    - Interactive controls for component props
    - Code examples with copy-to-clipboard
 
 3. **Shared UI**
+
    - Navigation (TopNav, Sidenav)
    - Theme toggle (dark/light mode)
    - Component preview containers
@@ -432,10 +446,7 @@ playground/
 
 ```json
 {
-  "workspaces": [
-    "packages/*",
-    "playground"
-  ],
+  "workspaces": ["packages/*", "playground"],
   "scripts": {
     "dev": "npm run dev -w @plexusui/playground",
     "build:cli": "npm run build -w @plexusui/cli",
@@ -445,6 +456,7 @@ playground/
 ```
 
 **Workspace structure**:
+
 - `packages/cli` - `@plexusui/cli` (published to npm)
 - `packages/components` - Source components (NOT published, copied by CLI)
 - `playground` - `@plexusui/playground` (private, demo only)
@@ -454,18 +466,21 @@ playground/
 ### Adding a New Component
 
 1. **Create component file** in `packages/components/`
+
    ```bash
    # For a new planet
    packages/components/pluto.tsx
    ```
 
 2. **Import dependencies from lib and primitives**
+
    ```tsx
    import { Sphere, Atmosphere } from "./primitives/sphere";
    import { PLUTO_RADIUS_KM, kmToSceneUnits } from "./lib";
    ```
 
 3. **Register in CLI** (`packages/cli/src/registry/index.ts`)
+
    ```typescript
    pluto: {
      name: "pluto",
@@ -479,6 +494,7 @@ playground/
    ```
 
 4. **Add to playground** for testing
+
    ```bash
    cd playground
    npx @plexusui/cli add pluto
@@ -501,32 +517,38 @@ If you need a new shared utility:
 ## Benefits of This Architecture
 
 ### 1. Copy Instead of Install
+
 - Users own the code completely
 - No version lock-in
 - Full customization freedom
 - Easy debugging (code is local)
 
 ### 2. Automatic Dependency Resolution
+
 - CLI handles all component dependencies
 - Users don't need to track what depends on what
 - Consistent file organization
 
 ### 3. DRY Principles
+
 - Shared utilities in lib/ (single source of truth)
 - Primitives are reusable building blocks
 - No duplicate code across components
 
 ### 4. Monorepo Organization
+
 - Single repo for all components, CLI, and playground
 - Easy to maintain and update
 - Consistent versioning
 
 ### 5. Bundle Optimization
+
 - Only copy what you use
 - Tree-shakeable utilities
 - No unused code
 
 ### 6. Scientific Accuracy
+
 - Centralized astronomical constants
 - Peer-reviewed algorithms
 - Real astrodynamics math

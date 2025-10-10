@@ -13,7 +13,7 @@ Plexus UI is a React component library for aerospace visualization, designed wit
 - 📊 **Charts & timelines** - Gantt charts for mission planning
 - 🧩 **Primitives pattern** - Build complex scenes from simple building blocks
 - ⚡ **Performance focused** - Optimized Three.js rendering with React Three Fiber
-- 🎨 **You own the code** - Like shadcn, components are copied to your project
+- 🎨 **You own the code** - Components are copied to your project
 
 ## 🚀 Quick Start
 

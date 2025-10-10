@@ -57,7 +57,8 @@ export interface MoonRootProps {
   children?: React.ReactNode;
 }
 
-export interface MoonCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface MoonCanvasProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */
@@ -66,10 +67,9 @@ export interface MoonCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
-export interface MoonControlsProps {
+export interface MoonControlsProps extends React.ComponentPropsWithoutRef<any> {
   /** Minimum zoom distance */
   minDistance?: number;
   /** Maximum zoom distance */
@@ -92,10 +92,9 @@ export interface MoonControlsProps {
   dampingFactor?: number;
 }
 
-export interface MoonGlobeProps {
+export interface MoonGlobeProps extends React.ComponentPropsWithoutRef<any> {
   /** Number of segments for sphere geometry */
   segments?: number;
-  children?: React.ReactNode;
 }
 
 // ============================================================================
@@ -162,6 +161,7 @@ const MoonCanvas = React.forwardRef<HTMLDivElement, MoonCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -170,7 +170,7 @@ const MoonCanvas = React.forwardRef<HTMLDivElement, MoonCanvasProps>(
     const { brightness } = useMoon();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -219,6 +219,7 @@ const MoonControls = React.forwardRef<any, MoonControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
@@ -236,6 +237,7 @@ const MoonControls = React.forwardRef<any, MoonControlsProps>(
         maxDistance={maxDistance}
         enableDamping={enableDamping}
         dampingFactor={dampingFactor}
+        {...props}
       />
     );
   }
@@ -247,7 +249,7 @@ MoonControls.displayName = "Moon.Controls";
  * Globe component - renders the main Moon sphere
  */
 const MoonGlobe = React.forwardRef<any, MoonGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const { radius, rotationSpeed, axialTilt, textureUrl } = useMoon();
 
     return (
@@ -261,6 +263,7 @@ const MoonGlobe = React.forwardRef<any, MoonGlobeProps>(
         segments={segments}
         roughness={0.95}
         metalness={0.05}
+        {...props}
       >
         {children}
       </Sphere>
@@ -273,12 +276,18 @@ MoonGlobe.displayName = "Moon.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const MoonAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
-  const { radius } = useMoon();
-  const axisSize = size ?? radius * 3;
+export interface MoonAxisProps extends React.ComponentPropsWithoutRef<any> {
+  size?: number;
+}
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
-});
+const MoonAxis = React.forwardRef<any, MoonAxisProps>(
+  ({ size, ...props }, ref) => {
+    const { radius } = useMoon();
+    const axisSize = size ?? radius * 3;
+
+    return <axesHelper ref={ref} args={[axisSize]} {...props} />;
+  }
+);
 
 MoonAxis.displayName = "Moon.Axis";
 

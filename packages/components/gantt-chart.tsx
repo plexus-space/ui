@@ -57,7 +57,10 @@ export interface GanttChartRootProps {
   /** Callback when task is clicked */
   onTaskClick?: (task: Task) => void;
   /** Visual variant */
-  variant?: "default" | "compact" | "detailed";  /** Use 12-hour time format (default: false for 24-hour) */
+  variant?:
+    | "default"
+    | "compact"
+    | "detailed" /** Use 12-hour time format (default: false for 24-hour) */;
   use12HourFormat?: boolean;
   className?: string;
   children?: React.ReactNode;
@@ -141,7 +144,8 @@ interface TimelineHeaderProps {
 
 const TimelineHeader = React.memo(
   ({ width, leftPanelWidth }: TimelineHeaderProps) => {
-    const { startTime, endTime, xScale, timezone, use12HourFormat } = useGantt();
+    const { startTime, endTime, xScale, timezone, use12HourFormat } =
+      useGantt();
 
     // Calculate pixels per hour to determine label density
     const timelineWidth = width - leftPanelWidth;
@@ -224,12 +228,18 @@ const TimelineHeader = React.memo(
 
           // Only show labels at the determined interval
           // Always show midnight, or show if hour matches interval
-          const shouldShowLabel = isMidnight || currentHour % hourInterval === 0;
+          const shouldShowLabel =
+            isMidnight || currentHour % hourInterval === 0;
 
           if (!shouldShowLabel) return null;
 
           // Format the label
-          const timeLabel = formatInTimeZone(hour, timezone, "HH:mm", use12HourFormat);
+          const timeLabel = formatInTimeZone(
+            hour,
+            timezone,
+            "HH:mm",
+            use12HourFormat
+          );
           const dateLabel = isMidnight
             ? new Intl.DateTimeFormat("en-US", {
                 timeZone: timezone,
@@ -239,7 +249,8 @@ const TimelineHeader = React.memo(
             : null;
 
           // Adjust font sizes based on zoom level
-          const timeFontSize = pixelsPerHour >= 40 ? 10 : pixelsPerHour >= 20 ? 9 : 8;
+          const timeFontSize =
+            pixelsPerHour >= 40 ? 10 : pixelsPerHour >= 20 ? 9 : 8;
           const dateFontSize = pixelsPerHour >= 40 ? 9 : 8;
 
           return (
@@ -439,7 +450,9 @@ const TaskRow = React.memo(
                 fill="#ffffff"
                 opacity={0.8}
               >
-                {formatInTimeZone(start, timezone, "HH:mm", use12HourFormat)} → {formatInTimeZone(end, timezone, "HH:mm", use12HourFormat)} ({durationMinutes}m)
+                {formatInTimeZone(start, timezone, "HH:mm", use12HourFormat)} →{" "}
+                {formatInTimeZone(end, timezone, "HH:mm", use12HourFormat)} (
+                {durationMinutes}m)
               </text>
             </g>
           )}
@@ -458,7 +471,8 @@ interface GridLinesProps {
 
 const GridLines = React.memo(
   ({ leftPanelWidth, totalHeight }: GridLinesProps) => {
-    const { startTime, endTime, xScale, tasks, rowHeight, extendedWidth } = useGantt();
+    const { startTime, endTime, xScale, tasks, rowHeight, extendedWidth } =
+      useGantt();
 
     // Generate 15-minute intervals
     const intervals = React.useMemo(() => {
@@ -704,13 +718,16 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
 
 GanttChartRoot.displayName = "GanttChart.Root";
 
+export interface GanttChartContainerProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
+
 /**
  * Container component - wraps the scrollable SVG content
  */
 const GanttChartContainer = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  GanttChartContainerProps
+>(({ className, style, children, ...props }, ref) => {
   return (
     <div
       ref={ref}
@@ -720,20 +737,26 @@ const GanttChartContainer = React.forwardRef<
         width: "100%",
         borderRadius: "8px",
         border: "1px solid rgba(0, 0, 0, 0.1)",
+        ...style,
       }}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 });
 
 GanttChartContainer.displayName = "GanttChart.Container";
+
+export interface GanttChartViewportProps
+  extends React.SVGProps<SVGSVGElement> {}
 
 /**
  * Viewport component - handles scrolling
  */
 const GanttChartViewport = React.forwardRef<
   SVGSVGElement,
-  React.SVGAttributes<SVGSVGElement>
+  GanttChartViewportProps
 >(({ className, children, ...props }, ref) => {
   const {
     scrollContainerRef,
@@ -791,75 +814,84 @@ const GanttChartViewport = React.forwardRef<
 
 GanttChartViewport.displayName = "GanttChart.Viewport";
 
+export interface GanttChartGridProps extends React.SVGProps<SVGGElement> {}
+
 /**
  * Grid component - renders the timeline grid
  */
-const GanttChartGrid = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const { leftPanelWidth, totalHeight } = useGantt();
+const GanttChartGrid = React.forwardRef<SVGGElement, GanttChartGridProps>(
+  ({ className, children, ...props }, ref) => {
+    const { leftPanelWidth, totalHeight } = useGantt();
 
-  return (
-    <g ref={ref} className={cn("gantt-chart-grid", className)} {...props}>
-      <GridLines leftPanelWidth={leftPanelWidth} totalHeight={totalHeight} />
-    </g>
-  );
-});
+    return (
+      <g ref={ref} className={cn("gantt-chart-grid", className)} {...props}>
+        <GridLines leftPanelWidth={leftPanelWidth} totalHeight={totalHeight} />
+        {children}
+      </g>
+    );
+  }
+);
 
 GanttChartGrid.displayName = "GanttChart.Grid";
+
+export interface GanttChartHeaderProps extends React.SVGProps<SVGGElement> {}
 
 /**
  * Header component - renders the timeline header
  */
-const GanttChartHeader = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const { extendedWidth, leftPanelWidth } = useGantt();
+const GanttChartHeader = React.forwardRef<SVGGElement, GanttChartHeaderProps>(
+  ({ className, children, ...props }, ref) => {
+    const { extendedWidth, leftPanelWidth } = useGantt();
 
-  return (
-    <g ref={ref} className={cn("gantt-chart-header", className)} {...props}>
-      <TimelineHeader width={extendedWidth} leftPanelWidth={leftPanelWidth} />
-    </g>
-  );
-});
+    return (
+      <g ref={ref} className={cn("gantt-chart-header", className)} {...props}>
+        <TimelineHeader width={extendedWidth} leftPanelWidth={leftPanelWidth} />
+        {children}
+      </g>
+    );
+  }
+);
 
 GanttChartHeader.displayName = "GanttChart.Header";
+
+export interface GanttChartTasksProps extends React.SVGProps<SVGGElement> {}
 
 /**
  * Tasks component - renders all task bars
  */
-const GanttChartTasks = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const { tasks, leftPanelWidth, variant } = useGantt();
+const GanttChartTasks = React.forwardRef<SVGGElement, GanttChartTasksProps>(
+  ({ className, children, ...props }, ref) => {
+    const { tasks, leftPanelWidth, variant } = useGantt();
 
-  return (
-    <g ref={ref} className={cn("gantt-chart-tasks", className)} {...props}>
-      {tasks.map((task, i) => (
-        <TaskRow
-          key={task.id}
-          task={task}
-          index={i}
-          leftPanelWidth={leftPanelWidth}
-          variant={variant}
-        />
-      ))}
-    </g>
-  );
-});
+    return (
+      <g ref={ref} className={cn("gantt-chart-tasks", className)} {...props}>
+        {tasks.map((task, i) => (
+          <TaskRow
+            key={task.id}
+            task={task}
+            index={i}
+            leftPanelWidth={leftPanelWidth}
+            variant={variant}
+          />
+        ))}
+        {children}
+      </g>
+    );
+  }
+);
 
 GanttChartTasks.displayName = "GanttChart.Tasks";
+
+export interface GanttChartCurrentTimeProps
+  extends React.SVGProps<SVGGElement> {}
 
 /**
  * Current time indicator component
  */
 const GanttChartCurrentTime = React.forwardRef<
   SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
+  GanttChartCurrentTimeProps
+>(({ className, children, ...props }, ref) => {
   const [currentTime, setCurrentTime] = React.useState<Date | null>(null);
   const [isMounted, setIsMounted] = React.useState(false);
   const { startTime, endTime, xScale, totalHeight } = useGantt();
@@ -903,19 +935,23 @@ const GanttChartCurrentTime = React.forwardRef<
         opacity={0.7}
       />
       <circle cx={x} cy={25} r={4} fill="rgb(239, 68, 68)" />
+      {children}
     </g>
   );
 });
 
 GanttChartCurrentTime.displayName = "GanttChart.CurrentTime";
 
+export interface GanttChartLeftPanelProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
+
 /**
  * Left panel component - sticky task names
  */
 const GanttChartLeftPanel = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  GanttChartLeftPanelProps
+>(({ className, style, children, ...props }, ref) => {
   const { leftPanelWidth, totalHeight, tasks, rowHeight, variant } = useGantt();
 
   return (
@@ -930,6 +966,7 @@ const GanttChartLeftPanel = React.forwardRef<
         height: `${totalHeight}px`,
         pointerEvents: "none",
         zIndex: 10,
+        ...style,
       }}
       {...props}
     >
@@ -1022,60 +1059,64 @@ const GanttChartLeftPanel = React.forwardRef<
           opacity={0.1}
         />
       </svg>
+      {children}
     </div>
   );
 });
 
 GanttChartLeftPanel.displayName = "GanttChart.LeftPanel";
 
+export interface GanttChartEmptyProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
+
 /**
  * Empty state component
  */
-const GanttChartEmpty = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode }
->(({ className, children, ...props }, ref) => {
-  const { width } = useGantt();
+const GanttChartEmpty = React.forwardRef<HTMLDivElement, GanttChartEmptyProps>(
+  ({ className, style, children, ...props }, ref) => {
+    const { width } = useGantt();
 
-  return (
-    <div
-      ref={ref}
-      className={cn("gantt-chart-empty", className)}
-      style={{
-        width: `${width}px`,
-        height: "200px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "8px",
-        border: "1px solid currentColor",
-        opacity: 0.1,
-      }}
-      {...props}
-    >
-      {children || (
-        <div style={{ textAlign: "center", opacity: 10 }}>
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            opacity={0.3}
-            style={{ margin: "0 auto 12px" }}
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <div style={{ fontSize: "14px", opacity: 0.5 }}>
-            No contacts scheduled
+    return (
+      <div
+        ref={ref}
+        className={cn("gantt-chart-empty", className)}
+        style={{
+          width: `${width}px`,
+          height: "200px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "8px",
+          border: "1px solid currentColor",
+          opacity: 0.1,
+          ...style,
+        }}
+        {...props}
+      >
+        {children || (
+          <div style={{ textAlign: "center", opacity: 10 }}>
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              opacity={0.3}
+              style={{ margin: "0 auto 12px" }}
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <div style={{ fontSize: "14px", opacity: 0.5 }}>
+              No contacts scheduled
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
-});
+        )}
+      </div>
+    );
+  }
+);
 
 GanttChartEmpty.displayName = "GanttChart.Empty";
 
@@ -1083,7 +1124,8 @@ GanttChartEmpty.displayName = "GanttChart.Empty";
 // Controls Component
 // ============================================================================
 
-interface GanttChartControlsProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface GanttChartControlsProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   onPanLeft?: () => void;
@@ -1098,6 +1140,8 @@ const GanttChartControls = React.forwardRef<
   (
     {
       className,
+      style,
+      children,
       onZoomIn,
       onZoomOut,
       onPanLeft,
@@ -1124,7 +1168,8 @@ const GanttChartControls = React.forwardRef<
       if (!shouldScrollToNow || zoomLevel !== 1) return;
 
       if (scrollContainerRef.current) {
-        const viewportWidth = scrollContainerRef.current.clientWidth - leftPanelWidth;
+        const viewportWidth =
+          scrollContainerRef.current.clientWidth - leftPanelWidth;
         const oneHourInPixels = viewportWidth / timeWindowHours;
 
         // Always scroll to actual current time
@@ -1139,18 +1184,27 @@ const GanttChartControls = React.forwardRef<
 
         setShouldScrollToNow(false);
       }
-    }, [shouldScrollToNow, zoomLevel, xScale, leftPanelWidth, timeWindowHours, scrollContainerRef]);
+    }, [
+      shouldScrollToNow,
+      zoomLevel,
+      xScale,
+      leftPanelWidth,
+      timeWindowHours,
+      scrollContainerRef,
+    ]);
 
     const handleZoomIn = () => {
       const currentScroll = scrollContainerRef.current?.scrollLeft || 0;
-      const currentCenter = currentScroll + (scrollContainerRef.current?.clientWidth || 0) / 2;
+      const currentCenter =
+        currentScroll + (scrollContainerRef.current?.clientWidth || 0) / 2;
 
       setZoomLevel(Math.min(zoomLevel * 1.5, 4));
 
       // Adjust scroll to maintain center point
       setTimeout(() => {
         if (scrollContainerRef.current) {
-          const newScroll = currentCenter * 1.5 - (scrollContainerRef.current.clientWidth / 2);
+          const newScroll =
+            currentCenter * 1.5 - scrollContainerRef.current.clientWidth / 2;
           scrollContainerRef.current.scrollLeft = newScroll;
         }
       }, 0);
@@ -1160,14 +1214,16 @@ const GanttChartControls = React.forwardRef<
 
     const handleZoomOut = () => {
       const currentScroll = scrollContainerRef.current?.scrollLeft || 0;
-      const currentCenter = currentScroll + (scrollContainerRef.current?.clientWidth || 0) / 2;
+      const currentCenter =
+        currentScroll + (scrollContainerRef.current?.clientWidth || 0) / 2;
 
       setZoomLevel(Math.max(zoomLevel / 1.5, 0.25));
 
       // Adjust scroll to maintain center point
       setTimeout(() => {
         if (scrollContainerRef.current) {
-          const newScroll = currentCenter / 1.5 - (scrollContainerRef.current.clientWidth / 2);
+          const newScroll =
+            currentCenter / 1.5 - scrollContainerRef.current.clientWidth / 2;
           scrollContainerRef.current.scrollLeft = Math.max(0, newScroll);
         }
       }, 0);
@@ -1209,6 +1265,7 @@ const GanttChartControls = React.forwardRef<
       <div
         ref={ref}
         className={cn("gantt-chart-controls", "flex gap-2", className)}
+        style={style}
         {...props}
       >
         <button
@@ -1246,6 +1303,7 @@ const GanttChartControls = React.forwardRef<
         >
           Reset
         </button>
+        {children}
       </div>
     );
   }

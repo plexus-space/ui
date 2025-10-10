@@ -91,10 +91,10 @@ export interface EarthCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
-export interface EarthControlsProps {
+export interface EarthControlsProps
+  extends React.ComponentPropsWithRef<typeof OrbitControls> {
   /** Minimum zoom distance */
   minDistance?: number;
   /** Maximum zoom distance */
@@ -117,13 +117,14 @@ export interface EarthControlsProps {
   dampingFactor?: number;
 }
 
-export interface EarthGlobeProps {
+export interface EarthGlobeProps
+  extends React.ComponentPropsWithRef<typeof Sphere> {
   /** Number of segments for sphere geometry */
   segments?: number;
-  children?: React.ReactNode;
 }
 
-export interface EarthAtmosphereProps {
+export interface EarthAtmosphereProps
+  extends React.ComponentPropsWithRef<typeof Atmosphere> {
   /** Atmosphere color */
   color?: string;
   /** Atmosphere intensity */
@@ -134,7 +135,8 @@ export interface EarthAtmosphereProps {
   scale?: number;
 }
 
-export interface EarthCloudsProps {
+export interface EarthCloudsProps
+  extends React.ComponentPropsWithRef<typeof Clouds> {
   /** Cloud layer height multiplier */
   height?: number;
   /** Cloud opacity */
@@ -226,6 +228,7 @@ const EarthCanvas = React.forwardRef<HTMLDivElement, EarthCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -234,7 +237,7 @@ const EarthCanvas = React.forwardRef<HTMLDivElement, EarthCanvasProps>(
     const { brightness } = useEarth();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -250,7 +253,7 @@ const EarthCanvas = React.forwardRef<HTMLDivElement, EarthCanvasProps>(
           <color attach="background" args={[0, 0, 0]} />
 
           <Suspense fallback={null}>
-            <ambientLight intensity={1.0 * brightness} color={0xffffff} />
+            <ambientLight intensity={1.2 * brightness} color={0xffffff} />
             {children}
           </Suspense>
         </Canvas>
@@ -277,6 +280,7 @@ const EarthControls = React.forwardRef<any, EarthControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
@@ -294,6 +298,7 @@ const EarthControls = React.forwardRef<any, EarthControlsProps>(
         maxDistance={maxDistance}
         enableDamping={enableDamping}
         dampingFactor={dampingFactor}
+        {...props}
       />
     );
   }
@@ -305,7 +310,7 @@ EarthControls.displayName = "Earth.Controls";
  * Globe component - renders the main Earth sphere
  */
 const EarthGlobe = React.forwardRef<any, EarthGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const {
       radius,
       rotationSpeed,
@@ -327,6 +332,7 @@ const EarthGlobe = React.forwardRef<any, EarthGlobeProps>(
         rotationSpeed={rotationSpeed}
         rotation={axialTilt}
         segments={segments}
+        {...props}
       >
         {children}
       </Sphere>
@@ -341,7 +347,13 @@ EarthGlobe.displayName = "Earth.Globe";
  */
 const EarthAtmosphere = React.forwardRef<any, EarthAtmosphereProps>(
   (
-    { color = "#4488ff", intensity = 0.8, falloff = 3.5, scale = 1.02 },
+    {
+      color = "#4488ff",
+      intensity = 0.8,
+      falloff = 3.5,
+      scale = 1.02,
+      ...props
+    },
     ref
   ) => {
     return (
@@ -350,6 +362,7 @@ const EarthAtmosphere = React.forwardRef<any, EarthAtmosphereProps>(
         intensity={intensity}
         falloff={falloff}
         scale={scale}
+        {...props}
       />
     );
   }
@@ -361,7 +374,10 @@ EarthAtmosphere.displayName = "Earth.Atmosphere";
  * Clouds component - renders the cloud layer
  */
 const EarthClouds = React.forwardRef<any, EarthCloudsProps>(
-  ({ height = 1.005, opacity = 0.5, rotationSpeedMultiplier = 0.8 }, ref) => {
+  (
+    { height = 1.005, opacity = 0.5, rotationSpeedMultiplier = 0.8, ...props },
+    ref
+  ) => {
     const { cloudsMapUrl, rotationSpeed } = useEarth();
 
     if (!cloudsMapUrl) return null;
@@ -372,6 +388,7 @@ const EarthClouds = React.forwardRef<any, EarthCloudsProps>(
         height={height}
         opacity={opacity}
         rotationSpeed={rotationSpeed * rotationSpeedMultiplier}
+        {...props}
       />
     );
   }
@@ -379,15 +396,23 @@ const EarthClouds = React.forwardRef<any, EarthCloudsProps>(
 
 EarthClouds.displayName = "Earth.Clouds";
 
+export interface EarthAxisProps
+  extends React.ComponentPropsWithRef<"axesHelper"> {
+  /** Axis size (defaults to 3x radius) */
+  size?: number;
+}
+
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const EarthAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
-  const { radius } = useEarth();
-  const axisSize = size ?? radius * 3;
+const EarthAxis = React.forwardRef<any, EarthAxisProps>(
+  ({ size, ...props }, ref) => {
+    const { radius } = useEarth();
+    const axisSize = size ?? radius * 3;
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
-});
+    return <axesHelper ref={ref} args={[axisSize]} {...props} />;
+  }
+);
 
 EarthAxis.displayName = "Earth.Axis";
 

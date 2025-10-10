@@ -1,6 +1,6 @@
 # Plexus UI Roadmap
 
-> **Vision:** The shadcn for deep tech, physics, and engineering. Beautiful, primitive-based building blocks for engineers across all disciplines.
+> **Vision:** Components for deep tech, physics, and engineering. Beautiful, primitive-based building blocks for engineers across all disciplines.
 
 ---
 
@@ -10,9 +10,8 @@
 2. **Primitive-First Architecture** - Every component built from composable primitives
 3. **Beautiful by Default** - Crafted, polished interfaces inspired by the best technical tools
 4. **Scientific Accuracy** - Peer-reviewed algorithms, cited sources, correct math
-5. **Copy, Don't Install** - Maintain shadcn's philosophy of code ownership
-6. **Performance Obsessed** - GPU acceleration, WebAssembly, optimal rendering
-7. **TypeScript Native** - Full type safety with proper generics
+5. **Performance Obsessed** - GPU acceleration, WebAssembly, optimal rendering
+6. **TypeScript Native** - Full type safety with proper generics
 
 ---
 
@@ -33,17 +32,17 @@
 - [x] Heatmap (2D scalar fields)
 - [x] Gantt Chart (timelines, schedules)
 
-### Enhance Existing Charts
+### New Charts
 
-- [ ] **Scatter Plot** - 2D/3D point clouds with clustering
-- [ ] **Bar Chart** - Horizontal/vertical with stacking
+- [x] **Scatter Plot** - 2D/3D point clouds with clustering
+- [x] **Bar Chart** - Horizontal/vertical with stacking
 - [ ] **Histogram** - Distribution analysis with bins
 - [ ] **Box Plot** - Statistical distribution visualization
 - [ ] **Violin Plot** - Probability density visualization
 
 ---
 
-## Phase 2: Scientific Charts & Analysis (Q1-Q2 2026)
+## Phase 2: Scientific Charts & Analysis
 
 ### Frequency Domain Analysis
 
@@ -68,7 +67,7 @@
 
 ---
 
-## Phase 3: 3D Visualization Primitives (Q2-Q3 2026)
+## Phase 3: 3D Visualization Primitives
 
 ### 3D Plotting & Fields
 

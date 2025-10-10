@@ -182,6 +182,24 @@ export const registry = {
         registryDependencies: ["lib"],
         category: "charts",
     },
+    "scatter-plot": {
+        name: "scatter-plot",
+        type: "components:chart",
+        description: "2D/3D scatter plot with clustering and regression analysis",
+        files: [`${BASE_URL}/scatter-plot.tsx`],
+        dependencies: ["react"],
+        registryDependencies: ["lib"],
+        category: "charts",
+    },
+    "bar-chart": {
+        name: "bar-chart",
+        type: "components:chart",
+        description: "Horizontal/vertical bar chart with grouped and stacked modes",
+        files: [`${BASE_URL}/bar-chart.tsx`],
+        dependencies: ["react"],
+        registryDependencies: ["lib"],
+        category: "charts",
+    },
     // ============================================================================
     // Primitives (Low-level building blocks - minimal dependencies)
     // ============================================================================

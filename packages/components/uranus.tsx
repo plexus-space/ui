@@ -57,7 +57,8 @@ export interface UranusRootProps {
   children?: React.ReactNode;
 }
 
-export interface UranusCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface UranusCanvasProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */
@@ -66,10 +67,9 @@ export interface UranusCanvasProps extends React.HTMLAttributes<HTMLDivElement> 
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
-export interface UranusControlsProps {
+export interface UranusControlsProps extends React.ComponentPropsWithRef<"group"> {
   /** Minimum zoom distance */
   minDistance?: number;
   /** Maximum zoom distance */
@@ -92,10 +92,9 @@ export interface UranusControlsProps {
   dampingFactor?: number;
 }
 
-export interface UranusGlobeProps {
+export interface UranusGlobeProps extends React.ComponentPropsWithRef<"group"> {
   /** Number of segments for sphere geometry */
   segments?: number;
-  children?: React.ReactNode;
 }
 
 // ============================================================================
@@ -162,6 +161,7 @@ const UranusCanvas = React.forwardRef<HTMLDivElement, UranusCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -170,7 +170,7 @@ const UranusCanvas = React.forwardRef<HTMLDivElement, UranusCanvasProps>(
     const { brightness } = useUranus();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -219,6 +219,7 @@ const UranusControls = React.forwardRef<any, UranusControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
@@ -236,6 +237,7 @@ const UranusControls = React.forwardRef<any, UranusControlsProps>(
         maxDistance={maxDistance}
         enableDamping={enableDamping}
         dampingFactor={dampingFactor}
+        {...props}
       />
     );
   }
@@ -247,7 +249,7 @@ UranusControls.displayName = "Uranus.Controls";
  * Globe component - renders the main Uranus sphere
  */
 const UranusGlobe = React.forwardRef<any, UranusGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const { radius, rotationSpeed, axialTilt, textureUrl } = useUranus();
 
     return (
@@ -261,6 +263,7 @@ const UranusGlobe = React.forwardRef<any, UranusGlobeProps>(
         segments={segments}
         roughness={0.7}
         metalness={0.1}
+        {...props}
       >
         {children}
       </Sphere>
@@ -273,11 +276,16 @@ UranusGlobe.displayName = "Uranus.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const UranusAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
+export interface UranusAxisProps extends React.ComponentPropsWithRef<"group"> {
+  /** Size of the axes helper */
+  size?: number;
+}
+
+const UranusAxis = React.forwardRef<any, UranusAxisProps>(({ size, ...props }, ref) => {
   const { radius } = useUranus();
   const axisSize = size ?? radius * 3;
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
+  return <axesHelper ref={ref} args={[axisSize]} {...props} />;
 });
 
 UranusAxis.displayName = "Uranus.Axis";

@@ -49,6 +49,8 @@ export interface LineChartRootProps {
   maxPoints?: number;
   /** Enable magnetic crosshair that snaps to nearest point */
   magneticCrosshair?: boolean;
+  /** Show unified tooltip with all series values at same x-coordinate (default: false) */
+  unifiedTooltip?: boolean;
   /** Visual variant style */
   variant?: LineChartVariant;
   /** Snap radius in pixels for point detection (default: 30) */
@@ -83,12 +85,15 @@ interface LineChartContext {
   setHoveredPoint: (
     point: { seriesIdx: number; pointIdx: number } | null
   ) => void;
+  hoveredXIndex: number | null;
+  setHoveredXIndex: (idx: number | null) => void;
   hiddenSeries: Set<number>;
   toggleSeries: (idx: number) => void;
   variant: LineChartVariant;
   animate: boolean;
   enableZoom: boolean;
   magneticCrosshair: boolean;
+  unifiedTooltip: boolean;
   snapRadius: number;
 }
 
@@ -127,6 +132,7 @@ const LineChartRoot = React.forwardRef<HTMLDivElement, LineChartRootProps>(
       height = 400,
       maxPoints = 2000,
       magneticCrosshair = true,
+      unifiedTooltip = false,
       variant = "default",
       snapRadius = 40,
       enableZoom = false,
@@ -140,6 +146,9 @@ const LineChartRoot = React.forwardRef<HTMLDivElement, LineChartRootProps>(
       seriesIdx: number;
       pointIdx: number;
     } | null>(null);
+    const [hoveredXIndex, setHoveredXIndex] = React.useState<number | null>(
+      null
+    );
     const [hiddenSeries, setHiddenSeries] = React.useState<Set<number>>(
       new Set()
     );
@@ -218,12 +227,15 @@ const LineChartRoot = React.forwardRef<HTMLDivElement, LineChartRootProps>(
         yTicks,
         hoveredPoint,
         setHoveredPoint,
+        hoveredXIndex,
+        setHoveredXIndex,
         hiddenSeries,
         toggleSeries,
         variant,
         animate,
         enableZoom,
         magneticCrosshair,
+        unifiedTooltip,
         snapRadius,
       }),
       [
@@ -241,19 +253,31 @@ const LineChartRoot = React.forwardRef<HTMLDivElement, LineChartRootProps>(
         xTicks,
         yTicks,
         hoveredPoint,
+        hoveredXIndex,
         hiddenSeries,
         toggleSeries,
         variant,
         animate,
         enableZoom,
         magneticCrosshair,
+        unifiedTooltip,
         snapRadius,
       ]
     );
 
     return (
       <LineChartContext.Provider value={contextValue}>
-        <div ref={ref} className={cn("line-chart", className)}>
+        <div
+          ref={ref}
+          className={cn("line-chart", className)}
+          style={{
+            width: "100%",
+            maxWidth: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
           {children}
         </div>
       </LineChartContext.Provider>
@@ -263,14 +287,17 @@ const LineChartRoot = React.forwardRef<HTMLDivElement, LineChartRootProps>(
 
 LineChartRoot.displayName = "LineChart.Root";
 
+export interface LineChartContainerProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
+
 /**
  * Container component - wraps the SVG content
  */
 const LineChartContainer = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  const { width, height } = useLineChart();
+  LineChartContainerProps
+>(({ className, style, children, ...props }, ref) => {
+  const { height } = useLineChart();
 
   return (
     <div
@@ -278,34 +305,43 @@ const LineChartContainer = React.forwardRef<
       className={cn("line-chart-container", className)}
       style={{
         position: "relative",
-        width: `${width}px`,
+        width: "100%",
+        maxWidth: "100%",
         height: `${height}px`,
         borderRadius: "8px",
         border: "1px solid rgba(0, 0, 0, 0.1)",
+        overflow: "visible",
+        ...style,
       }}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 });
 
 LineChartContainer.displayName = "LineChart.Container";
+
+export interface LineChartViewportProps extends React.SVGProps<SVGSVGElement> {}
 
 /**
  * Viewport component - SVG canvas
  */
 const LineChartViewport = React.forwardRef<
   SVGSVGElement,
-  React.SVGAttributes<SVGSVGElement>
+  LineChartViewportProps
 >(({ className, children, ...props }, ref) => {
   const { width, height } = useLineChart();
 
   return (
     <svg
       ref={ref}
-      width={width}
+      width="100%"
       height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="xMidYMid meet"
       className={cn("line-chart-svg", className)}
-      style={{ display: "block", userSelect: "none" }}
+      style={{ display: "block", userSelect: "none", maxWidth: "100%" }}
       role="img"
       aria-label="Line chart"
       {...props}
@@ -317,475 +353,622 @@ const LineChartViewport = React.forwardRef<
 
 LineChartViewport.displayName = "LineChart.Viewport";
 
+export interface LineChartGridProps extends React.SVGProps<SVGGElement> {}
+
 /**
  * Grid component - renders grid lines
  */
-const LineChartGrid = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const { xTicks, yTicks, xScale, yScale, margin, width, height, animate } =
-    useLineChart();
+const LineChartGrid = React.forwardRef<SVGGElement, LineChartGridProps>(
+  ({ className, ...props }, ref) => {
+    const { xTicks, yTicks, xScale, yScale, margin, width, height, animate } =
+      useLineChart();
 
-  return (
-    <g ref={ref} className={cn("line-chart-grid", className)} {...props}>
-      {/* Vertical grid lines */}
-      {xTicks.map((tick, i) => (
-        <line
-          key={`vgrid-${i}`}
-          x1={xScale(tick)}
-          y1={margin.top}
-          x2={xScale(tick)}
-          y2={height - margin.bottom}
-          stroke="currentColor"
-          strokeWidth={1}
-          opacity={0.1}
-          style={
-            animate
-              ? {
-                  animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
-                  opacity: 0,
-                }
-              : undefined
-          }
-        />
-      ))}
-      {/* Horizontal grid lines */}
-      {yTicks.map((tick, i) => (
-        <line
-          key={`hgrid-${i}`}
-          x1={margin.left}
-          y1={yScale(tick)}
-          x2={width - margin.right}
-          y2={yScale(tick)}
-          stroke="currentColor"
-          strokeWidth={1}
-          opacity={0.1}
-          style={
-            animate
-              ? {
-                  animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
-                  opacity: 0,
-                }
-              : undefined
-          }
-        />
-      ))}
-    </g>
-  );
-});
+    return (
+      <g ref={ref} className={cn("line-chart-grid", className)} {...props}>
+        {/* Vertical grid lines */}
+        {xTicks.map((tick, i) => (
+          <line
+            key={`vgrid-${i}`}
+            x1={xScale(tick)}
+            y1={margin.top}
+            x2={xScale(tick)}
+            y2={height - margin.bottom}
+            stroke="currentColor"
+            strokeWidth={1}
+            opacity={0.1}
+            style={
+              animate
+                ? {
+                    animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
+                    opacity: 0,
+                  }
+                : undefined
+            }
+          />
+        ))}
+        {/* Horizontal grid lines */}
+        {yTicks.map((tick, i) => (
+          <line
+            key={`hgrid-${i}`}
+            x1={margin.left}
+            y1={yScale(tick)}
+            x2={width - margin.right}
+            y2={yScale(tick)}
+            stroke="currentColor"
+            strokeWidth={1}
+            opacity={0.1}
+            style={
+              animate
+                ? {
+                    animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
+                    opacity: 0,
+                  }
+                : undefined
+            }
+          />
+        ))}
+      </g>
+    );
+  }
+);
 
 LineChartGrid.displayName = "LineChart.Grid";
+
+export interface LineChartAxesProps extends React.SVGProps<SVGGElement> {}
 
 /**
  * Axes component - renders X and Y axes with labels
  */
-const LineChartAxes = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const {
-    xTicks,
-    yTicks,
-    xScale,
-    yScale,
-    margin,
-    width,
-    height,
-    xAxis,
-    yAxis,
-    animate,
-  } = useLineChart();
+const LineChartAxes = React.forwardRef<SVGGElement, LineChartAxesProps>(
+  ({ className, ...props }, ref) => {
+    const {
+      xTicks,
+      yTicks,
+      xScale,
+      yScale,
+      margin,
+      width,
+      height,
+      xAxis,
+      yAxis,
+      animate,
+    } = useLineChart();
 
-  const formatTick = (value: number, axis: Axis): string => {
-    if (axis.formatter) return axis.formatter(value);
-    if (axis.type === "time") {
-      const timezone = axis.timezone || "UTC";
-      return formatTime(value, timezone);
-    }
-    return formatValue(value);
-  };
+    const formatTick = (value: number, axis: Axis): string => {
+      if (axis.formatter) return axis.formatter(value);
+      if (axis.type === "time") {
+        const timezone = axis.timezone || "UTC";
+        return formatTime(value, timezone);
+      }
+      return formatValue(value);
+    };
 
-  return (
-    <g ref={ref} className={cn("line-chart-axes", className)} {...props}>
-      {/* X-axis */}
-      <line
-        x1={margin.left}
-        y1={height - margin.bottom}
-        x2={width - margin.right}
-        y2={height - margin.bottom}
-        stroke="currentColor"
-        strokeWidth={1.5}
-        opacity={0.2}
-      />
-      {xTicks.map((tick, i) => (
-        <g key={`xtick-${i}`}>
-          <line
-            x1={xScale(tick)}
-            y1={height - margin.bottom}
-            x2={xScale(tick)}
-            y2={height - margin.bottom + 6}
-            stroke="currentColor"
-            strokeWidth={1.5}
-            opacity={0.2}
-          />
+    return (
+      <g ref={ref} className={cn("line-chart-axes", className)} {...props}>
+        {/* X-axis */}
+        <line
+          x1={margin.left}
+          y1={height - margin.bottom}
+          x2={width - margin.right}
+          y2={height - margin.bottom}
+          stroke="currentColor"
+          strokeWidth={1.5}
+          opacity={0.2}
+        />
+        {xTicks.map((tick, i) => (
+          <g key={`xtick-${i}`}>
+            <line
+              x1={xScale(tick)}
+              y1={height - margin.bottom}
+              x2={xScale(tick)}
+              y2={height - margin.bottom + 6}
+              stroke="currentColor"
+              strokeWidth={1.5}
+              opacity={0.2}
+            />
+            <text
+              x={xScale(tick)}
+              y={height - margin.bottom + 20}
+              textAnchor="middle"
+              fontSize={10}
+              fill="currentColor"
+              opacity={0.6}
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatTick(tick, xAxis)}
+            </text>
+          </g>
+        ))}
+        {xAxis.label && (
           <text
-            x={xScale(tick)}
-            y={height - margin.bottom + 20}
+            x={(margin.left + width - margin.right) / 2}
+            y={height - 5}
             textAnchor="middle"
-            fontSize={10}
+            fontSize={12}
+            fontWeight={500}
             fill="currentColor"
-            opacity={0.6}
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            opacity={0.7}
           >
-            {formatTick(tick, xAxis)}
+            {xAxis.label}
           </text>
-        </g>
-      ))}
-      {xAxis.label && (
-        <text
-          x={(margin.left + width - margin.right) / 2}
-          y={height - 5}
-          textAnchor="middle"
-          fontSize={12}
-          fontWeight={500}
-          fill="currentColor"
-          opacity={0.7}
-        >
-          {xAxis.label}
-        </text>
-      )}
+        )}
 
-      {/* Y-axis */}
-      <line
-        x1={margin.left}
-        y1={margin.top}
-        x2={margin.left}
-        y2={height - margin.bottom}
-        stroke="currentColor"
-        strokeWidth={1.5}
-        opacity={0.2}
-      />
-      {yTicks.map((tick, i) => (
-        <g key={`ytick-${i}`}>
-          <line
-            x1={margin.left - 6}
-            y1={yScale(tick)}
-            x2={margin.left}
-            y2={yScale(tick)}
-            stroke="currentColor"
-            strokeWidth={1.5}
-            opacity={0.2}
-          />
+        {/* Y-axis */}
+        <line
+          x1={margin.left}
+          y1={margin.top}
+          x2={margin.left}
+          y2={height - margin.bottom}
+          stroke="currentColor"
+          strokeWidth={1.5}
+          opacity={0.2}
+        />
+        {yTicks.map((tick, i) => (
+          <g key={`ytick-${i}`}>
+            <line
+              x1={margin.left - 6}
+              y1={yScale(tick)}
+              x2={margin.left}
+              y2={yScale(tick)}
+              stroke="currentColor"
+              strokeWidth={1.5}
+              opacity={0.2}
+            />
+            <text
+              x={margin.left - 10}
+              y={yScale(tick) + 4}
+              textAnchor="end"
+              fontSize={10}
+              fill="currentColor"
+              opacity={0.6}
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatTick(tick, yAxis)}
+            </text>
+          </g>
+        ))}
+        {yAxis.label && (
           <text
-            x={margin.left - 10}
-            y={yScale(tick) + 4}
-            textAnchor="end"
-            fontSize={10}
+            x={margin.left - 50}
+            y={(margin.top + height - margin.bottom) / 2}
+            textAnchor="middle"
+            fontSize={12}
+            fontWeight={500}
             fill="currentColor"
-            opacity={0.6}
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            opacity={0.7}
+            transform={`rotate(-90 ${margin.left - 50} ${
+              (margin.top + height - margin.bottom) / 2
+            })`}
           >
-            {formatTick(tick, yAxis)}
+            {yAxis.label}
           </text>
-        </g>
-      ))}
-      {yAxis.label && (
-        <text
-          x={margin.left - 50}
-          y={(margin.top + height - margin.bottom) / 2}
-          textAnchor="middle"
-          fontSize={12}
-          fontWeight={500}
-          fill="currentColor"
-          opacity={0.7}
-          transform={`rotate(-90 ${margin.left - 50} ${
-            (margin.top + height - margin.bottom) / 2
-          })`}
-        >
-          {yAxis.label}
-        </text>
-      )}
-    </g>
-  );
-});
+        )}
+      </g>
+    );
+  }
+);
 
 LineChartAxes.displayName = "LineChart.Axes";
+
+export interface LineChartLinesProps extends React.SVGProps<SVGGElement> {}
 
 /**
  * Lines component - renders the data lines
  */
-const LineChartLines = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const { processedSeries, xScale, yScale, hiddenSeries, animate } =
-    useLineChart();
+const LineChartLines = React.forwardRef<SVGGElement, LineChartLinesProps>(
+  ({ className, ...props }, ref) => {
+    const { processedSeries, xScale, yScale, hiddenSeries, animate } =
+      useLineChart();
 
-  return (
-    <g ref={ref} className={cn("line-chart-lines", className)} {...props}>
-      {processedSeries.map((s, seriesIdx) => {
-        if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
+    return (
+      <g ref={ref} className={cn("line-chart-lines", className)} {...props}>
+        {processedSeries.map((s, seriesIdx) => {
+          if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
 
-        const pathData = generateSmoothPath(s.data, xScale, yScale);
-        const color = s.color || "#64748b";
+          const pathData = generateSmoothPath(s.data, xScale, yScale);
+          const color = s.color || "#64748b";
 
-        // Build filled area path
-        const baselineY = yScale(0);
-        const filledPath = s.filled
-          ? pathData +
-            ` L ${xScale(s.data[s.data.length - 1].x)} ${baselineY} L ${xScale(
-              s.data[0].x
-            )} ${baselineY} Z`
-          : undefined;
+          // Build filled area path
+          const baselineY = yScale(0);
+          const filledPath = s.filled
+            ? pathData +
+              ` L ${xScale(
+                s.data[s.data.length - 1].x
+              )} ${baselineY} L ${xScale(s.data[0].x)} ${baselineY} Z`
+            : undefined;
 
-        return (
-          <g key={seriesIdx}>
-            {s.filled && filledPath && (
-              <>
-                <defs>
-                  <linearGradient
-                    id={`gradient-${seriesIdx}`}
-                    x1="0%"
-                    y1="0%"
-                    x2="0%"
-                    y2="100%"
-                  >
-                    <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-                    <stop offset="100%" stopColor={color} stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <path
-                  d={filledPath}
-                  fill={`url(#gradient-${seriesIdx})`}
-                  style={
-                    animate
-                      ? {
-                          animation: `fadeIn 0.5s ease ${
-                            seriesIdx * 0.1
-                          }s forwards`,
-                          opacity: 0,
-                        }
-                      : undefined
-                  }
-                />
-              </>
-            )}
-            <path
-              d={pathData}
-              fill="none"
-              stroke={color}
-              strokeWidth={s.strokeWidth || 2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={s.dashed ? "6,6" : undefined}
-              style={
-                animate
-                  ? {
-                      animation: `fadeIn 0.5s ease ${
-                        seriesIdx * 0.1
-                      }s forwards`,
-                      opacity: 0,
+          return (
+            <g key={seriesIdx}>
+              {s.filled && filledPath && (
+                <>
+                  <defs>
+                    <linearGradient
+                      id={`gradient-${seriesIdx}`}
+                      x1="0%"
+                      y1="0%"
+                      x2="0%"
+                      y2="100%"
+                    >
+                      <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+                      <stop
+                        offset="100%"
+                        stopColor={color}
+                        stopOpacity={0.02}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d={filledPath}
+                    fill={`url(#gradient-${seriesIdx})`}
+                    style={
+                      animate
+                        ? {
+                            animation: `fadeIn 0.5s ease ${
+                              seriesIdx * 0.1
+                            }s forwards`,
+                            opacity: 0,
+                          }
+                        : undefined
                     }
-                  : undefined
-              }
-            />
-          </g>
-        );
-      })}
-    </g>
-  );
-});
+                  />
+                </>
+              )}
+              <path
+                d={pathData}
+                fill="none"
+                stroke={color}
+                strokeWidth={s.strokeWidth || 2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray={s.dashed ? "6,6" : undefined}
+                style={
+                  animate
+                    ? {
+                        animation: `fadeIn 0.5s ease ${
+                          seriesIdx * 0.1
+                        }s forwards`,
+                        opacity: 0,
+                      }
+                    : undefined
+                }
+              />
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+);
 
 LineChartLines.displayName = "LineChart.Lines";
+
+export interface LineChartPointsProps extends React.SVGProps<SVGGElement> {
+  radius?: number;
+}
 
 /**
  * Points component - renders data points
  */
-const LineChartPoints = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement> & { radius?: number }
->(({ className, radius = 3, ...props }, ref) => {
-  const { processedSeries, xScale, yScale, hiddenSeries } = useLineChart();
+const LineChartPoints = React.forwardRef<SVGGElement, LineChartPointsProps>(
+  ({ className, radius = 3, ...props }, ref) => {
+    const { processedSeries, xScale, yScale, hiddenSeries } = useLineChart();
 
-  return (
-    <g ref={ref} className={cn("line-chart-points", className)} {...props}>
-      {processedSeries.map((s, seriesIdx) => {
-        if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
+    return (
+      <g ref={ref} className={cn("line-chart-points", className)} {...props}>
+        {processedSeries.map((s, seriesIdx) => {
+          if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
 
-        const color = s.color || "#64748b";
+          const color = s.color || "#64748b";
 
-        return (
-          <g key={seriesIdx}>
-            {s.data.map((point, i) => (
-              <circle
-                key={i}
-                cx={xScale(point.x)}
-                cy={yScale(point.y)}
-                r={radius}
-                fill={color}
-                stroke="white"
-                strokeWidth={1.5}
-              />
-            ))}
-          </g>
-        );
-      })}
-    </g>
-  );
-});
+          return (
+            <g key={seriesIdx}>
+              {s.data.map((point, i) => (
+                <circle
+                  key={i}
+                  cx={xScale(point.x)}
+                  cy={yScale(point.y)}
+                  r={radius}
+                  fill={color}
+                  stroke="white"
+                  strokeWidth={1.5}
+                />
+              ))}
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+);
 
 LineChartPoints.displayName = "LineChart.Points";
+
+export interface LineChartTooltipProps extends React.SVGProps<SVGGElement> {}
 
 /**
  * Tooltip component - interactive tooltip on hover
  */
-const LineChartTooltip = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement>
->(({ className, ...props }, ref) => {
-  const {
-    hoveredPoint,
-    processedSeries,
-    xScale,
-    yScale,
-    xAxis,
-    yAxis,
-    width,
-    height,
-  } = useLineChart();
+const LineChartTooltip = React.forwardRef<SVGGElement, LineChartTooltipProps>(
+  ({ className, ...props }, ref) => {
+    const {
+      hoveredPoint,
+      hoveredXIndex,
+      processedSeries,
+      xScale,
+      yScale,
+      xAxis,
+      yAxis,
+      width,
+      height,
+      margin,
+      unifiedTooltip,
+      hiddenSeries,
+    } = useLineChart();
 
-  if (!hoveredPoint) return null;
+    // Unified tooltip mode: show all series at the same x-coordinate
+    if (unifiedTooltip && hoveredXIndex !== null) {
+      // Get all visible series data at this x index
+      const seriesData = processedSeries
+        .map((s, idx) => ({ series: s, seriesIdx: idx }))
+        .filter(({ seriesIdx }) => !hiddenSeries.has(seriesIdx))
+        .map(({ series, seriesIdx }) => ({
+          series,
+          seriesIdx,
+          point: series.data[hoveredXIndex],
+        }))
+        .filter(({ point }) => point !== undefined);
 
-  const s = processedSeries[hoveredPoint.seriesIdx];
-  if (!s) return null;
+      if (seriesData.length === 0) return null;
 
-  const point = s.data[hoveredPoint.pointIdx];
-  const px = xScale(point.x);
-  const py = yScale(point.y);
-  const color = s.color || "#64748b";
+      const xValue = seriesData[0].point.x;
+      const px = xScale(xValue);
 
-  const xLabel =
-    xAxis.type === "time"
-      ? new Date(point.x).toLocaleString()
-      : xAxis.formatter?.(point.x) ?? formatValue(point.x);
-  const yLabel = yAxis.formatter?.(point.y) ?? formatValue(point.y);
+      const xLabel =
+        xAxis.type === "time"
+          ? new Date(xValue).toLocaleString()
+          : xAxis.formatter?.(xValue) ?? formatValue(xValue);
 
-  // Smart positioning
-  const tooltipWidth = 180;
-  const tooltipHeight = 70;
-  const offsetX = px > width / 2 ? -tooltipWidth - 10 : 10;
-  const offsetY = py > height / 2 ? -tooltipHeight - 10 : 10;
+      // Smart positioning
+      const tooltipWidth = 200;
+      const lineHeight = 18;
+      const tooltipHeight = 40 + seriesData.length * lineHeight;
+      const offsetX = px > width / 2 ? -tooltipWidth - 15 : 15;
+      const tooltipY = margin.top + 10;
 
-  return (
-    <g
-      ref={ref}
-      className={cn("line-chart-tooltip", className)}
-      style={{ pointerEvents: "none" }}
-      {...props}
-    >
-      {/* Crosshair */}
-      <line
-        x1={px}
-        y1={0}
-        x2={px}
-        y2={height}
-        stroke="currentColor"
-        strokeWidth={1}
-        strokeDasharray="4,4"
-        opacity={0.3}
-      />
-      <line
-        x1={0}
-        y1={py}
-        x2={width}
-        y2={py}
-        stroke="currentColor"
-        strokeWidth={1}
-        strokeDasharray="4,4"
-        opacity={0.3}
-      />
+      return (
+        <g
+          ref={ref}
+          className={cn("line-chart-tooltip", className)}
+          style={{ pointerEvents: "none" }}
+          {...props}
+        >
+          {/* Vertical crosshair */}
+          <line
+            x1={px}
+            y1={margin.top}
+            x2={px}
+            y2={height - margin.bottom}
+            stroke="currentColor"
+            strokeWidth={1.5}
+            strokeDasharray="4,4"
+            opacity={0.4}
+          />
 
-      {/* Point indicator - static circles to avoid flicker */}
-      <circle
-        cx={px}
-        cy={py}
-        r={8}
-        fill="none"
-        stroke={color}
-        strokeWidth={2}
-        opacity={0.3}
-      />
-      <circle
-        cx={px}
-        cy={py}
-        r={6}
-        fill="none"
-        stroke={color}
-        strokeWidth={2}
-        opacity={0.5}
-      />
-      <circle
-        cx={px}
-        cy={py}
-        r={4}
-        fill={color}
-        stroke="white"
-        strokeWidth={2}
-      />
+          {/* Point indicators for each series */}
+          {seriesData.map(({ series, point }) => {
+            const py = yScale(point.y);
+            const color = series.color || "#64748b";
+            return (
+              <g key={series.name}>
+                <circle
+                  cx={px}
+                  cy={py}
+                  r={6}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={2}
+                  opacity={0.5}
+                />
+                <circle
+                  cx={px}
+                  cy={py}
+                  r={4}
+                  fill={color}
+                  stroke="white"
+                  strokeWidth={2}
+                />
+              </g>
+            );
+          })}
 
-      {/* Tooltip box */}
-      <rect
-        x={px + offsetX}
-        y={py + offsetY}
-        width={tooltipWidth}
-        height={tooltipHeight}
-        rx={6}
-        fill="currentColor"
-        opacity={0.95}
-      />
-      <text
-        x={px + offsetX + 10}
-        y={py + offsetY + 20}
-        fontSize={11}
-        fontWeight={600}
-        fill="white"
-        style={{ mixBlendMode: "difference" }}
+          {/* Tooltip box */}
+          <rect
+            x={px + offsetX}
+            y={tooltipY}
+            width={tooltipWidth}
+            height={tooltipHeight}
+            rx={6}
+            fill="currentColor"
+            opacity={0.95}
+          />
+
+          {/* X-axis label */}
+          <text
+            x={px + offsetX + 10}
+            y={tooltipY + 20}
+            fontSize={11}
+            fontWeight={600}
+            fill="white"
+            style={{ mixBlendMode: "difference" }}
+          >
+            {xAxis.label || "X"}: {xLabel}
+          </text>
+
+          {/* Series values */}
+          {seriesData.map(({ series, point }, idx) => {
+            const yLabel = yAxis.formatter?.(point.y) ?? formatValue(point.y);
+            const color = series.color || "#64748b";
+            return (
+              <g key={series.name}>
+                <circle
+                  cx={px + offsetX + 15}
+                  cy={tooltipY + 35 + idx * lineHeight}
+                  r={4}
+                  fill={color}
+                />
+                <text
+                  x={px + offsetX + 25}
+                  y={tooltipY + 39 + idx * lineHeight}
+                  fontSize={10}
+                  fill="white"
+                  opacity={0.9}
+                  style={{ mixBlendMode: "difference" }}
+                >
+                  {series.name}: {yLabel}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      );
+    }
+
+    // Individual tooltip mode: show single point
+    if (!hoveredPoint) return null;
+
+    const s = processedSeries[hoveredPoint.seriesIdx];
+    if (!s) return null;
+
+    const point = s.data[hoveredPoint.pointIdx];
+    const px = xScale(point.x);
+    const py = yScale(point.y);
+    const color = s.color || "#64748b";
+
+    const xLabel =
+      xAxis.type === "time"
+        ? new Date(point.x).toLocaleString()
+        : xAxis.formatter?.(point.x) ?? formatValue(point.x);
+    const yLabel = yAxis.formatter?.(point.y) ?? formatValue(point.y);
+
+    // Smart positioning
+    const tooltipWidth = 180;
+    const tooltipHeight = 70;
+    const offsetX = px > width / 2 ? -tooltipWidth - 10 : 10;
+    const offsetY = py > height / 2 ? -tooltipHeight - 10 : 10;
+
+    return (
+      <g
+        ref={ref}
+        className={cn("line-chart-tooltip", className)}
+        style={{ pointerEvents: "none" }}
+        {...props}
       >
-        {s.name}
-      </text>
-      <text
-        x={px + offsetX + 10}
-        y={py + offsetY + 38}
-        fontSize={10}
-        fill="white"
-        opacity={0.8}
-        style={{ mixBlendMode: "difference" }}
-      >
-        {xAxis.label || "X"}: {xLabel}
-      </text>
-      <text
-        x={px + offsetX + 10}
-        y={py + offsetY + 54}
-        fontSize={10}
-        fill="white"
-        opacity={0.8}
-        style={{ mixBlendMode: "difference" }}
-      >
-        {yAxis.label || "Y"}: {yLabel}
-      </text>
-    </g>
-  );
-});
+        {/* Crosshair - clipped to chart area */}
+        <line
+          x1={px}
+          y1={margin.top}
+          x2={px}
+          y2={height - margin.bottom}
+          stroke="currentColor"
+          strokeWidth={1}
+          strokeDasharray="4,4"
+          opacity={0.3}
+        />
+        <line
+          x1={margin.left}
+          y1={py}
+          x2={width - margin.right}
+          y2={py}
+          stroke="currentColor"
+          strokeWidth={1}
+          strokeDasharray="4,4"
+          opacity={0.3}
+        />
+
+        {/* Point indicator - static circles to avoid flicker */}
+        <circle
+          cx={px}
+          cy={py}
+          r={8}
+          fill="none"
+          stroke={color}
+          strokeWidth={2}
+          opacity={0.3}
+        />
+        <circle
+          cx={px}
+          cy={py}
+          r={6}
+          fill="none"
+          stroke={color}
+          strokeWidth={2}
+          opacity={0.5}
+        />
+        <circle
+          cx={px}
+          cy={py}
+          r={4}
+          fill={color}
+          stroke="white"
+          strokeWidth={2}
+        />
+
+        {/* Tooltip box */}
+        <rect
+          x={px + offsetX}
+          y={py + offsetY}
+          width={tooltipWidth}
+          height={tooltipHeight}
+          rx={6}
+          fill="currentColor"
+          opacity={0.95}
+        />
+        <text
+          x={px + offsetX + 10}
+          y={py + offsetY + 20}
+          fontSize={11}
+          fontWeight={600}
+          fill="white"
+          style={{ mixBlendMode: "difference" }}
+        >
+          {s.name}
+        </text>
+        <text
+          x={px + offsetX + 10}
+          y={py + offsetY + 38}
+          fontSize={10}
+          fill="white"
+          opacity={0.8}
+          style={{ mixBlendMode: "difference" }}
+        >
+          {xAxis.label || "X"}: {xLabel}
+        </text>
+        <text
+          x={px + offsetX + 10}
+          y={py + offsetY + 54}
+          fontSize={10}
+          fill="white"
+          opacity={0.8}
+          style={{ mixBlendMode: "difference" }}
+        >
+          {yAxis.label || "Y"}: {yLabel}
+        </text>
+      </g>
+    );
+  }
+);
 
 LineChartTooltip.displayName = "LineChart.Tooltip";
+
+export interface LineChartInteractionProps
+  extends React.SVGProps<SVGRectElement> {}
 
 /**
  * Interaction layer component - handles mouse events
  */
 const LineChartInteraction = React.forwardRef<
   SVGRectElement,
-  React.SVGAttributes<SVGRectElement>
+  LineChartInteractionProps
 >(({ className, ...props }, ref) => {
   const {
     margin,
@@ -796,7 +979,10 @@ const LineChartInteraction = React.forwardRef<
     yScale,
     setHoveredPoint,
     hoveredPoint,
+    setHoveredXIndex,
+    hoveredXIndex,
     magneticCrosshair,
+    unifiedTooltip,
     snapRadius,
     hiddenSeries,
   } = useLineChart();
@@ -812,67 +998,102 @@ const LineChartInteraction = React.forwardRef<
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      let nearestSeriesIdx = 0;
-      let nearestPointIdx = 0;
-      let minDist = Infinity;
+      if (unifiedTooltip) {
+        // Unified mode: find nearest x-coordinate across all visible series
+        let nearestPointIdx = 0;
+        let minXDist = Infinity;
 
-      processedSeries.forEach((s, seriesIdx) => {
-        if (hiddenSeries.has(seriesIdx)) return;
+        // Use first visible series to find x positions
+        const firstVisibleSeries = processedSeries.find(
+          (_, idx) => !hiddenSeries.has(idx)
+        );
+        if (!firstVisibleSeries) return;
 
-        s.data.forEach((point, pointIdx) => {
+        firstVisibleSeries.data.forEach((point, pointIdx) => {
           const px = xScale(point.x);
-          const py = yScale(point.y);
-          const dist = Math.sqrt(
-            Math.pow(px - mouseX, 2) + Math.pow(py - mouseY, 2)
-          );
+          const xDist = Math.abs(px - mouseX);
 
-          if (dist < minDist) {
-            minDist = dist;
-            nearestSeriesIdx = seriesIdx;
+          if (xDist < minXDist) {
+            minXDist = xDist;
             nearestPointIdx = pointIdx;
           }
         });
-      });
 
-      // Add hysteresis: use a larger radius to "release" than to "capture"
-      // This prevents flickering when mouse is near the edge
-      const currentSnapRadius = snapRadius;
-      const releaseRadius = snapRadius * 1.3; // 30% larger for release
+        const currentSnapRadius = snapRadius;
+        const releaseRadius = snapRadius * 1.3;
 
-      if (minDist < currentSnapRadius) {
-        // Only update if it's a different point
-        if (
-          hoveredPoint?.seriesIdx !== nearestSeriesIdx ||
-          hoveredPoint?.pointIdx !== nearestPointIdx
-        ) {
-          setHoveredPoint({
-            seriesIdx: nearestSeriesIdx,
-            pointIdx: nearestPointIdx,
-          });
+        if (minXDist < currentSnapRadius) {
+          if (hoveredXIndex !== nearestPointIdx) {
+            setHoveredXIndex(nearestPointIdx);
+          }
+        } else if (minXDist > releaseRadius) {
+          if (hoveredXIndex !== null) {
+            setHoveredXIndex(null);
+          }
         }
-      } else if (minDist > releaseRadius) {
-        // Only clear if we're far enough away
-        if (hoveredPoint !== null) {
-          setHoveredPoint(null);
+      } else {
+        // Individual mode: find nearest point
+        let nearestSeriesIdx = 0;
+        let nearestPointIdx = 0;
+        let minDist = Infinity;
+
+        processedSeries.forEach((s, seriesIdx) => {
+          if (hiddenSeries.has(seriesIdx)) return;
+
+          s.data.forEach((point, pointIdx) => {
+            const px = xScale(point.x);
+            const py = yScale(point.y);
+            const dist = Math.sqrt(
+              Math.pow(px - mouseX, 2) + Math.pow(py - mouseY, 2)
+            );
+
+            if (dist < minDist) {
+              minDist = dist;
+              nearestSeriesIdx = seriesIdx;
+              nearestPointIdx = pointIdx;
+            }
+          });
+        });
+
+        const currentSnapRadius = snapRadius;
+        const releaseRadius = snapRadius * 1.3;
+
+        if (minDist < currentSnapRadius) {
+          if (
+            hoveredPoint?.seriesIdx !== nearestSeriesIdx ||
+            hoveredPoint?.pointIdx !== nearestPointIdx
+          ) {
+            setHoveredPoint({
+              seriesIdx: nearestSeriesIdx,
+              pointIdx: nearestPointIdx,
+            });
+          }
+        } else if (minDist > releaseRadius) {
+          if (hoveredPoint !== null) {
+            setHoveredPoint(null);
+          }
         }
       }
-      // If between currentSnapRadius and releaseRadius, maintain current state
     },
     [
       magneticCrosshair,
+      unifiedTooltip,
       processedSeries,
       xScale,
       yScale,
       snapRadius,
       hiddenSeries,
       hoveredPoint,
+      hoveredXIndex,
       setHoveredPoint,
+      setHoveredXIndex,
     ]
   );
 
   const handleMouseLeave = React.useCallback(() => {
     setHoveredPoint(null);
-  }, [setHoveredPoint]);
+    setHoveredXIndex(null);
+  }, [setHoveredPoint, setHoveredXIndex]);
 
   return (
     <rect
@@ -893,120 +1114,129 @@ const LineChartInteraction = React.forwardRef<
 
 LineChartInteraction.displayName = "LineChart.Interaction";
 
+export interface LineChartLegendProps extends React.SVGProps<SVGGElement> {
+  interactive?: boolean;
+}
+
 /**
  * Legend component
  */
-const LineChartLegend = React.forwardRef<
-  SVGGElement,
-  React.SVGAttributes<SVGGElement> & { interactive?: boolean }
->(({ className, interactive = false, ...props }, ref) => {
-  const { processedSeries, width, margin, hiddenSeries, toggleSeries } =
-    useLineChart();
+const LineChartLegend = React.forwardRef<SVGGElement, LineChartLegendProps>(
+  ({ className, interactive = false, ...props }, ref) => {
+    const { processedSeries, width, margin, hiddenSeries, toggleSeries } =
+      useLineChart();
 
-  return (
-    <g ref={ref} className={cn("line-chart-legend", className)} {...props}>
-      {processedSeries.map((s, idx) => {
-        const x = width - margin.right + 20;
-        const y = margin.top + idx * 24;
-        const color = s.color || "#64748b";
-        const isHidden = hiddenSeries.has(idx);
+    return (
+      <g ref={ref} className={cn("line-chart-legend", className)} {...props}>
+        {processedSeries.map((s, idx) => {
+          const x = width - margin.right + 20;
+          const y = margin.top + idx * 24;
+          const color = s.color || "#64748b";
+          const isHidden = hiddenSeries.has(idx);
 
-        return (
-          <g
-            key={idx}
-            onClick={interactive ? () => toggleSeries(idx) : undefined}
-            style={{ cursor: interactive ? "pointer" : "default" }}
-            opacity={isHidden ? 0.4 : 1}
-          >
-            <line
-              x1={x}
-              y1={y}
-              x2={x + 20}
-              y2={y}
-              stroke={color}
-              strokeWidth={2.5}
-              strokeDasharray={s.dashed ? "4,4" : undefined}
-            />
-            <text
-              x={x + 28}
-              y={y + 4}
-              fontSize={11}
-              fill="currentColor"
-              opacity={0.8}
+          return (
+            <g
+              key={idx}
+              onClick={interactive ? () => toggleSeries(idx) : undefined}
+              style={{ cursor: interactive ? "pointer" : "default" }}
+              opacity={isHidden ? 0.4 : 1}
             >
-              {s.name}
-            </text>
-          </g>
-        );
-      })}
-    </g>
-  );
-});
+              <line
+                x1={x}
+                y1={y}
+                x2={x + 20}
+                y2={y}
+                stroke={color}
+                strokeWidth={2.5}
+                strokeDasharray={s.dashed ? "4,4" : undefined}
+              />
+              <text
+                x={x + 28}
+                y={y + 4}
+                fontSize={11}
+                fill="currentColor"
+                opacity={0.8}
+              >
+                {s.name}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+);
 
 LineChartLegend.displayName = "LineChart.Legend";
+
+export interface LineChartEmptyProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
 
 /**
  * Empty state component
  */
-const LineChartEmpty = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => {
-  const { width, height } = useLineChart();
+const LineChartEmpty = React.forwardRef<HTMLDivElement, LineChartEmptyProps>(
+  ({ className, style, children, ...props }, ref) => {
+    const { width, height } = useLineChart();
 
-  return (
-    <div
-      ref={ref}
-      className={cn("line-chart-empty", className)}
-      style={{
-        width: `${width}px`,
-        height: `${height}px`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: "12px",
-        borderRadius: "8px",
-        border: "1px solid currentColor",
-        opacity: 0.1,
-      }}
-      {...props}
-    >
-      {children || (
-        <>
-          <svg
-            width="64"
-            height="64"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            opacity="0.3"
-          >
-            <polyline
-              points="22 12 18 12 15 21 9 3 6 12 2 12"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <div style={{ fontSize: "14px", opacity: 0.5 }}>
-            No data available
-          </div>
-        </>
-      )}
-    </div>
-  );
-});
+    return (
+      <div
+        ref={ref}
+        className={cn("line-chart-empty", className)}
+        style={{
+          width: `${width}px`,
+          height: `${height}px`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          gap: "12px",
+          borderRadius: "8px",
+          border: "1px solid currentColor",
+          opacity: 0.1,
+          ...style,
+        }}
+        {...props}
+      >
+        {children || (
+          <>
+            <svg
+              width="64"
+              height="64"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              opacity="0.3"
+            >
+              <polyline
+                points="22 12 18 12 15 21 9 3 6 12 2 12"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <div style={{ fontSize: "14px", opacity: 0.5 }}>
+              No data available
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+);
 
 LineChartEmpty.displayName = "LineChart.Empty";
+
+export interface LineChartLoadingProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
 
 /**
  * Loading state component
  */
 const LineChartLoading = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  LineChartLoadingProps
+>(({ className, style, children, ...props }, ref) => {
   const { width, height } = useLineChart();
 
   return (
@@ -1025,6 +1255,7 @@ const LineChartLoading = React.forwardRef<
         background: "var(--background, white)",
         opacity: 0.95,
         zIndex: 10,
+        ...style,
       }}
       role="status"
       aria-live="polite"

@@ -13,16 +13,6 @@ export const TopNav = () => {
         <Link href="/">
           <SimpleLogo className="w-5 h-5" />
         </Link>
-        <Link href="/docs">
-          <Button variant="ghost" size="sm">
-            Documentation
-          </Button>
-        </Link>
-        <Link href="/components">
-          <Button variant="ghost" size="sm">
-            Components
-          </Button>
-        </Link>
       </div>
       <div className="flex items-center gap-2">
         <Input type="text" placeholder="Search..." className="w-64" />

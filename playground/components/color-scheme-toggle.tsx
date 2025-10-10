@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "./ui/button";
 
 export function ColorSchemeToggle() {
   const { colorScheme, setColorScheme } = useColorScheme();

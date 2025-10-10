@@ -67,7 +67,8 @@ export interface SaturnRootProps {
   children?: React.ReactNode;
 }
 
-export interface SaturnCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface SaturnCanvasProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */
@@ -76,7 +77,6 @@ export interface SaturnCanvasProps extends React.HTMLAttributes<HTMLDivElement> 
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
 export interface SaturnControlsProps {
@@ -102,13 +102,14 @@ export interface SaturnControlsProps {
   dampingFactor?: number;
 }
 
-export interface SaturnGlobeProps {
+export interface SaturnGlobeProps
+  extends React.ComponentPropsWithoutRef<"group"> {
   /** Number of segments for sphere geometry */
   segments?: number;
-  children?: React.ReactNode;
 }
 
-export interface SaturnRingsProps {
+export interface SaturnRingsProps
+  extends React.ComponentPropsWithoutRef<"group"> {
   /** Opacity of the rings */
   opacity?: number;
 }
@@ -136,7 +137,9 @@ const SaturnRoot = React.forwardRef<HTMLDivElement, SaturnRootProps>(
   ) => {
     const rotationSpeed = React.useMemo(() => {
       if (!enableRotation) return 0;
-      return ((2 * Math.PI) / (SATURN_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
+      return (
+        ((2 * Math.PI) / (SATURN_ROTATION_PERIOD_SECONDS * 60)) * timeScale
+      );
     }, [enableRotation, timeScale]);
 
     const axialTilt: [number, number, number] = React.useMemo(
@@ -155,7 +158,16 @@ const SaturnRoot = React.forwardRef<HTMLDivElement, SaturnRootProps>(
         ringsTextureUrl,
         showRings,
       }),
-      [radius, rotationSpeed, axialTilt, brightness, timeScale, textureUrl, ringsTextureUrl, showRings]
+      [
+        radius,
+        rotationSpeed,
+        axialTilt,
+        brightness,
+        timeScale,
+        textureUrl,
+        ringsTextureUrl,
+        showRings,
+      ]
     );
 
     return (
@@ -181,6 +193,7 @@ const SaturnCanvas = React.forwardRef<HTMLDivElement, SaturnCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -189,7 +202,7 @@ const SaturnCanvas = React.forwardRef<HTMLDivElement, SaturnCanvasProps>(
     const { brightness } = useSaturn();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -237,6 +250,7 @@ const SaturnControls = React.forwardRef<any, SaturnControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
@@ -254,6 +268,7 @@ const SaturnControls = React.forwardRef<any, SaturnControlsProps>(
         maxDistance={maxDistance}
         enableDamping={enableDamping}
         dampingFactor={dampingFactor}
+        {...props}
       />
     );
   }
@@ -265,8 +280,11 @@ SaturnControls.displayName = "Saturn.Controls";
  * Globe component - renders the main Saturn sphere
  */
 const SaturnGlobe = React.forwardRef<any, SaturnGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const { radius, rotationSpeed, axialTilt, textureUrl } = useSaturn();
+
+    // Extract rotation from props to avoid type conflicts
+    const { rotation: _rotation, ...sphereProps } = props as any;
 
     return (
       <Sphere
@@ -279,6 +297,7 @@ const SaturnGlobe = React.forwardRef<any, SaturnGlobeProps>(
         segments={segments}
         roughness={0.7}
         metalness={0.1}
+        {...sphereProps}
       >
         {children}
       </Sphere>
@@ -292,19 +311,26 @@ SaturnGlobe.displayName = "Saturn.Globe";
  * Rings component - renders Saturn's iconic rings
  */
 const SaturnRings = React.forwardRef<any, SaturnRingsProps>(
-  ({ opacity = 0.7 }, ref) => {
+  ({ opacity = 0.7, ...props }, ref) => {
     const { ringsTextureUrl, showRings } = useSaturn();
 
     if (!showRings) return null;
 
+    const ringRotation: [number, number, number] = [Math.PI / 2.2, 0, 0];
+
+    // Extract rotation from props to avoid type conflicts
+    const { rotation: _rotation, ...ringProps } = props as any;
+
     return (
       <Ring
+        ref={ref}
         innerRadius={SATURN_RINGS_INNER}
         outerRadius={SATURN_RINGS_OUTER}
         textureUrl={ringsTextureUrl}
         color="#c9b29b"
         opacity={opacity}
-        rotation={[Math.PI / 2.2, 0, 0]}
+        rotation={ringRotation}
+        {...ringProps}
       />
     );
   }
@@ -315,12 +341,20 @@ SaturnRings.displayName = "Saturn.Rings";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const SaturnAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
-  const { radius } = useSaturn();
-  const axisSize = size ?? radius * 3;
+export interface SaturnAxisProps
+  extends React.ComponentPropsWithoutRef<"group"> {
+  /** Size of the axis helper */
+  size?: number;
+}
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
-});
+const SaturnAxis = React.forwardRef<any, SaturnAxisProps>(
+  ({ size, ...props }, ref) => {
+    const { radius } = useSaturn();
+    const axisSize = size ?? radius * 3;
+
+    return <axesHelper ref={ref} args={[axisSize]} {...props} />;
+  }
+);
 
 SaturnAxis.displayName = "Saturn.Axis";
 

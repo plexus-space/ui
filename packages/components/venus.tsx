@@ -57,7 +57,8 @@ export interface VenusRootProps {
   children?: React.ReactNode;
 }
 
-export interface VenusCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface VenusCanvasProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /** Camera position [x, y, z] */
   cameraPosition?: [number, number, number];
   /** Camera field of view */
@@ -66,7 +67,6 @@ export interface VenusCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
   height?: string;
   /** Canvas width */
   width?: string;
-  children?: React.ReactNode;
 }
 
 export interface VenusControlsProps {
@@ -96,6 +96,7 @@ export interface VenusGlobeProps {
   /** Number of segments for sphere geometry */
   segments?: number;
   children?: React.ReactNode;
+  [key: string]: any;
 }
 
 // ============================================================================
@@ -162,6 +163,7 @@ const VenusCanvas = React.forwardRef<HTMLDivElement, VenusCanvasProps>(
       height = "600px",
       width = "100%",
       className,
+      style,
       children,
       ...props
     },
@@ -170,7 +172,7 @@ const VenusCanvas = React.forwardRef<HTMLDivElement, VenusCanvasProps>(
     const { brightness } = useVenus();
 
     return (
-      <div ref={ref} className={className} {...props}>
+      <div ref={ref} className={className} style={style} {...props}>
         <Canvas
           style={{
             height: `${height}`,
@@ -219,6 +221,7 @@ const VenusControls = React.forwardRef<any, VenusControlsProps>(
       enableRotate = true,
       enableDamping = true,
       dampingFactor = 0.05,
+      ...props
     },
     ref
   ) => {
@@ -236,6 +239,7 @@ const VenusControls = React.forwardRef<any, VenusControlsProps>(
         maxDistance={maxDistance}
         enableDamping={enableDamping}
         dampingFactor={dampingFactor}
+        {...props}
       />
     );
   }
@@ -247,7 +251,7 @@ VenusControls.displayName = "Venus.Controls";
  * Globe component - renders the main Venus sphere
  */
 const VenusGlobe = React.forwardRef<any, VenusGlobeProps>(
-  ({ segments = 128, children }, ref) => {
+  ({ segments = 128, children, ...props }, ref) => {
     const { radius, rotationSpeed, axialTilt, textureUrl } = useVenus();
 
     return (
@@ -261,6 +265,7 @@ const VenusGlobe = React.forwardRef<any, VenusGlobeProps>(
         segments={segments}
         roughness={0.7}
         metalness={0.1}
+        {...props}
       >
         {children}
       </Sphere>
@@ -273,12 +278,14 @@ VenusGlobe.displayName = "Venus.Globe";
 /**
  * Axis helper component - shows coordinate axes (for debugging)
  */
-const VenusAxis = React.forwardRef<any, { size?: number }>(({ size }, ref) => {
-  const { radius } = useVenus();
-  const axisSize = size ?? radius * 3;
+const VenusAxis = React.forwardRef<any, { size?: number; [key: string]: any }>(
+  ({ size, ...props }, ref) => {
+    const { radius } = useVenus();
+    const axisSize = size ?? radius * 3;
 
-  return <axesHelper ref={ref} args={[axisSize]} />;
-});
+    return <axesHelper ref={ref} args={[axisSize]} {...props} />;
+  }
+);
 
 VenusAxis.displayName = "Venus.Axis";
 
