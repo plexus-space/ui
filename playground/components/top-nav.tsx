@@ -15,7 +15,6 @@ export const TopNav = () => {
         </Link>
       </div>
       <div className="flex items-center gap-2">
-        <Input type="text" placeholder="Search..." className="w-64" />
         <ColorSchemeToggle />
         <ThemeToggle />
         <Link href="https://github.com/plexus-space/ui">
