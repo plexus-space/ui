@@ -14,11 +14,11 @@ import { Sphere, Ring } from "./primitives/sphere";
 export const SATURN_RADIUS_KM = 58232;
 export const SCENE_SCALE = 0.001;
 export const SATURN_RADIUS = SATURN_RADIUS_KM * SCENE_SCALE;
-export const SATURN_ROTATION_PERIOD_SECONDS = 38520.0; // 10.7 hours
-export const SATURN_ORBITAL_PERIOD_DAYS = 10759; // 29.5 years
-export const SATURN_AXIAL_TILT_DEG = 26.7;
+export const SATURN_ROTATION_PERIOD_SECONDS = 38362; // 10.656 hours
+export const SATURN_ORBITAL_PERIOD_DAYS = 10759.22; // 29.5 years
+export const SATURN_AXIAL_TILT_DEG = 26.73;
 export const SATURN_RINGS_INNER_KM = 66900;
-export const SATURN_RINGS_OUTER_KM = 136780;
+export const SATURN_RINGS_OUTER_KM = 140220;
 export const SATURN_RINGS_INNER = SATURN_RINGS_INNER_KM * SCENE_SCALE;
 export const SATURN_RINGS_OUTER = SATURN_RINGS_OUTER_KM * SCENE_SCALE;
 
@@ -202,7 +202,7 @@ export interface SaturnControlsProps {
  * Main Saturn sphere with texture
  */
 export interface SaturnGlobeProps
-  extends React.ComponentPropsWithoutRef<"group"> {
+  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'color' | 'rotationSpeed' | 'rotation' | 'segments' | 'roughness' | 'metalness'> {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128
@@ -425,9 +425,15 @@ SaturnGlobe.displayName = "Saturn.Globe";
  */
 const SaturnRings = React.forwardRef<any, SaturnRingsProps>(
   ({ opacity = 0.7, ...props }, ref) => {
-    const { ringsTextureUrl, showRings } = useSaturn();
+    const { ringsTextureUrl, showRings, radius } = useSaturn();
 
     if (!showRings) return null;
+
+    // Calculate scale factor to maintain proper ring proportions
+    // when radius is overridden from the default
+    const scaleFactor = radius / SATURN_RADIUS;
+    const scaledInnerRadius = SATURN_RINGS_INNER * scaleFactor;
+    const scaledOuterRadius = SATURN_RINGS_OUTER * scaleFactor;
 
     const ringRotation: [number, number, number] = [Math.PI / 2.2, 0, 0];
 
@@ -437,8 +443,8 @@ const SaturnRings = React.forwardRef<any, SaturnRingsProps>(
     return (
       <Ring
         ref={ref}
-        innerRadius={SATURN_RINGS_INNER}
-        outerRadius={SATURN_RINGS_OUTER}
+        innerRadius={scaledInnerRadius}
+        outerRadius={scaledOuterRadius}
         textureUrl={ringsTextureUrl}
         color="#c9b29b"
         opacity={opacity}

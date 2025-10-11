@@ -201,12 +201,7 @@ export interface NeptuneControlsProps
  * Main Neptune sphere with texture
  */
 export interface NeptuneGlobeProps
-  extends Omit<
-    React.ComponentProps<typeof Sphere>,
-    keyof {
-      segments?: number;
-    }
-  > {
+  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'color' | 'rotationSpeed' | 'rotation' | 'segments' | 'roughness' | 'metalness'> {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128

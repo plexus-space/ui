@@ -26,30 +26,17 @@
 - [x] **Scatter Plot** - 2D point clouds with clustering
 - [x] **Bar Chart** - Horizontal/vertical with stacking
 - [x] **Histogram** - Distribution analysis with bins
-- [ ] **Box Plot** - Statistical distribution visualization
-- [ ] **Violin Plot** - Probability density visualization
+- [x] **Box Plot** - Statistical distribution visualization
+- [x] **Violin Plot** - Probability density visualization
 
 ---
 
 ## Phase 2: Scientific Charts & Analysis
 
-### Frequency Domain Analysis
+- [x] **Waterfall Plot** - 3D spectral analysis over time - use d3 or performant 3D tool
+- [x] **Spectrogram** - Time-frequency representation
 
-- [ ] **Waterfall Plot** - 3D spectral analysis over time
-- [ ] **Spectrogram** - Time-frequency representation
-
-### Statistical & Distribution
-
-- [ ] **Probability Plot** - QQ plots, probability distributions
-- [ ] **Contour Plot** - 2D level sets and gradients
-- [ ] **Cumulative Distribution** - CDF visualization
-- [ ] **Residual Plot** - Error analysis and diagnostics
-
----
-
-## Phase 3: 3D Visualization Primitives
-
-### 3D Plotting & Fields
+### 3D Plotting & Fields -
 
 - [ ] **Surface Plot** - 3D function visualization (z = f(x,y))
 - [ ] **Isosurface Renderer** - 3D scalar field level sets
@@ -95,6 +82,11 @@
 - [ ] **Deformation Simulator** - FEA-style displacement
 - [ ] **Fatigue Curve** - S-N diagrams for material life
 - [ ] **Phase Transformation** - Material state changes
+
+- [ ] Orbital Mechanics Simulator - Two-body problems, orbital elements, Hohmann transfers
+- [ ] Robot Kinematics - Forward/inverse kinematics, Denavit-Hartenberg parameters
+- [ ] Constraint-based Physics - Joints, motors, limits (useful for mechanisms)
+- [ ] Soft Body Dynamics - Deformable objects, cloth, cables
 
 ---
 
@@ -154,9 +146,19 @@
 - [ ] **SLAM Visualizer** - Simultaneous localization and mapping
 - [ ] **Depth Map** - Distance to surface visualization
 
----
+- [ ] Radar Display - PPI (Plan Position Indicator) scope, range-doppler
+- [ ] Sonar Waterfall - Acoustic returns over time
+- [ ] Thermal Camera View - False color temperature mapping
 
-## Phase 7: Interactive Controls & UI
+## Phase 7: Network & System Architecture
+
+- [ ] Node Graph Editor - Visual programming/system design
+- [ ] Dataflow Visualizer - Signal routing between subsystems
+- [ ] State Machine Diagram - Interactive FSM visualization
+- [ ] Dependency Graph - System interdependencies
+- [ ] Pipeline Monitor - Data processing stages
+
+## Phase 8: Interactive Controls & UI
 
 ### Sliders & Inputs
 
@@ -181,7 +183,7 @@
 
 ---
 
-## Phase 8: Advanced Geometry & CAD (Q3-Q4 2027)
+## Phase 9: Advanced Geometry & CAD
 
 ### CAD Primitives
 
@@ -204,7 +206,7 @@
 
 ---
 
-## Phase 9: Math & Algebra
+## Phase 10: Math & Algebra
 
 ### Equation Visualization
 
@@ -229,7 +231,7 @@
 
 ---
 
-## Phase 10: Developer Experience (Ongoing)
+## Phase 11: Developer Experience (Ongoing)
 
 ### Documentation Site
 
@@ -243,22 +245,3 @@
 
 - [ ] **Accessibility Audit** - WCAG 2.1 AA compliance
 - [ ] **Performance Profiler** - Frame rate monitoring
-
----
-
-## Phase 11: Ecosystem & Integrations
-
-### External Integrations
-
-- [ ] **Python Bridge** - NumPy/SciPy via WebSocket
-- [ ] **MATLAB Gateway** - Import data from MATLAB
-- [ ] **ROS Integration** - Robot Operating System topics
-- [ ] **Unity/Unreal Export** - Game engine compatibility
-- [ ] **CAD Import** - STEP, IGES file support
-
-### Advanced Features
-
-- [ ] **Real-time Collaboration** - Multi-user editing
-- [ ] **WebXR Support** - VR/AR visualization
-- [ ] **Offline Mode** - Service worker caching
-- [ ] **Mobile Optimized** - Touch-friendly controls

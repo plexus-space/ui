@@ -9,21 +9,20 @@ export default function Home() {
     <div className="max-w-5xl mx-auto px-8 py-12">
       <div className="mb-16">
         <div className="flex items-center gap-4 mb-4">
-          <h1 className="text-5xl font-bold text-foreground">
-            {" "}
+          <h1 className="text-5xl text-foreground">
             Aerospace. Physics. Deep Tech. Components
           </h1>
         </div>
 
         <p className="max-w-3xl text-lg text-zinc-600 dark:text-zinc-400 mb-8">
-          A set of thoughtfully designed components that you can customize,
-          extend, and build on. Start here then make it your own.
+          Thoughtfully designed components that you can customize, extend, and
+          build on. Start here then make it your own.
         </p>
-        <Image src="/main.png" alt="Plexus UI Logo" width={200} height={200} />
+        {/* <Image src="/main.png" alt="Plexus UI Logo" width={200} height={200} /> */}
       </div>
 
       <div className="mb-12 flex flex-col gap-2">
-        <h1 className="text-4xl font-bold mb-4">Documentation</h1>
+        <h1 className="text-4xl mb-4">Documentation</h1>
         <p className="text-zinc-600  dark:text-zinc-400 mb-4">
           Install cli and use it to add components to your project - get all the
           code

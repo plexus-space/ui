@@ -6,25 +6,35 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Sphere, Atmosphere, Clouds } from "./primitives/sphere";
-import {
-  EARTH_RADIUS_KM,
-  EARTH_ROTATION_PERIOD_SECONDS,
-  EARTH_AXIAL_TILT_DEG,
-  kmToSceneUnits,
-  calculateRotationSpeed,
-  getCurrentDayOfYear,
-  degToRad,
-} from "./lib";
 
 // ============================================================================
-// Derived Constants
+// Constants - Astronomically Accurate Values
 // ============================================================================
 
-export const EARTH_RADIUS = kmToSceneUnits(EARTH_RADIUS_KM);
+export const EARTH_RADIUS_KM = 6371.0;
+export const SCENE_SCALE = 0.001;
+export const EARTH_RADIUS = EARTH_RADIUS_KM * SCENE_SCALE;
+export const EARTH_ROTATION_PERIOD_SECONDS = 86164.0905; // Sidereal day
+export const EARTH_ORBITAL_PERIOD_DAYS = 365.256363004; // Sidereal year
+export const EARTH_AXIAL_TILT_DEG = 23.4392811;
 
 // ============================================================================
 // Utilities
 // ============================================================================
+
+export function getCurrentDayOfYear(): {
+  dayOfYear: number;
+  fractionOfDay: number;
+} {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const diff = now.getTime() - start.getTime();
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+  const fractionOfDay =
+    (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
+  return { dayOfYear, fractionOfDay };
+}
 
 export function calculateEarthRotation(timeScale: number = 1): number {
   const { fractionOfDay } = getCurrentDayOfYear();
@@ -223,7 +233,7 @@ export interface EarthControlsProps
  * Main Earth sphere with textures
  */
 export interface EarthGlobeProps
-  extends React.ComponentPropsWithRef<typeof Sphere> {
+  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'normalMapUrl' | 'specularMapUrl' | 'emissiveMapUrl' | 'rotationSpeed' | 'rotation'> {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128
@@ -322,11 +332,11 @@ const EarthRoot = React.forwardRef<HTMLDivElement, EarthRootProps>(
   ) => {
     const rotationSpeed = React.useMemo(() => {
       if (!enableRotation) return 0;
-      return calculateRotationSpeed(EARTH_ROTATION_PERIOD_SECONDS, timeScale);
+      return ((2 * Math.PI) / (EARTH_ROTATION_PERIOD_SECONDS * 60)) * timeScale;
     }, [enableRotation, timeScale]);
 
     const axialTilt: [number, number, number] = React.useMemo(
-      () => [0, 0, degToRad(EARTH_AXIAL_TILT_DEG)],
+      () => [0, 0, THREE.MathUtils.degToRad(EARTH_AXIAL_TILT_DEG)],
       []
     );
 
@@ -589,5 +599,3 @@ export const Earth = Object.assign(EarthRoot, {
   Clouds: EarthClouds,
   Axis: EarthAxis,
 });
-
-export { getCurrentDayOfYear };

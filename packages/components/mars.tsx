@@ -184,7 +184,8 @@ export interface MarsControlsProps {
  * Props for Mars.Globe component
  * Main Mars sphere with texture
  */
-export interface MarsGlobeProps {
+export interface MarsGlobeProps
+  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'color' | 'rotationSpeed' | 'rotation' | 'segments' | 'roughness' | 'metalness'> {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128
@@ -192,10 +193,6 @@ export interface MarsGlobeProps {
    * @example 64 (lower detail), 256 (highest detail)
    */
   segments?: number;
-  /**
-   * Child components
-   */
-  children?: React.ReactNode;
 }
 
 // ============================================================================

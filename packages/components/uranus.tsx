@@ -185,7 +185,18 @@ export interface UranusControlsProps extends Record<string, any> {
  * Props for Uranus.Globe component
  * Main Uranus sphere with texture
  */
-export interface UranusGlobeProps extends Record<string, any> {
+export interface UranusGlobeProps
+  extends Omit<
+    React.ComponentPropsWithRef<typeof Sphere>,
+    | "radius"
+    | "textureUrl"
+    | "color"
+    | "rotationSpeed"
+    | "rotation"
+    | "segments"
+    | "roughness"
+    | "metalness"
+  > {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128
@@ -193,10 +204,6 @@ export interface UranusGlobeProps extends Record<string, any> {
    * @example 64 (lower detail), 256 (highest detail)
    */
   segments?: number;
-  /**
-   * Child components
-   */
-  children?: React.ReactNode;
 }
 
 // ============================================================================

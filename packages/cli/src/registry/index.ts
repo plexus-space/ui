@@ -12,10 +12,7 @@ export const registry: Registry = {
     type: "components:lib",
     description:
       "Shared utility functions, constants, helpers, and theme system",
-    files: [
-      `${BASE_URL}/lib/plexusui-utils.ts`,
-      `${BASE_URL}/lib/index.ts`,
-    ],
+    files: [`${BASE_URL}/lib/plexusui-utils.ts`, `${BASE_URL}/lib/index.ts`],
     dependencies: ["react", "three"],
     category: "lib",
   },
@@ -29,7 +26,7 @@ export const registry: Registry = {
     description: "Earth with rotation, atmosphere, and clouds",
     files: [`${BASE_URL}/earth.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
   mars: {
@@ -38,7 +35,7 @@ export const registry: Registry = {
     description: "Mars with surface features",
     files: [`${BASE_URL}/mars.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
   mercury: {
@@ -47,7 +44,7 @@ export const registry: Registry = {
     description: "Mercury visualization",
     files: [`${BASE_URL}/mercury.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
   venus: {
@@ -56,7 +53,7 @@ export const registry: Registry = {
     description: "Venus with atmosphere",
     files: [`${BASE_URL}/venus.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
   moon: {
@@ -65,7 +62,7 @@ export const registry: Registry = {
     description: "Earth's Moon",
     files: [`${BASE_URL}/moon.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
   jupiter: {
@@ -74,7 +71,7 @@ export const registry: Registry = {
     description: "Jupiter with atmospheric bands",
     files: [`${BASE_URL}/jupiter.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
   saturn: {
@@ -83,7 +80,7 @@ export const registry: Registry = {
     description: "Saturn with rings",
     files: [`${BASE_URL}/saturn.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
   uranus: {
@@ -92,7 +89,7 @@ export const registry: Registry = {
     description: "Uranus with rings",
     files: [`${BASE_URL}/uranus.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
   neptune: {
@@ -101,7 +98,7 @@ export const registry: Registry = {
     description: "Neptune with atmospheric features",
     files: [`${BASE_URL}/neptune.tsx`],
     dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-    registryDependencies: ["sphere", "lib"],
+    registryDependencies: ["sphere"],
     category: "3d",
   },
 
@@ -216,8 +213,42 @@ export const registry: Registry = {
   histogram: {
     name: "histogram",
     type: "components:chart",
-    description: "Distribution analysis with automatic binning and statistical overlays",
+    description:
+      "Distribution analysis with automatic binning and statistical overlays",
     files: [`${BASE_URL}/histogram.tsx`],
+    dependencies: ["react"],
+    registryDependencies: ["lib"],
+    category: "charts",
+  },
+
+  "box-plot": {
+    name: "box-plot",
+    type: "components:chart",
+    description:
+      "Statistical distribution with quartiles, whiskers, and outliers",
+    files: [`${BASE_URL}/box-plot.tsx`],
+    dependencies: ["react"],
+    registryDependencies: ["lib"],
+    category: "charts",
+  },
+
+  "violin-plot": {
+    name: "violin-plot",
+    type: "components:chart",
+    description:
+      "Probability density visualization with kernel density estimation",
+    files: [`${BASE_URL}/violin-plot.tsx`],
+    dependencies: ["react"],
+    registryDependencies: ["lib"],
+    category: "charts",
+  },
+
+  spectrogram: {
+    name: "spectrogram",
+    type: "components:chart",
+    description:
+      "Time-frequency representation with color-coded magnitude visualization",
+    files: [`${BASE_URL}/spectrogram.tsx`],
     dependencies: ["react"],
     registryDependencies: ["lib"],
     category: "charts",
@@ -310,13 +341,27 @@ export const registry: Registry = {
 };
 
 export function getComponent(name: string) {
-  return registry[name];
+  const component = registry[name];
+  // CLI only returns free tier components
+  if (component && component.tier === "pro") {
+    return undefined;
+  }
+  return component;
 }
 
 export function getAllComponents() {
-  return Object.values(registry);
+  // CLI only returns free tier components
+  return Object.values(registry).filter((c) => c.tier !== "pro");
 }
 
 export function getComponentsByCategory(category: string) {
-  return Object.values(registry).filter((c) => c.category === category);
+  // CLI only returns free tier components
+  return Object.values(registry).filter(
+    (c) => c.category === category && c.tier !== "pro"
+  );
+}
+
+// Internal function for playground - returns all components including pro
+export function getAllComponentsInternal() {
+  return Object.values(registry);
 }

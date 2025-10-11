@@ -184,7 +184,8 @@ export interface MoonControlsProps extends React.ComponentPropsWithoutRef<any> {
  * Props for Moon.Globe component
  * Main Moon sphere with texture
  */
-export interface MoonGlobeProps extends React.ComponentPropsWithoutRef<any> {
+export interface MoonGlobeProps
+  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'color' | 'rotationSpeed' | 'rotation' | 'segments' | 'roughness' | 'metalness'> {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128

@@ -185,7 +185,8 @@ export interface MercuryControlsProps extends Record<string, any> {
  * Props for Mercury.Globe component
  * Main Mercury sphere with texture
  */
-export interface MercuryGlobeProps extends Record<string, any> {
+export interface MercuryGlobeProps
+  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'color' | 'rotationSpeed' | 'rotation' | 'segments' | 'roughness' | 'metalness'> {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128
@@ -193,10 +194,6 @@ export interface MercuryGlobeProps extends Record<string, any> {
    * @example 64 (lower detail), 256 (highest detail)
    */
   segments?: number;
-  /**
-   * Child components
-   */
-  children?: React.ReactNode;
 }
 
 // ============================================================================

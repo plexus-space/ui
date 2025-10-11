@@ -132,6 +132,14 @@ export interface ScatterPlotRootProps {
    */
   height?: number;
   /**
+   * Maximum points per series before automatic sampling
+   * Uses density-aware sampling to preserve outliers and spatial distribution
+   * Dense clusters are sampled more aggressively while sparse regions are preserved
+   * @default 5000
+   * @example 1000, 5000, 10000
+   */
+  maxPoints?: number;
+  /**
    * Visual variant style preset
    * @default "default"
    */
@@ -175,6 +183,7 @@ export interface ScatterPlotRootProps {
 
 interface ScatterPlotContext {
   series: ScatterSeries[];
+  processedSeries: ScatterSeries[];
   xAxis: Axis;
   yAxis: Axis;
   width: number;
@@ -211,6 +220,83 @@ function useScatterPlot() {
 // ============================================================================
 // Utilities
 // ============================================================================
+
+/**
+ * Density-aware sampling that preserves outliers and spatial distribution
+ * - Divides space into grid cells
+ * - Calculates point density per cell
+ * - Keeps all points from sparse cells (outliers)
+ * - Aggressively samples from dense cells
+ * - Maintains visual distribution patterns
+ */
+function sampleData(data: ScatterPoint[], maxPoints: number): ScatterPoint[] {
+  if (data.length <= maxPoints) return data;
+
+  // Calculate data bounds
+  const xs = data.map((p) => p.x);
+  const ys = data.map((p) => p.y);
+  const xMin = Math.min(...xs);
+  const xMax = Math.max(...xs);
+  const yMin = Math.min(...ys);
+  const yMax = Math.max(...ys);
+
+  // Create spatial grid (use sqrt for reasonable grid size)
+  const gridSize = Math.ceil(Math.sqrt(maxPoints));
+  const cellWidth = (xMax - xMin) / gridSize || 1;
+  const cellHeight = (yMax - yMin) / gridSize || 1;
+
+  // Map points to grid cells
+  const grid = new Map<string, ScatterPoint[]>();
+
+  data.forEach((point) => {
+    const cellX = Math.floor((point.x - xMin) / cellWidth);
+    const cellY = Math.floor((point.y - yMin) / cellHeight);
+    const key = `${cellX},${cellY}`;
+
+    if (!grid.has(key)) {
+      grid.set(key, []);
+    }
+    grid.get(key)!.push(point);
+  });
+
+  // Calculate density threshold (median cell size)
+  const cellSizes = Array.from(grid.values()).map((cell) => cell.length);
+  cellSizes.sort((a, b) => a - b);
+  const medianDensity = cellSizes[Math.floor(cellSizes.length / 2)] || 1;
+  const sparsityThreshold = Math.max(3, medianDensity * 0.5);
+
+  // Sample from cells based on density
+  const sampled: ScatterPoint[] = [];
+  const targetRatio = maxPoints / data.length;
+
+  grid.forEach((points) => {
+    const cellDensity = points.length;
+
+    if (cellDensity <= sparsityThreshold) {
+      // Sparse cell: keep all points (preserve outliers)
+      sampled.push(...points);
+    } else {
+      // Dense cell: sample proportionally
+      const keepRatio = Math.max(
+        targetRatio,
+        sparsityThreshold / cellDensity
+      );
+      const keepCount = Math.ceil(points.length * keepRatio);
+
+      // Randomly sample from this cell
+      const shuffled = [...points].sort(() => Math.random() - 0.5);
+      sampled.push(...shuffled.slice(0, keepCount));
+    }
+  });
+
+  // If we're still over budget, randomly sample down
+  if (sampled.length > maxPoints) {
+    const shuffled = [...sampled].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, maxPoints);
+  }
+
+  return sampled;
+}
 
 function calculateLinearRegression(points: ScatterPoint[]): {
   slope: number;
@@ -263,6 +349,7 @@ const ScatterPlotRoot = React.forwardRef<HTMLDivElement, ScatterPlotRootProps>(
       yAxis = {},
       width = 800,
       height = 400,
+      maxPoints = 5000,
       variant = "default",
       enableZoom = false,
       animate = false,
@@ -304,6 +391,14 @@ const ScatterPlotRoot = React.forwardRef<HTMLDivElement, ScatterPlotRootProps>(
       []
     );
 
+    // Sample data if needed
+    const processedSeries = React.useMemo(() => {
+      return series.map((s) => ({
+        ...s,
+        data: sampleData(s.data, maxPoints),
+      }));
+    }, [series, maxPoints]);
+
     // Calculate domains
     const allPoints = series.flatMap((s) => s.data);
     const xDomain: [number, number] =
@@ -333,6 +428,7 @@ const ScatterPlotRoot = React.forwardRef<HTMLDivElement, ScatterPlotRootProps>(
     const contextValue: ScatterPlotContext = React.useMemo(
       () => ({
         series,
+        processedSeries,
         xAxis,
         yAxis,
         width,
@@ -356,6 +452,7 @@ const ScatterPlotRoot = React.forwardRef<HTMLDivElement, ScatterPlotRootProps>(
       }),
       [
         series,
+        processedSeries,
         xAxis,
         yAxis,
         width,
@@ -726,12 +823,12 @@ export interface ScatterPlotPointsProps extends React.SVGProps<SVGGElement> {
  */
 const ScatterPlotPoints = React.forwardRef<SVGGElement, ScatterPlotPointsProps>(
   ({ className, hoverRadiusMultiplier = 1.5, hoverStrokeWidth = 2, defaultStrokeWidth = 1, ...props }, ref) => {
-    const { series, xScale, yScale, hiddenSeries, animate, hoveredPoint } =
+    const { processedSeries, xScale, yScale, hiddenSeries, animate, hoveredPoint } =
       useScatterPlot();
 
     return (
       <g ref={ref} className={cn("scatter-plot-points", className)} {...props}>
-      {series.map((s, seriesIdx) => {
+      {processedSeries.map((s, seriesIdx) => {
         if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
 
         const color = s.color || "#64748b";
