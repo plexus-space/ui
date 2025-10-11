@@ -7,57 +7,171 @@ import { cn, formatValue } from "./lib";
 // Types
 // ============================================================================
 
+/**
+ * Data point in polar coordinates
+ */
 export interface PolarPoint {
-  /** Angle in radians (0 = right, π/2 = top, π = left, 3π/2 = bottom) */
+  /**
+   * Angle in radians (0 = right, π/2 = top, π = left, 3π/2 = bottom)
+   * @range 0-2π
+   * @example 0, Math.PI/2, Math.PI, 3*Math.PI/2
+   */
   theta: number;
-  /** Radial distance from origin */
+  /**
+   * Radial distance from origin
+   * @range 0-Infinity
+   * @example 0, 50, 100
+   */
   r: number;
-  /** Optional label */
+  /**
+   * Optional text label for the data point
+   * @example "North", "Peak", "Maximum"
+   */
   label?: string;
 }
 
+/**
+ * Series configuration for polar plot data
+ */
 export interface PolarSeries {
+  /** Display name for the series (shown in legend and tooltips) */
   name: string;
+  /** Array of data points in polar coordinates */
   data: PolarPoint[];
+  /**
+   * Line and fill color in any CSS color format
+   * @default "#64748b"
+   * @example "#06b6d4", "rgb(6, 182, 212)", "hsl(187, 95%, 43%)"
+   */
   color?: string;
+  /**
+   * Line stroke width in pixels
+   * @default 2.5
+   * @range 1-10
+   */
   strokeWidth?: number;
+  /**
+   * Fill area enclosed by the line with gradient
+   * @default true
+   */
   filled?: boolean;
-  /** Connect first and last point (true for radar charts) */
+  /**
+   * Connect first and last point to close the shape (typical for radar charts)
+   * @default true for radar variant, false otherwise
+   */
   closed?: boolean;
-  /** Show markers at data points */
+  /**
+   * Display circular markers at data points
+   * @default true
+   */
   showMarkers?: boolean;
 }
 
+/**
+ * Polar axis configuration
+ */
 export interface PolarAxis {
-  /** Radial axis label */
+  /**
+   * Radial axis label text
+   * @example "Magnitude", "Distance (km)", "Intensity"
+   */
   label?: string;
-  /** Radial domain [min, max] or "auto" */
+  /**
+   * Radial domain range [min, max] or automatic calculation
+   * @default "auto" (calculated from data with 10% padding)
+   * @example [0, 100], [0, 1]
+   */
   domain?: [number, number] | "auto";
-  /** Number of concentric circles to draw */
+  /**
+   * Number of concentric circles to draw
+   * @default 5
+   * @range 2-10
+   */
   rings?: number;
-  /** Angle labels in degrees (e.g., ["0°", "90°", "180°", "270°"]) */
+  /**
+   * Labels for angle positions (shown around the perimeter)
+   * @example ["0°", "90°", "180°", "270°"], ["N", "E", "S", "W"]
+   */
   angleLabels?: string[];
-  /** Number of angle divisions (spokes) */
+  /**
+   * Number of radial divisions (spokes)
+   * @default 8 (or angleLabels.length if provided)
+   * @range 4-16
+   */
   angleCount?: number;
 }
 
-export type PolarVariant = "polar" | "radar" | "rose";
+/**
+ * Polar plot variant types
+ */
+export type PolarVariant =
+  | "polar"  // Standard polar coordinate plot
+  | "radar"  // Radar/spider chart with closed shapes
+  | "rose";  // Rose diagram showing wedges
 
+/**
+ * Props for PolarPlot.Root component
+ */
 export interface PolarPlotRootProps {
+  /**
+   * Array of data series to plot
+   * @required
+   */
   series: PolarSeries[];
+  /**
+   * Polar axis configuration
+   * @default { domain: "auto", rings: 5, angleCount: 8 }
+   */
   axis?: PolarAxis;
+  /**
+   * Chart width in pixels
+   * @default 600
+   * @example 400, 800, 1000
+   */
   width?: number;
+  /**
+   * Chart height in pixels
+   * @default 600
+   * @example 400, 800, 1000
+   */
   height?: number;
+  /**
+   * Display concentric circles and radial spokes
+   * @default true
+   */
   showGrid?: boolean;
+  /**
+   * Display series legend
+   * @default true
+   */
   showLegend?: boolean;
+  /**
+   * Enable entrance animations for lines and grid
+   * @default true
+   */
   animate?: boolean;
-  /** Plot type */
+  /**
+   * Plot variant style
+   * @default "polar"
+   */
   variant?: PolarVariant;
-  /** Enable responsive container */
+  /**
+   * Enable responsive container that fills parent element
+   * @default false
+   */
   responsive?: boolean;
-  /** Allow series visibility toggle */
+  /**
+   * Allow clicking legend to toggle series visibility
+   * @default false
+   */
   toggleableSeries?: boolean;
+  /**
+   * Additional CSS class names
+   */
   className?: string;
+  /**
+   * Child components (Container, Viewport, etc.)
+   */
   children?: React.ReactNode;
 }
 
@@ -802,7 +916,7 @@ PolarPlotEmpty.displayName = "PolarPlot.Empty";
 // Exports
 // ============================================================================
 
-export const PolarPlot = {
+export const PolarPlot = Object.assign(PolarPlotRoot, {
   Root: PolarPlotRoot,
   Container: PolarPlotContainer,
   Viewport: PolarPlotViewport,
@@ -812,4 +926,4 @@ export const PolarPlot = {
   Tooltip: PolarPlotTooltip,
   Loading: PolarPlotLoading,
   Empty: PolarPlotEmpty,
-};
+});

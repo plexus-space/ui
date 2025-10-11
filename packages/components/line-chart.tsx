@@ -16,50 +16,159 @@ import {
 // Types
 // ============================================================================
 
+/**
+ * Series configuration for line chart data
+ */
 export interface Series {
+  /** Display name for the series (shown in legend and tooltips) */
   name: string;
+  /** Array of data points with x and y coordinates */
   data: Point[];
+  /**
+   * Line color in any CSS color format
+   * @default "#64748b"
+   * @example "#06b6d4", "rgb(6, 182, 212)", "hsl(187, 95%, 43%)"
+   */
   color?: string;
+  /**
+   * Line stroke width in pixels
+   * @default 2.5
+   * @range 1-10
+   */
   strokeWidth?: number;
+  /**
+   * Render line with dashed stroke
+   * @default false
+   */
   dashed?: boolean;
+  /**
+   * Fill area under the line with gradient
+   * @default false
+   */
   filled?: boolean;
 }
 
+/**
+ * Axis configuration for x or y axis
+ */
 export interface Axis {
+  /**
+   * Axis label text (displayed along axis)
+   * @example "Time (s)", "Altitude (km)", "Velocity (m/s)"
+   */
   label?: string;
+  /**
+   * Domain range for axis values
+   * @default "auto" (calculated from data)
+   * @example [0, 100], [-50, 50]
+   */
   domain?: [number, number] | "auto";
+  /**
+   * Data type for axis values
+   * @default "number"
+   */
   type?: "number" | "time";
+  /**
+   * Timezone for time axis formatting (IANA timezone identifier)
+   * @default "UTC"
+   * @example "America/New_York", "Europe/London"
+   */
   timezone?: string;
+  /**
+   * Custom formatter function for axis tick labels
+   * @example (value) => `${value.toFixed(2)} km`
+   */
   formatter?: (value: number) => string;
 }
 
+/**
+ * Visual variant styles for the chart
+ */
 export type LineChartVariant =
-  | "default"
-  | "minimal"
-  | "scientific"
-  | "dashboard";
+  | "default"   // Balanced styling for general use
+  | "minimal"   // Minimal styling with reduced visual weight
+  | "scientific" // Dense styling for data analysis
+  | "dashboard"; // Polished styling for dashboards
 
+/**
+ * Props for LineChart.Root component
+ */
 export interface LineChartRootProps {
+  /**
+   * Array of data series to plot
+   * @required
+   */
   series: Series[];
+  /**
+   * X-axis configuration
+   * @default { type: "number", domain: "auto" }
+   */
   xAxis?: Axis;
+  /**
+   * Y-axis configuration
+   * @default { type: "number", domain: "auto" }
+   */
   yAxis?: Axis;
+  /**
+   * Chart width in pixels
+   * @default 800
+   * @example 600, 1200, 1920
+   */
   width?: number;
+  /**
+   * Chart height in pixels
+   * @default 400
+   * @example 300, 600, 800
+   */
   height?: number;
-  /** Maximum points per series before decimation (default: 2000) */
+  /**
+   * Maximum points per series before automatic decimation
+   * Reduces large datasets for better performance
+   * @default 2000
+   * @example 1000, 5000, 10000
+   */
   maxPoints?: number;
-  /** Enable magnetic crosshair that snaps to nearest point */
+  /**
+   * Enable magnetic crosshair that snaps to nearest data point
+   * @default true
+   */
   magneticCrosshair?: boolean;
-  /** Show unified tooltip with all series values at same x-coordinate (default: false) */
+  /**
+   * Show unified tooltip with all series values at the same x-coordinate
+   * When false, shows tooltip for single hovered point
+   * @default false
+   */
   unifiedTooltip?: boolean;
-  /** Visual variant style */
+  /**
+   * Visual variant style preset
+   * @default "default"
+   */
   variant?: LineChartVariant;
-  /** Snap radius in pixels for point detection (default: 30) */
+  /**
+   * Snap radius in pixels for point detection during hover
+   * Larger values make it easier to hover points
+   * @default 40
+   * @range 10-100
+   */
   snapRadius?: number;
-  /** Enable zoom and pan interactions */
+  /**
+   * Enable zoom and pan interactions
+   * @default false
+   * @experimental Not yet implemented
+   */
   enableZoom?: boolean;
-  /** Enable animations */
+  /**
+   * Enable entrance animations for lines and grid
+   * @default false
+   */
   animate?: boolean;
+  /**
+   * Additional CSS class names
+   */
   className?: string;
+  /**
+   * Child components (Container, Viewport, etc.)
+   */
   children?: React.ReactNode;
 }
 
@@ -287,6 +396,10 @@ const LineChartRoot = React.forwardRef<HTMLDivElement, LineChartRootProps>(
 
 LineChartRoot.displayName = "LineChart.Root";
 
+/**
+ * Props for LineChart.Container component
+ * Wraps the SVG viewport with proper dimensions and styling
+ */
 export interface LineChartContainerProps
   extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -322,10 +435,14 @@ const LineChartContainer = React.forwardRef<
 
 LineChartContainer.displayName = "LineChart.Container";
 
+/**
+ * Props for LineChart.Viewport component
+ * SVG canvas that contains all visual elements
+ */
 export interface LineChartViewportProps extends React.SVGProps<SVGSVGElement> {}
 
 /**
- * Viewport component - SVG canvas
+ * Viewport component - SVG canvas that contains all chart visual elements
  */
 const LineChartViewport = React.forwardRef<
   SVGSVGElement,
@@ -353,10 +470,14 @@ const LineChartViewport = React.forwardRef<
 
 LineChartViewport.displayName = "LineChart.Viewport";
 
+/**
+ * Props for LineChart.Grid component
+ * Renders horizontal and vertical grid lines
+ */
 export interface LineChartGridProps extends React.SVGProps<SVGGElement> {}
 
 /**
- * Grid component - renders grid lines
+ * Grid component - renders horizontal and vertical grid lines for the chart
  */
 const LineChartGrid = React.forwardRef<SVGGElement, LineChartGridProps>(
   ({ className, ...props }, ref) => {
@@ -414,10 +535,14 @@ const LineChartGrid = React.forwardRef<SVGGElement, LineChartGridProps>(
 
 LineChartGrid.displayName = "LineChart.Grid";
 
+/**
+ * Props for LineChart.Axes component
+ * Renders X and Y axes with tick marks and labels
+ */
 export interface LineChartAxesProps extends React.SVGProps<SVGGElement> {}
 
 /**
- * Axes component - renders X and Y axes with labels
+ * Axes component - renders X and Y axes with tick marks, tick labels, and axis labels
  */
 const LineChartAxes = React.forwardRef<SVGGElement, LineChartAxesProps>(
   ({ className, ...props }, ref) => {
@@ -550,10 +675,14 @@ const LineChartAxes = React.forwardRef<SVGGElement, LineChartAxesProps>(
 
 LineChartAxes.displayName = "LineChart.Axes";
 
+/**
+ * Props for LineChart.Lines component
+ * Renders the actual data lines for all series
+ */
 export interface LineChartLinesProps extends React.SVGProps<SVGGElement> {}
 
 /**
- * Lines component - renders the data lines
+ * Lines component - renders the actual data lines with optional fills and animations
  */
 const LineChartLines = React.forwardRef<SVGGElement, LineChartLinesProps>(
   ({ className, ...props }, ref) => {
@@ -642,12 +771,20 @@ const LineChartLines = React.forwardRef<SVGGElement, LineChartLinesProps>(
 
 LineChartLines.displayName = "LineChart.Lines";
 
+/**
+ * Props for LineChart.Points component
+ */
 export interface LineChartPointsProps extends React.SVGProps<SVGGElement> {
+  /**
+   * Radius of point circles in pixels
+   * @default 3
+   * @range 1-10
+   */
   radius?: number;
 }
 
 /**
- * Points component - renders data points
+ * Points component - renders individual data point markers as circles
  */
 const LineChartPoints = React.forwardRef<SVGGElement, LineChartPointsProps>(
   ({ className, radius = 3, ...props }, ref) => {
@@ -683,10 +820,15 @@ const LineChartPoints = React.forwardRef<SVGGElement, LineChartPointsProps>(
 
 LineChartPoints.displayName = "LineChart.Points";
 
+/**
+ * Props for LineChart.Tooltip component
+ * Displays data values on hover with crosshair
+ */
 export interface LineChartTooltipProps extends React.SVGProps<SVGGElement> {}
 
 /**
- * Tooltip component - interactive tooltip on hover
+ * Tooltip component - displays interactive tooltip with data values on hover
+ * Shows crosshair and formatted data values for hovered points
  */
 const LineChartTooltip = React.forwardRef<SVGGElement, LineChartTooltipProps>(
   ({ className, ...props }, ref) => {
@@ -960,11 +1102,16 @@ const LineChartTooltip = React.forwardRef<SVGGElement, LineChartTooltipProps>(
 
 LineChartTooltip.displayName = "LineChart.Tooltip";
 
+/**
+ * Props for LineChart.Interaction component
+ * Transparent interaction layer for mouse/touch events
+ */
 export interface LineChartInteractionProps
   extends React.SVGProps<SVGRectElement> {}
 
 /**
- * Interaction layer component - handles mouse events
+ * Interaction layer component - transparent overlay that handles mouse and touch events
+ * Enables hover detection, point snapping, and tooltip triggering
  */
 const LineChartInteraction = React.forwardRef<
   SVGRectElement,
@@ -1118,12 +1265,19 @@ const LineChartInteraction = React.forwardRef<
 
 LineChartInteraction.displayName = "LineChart.Interaction";
 
+/**
+ * Props for LineChart.Legend component
+ */
 export interface LineChartLegendProps extends React.SVGProps<SVGGElement> {
+  /**
+   * Enable clicking legend items to toggle series visibility
+   * @default false
+   */
   interactive?: boolean;
 }
 
 /**
- * Legend component
+ * Legend component - displays series legend with optional click-to-toggle functionality
  */
 const LineChartLegend = React.forwardRef<SVGGElement, LineChartLegendProps>(
   ({ className, interactive = false, ...props }, ref) => {
@@ -1173,11 +1327,15 @@ const LineChartLegend = React.forwardRef<SVGGElement, LineChartLegendProps>(
 
 LineChartLegend.displayName = "LineChart.Legend";
 
+/**
+ * Props for LineChart.Empty component
+ * Displays when no data is available
+ */
 export interface LineChartEmptyProps
   extends React.HTMLAttributes<HTMLDivElement> {}
 
 /**
- * Empty state component
+ * Empty state component - displays placeholder when no data is available
  */
 const LineChartEmpty = React.forwardRef<HTMLDivElement, LineChartEmptyProps>(
   ({ className, style, children, ...props }, ref) => {
@@ -1231,11 +1389,15 @@ const LineChartEmpty = React.forwardRef<HTMLDivElement, LineChartEmptyProps>(
 
 LineChartEmpty.displayName = "LineChart.Empty";
 
+/**
+ * Props for LineChart.Loading component
+ * Displays loading spinner while data is being fetched
+ */
 export interface LineChartLoadingProps
   extends React.HTMLAttributes<HTMLDivElement> {}
 
 /**
- * Loading state component
+ * Loading state component - displays loading spinner while data is being fetched or processed
  */
 const LineChartLoading = React.forwardRef<
   HTMLDivElement,

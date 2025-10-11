@@ -213,6 +213,16 @@ export const registry: Registry = {
     category: "charts",
   },
 
+  histogram: {
+    name: "histogram",
+    type: "components:chart",
+    description: "Distribution analysis with automatic binning and statistical overlays",
+    files: [`${BASE_URL}/histogram.tsx`],
+    dependencies: ["react"],
+    registryDependencies: ["lib"],
+    category: "charts",
+  },
+
   // ============================================================================
   // Primitives (Low-level building blocks - minimal dependencies)
   // ============================================================================

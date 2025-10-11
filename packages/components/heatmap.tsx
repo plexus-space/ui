@@ -12,49 +12,130 @@ import {
 // Types
 // ============================================================================
 
+/**
+ * Individual cell data for heatmap visualization
+ */
 export interface HeatmapCell {
+  /** X-coordinate (column index) of the cell */
   x: number;
+  /** Y-coordinate (row index) of the cell */
   y: number;
+  /** Numeric value determining cell color intensity */
   value: number;
-  /** Optional label for the cell */
+  /**
+   * Optional text label for the cell displayed in tooltip
+   * @example "Region A", "Sample 1"
+   */
   label?: string;
 }
 
+/**
+ * Cell shape options for heatmap cells
+ */
 export type CellShape = "square" | "hexagon";
 
+/**
+ * Props for Heatmap.Root component
+ */
 export interface HeatmapRootProps {
-  /** 2D data grid or flat array of cells */
+  /**
+   * Data as 2D array (number[][]) or flat array of HeatmapCell objects
+   * @required
+   * @example [[1, 2, 3], [4, 5, 6]], or [{x:0, y:0, value:1}, ...]
+   */
   data: number[][] | HeatmapCell[];
-  /** X-axis labels (for categorical data) */
+  /**
+   * Labels for X-axis (columns) for categorical data
+   * @example ["Jan", "Feb", "Mar"], ["A", "B", "C"]
+   */
   xLabels?: string[];
-  /** Y-axis labels (for categorical data) */
+  /**
+   * Labels for Y-axis (rows) for categorical data
+   * @example ["Sample 1", "Sample 2"], ["Group A", "Group B"]
+   */
   yLabels?: string[];
-  /** X-axis title */
+  /**
+   * X-axis title text
+   * @example "Time (months)", "Categories"
+   */
   xAxisLabel?: string;
-  /** Y-axis title */
+  /**
+   * Y-axis title text
+   * @example "Samples", "Regions"
+   */
   yAxisLabel?: string;
-  /** Colormap to use */
+  /**
+   * Color scheme for value mapping
+   * @default "viridis"
+   * @example "viridis", "plasma", "inferno", "magma", "turbo"
+   */
   colormap?: ColormapName;
-  /** Value domain [min, max] or "auto" */
+  /**
+   * Value range [min, max] or automatic calculation
+   * @default "auto" (calculated from data)
+   * @example [0, 100], [-1, 1]
+   */
   domain?: [number, number] | "auto";
+  /**
+   * Chart width in pixels
+   * @default 800
+   * @example 600, 1000, 1200
+   */
   width?: number;
+  /**
+   * Chart height in pixels
+   * @default 600
+   * @example 400, 800, 1000
+   */
   height?: number;
-  /** Show color scale legend */
+  /**
+   * Display color scale legend on the right
+   * @default true
+   */
   showColorbar?: boolean;
-  /** Show cell values as text */
+  /**
+   * Display numeric values as text inside cells
+   * @default false
+   */
   showValues?: boolean;
-  /** Show grid lines between cells */
+  /**
+   * Display grid lines between cells
+   * @default true
+   */
   showGrid?: boolean;
-  /** Cell shape: square or hexagon */
+  /**
+   * Cell shape type
+   * @default "square"
+   */
   cellShape?: CellShape;
-  /** Cell gap/padding (0-1, as fraction of cell size) */
+  /**
+   * Gap between cells as fraction of cell size
+   * @default 0.05
+   * @range 0.0-0.3
+   */
   cellGap?: number;
+  /**
+   * Enable entrance animations for cells and axes
+   * @default true
+   */
   animate?: boolean;
-  /** Enable responsive container */
+  /**
+   * Enable responsive container that fills parent element
+   * @default false
+   */
   responsive?: boolean;
-  /** Value formatter */
+  /**
+   * Custom formatter function for cell values
+   * @example (value) => `${value.toFixed(1)}°C`
+   */
   valueFormatter?: (value: number) => string;
+  /**
+   * Additional CSS class names
+   */
   className?: string;
+  /**
+   * Child components (Container, Viewport, etc.)
+   */
   children?: React.ReactNode;
 }
 
@@ -1138,7 +1219,7 @@ HeatmapEmpty.displayName = "Heatmap.Empty";
 // Exports
 // ============================================================================
 
-export const Heatmap = {
+export const Heatmap = Object.assign(HeatmapRoot, {
   Root: HeatmapRoot,
   Container: HeatmapContainer,
   Viewport: HeatmapViewport,
@@ -1148,4 +1229,4 @@ export const Heatmap = {
   Tooltip: HeatmapTooltip,
   Loading: HeatmapLoading,
   Empty: HeatmapEmpty,
-};
+});

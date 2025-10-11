@@ -119,4 +119,12 @@ export const components = [
       "Versatile bar chart supporting both vertical and horizontal orientations. Features grouped and stacked modes for multi-series data visualization with interactive tooltips.",
     textures: [],
   },
+  {
+    id: "histogram",
+    name: "Histogram",
+    category: "Charts",
+    description:
+      "Distribution analysis chart with automatic binning, statistical overlays (mean, median), and support for both count and density modes. Perfect for analyzing data distributions and frequency patterns.",
+    textures: [],
+  },
 ];

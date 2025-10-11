@@ -10,10 +10,6 @@
 !.yarn/releases
 !.yarn/versions
 
-ARCHITECTURE.md
-ROADMAP.md
-COMPONENT_TEMPLATE.md
-
 # testing
 /coverage
 

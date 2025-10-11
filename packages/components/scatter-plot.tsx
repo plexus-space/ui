@@ -15,51 +15,157 @@ import {
 // Types
 // ============================================================================
 
+/**
+ * Extended point data for scatter plots with optional labeling and metadata
+ */
 export interface ScatterPoint extends Point {
+  /** Optional text label for the data point displayed in tooltips */
   label?: string;
+  /** Additional metadata associated with the point for custom processing */
   metadata?: Record<string, any>;
 }
 
+/**
+ * Series configuration for scatter plot data
+ */
 export interface ScatterSeries {
+  /** Display name for the series (shown in legend and tooltips) */
   name: string;
+  /** Array of data points with x and y coordinates */
   data: ScatterPoint[];
+  /**
+   * Point color in any CSS color format
+   * @default "#64748b"
+   * @example "#06b6d4", "rgb(6, 182, 212)", "hsl(187, 95%, 43%)"
+   */
   color?: string;
+  /**
+   * Point radius in pixels
+   * @default 4
+   * @range 1-20
+   */
   radius?: number;
+  /**
+   * Point opacity level
+   * @default 0.7
+   * @range 0.0-1.0
+   */
   opacity?: number;
-  cluster?: number; // Optional cluster assignment
+  /**
+   * Optional cluster assignment for grouping related points
+   * @example 0, 1, 2
+   */
+  cluster?: number;
 }
 
+/**
+ * Axis configuration for x or y axis
+ */
 export interface Axis {
+  /**
+   * Axis label text (displayed along axis)
+   * @example "Temperature (°C)", "Pressure (kPa)", "Time (s)"
+   */
   label?: string;
+  /**
+   * Domain range for axis values
+   * @default "auto" (calculated from data)
+   * @example [0, 100], [-50, 50]
+   */
   domain?: [number, number] | "auto";
+  /**
+   * Data type for axis values
+   * @default "number"
+   */
   type?: "number" | "time";
+  /**
+   * Timezone for time axis formatting (IANA timezone identifier)
+   * @default "UTC"
+   * @example "America/New_York", "Europe/London"
+   */
   timezone?: string;
+  /**
+   * Custom formatter function for axis tick labels
+   * @example (value) => `${value.toFixed(2)} km`
+   */
   formatter?: (value: number) => string;
 }
 
+/**
+ * Visual variant styles for the scatter plot
+ */
 export type ScatterPlotVariant =
-  | "default"
-  | "minimal"
-  | "scientific"
-  | "dashboard";
+  | "default"   // Balanced styling for general use
+  | "minimal"   // Minimal styling with reduced visual weight
+  | "scientific" // Dense styling for data analysis
+  | "dashboard"; // Polished styling for dashboards
 
+/**
+ * Props for ScatterPlot.Root component
+ */
 export interface ScatterPlotRootProps {
+  /**
+   * Array of data series to plot
+   * @required
+   */
   series: ScatterSeries[];
+  /**
+   * X-axis configuration
+   * @default { type: "number", domain: "auto" }
+   */
   xAxis?: Axis;
+  /**
+   * Y-axis configuration
+   * @default { type: "number", domain: "auto" }
+   */
   yAxis?: Axis;
+  /**
+   * Chart width in pixels
+   * @default 800
+   * @example 600, 1200, 1920
+   */
   width?: number;
+  /**
+   * Chart height in pixels
+   * @default 400
+   * @example 300, 600, 800
+   */
   height?: number;
-  /** Visual variant style */
+  /**
+   * Visual variant style preset
+   * @default "default"
+   */
   variant?: ScatterPlotVariant;
-  /** Enable zoom and pan interactions */
+  /**
+   * Enable zoom and pan interactions
+   * @default false
+   * @experimental Not yet implemented
+   */
   enableZoom?: boolean;
-  /** Enable animations */
+  /**
+   * Enable entrance animations for points and grid
+   * @default false
+   */
   animate?: boolean;
-  /** Show regression line */
+  /**
+   * Display linear regression line and R² value
+   * @default false
+   */
   showRegression?: boolean;
-  /** Snap radius in pixels for point detection (default: 30) */
+  /**
+   * Snap radius in pixels for point detection during hover
+   * Larger values make it easier to hover points
+   * @default 30
+   * @range 10-100
+   */
   snapRadius?: number;
+  /**
+   * Additional CSS class names
+   */
   className?: string;
+  /**
+   * Child components (Container, Viewport, etc.)
+   */
   children?: React.ReactNode;
 }
 
@@ -295,11 +401,17 @@ const ScatterPlotRoot = React.forwardRef<HTMLDivElement, ScatterPlotRootProps>(
 ScatterPlotRoot.displayName = "ScatterPlot.Root";
 
 /**
+ * Props for ScatterPlot.Container component
+ * Wraps the SVG viewport with proper dimensions and styling
+ */
+export interface ScatterPlotContainerProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+/**
  * Container component - wraps the SVG content
  */
 const ScatterPlotContainer = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  ScatterPlotContainerProps
 >(({ className, style, children, ...props }, ref) => {
   const { height } = useScatterPlot();
 
@@ -327,11 +439,17 @@ const ScatterPlotContainer = React.forwardRef<
 ScatterPlotContainer.displayName = "ScatterPlot.Container";
 
 /**
- * Viewport component - SVG canvas
+ * Props for ScatterPlot.Viewport component
+ * SVG canvas that contains all visual elements
+ */
+export interface ScatterPlotViewportProps extends React.SVGProps<SVGSVGElement> {}
+
+/**
+ * Viewport component - SVG canvas that contains all chart visual elements
  */
 const ScatterPlotViewport = React.forwardRef<
   SVGSVGElement,
-  React.SVGProps<SVGSVGElement>
+  ScatterPlotViewportProps
 >(({ className, children, ...props }, ref) => {
   const { width, height } = useScatterPlot();
 
@@ -355,17 +473,32 @@ const ScatterPlotViewport = React.forwardRef<
 
 ScatterPlotViewport.displayName = "ScatterPlot.Viewport";
 
+/**
+ * Props for ScatterPlot.Grid component
+ * Renders horizontal and vertical grid lines
+ */
 export interface ScatterPlotGridProps extends React.SVGProps<SVGGElement> {
-  /** Stroke color for grid lines */
+  /**
+   * Stroke color for grid lines
+   * @default "currentColor"
+   */
   stroke?: string;
-  /** Stroke width for grid lines */
+  /**
+   * Stroke width for grid lines in pixels
+   * @default 1
+   * @range 0.5-3
+   */
   strokeWidth?: number;
-  /** Opacity for grid lines */
+  /**
+   * Opacity for grid lines
+   * @default 0.1
+   * @range 0.0-1.0
+   */
   opacity?: number;
 }
 
 /**
- * Grid component - renders grid lines
+ * Grid component - renders horizontal and vertical grid lines for the chart
  */
 const ScatterPlotGrid = React.forwardRef<SVGGElement, ScatterPlotGridProps>(
   ({ className, stroke = "currentColor", strokeWidth = 1, opacity = 0.1, ...props }, ref) => {
@@ -424,11 +557,17 @@ const ScatterPlotGrid = React.forwardRef<SVGGElement, ScatterPlotGridProps>(
 ScatterPlotGrid.displayName = "ScatterPlot.Grid";
 
 /**
- * Axes component - renders X and Y axes with labels
+ * Props for ScatterPlot.Axes component
+ * Renders X and Y axes with tick marks and labels
+ */
+export interface ScatterPlotAxesProps extends React.SVGProps<SVGGElement> {}
+
+/**
+ * Axes component - renders X and Y axes with tick marks, tick labels, and axis labels
  */
 const ScatterPlotAxes = React.forwardRef<
   SVGGElement,
-  React.SVGProps<SVGGElement>
+  ScatterPlotAxesProps
 >(({ className, ...props }, ref) => {
   const {
     xTicks,
@@ -558,17 +697,32 @@ const ScatterPlotAxes = React.forwardRef<
 
 ScatterPlotAxes.displayName = "ScatterPlot.Axes";
 
+/**
+ * Props for ScatterPlot.Points component
+ */
 export interface ScatterPlotPointsProps extends React.SVGProps<SVGGElement> {
-  /** Multiplier for point radius when hovered (default: 1.5) */
+  /**
+   * Multiplier for point radius when hovered
+   * @default 1.5
+   * @range 1.0-3.0
+   */
   hoverRadiusMultiplier?: number;
-  /** Stroke width when point is hovered */
+  /**
+   * Stroke width when point is hovered in pixels
+   * @default 2
+   * @range 1-5
+   */
   hoverStrokeWidth?: number;
-  /** Default stroke width for points */
+  /**
+   * Default stroke width for points in pixels
+   * @default 1
+   * @range 0.5-3
+   */
   defaultStrokeWidth?: number;
 }
 
 /**
- * Points component - renders scatter points
+ * Points component - renders individual data point markers as circles
  */
 const ScatterPlotPoints = React.forwardRef<SVGGElement, ScatterPlotPointsProps>(
   ({ className, hoverRadiusMultiplier = 1.5, hoverStrokeWidth = 2, defaultStrokeWidth = 1, ...props }, ref) => {
@@ -623,17 +777,32 @@ const ScatterPlotPoints = React.forwardRef<SVGGElement, ScatterPlotPointsProps>(
 
 ScatterPlotPoints.displayName = "ScatterPlot.Points";
 
+/**
+ * Props for ScatterPlot.Regression component
+ */
 export interface ScatterPlotRegressionProps extends React.SVGProps<SVGGElement> {
-  /** Stroke width for regression line */
+  /**
+   * Stroke width for regression line in pixels
+   * @default 2
+   * @range 1-5
+   */
   strokeWidth?: number;
-  /** Stroke dash array for regression line */
+  /**
+   * Stroke dash pattern for regression line
+   * @default "6,6"
+   * @example "4,4", "8,2", "none"
+   */
   strokeDasharray?: string;
-  /** Opacity for regression line */
+  /**
+   * Opacity for regression line
+   * @default 0.5
+   * @range 0.0-1.0
+   */
   opacity?: number;
 }
 
 /**
- * Regression line component - shows trend line
+ * Regression line component - displays linear regression trend line with R² value
  */
 const ScatterPlotRegression = React.forwardRef<
   SVGGElement,
@@ -688,11 +857,18 @@ const ScatterPlotRegression = React.forwardRef<
 ScatterPlotRegression.displayName = "ScatterPlot.Regression";
 
 /**
- * Tooltip component - interactive tooltip on hover
+ * Props for ScatterPlot.Tooltip component
+ * Displays data values on hover with crosshair
+ */
+export interface ScatterPlotTooltipProps extends React.SVGProps<SVGGElement> {}
+
+/**
+ * Tooltip component - displays interactive tooltip with data values on hover
+ * Shows crosshair and formatted data values for hovered points
  */
 const ScatterPlotTooltip = React.forwardRef<
   SVGGElement,
-  React.SVGProps<SVGGElement>
+  ScatterPlotTooltipProps
 >(({ className, ...props }, ref) => {
   const {
     hoveredPoint,
@@ -826,15 +1002,28 @@ const ScatterPlotTooltip = React.forwardRef<
 
 ScatterPlotTooltip.displayName = "ScatterPlot.Tooltip";
 
+/**
+ * Props for ScatterPlot.Interaction component
+ * Transparent interaction layer for mouse/touch events
+ */
 export interface ScatterPlotInteractionProps extends React.SVGProps<SVGRectElement> {
-  /** Callback when point is hovered */
+  /**
+   * Callback function invoked when a point is hovered or unhovered
+   * @param point Point coordinates or null when hover ends
+   * @example (point) => console.log('Hovered:', point)
+   */
   onPointHover?: (point: { seriesIdx: number; pointIdx: number } | null) => void;
-  /** Callback when point is clicked */
+  /**
+   * Callback function invoked when a point is clicked
+   * @param point Coordinates of the clicked point
+   * @example (point) => console.log('Clicked:', point)
+   */
   onPointClick?: (point: { seriesIdx: number; pointIdx: number }) => void;
 }
 
 /**
- * Interaction layer component - handles mouse events
+ * Interaction layer component - transparent overlay that handles mouse and touch events
+ * Enables hover detection, point snapping, and tooltip triggering
  */
 const ScatterPlotInteraction = React.forwardRef<
   SVGRectElement,
@@ -988,13 +1177,24 @@ const ScatterPlotInteraction = React.forwardRef<
 
 ScatterPlotInteraction.displayName = "ScatterPlot.Interaction";
 
+/**
+ * Props for ScatterPlot.Legend component
+ */
 export interface ScatterPlotLegendProps extends React.SVGProps<SVGGElement> {
+  /**
+   * Enable clicking legend items to toggle series visibility
+   * @default false
+   */
   interactive?: boolean;
+  /**
+   * Legend position within the chart
+   * @default "top-right"
+   */
   position?: "top-right" | "top-left" | "bottom-right" | "bottom-left";
 }
 
 /**
- * Legend component - SVG-based legend inside the chart
+ * Legend component - SVG-based series legend rendered inside the chart with optional click-to-toggle functionality
  */
 const ScatterPlotLegend = React.forwardRef<
   SVGGElement,
@@ -1072,13 +1272,24 @@ const ScatterPlotLegend = React.forwardRef<
 
 ScatterPlotLegend.displayName = "ScatterPlot.Legend";
 
+/**
+ * Props for ScatterPlot.LegendHTML component
+ */
 export interface ScatterPlotLegendHTMLProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Enable clicking legend items to toggle series visibility
+   * @default false
+   */
   interactive?: boolean;
+  /**
+   * Layout orientation for legend items
+   * @default "horizontal"
+   */
   orientation?: "horizontal" | "vertical";
 }
 
 /**
- * HTML Legend component - flexible legend that sits outside the SVG
+ * HTML Legend component - flexible HTML-based legend that sits outside the SVG for better positioning control
  */
 const ScatterPlotLegendHTML = React.forwardRef<
   HTMLDivElement,
@@ -1150,11 +1361,17 @@ const ScatterPlotLegendHTML = React.forwardRef<
 ScatterPlotLegendHTML.displayName = "ScatterPlot.LegendHTML";
 
 /**
- * Empty state component
+ * Props for ScatterPlot.Empty component
+ * Displays when no data is available
+ */
+export interface ScatterPlotEmptyProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+/**
+ * Empty state component - displays placeholder when no data is available
  */
 const ScatterPlotEmpty = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  ScatterPlotEmptyProps
 >(({ className, style, children, ...props }, ref) => {
   const { width, height } = useScatterPlot();
 
@@ -1205,11 +1422,17 @@ const ScatterPlotEmpty = React.forwardRef<
 ScatterPlotEmpty.displayName = "ScatterPlot.Empty";
 
 /**
- * Loading state component
+ * Props for ScatterPlot.Loading component
+ * Displays loading spinner while data is being fetched
+ */
+export interface ScatterPlotLoadingProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+/**
+ * Loading state component - displays loading spinner while data is being fetched or processed
  */
 const ScatterPlotLoading = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  ScatterPlotLoadingProps
 >(({ className, style, ...props }, ref) => {
   const { width, height } = useScatterPlot();
 

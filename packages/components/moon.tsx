@@ -43,56 +43,154 @@ function useMoon() {
 // Types
 // ============================================================================
 
+/**
+ * Props for Moon.Root component
+ * Root component that provides context for all Moon sub-components
+ */
 export interface MoonRootProps {
-  /** Texture URL for Moon surface map */
+  /**
+   * Texture URL for Moon surface map
+   * @example "/textures/moon-surface.jpg"
+   */
   textureUrl?: string;
-  /** Moon radius in scene units */
+  /**
+   * Moon radius in scene units
+   * @default MOON_RADIUS (1.7374 scene units, representing 1737.4 km)
+   * @example 1.5, 2, 3
+   */
   radius?: number;
-  /** Enable automatic rotation */
+  /**
+   * Enable automatic rotation based on Moon's actual rotation period (27.3 days, tidally locked)
+   * @default true
+   */
   enableRotation?: boolean;
-  /** Time scale multiplier for rotation speed */
+  /**
+   * Time scale multiplier for rotation speed
+   * 1 = real-time, 10 = 10x faster, 0.1 = 10x slower
+   * @default 1
+   * @range 0.1-1000
+   * @example 1 (real-time), 10 (10x faster), 0.1 (10x slower)
+   */
   timeScale?: number;
-  /** Overall brightness multiplier */
+  /**
+   * Overall brightness multiplier for lighting
+   * @default 1.2
+   * @range 0.0-2.0
+   * @example 0.8 (dimmer), 1.5 (brighter)
+   */
   brightness?: number;
+  /**
+   * Child components (Canvas, Globe, etc.)
+   */
   children?: React.ReactNode;
 }
 
+/**
+ * Props for Moon.Canvas component
+ * Three.js Canvas wrapper with camera configuration
+ */
 export interface MoonCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** Camera position [x, y, z] */
+  /**
+   * Camera position in 3D space [x, y, z]
+   * @default [0, 2, 8]
+   * @example [0, 3, 10], [3, 2, 6]
+   */
   cameraPosition?: [number, number, number];
-  /** Camera field of view */
+  /**
+   * Camera field of view in degrees
+   * @default 45
+   * @range 20-120
+   * @example 35 (narrow), 60 (wide)
+   */
   cameraFov?: number;
-  /** Canvas height */
+  /**
+   * Canvas height (CSS value)
+   * @default "600px"
+   * @example "400px", "100vh", "50%"
+   */
   height?: string;
-  /** Canvas width */
+  /**
+   * Canvas width (CSS value)
+   * @default "100%"
+   * @example "800px", "100vw", "50%"
+   */
   width?: string;
 }
 
+/**
+ * Props for Moon.Controls component
+ * Orbit controls for camera manipulation
+ */
 export interface MoonControlsProps extends React.ComponentPropsWithoutRef<any> {
-  /** Minimum zoom distance */
+  /**
+   * Minimum zoom distance from Moon center
+   * @default 3
+   * @example 2, 4, 5
+   */
   minDistance?: number;
-  /** Maximum zoom distance */
+  /**
+   * Maximum zoom distance from Moon center
+   * @default 30
+   * @example 20, 50, 100
+   */
   maxDistance?: number;
-  /** Zoom speed */
+  /**
+   * Zoom speed multiplier
+   * @default 0.6
+   * @range 0.1-2.0
+   */
   zoomSpeed?: number;
-  /** Pan speed */
+  /**
+   * Pan speed multiplier
+   * @default 0.5
+   * @range 0.1-2.0
+   */
   panSpeed?: number;
-  /** Rotate speed */
+  /**
+   * Rotation speed multiplier
+   * @default 0.4
+   * @range 0.1-2.0
+   */
   rotateSpeed?: number;
-  /** Enable pan */
+  /**
+   * Enable panning with right mouse button
+   * @default true
+   */
   enablePan?: boolean;
-  /** Enable zoom */
+  /**
+   * Enable zooming with mouse wheel
+   * @default true
+   */
   enableZoom?: boolean;
-  /** Enable rotate */
+  /**
+   * Enable rotation with left mouse button
+   * @default true
+   */
   enableRotate?: boolean;
-  /** Enable damping */
+  /**
+   * Enable smooth camera damping
+   * @default true
+   */
   enableDamping?: boolean;
-  /** Damping factor */
+  /**
+   * Damping inertia factor (lower = more damping)
+   * @default 0.05
+   * @range 0.01-0.3
+   */
   dampingFactor?: number;
 }
 
+/**
+ * Props for Moon.Globe component
+ * Main Moon sphere with texture
+ */
 export interface MoonGlobeProps extends React.ComponentPropsWithoutRef<any> {
-  /** Number of segments for sphere geometry */
+  /**
+   * Number of segments for sphere geometry (higher = smoother)
+   * @default 128
+   * @range 32-256
+   * @example 64 (lower detail), 256 (highest detail)
+   */
   segments?: number;
 }
 

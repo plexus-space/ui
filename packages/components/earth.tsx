@@ -60,88 +60,240 @@ function useEarth() {
 // Types
 // ============================================================================
 
+/**
+ * Props for Earth.Root component
+ * Root component that provides context for all Earth sub-components
+ */
 export interface EarthRootProps {
-  /** Texture URL for day map */
+  /**
+   * Texture URL for day map (Earth's surface in daylight)
+   * @example "/textures/earth-day.jpg"
+   */
   dayMapUrl?: string;
-  /** Texture URL for night lights map */
+  /**
+   * Texture URL for night lights map (city lights visible on night side)
+   * @example "/textures/earth-night.jpg"
+   */
   nightMapUrl?: string;
-  /** Texture URL for clouds map */
+  /**
+   * Texture URL for clouds map (cloud layer texture)
+   * @example "/textures/earth-clouds.jpg"
+   */
   cloudsMapUrl?: string;
-  /** Texture URL for normal map */
+  /**
+   * Texture URL for normal map (surface detail and elevation)
+   * @example "/textures/earth-normal.jpg"
+   */
   normalMapUrl?: string;
-  /** Texture URL for specular map */
+  /**
+   * Texture URL for specular map (controls reflectivity of oceans)
+   * @example "/textures/earth-specular.jpg"
+   */
   specularMapUrl?: string;
-  /** Earth radius in scene units */
+  /**
+   * Earth radius in scene units
+   * @default EARTH_RADIUS (6.371 scene units, representing 6371 km)
+   * @example 5, 10, 15
+   */
   radius?: number;
-  /** Enable automatic rotation */
+  /**
+   * Enable automatic rotation based on Earth's actual rotation period
+   * @default true
+   */
   enableRotation?: boolean;
-  /** Time scale multiplier for rotation speed */
+  /**
+   * Time scale multiplier for rotation speed
+   * 1 = real-time, 10 = 10x faster, 0.1 = 10x slower
+   * @default 1
+   * @range 0.1-1000
+   * @example 1 (real-time), 10 (10x faster), 0.1 (10x slower)
+   */
   timeScale?: number;
-  /** Overall brightness multiplier */
+  /**
+   * Overall brightness multiplier for lighting and emissive maps
+   * @default 1.0
+   * @range 0.0-2.0
+   * @example 0.8 (dimmer), 1.2 (brighter)
+   */
   brightness?: number;
+  /**
+   * Child components (Canvas, Globe, Atmosphere, etc.)
+   */
   children?: React.ReactNode;
 }
 
+/**
+ * Props for Earth.Canvas component
+ * Three.js Canvas wrapper with camera configuration
+ */
 export interface EarthCanvasProps extends React.HTMLAttributes<HTMLDivElement> {
-  /** Camera position [x, y, z] */
+  /**
+   * Camera position in 3D space [x, y, z]
+   * @default [0, 5, 20]
+   * @example [0, 10, 30], [10, 5, 15]
+   */
   cameraPosition?: [number, number, number];
-  /** Camera field of view */
+  /**
+   * Camera field of view in degrees
+   * @default 45
+   * @range 20-120
+   * @example 35 (narrow), 60 (wide)
+   */
   cameraFov?: number;
-  /** Canvas height */
+  /**
+   * Canvas height (CSS value)
+   * @default "600px"
+   * @example "400px", "100vh", "50%"
+   */
   height?: string;
-  /** Canvas width */
+  /**
+   * Canvas width (CSS value)
+   * @default "100%"
+   * @example "800px", "100vw", "50%"
+   */
   width?: string;
 }
 
+/**
+ * Props for Earth.Controls component
+ * Orbit controls for camera manipulation
+ */
 export interface EarthControlsProps
   extends React.ComponentPropsWithRef<typeof OrbitControls> {
-  /** Minimum zoom distance */
+  /**
+   * Minimum zoom distance from Earth center
+   * @default 8
+   * @example 5, 10, 15
+   */
   minDistance?: number;
-  /** Maximum zoom distance */
+  /**
+   * Maximum zoom distance from Earth center
+   * @default 100
+   * @example 50, 200, 500
+   */
   maxDistance?: number;
-  /** Zoom speed */
+  /**
+   * Zoom speed multiplier
+   * @default 0.6
+   * @range 0.1-2.0
+   */
   zoomSpeed?: number;
-  /** Pan speed */
+  /**
+   * Pan speed multiplier
+   * @default 0.5
+   * @range 0.1-2.0
+   */
   panSpeed?: number;
-  /** Rotate speed */
+  /**
+   * Rotation speed multiplier
+   * @default 0.4
+   * @range 0.1-2.0
+   */
   rotateSpeed?: number;
-  /** Enable pan */
+  /**
+   * Enable panning with right mouse button
+   * @default true
+   */
   enablePan?: boolean;
-  /** Enable zoom */
+  /**
+   * Enable zooming with mouse wheel
+   * @default true
+   */
   enableZoom?: boolean;
-  /** Enable rotate */
+  /**
+   * Enable rotation with left mouse button
+   * @default true
+   */
   enableRotate?: boolean;
-  /** Enable damping */
+  /**
+   * Enable smooth camera damping
+   * @default true
+   */
   enableDamping?: boolean;
-  /** Damping factor */
+  /**
+   * Damping inertia factor (lower = more damping)
+   * @default 0.05
+   * @range 0.01-0.3
+   */
   dampingFactor?: number;
 }
 
+/**
+ * Props for Earth.Globe component
+ * Main Earth sphere with textures
+ */
 export interface EarthGlobeProps
   extends React.ComponentPropsWithRef<typeof Sphere> {
-  /** Number of segments for sphere geometry */
+  /**
+   * Number of segments for sphere geometry (higher = smoother)
+   * @default 128
+   * @range 32-256
+   * @example 64 (lower detail), 256 (highest detail)
+   */
   segments?: number;
 }
 
+/**
+ * Props for Earth.Atmosphere component
+ * Atmospheric glow effect around Earth
+ */
 export interface EarthAtmosphereProps
   extends React.ComponentPropsWithRef<typeof Atmosphere> {
-  /** Atmosphere color */
+  /**
+   * Atmosphere color (any CSS color format)
+   * @default "#4488ff"
+   * @example "#88ccff", "rgb(68, 136, 255)", "hsl(210, 100%, 64%)"
+   */
   color?: string;
-  /** Atmosphere intensity */
+  /**
+   * Atmosphere glow intensity
+   * @default 0.8
+   * @range 0.0-2.0
+   * @example 0.5 (subtle), 1.5 (intense)
+   */
   intensity?: number;
-  /** Atmosphere falloff */
+  /**
+   * Atmosphere falloff exponent (higher = sharper edge)
+   * @default 3.5
+   * @range 1.0-6.0
+   * @example 2.0 (soft edge), 5.0 (sharp edge)
+   */
   falloff?: number;
-  /** Atmosphere scale multiplier */
+  /**
+   * Atmosphere size scale relative to globe
+   * @default 1.02
+   * @range 1.01-1.1
+   * @example 1.01 (thin), 1.05 (thick)
+   */
   scale?: number;
 }
 
+/**
+ * Props for Earth.Clouds component
+ * Cloud layer with independent rotation
+ */
 export interface EarthCloudsProps
   extends React.ComponentPropsWithRef<typeof Clouds> {
-  /** Cloud layer height multiplier */
+  /**
+   * Cloud layer height relative to Earth surface
+   * @default 1.005
+   * @range 1.001-1.02
+   * @example 1.003, 1.01
+   */
   height?: number;
-  /** Cloud opacity */
+  /**
+   * Cloud layer opacity
+   * @default 0.5
+   * @range 0.0-1.0
+   * @example 0.3 (transparent), 0.7 (opaque)
+   */
   opacity?: number;
-  /** Cloud rotation speed multiplier */
+  /**
+   * Cloud rotation speed relative to Earth rotation
+   * @default 0.8
+   * @range 0.0-2.0
+   * @example 0.5 (slower), 1.5 (faster)
+   */
   rotationSpeedMultiplier?: number;
 }
 
@@ -396,9 +548,17 @@ const EarthClouds = React.forwardRef<any, EarthCloudsProps>(
 
 EarthClouds.displayName = "Earth.Clouds";
 
+/**
+ * Props for Earth.Axis component
+ * Debug helper that displays XYZ coordinate axes
+ */
 export interface EarthAxisProps
   extends React.ComponentPropsWithRef<"axesHelper"> {
-  /** Axis size (defaults to 3x radius) */
+  /**
+   * Axis line length in scene units
+   * @default radius * 3
+   * @example 10, 20, 50
+   */
   size?: number;
 }
 

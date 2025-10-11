@@ -43,58 +43,159 @@ function useUranus() {
 // Types
 // ============================================================================
 
+/**
+ * Props for Uranus.Root component
+ * Root component that provides context for all Uranus sub-components
+ */
 export interface UranusRootProps {
-  /** Texture URL for Uranus surface map */
+  /**
+   * Texture URL for Uranus surface map
+   * @example "/textures/uranus-surface.jpg"
+   */
   textureUrl?: string;
-  /** Uranus radius in scene units */
+  /**
+   * Uranus radius in scene units
+   * @default URANUS_RADIUS (25.362 scene units, representing 25362 km)
+   * @example 20, 25, 30
+   */
   radius?: number;
-  /** Enable automatic rotation */
+  /**
+   * Enable automatic rotation based on Uranus's actual rotation period (17.2 hours, retrograde)
+   * @default true
+   */
   enableRotation?: boolean;
-  /** Time scale multiplier for rotation speed */
+  /**
+   * Time scale multiplier for rotation speed
+   * 1 = real-time, 10 = 10x faster, 0.1 = 10x slower
+   * @default 1
+   * @range 0.1-1000
+   * @example 1 (real-time), 10 (10x faster), 0.1 (10x slower)
+   */
   timeScale?: number;
-  /** Overall brightness multiplier */
+  /**
+   * Overall brightness multiplier for lighting
+   * @default 1.2
+   * @range 0.0-2.0
+   * @example 0.8 (dimmer), 1.5 (brighter)
+   */
   brightness?: number;
+  /**
+   * Child components (Canvas, Globe, etc.)
+   */
   children?: React.ReactNode;
 }
 
+/**
+ * Props for Uranus.Canvas component
+ * Three.js Canvas wrapper with camera configuration
+ */
 export interface UranusCanvasProps
   extends React.HTMLAttributes<HTMLDivElement> {
-  /** Camera position [x, y, z] */
+  /**
+   * Camera position in 3D space [x, y, z]
+   * @default [0, 5, 50]
+   * @example [0, 10, 60], [10, 5, 40]
+   */
   cameraPosition?: [number, number, number];
-  /** Camera field of view */
+  /**
+   * Camera field of view in degrees
+   * @default 45
+   * @range 20-120
+   * @example 35 (narrow), 60 (wide)
+   */
   cameraFov?: number;
-  /** Canvas height */
+  /**
+   * Canvas height (CSS value)
+   * @default "600px"
+   * @example "400px", "100vh", "50%"
+   */
   height?: string;
-  /** Canvas width */
+  /**
+   * Canvas width (CSS value)
+   * @default "100%"
+   * @example "800px", "100vw", "50%"
+   */
   width?: string;
 }
 
+/**
+ * Props for Uranus.Controls component
+ * Orbit controls for camera manipulation
+ */
 export interface UranusControlsProps extends Record<string, any> {
-  /** Minimum zoom distance */
+  /**
+   * Minimum zoom distance from Uranus center
+   * @default 30
+   * @example 20, 35, 50
+   */
   minDistance?: number;
-  /** Maximum zoom distance */
+  /**
+   * Maximum zoom distance from Uranus center
+   * @default 200
+   * @example 150, 250, 300
+   */
   maxDistance?: number;
-  /** Zoom speed */
+  /**
+   * Zoom speed multiplier
+   * @default 0.6
+   * @range 0.1-2.0
+   */
   zoomSpeed?: number;
-  /** Pan speed */
+  /**
+   * Pan speed multiplier
+   * @default 0.5
+   * @range 0.1-2.0
+   */
   panSpeed?: number;
-  /** Rotate speed */
+  /**
+   * Rotation speed multiplier
+   * @default 0.4
+   * @range 0.1-2.0
+   */
   rotateSpeed?: number;
-  /** Enable pan */
+  /**
+   * Enable panning with right mouse button
+   * @default true
+   */
   enablePan?: boolean;
-  /** Enable zoom */
+  /**
+   * Enable zooming with mouse wheel
+   * @default true
+   */
   enableZoom?: boolean;
-  /** Enable rotate */
+  /**
+   * Enable rotation with left mouse button
+   * @default true
+   */
   enableRotate?: boolean;
-  /** Enable damping */
+  /**
+   * Enable smooth camera damping
+   * @default true
+   */
   enableDamping?: boolean;
-  /** Damping factor */
+  /**
+   * Damping inertia factor (lower = more damping)
+   * @default 0.05
+   * @range 0.01-0.3
+   */
   dampingFactor?: number;
 }
 
+/**
+ * Props for Uranus.Globe component
+ * Main Uranus sphere with texture
+ */
 export interface UranusGlobeProps extends Record<string, any> {
-  /** Number of segments for sphere geometry */
+  /**
+   * Number of segments for sphere geometry (higher = smoother)
+   * @default 128
+   * @range 32-256
+   * @example 64 (lower detail), 256 (highest detail)
+   */
   segments?: number;
+  /**
+   * Child components
+   */
   children?: React.ReactNode;
 }
 
