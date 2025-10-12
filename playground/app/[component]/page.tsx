@@ -15,6 +15,7 @@ import { HistogramExamples } from "@/examples/histogram";
 import { BoxPlotExamples } from "@/examples/box";
 import { ViolinPlotExamples } from "@/examples/violin";
 import { SpectrogramExamples } from "@/examples/spectrogram";
+import { WaterfallPlotExamples } from "@/examples/waterfall";
 import { EarthExamples } from "@/examples/planets";
 import { MarsExamples } from "@/examples/planets";
 import { MercuryExamples } from "@/examples/planets";
@@ -41,6 +42,7 @@ const componentExamples: Record<string, React.ComponentType> = {
   "box-plot": BoxPlotExamples,
   "violin-plot": ViolinPlotExamples,
   spectrogram: SpectrogramExamples,
+  "waterfall-plot": WaterfallPlotExamples,
   earth: EarthExamples,
   mars: MarsExamples,
   mercury: MercuryExamples,
@@ -63,6 +65,7 @@ const componentApiData: Record<string, ApiProp[]> = {
   "box-plot": apiData.boxPlotApiProps,
   "violin-plot": apiData.violinPlotApiProps,
   spectrogram: apiData.spectrogramApiProps,
+  "waterfall-plot": apiData.waterfallPlotApiProps,
   earth: apiData.earthApiProps,
   mars: apiData.planetApiProps,
   mercury: apiData.planetApiProps,

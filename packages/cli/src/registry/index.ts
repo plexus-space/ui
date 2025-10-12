@@ -254,6 +254,17 @@ export const registry: Registry = {
     category: "charts",
   },
 
+  "waterfall-plot": {
+    name: "waterfall-plot",
+    type: "components:chart",
+    description:
+      "3D spectral analysis visualization with stacked waterfall lines color-coded by position",
+    files: [`${BASE_URL}/waterfall-plot.tsx`],
+    dependencies: ["react"],
+    registryDependencies: ["lib"],
+    category: "charts",
+  },
+
   // ============================================================================
   // Primitives (Low-level building blocks - minimal dependencies)
   // ============================================================================

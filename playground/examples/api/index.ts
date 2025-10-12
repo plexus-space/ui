@@ -10,3 +10,4 @@ export { polarPlotApiProps } from "./polar-plot";
 export { scatterPlotApiProps } from "./scatter-plot";
 export { spectrogramApiProps } from "./spectrogram";
 export { violinPlotApiProps } from "./violin-plot";
+export { waterfallPlotApiProps } from "./waterfall-plot";

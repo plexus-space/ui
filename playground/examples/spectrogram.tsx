@@ -1,12 +1,12 @@
-import { useColorScheme } from "@/components/color-scheme-provider";
-import { SpectrogramDataPoint } from "@plexusui/components/spectrogram";
 import { useMemo } from "react";
-import { seededRandom } from "./data";
 import { ComponentPreview } from "@/components/component-preview";
-import { Spectrogram } from "@plexusui/components/spectrogram";
+import {
+  Spectrogram,
+  SpectrogramDataPoint,
+} from "@plexusui/components/spectrogram";
+import { seededRandom } from "./data";
 
 export const SpectrogramExamples = () => {
-  const { color } = useColorScheme();
   const spectrogramData = useMemo(() => {
     const random = seededRandom(42);
     const points: SpectrogramDataPoint[] = [];

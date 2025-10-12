@@ -180,4 +180,13 @@ export const components: Component[] = [
       "Time-frequency representation with color-coded magnitude visualization. Displays how the frequency content of a signal varies over time, essential for signal processing and audio analysis.",
     textures: [],
   },
+  {
+    id: "waterfall-plot",
+    name: "Waterfall Plot",
+    category: "Charts",
+    tier: "free",
+    description:
+      "3D spectral analysis visualization with stacked waterfall lines color-coded by position. Essential for visualizing time-frequency data, emission spectra, and multi-dimensional signal analysis with proper depth perception.",
+    textures: [],
+  },
 ];
