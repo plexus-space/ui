@@ -189,4 +189,13 @@ export const components: Component[] = [
       "3D spectral analysis visualization with stacked waterfall lines color-coded by position. Essential for visualizing time-frequency data, emission spectra, and multi-dimensional signal analysis with proper depth perception.",
     textures: [],
   },
+  {
+    id: "node-graph-editor",
+    name: "Node Graph Editor",
+    category: "Network & System Architecture",
+    tier: "pro",
+    description:
+      "Interactive node-based graph editor for visual programming, system design, and dataflow visualization. Features drag-and-drop node positioning, port-based connections, grid snapping, pan/zoom navigation, and a minimap for large graphs. Perfect for designing control systems, signal processing pipelines, and mission workflows.",
+    textures: [],
+  },
 ];

@@ -28,7 +28,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@plexusui/components/*": ["../packages/components/*"]
+      "@plexusui/components/*": ["../packages/components/*"],
+      "@plexusui/components-pro/*": ["../packages/components-pro/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

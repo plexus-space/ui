@@ -1537,9 +1537,7 @@ const WaterfallPlotTooltip = React.forwardRef<
         width={tooltipWidth}
         height={tooltipHeight}
         rx={6}
-        fill="rgba(0, 0, 0, 0.9)"
-        stroke="white"
-        strokeWidth={1}
+        fill="currentColor"
         opacity={0.95}
       />
 
@@ -1547,8 +1545,9 @@ const WaterfallPlotTooltip = React.forwardRef<
         x={px + offsetX + 10}
         y={py + offsetY + 25}
         fontSize={11}
-        fontWeight={500}
+        fontWeight={600}
         fill="white"
+        style={{ mixBlendMode: "difference" }}
       >
         {`${yAxisLabel}: ${yLabel}`}
       </text>
@@ -1559,6 +1558,7 @@ const WaterfallPlotTooltip = React.forwardRef<
         fontSize={10}
         fill="white"
         opacity={0.8}
+        style={{ mixBlendMode: "difference" }}
       >
         {`${line.points.length} points`}
       </text>

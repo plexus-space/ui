@@ -2,8 +2,6 @@
 
 > **Vision:** Components for deep tech, physics, and engineering. Beautiful, primitive-based building blocks for engineers across all disciplines.
 
----
-
 ## Guiding Principles
 
 1. **Universal Engineering Tools** - Components that work across mechanical, electrical, chemical, aerospace, civil, robotics, and more
@@ -13,30 +11,12 @@
 5. **Performance Obsessed** - GPU acceleration, WebAssembly, optimal rendering
 6. **TypeScript Native** - Full type safety with proper generics
 
----
-
-## Phase 1: Foundation & Data Visualization (Current → Q1 2026)
-
-### Core Primitives ✓ (Completed)
-
-### Chart Components ✓ (Completed)
-
-### New Charts
-
-- [x] **Scatter Plot** - 2D point clouds with clustering
-- [x] **Bar Chart** - Horizontal/vertical with stacking
-- [x] **Histogram** - Distribution analysis with bins
-- [x] **Box Plot** - Statistical distribution visualization
-- [x] **Violin Plot** - Probability density visualization
-
----
-
 ## Phase 2: Scientific Charts & Analysis ✓ (Completed)
 
 - [x] **Waterfall Plot** - 3D spectral analysis over time
 - [x] **Spectrogram** - Time-frequency representation
 
-### 3D Plotting & Fields -
+### 3D Plotting & Fields
 
 - [ ] **Surface Plot** - 3D function visualization (z = f(x,y))
 - [ ] **Isosurface Renderer** - 3D scalar field level sets
@@ -58,9 +38,84 @@
 - [ ] **Annotation Labels** - Callouts and markers in 3D space
 - [ ] **Grid Planes** - Reference planes (XY, YZ, XZ)
 
+## Phase 3: Network & System Architecture
+
+- [ ] Node Graph Editor - Visual programming/system design
+- [ ] Dataflow Visualizer - Signal routing between subsystems
+- [ ] State Machine Diagram - Interactive FSM visualization
+- [ ] Dependency Graph - System interdependencies
+- [ ] Pipeline Monitor - Data processing stages
+
+## Phase 4: Flight Dynamics & Astrodynamics
+
+> **Goal:** STK-level accuracy for Earth and lunar mission analysis. Physics-based simulation with validated propagators, environmental models, and mission planning tools.
+
+### Orbital Mechanics & Propagation
+
+- [ ] **Orbit Propagator** - Multiple propagators (SGP4, J2, high-fidelity w/ perturbations)
+- [ ] **Two-Body Problem** - Keplerian orbits with classical orbital elements
+- [ ] **Orbital Elements Display** - Interactive visualization (a, e, i, Ω, ω, ν)
+- [ ] **Ground Track Plotter** - Satellite path over Earth/Moon surface
+- [ ] **3D Orbit Visualizer** - Real-time orbit animation with celestial bodies
+- [ ] **Orbit Perturbations** - J2-J6, drag, SRP, third-body (Sun/Moon)
+- [ ] **N-Body Simulator** - Multi-body gravitational interactions
+
+### Trajectory Design & Optimization
+
+- [ ] **Hohmann Transfer** - Optimal two-impulse orbital transfer
+- [ ] **Bi-Elliptic Transfer** - Three-impulse high-altitude transfers
+- [ ] **Lambert Solver** - Time-constrained trajectory between positions
+- [ ] **Porkchop Plotter** - ΔV and flight time contours for transfers
+- [ ] **Launch Window Calculator** - Optimal launch opportunities
+- [ ] **Trajectory Optimizer** - Low-thrust spiral transfers, gradient methods
+- [ ] **Gravity Assist Planner** - Swing-by trajectory design
+- [ ] **Interplanetary Trajectories** - Earth-Moon transfers, L-point orbits
+- [ ] **Landing Trajectory** - Powered descent guidance (lunar landing)
+
+### Attitude Dynamics & Control
+
+- [ ] **Attitude Visualizer** - 3D spacecraft orientation (quaternions/Euler)
+- [ ] **Torque-Free Motion** - Rigid body dynamics, polhode/herpolhode
+- [ ] **Gravity Gradient** - Torque from non-uniform gravity field
+- [ ] **Momentum Exchange** - Reaction wheels, control moment gyros
+- [ ] **Magnetic Torquers** - Dipole interaction with planetary field
+- [ ] **Spin Stabilization** - Gyroscopic stability visualization
+- [ ] **Three-Axis Stabilization** - Active control with actuators
+- [ ] **Attitude Determination** - Sensor fusion (sun, star tracker, magnetometer)
+
+### Ground Systems & Coverage
+
+- [ ] **Ground Station Access** - Visibility windows and contact times
+- [ ] **Coverage Analyzer** - Area coverage over time (swath, footprint)
+- [ ] **Sensor FOV Projector** - Camera/instrument field of view on surface
+- [ ] **Communication Link Budget** - RF link analysis with pointing
+- [ ] **Constellation Designer** - Multi-satellite coverage optimization
+- [ ] **Ground Track Repeat** - Sun-synchronous and repeat orbits
+- [ ] **Station Keeping** - Orbit maintenance maneuver planning
+
+### Environmental Models
+
+- [ ] **Gravity Models** - EGM2008 (Earth), GRAIL (Moon) spherical harmonics
+- [ ] **Atmospheric Density** - NRLMSISE-00, exponential models with drag
+- [ ] **Solar Radiation Pressure** - Surface area, reflectivity, eclipse modeling
+- [ ] **Magnetic Field** - IGRF, WMM for Earth; lunar magnetic anomalies
+- [ ] **Eclipse Calculator** - Umbra/penumbra with cylindrical/conical shadow
+- [ ] **Solar/Lunar Position** - High-precision ephemeris (JPL DE440)
+- [ ] **Coordinate Frames** - ECI, ECEF, LVLH, RSW transformations
+
+### Mission Analysis Tools
+
+- [ ] **ΔV Budget Calculator** - Mission velocity requirements breakdown
+- [ ] **Orbital Lifetime** - Decay prediction with atmospheric drag
+- [ ] **Encounter Analyzer** - Close approach detection and geometry
+- [ ] **Event Finder** - Apoapsis, periapsis, equator crossing, eclipse events
+- [ ] **Access Reports** - Tabular visibility data with azimuth/elevation
+- [ ] **Maneuver Planner** - Burn timing, direction, magnitude optimizer
+- [ ] **Orbit Determination** - Least-squares fitting from observations
+
 ---
 
-## Phase 4: Simulation & Dynamics
+## Phase 5: Simulation & Dynamics
 
 ### Physics Simulation
 
@@ -83,14 +138,15 @@
 - [ ] **Fatigue Curve** - S-N diagrams for material life
 - [ ] **Phase Transformation** - Material state changes
 
-- [ ] Orbital Mechanics Simulator - Two-body problems, orbital elements, Hohmann transfers
-- [ ] Robot Kinematics - Forward/inverse kinematics, Denavit-Hartenberg parameters
+### Mechanical Systems
+
+- [ ] **Robot Kinematics** - Forward/inverse kinematics, Denavit-Hartenberg parameters
 - [ ] Constraint-based Physics - Joints, motors, limits (useful for mechanisms)
 - [ ] Soft Body Dynamics - Deformable objects, cloth, cables
 
 ---
 
-## Phase 5: Control Systems & Signals
+## Phase 6: Control Systems & Signals
 
 ### Control Theory
 
@@ -117,7 +173,7 @@
 
 ---
 
-## Phase 6: Sensor & Instrumentation
+## Phase 7: Sensor & Instrumentation
 
 ### Sensor Visualizations
 
@@ -149,14 +205,6 @@
 - [ ] Radar Display - PPI (Plan Position Indicator) scope, range-doppler
 - [ ] Sonar Waterfall - Acoustic returns over time
 - [ ] Thermal Camera View - False color temperature mapping
-
-## Phase 7: Network & System Architecture
-
-- [ ] Node Graph Editor - Visual programming/system design
-- [ ] Dataflow Visualizer - Signal routing between subsystems
-- [ ] State Machine Diagram - Interactive FSM visualization
-- [ ] Dependency Graph - System interdependencies
-- [ ] Pipeline Monitor - Data processing stages
 
 ## Phase 8: Interactive Controls & UI
 

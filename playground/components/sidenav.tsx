@@ -4,10 +4,15 @@ import { components } from "@/constants/components";
 import { useParams } from "next/navigation";
 import { Logo, SimpleLogo } from "./logo";
 import { Button } from "./ui/button";
+import { Sparkles } from "lucide-react";
 
 export const Sidenav = () => {
   const params = useParams();
   const componentId = params.component as string;
+
+  const freeComponents = components.filter((comp) => comp.tier !== "pro");
+  const proComponents = components.filter((comp) => comp.tier === "pro");
+
   return (
     <aside className="w-52 flex-shrink-0  bg-background overflow-y-auto">
       <nav className="p-4 pt-6">
@@ -19,7 +24,7 @@ export const Sidenav = () => {
                   {category}
                 </div>
                 <div className="flex flex-col gap-1">
-                  {components
+                  {freeComponents
                     .filter((comp) => comp.category === category)
                     .map((comp) => (
                       <Link
@@ -43,6 +48,37 @@ export const Sidenav = () => {
                 </div>
               </div>
             )
+          )}
+
+          {proComponents.length > 0 && (
+            <div>
+              <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Pro Components
+              </div>
+              <div className="flex flex-col gap-1">
+                {proComponents.map((comp) => (
+                  <Link
+                    key={comp.id}
+                    href={`/${comp.id}`}
+                    className="w-full"
+                  >
+                    <Button
+                      variant="ghost"
+                      className={`${
+                        comp.id === componentId
+                          ? "bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30"
+                          : ""
+                      } cursor-pointer group relative`}
+                      size="sm"
+                    >
+                      <Sparkles className="w-3 h-3 mr-1.5 text-purple-500 dark:text-purple-400" />
+                      {comp.name}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </nav>

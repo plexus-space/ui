@@ -10,7 +10,7 @@ export default function Home() {
       <div className="mb-16">
         <div className="flex items-center gap-4 mb-4">
           <h1 className="text-5xl text-foreground">
-            Aerospace. Physics. Deep Tech. Components
+            Aerospace. Physics. Deep Tech. UI Components
           </h1>
         </div>
 
