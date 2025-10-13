@@ -22,7 +22,7 @@ Plexus UI is a React component library for aerospace visualization, designed wit
 npx @plexusui/cli init
 
 # Add components (copies source code to your project)
-npx @plexusui/cli add earth mars orbital-path solar-system
+npx @plexusui/cli add earth mars
 ```
 
 This copies the component files to `/components/plexusui/` - you own the code and can customize it however you want!
@@ -59,19 +59,14 @@ High-quality planetary visualizations with real textures and rotation:
 - `mercury`, `venus`, `moon`
 - `jupiter`, `saturn`, `uranus`, `neptune`
 
-### 🛸 Orbital Mechanics (3D)
+### 🛸 Orbital Mechanics (3D) - PRO
 
 Scientifically accurate orbital visualization using real astrodynamics equations:
 
-- `orbital-path` - Elliptical orbits with Keplerian elements
-
-**💡 All orbital components support optional high-precision mode!**
-
-### 🌌 Solar System (3D)
-
-Complete solar system visualization with astronomically accurate distances:
-
-- `solar-system` - All 8 planets at correct relative distances with animated orbits
+- `orbit-propagator` - Real-time orbit propagation (Two-Body, J2, High-Fidelity)
+- `orbital-elements-display` - Interactive HUD for Keplerian orbital elements
+- `ground-track-plotter` - Satellite ground track visualization on Earth
+- `orbit-transfer-planner` - Hohmann & bi-elliptic transfer calculations
 
 ### 📊 Charts & Timelines (2D)
 
@@ -86,50 +81,6 @@ All algorithms based on peer-reviewed aerospace textbooks:
 - **Vallado, D.A.** - "Fundamentals of Astrodynamics and Applications" (4th ed.)
 - **Curtis, H.D.** - "Orbital Mechanics for Engineering Students" (4th ed.)
 - **Battin, R.H.** - "An Introduction to the Mathematics and Methods of Astrodynamics"
-
-## 💡 Examples
-
-### Solar System Overview
-
-```tsx
-import { SolarSystem } from "@/components/plexusui/solar-system";
-
-function SolarSystemVisualization() {
-  return (
-    <SolarSystem
-      showOrbitalPaths
-      animationSpeed={50}
-      planetSizeScale={5}
-      brightness={1.2}
-      cameraPosition={[0, 1000, 2000]}
-    />
-  );
-}
-```
-
-### Earth with ISS Orbit
-
-```tsx
-import { EarthScene, EarthSphereRoot } from "@/components/plexusui/earth";
-import { OrbitalPathRoot } from "@/components/plexusui/orbital-path";
-
-function ISSVisualization() {
-  const issOrbit = {
-    semiMajorAxis: 6771, // km
-    eccentricity: 0.0001,
-    inclination: 51.6, // degrees
-    longitudeOfAscendingNode: 0,
-    argumentOfPeriapsis: 0,
-  };
-
-  return (
-    <EarthScene>
-      <EarthSphereRoot enableRotation />
-      <OrbitalPathRoot elements={issOrbit} color="#00ff00" />
-    </EarthScene>
-  );
-}
-```
 
 ## 📥 Installation
 
@@ -152,7 +103,7 @@ npm install react react-dom
 npx @plexusui/cli init
 
 # Add components
-npx @plexusui/cli add earth mars orbital-path
+npx @plexusui/cli add earth mars
 
 ```
 
@@ -160,7 +111,6 @@ Components are copied to `components/ui/` and you can immediately start using th
 
 ```tsx
 import { Earth } from "@/components/ui/earth";
-import { OrbitalPath } from "@/components/ui/orbital-path";
 ```
 
 ## 🏗️ Repository Structure
@@ -171,7 +121,6 @@ components/             # All component source files (copied by CLI)
 ├── mars.tsx
 ├── jupiter.tsx
 ├── saturn.tsx
-├── orbital-path.tsx
 └── ...
 
 packages/

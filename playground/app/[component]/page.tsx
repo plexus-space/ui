@@ -13,10 +13,13 @@ import { ScatterPlotExamples } from "@/examples/scatter";
 import { BarChartExamples } from "@/examples/bar";
 import { HistogramExamples } from "@/examples/histogram";
 import { BoxPlotExamples } from "@/examples/box";
-import { ViolinPlotExamples } from "@/examples/violin";
 import { SpectrogramExamples } from "@/examples/spectrogram";
 import { WaterfallPlotExamples } from "@/examples/waterfall";
 import { NodeGraphEditorExamples } from "@/examples/node-graph-editor";
+import { OrbitPropagatorExamples } from "@/examples/orbit-propagator";
+import { OrbitalElementsDisplayExamples } from "@/examples/orbital-elements-display";
+import { GroundTrackPlotterExamples } from "@/examples/ground-track-plotter";
+import { OrbitTransferPlannerExamples } from "@/examples/orbit-transfer-planner";
 import { EarthExamples } from "@/examples/planets";
 import { MarsExamples } from "@/examples/planets";
 import { MercuryExamples } from "@/examples/planets";
@@ -26,7 +29,10 @@ import { JupiterExamples } from "@/examples/planets";
 import { SaturnExamples } from "@/examples/planets";
 import { UranusExamples } from "@/examples/planets";
 import { NeptuneExamples } from "@/examples/planets";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import * as apiData from "@/examples/api";
 
 // ============================================================================
@@ -41,10 +47,13 @@ const componentExamples: Record<string, React.ComponentType> = {
   "bar-chart": BarChartExamples,
   histogram: HistogramExamples,
   "box-plot": BoxPlotExamples,
-  "violin-plot": ViolinPlotExamples,
   spectrogram: SpectrogramExamples,
   "waterfall-plot": WaterfallPlotExamples,
   "node-graph-editor": NodeGraphEditorExamples,
+  "orbit-propagator": OrbitPropagatorExamples,
+  "orbital-elements-display": OrbitalElementsDisplayExamples,
+  "ground-track-plotter": GroundTrackPlotterExamples,
+  "orbit-transfer-planner": OrbitTransferPlannerExamples,
   earth: EarthExamples,
   mars: MarsExamples,
   mercury: MercuryExamples,
@@ -65,7 +74,6 @@ const componentApiData: Record<string, ApiProp[]> = {
   "bar-chart": apiData.barChartApiProps,
   histogram: apiData.histogramApiProps,
   "box-plot": apiData.boxPlotApiProps,
-  "violin-plot": apiData.violinPlotApiProps,
   spectrogram: apiData.spectrogramApiProps,
   "waterfall-plot": apiData.waterfallPlotApiProps,
   earth: apiData.earthApiProps,

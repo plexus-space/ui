@@ -11,10 +11,117 @@
 5. **Performance Obsessed** - GPU acceleration, WebAssembly, optimal rendering
 6. **TypeScript Native** - Full type safety with proper generics
 
+---
+
+## Phase 0: Foundation - Shared Primitives (Ongoing)
+
+> **The Secret Sauce:** Every component—from ECG waveforms to orbital paths—is built from the same GPU-accelerated primitives. This enables unprecedented cross-domain composition.
+
+### Core Rendering Primitives
+
+- [x] **Line Renderer** - GPU-accelerated polylines (used by: ECG, orbits, terrain contours, waveforms)
+- [x] **Mesh Renderer** - 3D geometry (used by: planets, anatomy, terrain, organs)
+- [x] **Point Cloud** - Particle rendering (used by: scatter plots, LiDAR, stars, molecular)
+- [x] **Heatmap Canvas** - 2D color mapping (used by: thermal imaging, medical imaging, spectrograms)
+- [x] **Volume Renderer** - 3D scalar fields (medical CT/MRI, atmospheric density, CFD results)
+- [x] **Vector Field Renderer** - Arrow fields (fluid flow, forces, gradients, magnetic fields)
+
+### Physics & Simulation
+
+- [x] **Physics Engine** - Euler, Verlet, RK4 integrators
+- [x] **WebAssembly Physics** - High-performance N-body, collision detection
+- [ ] **Fluid Simulation** - SPH, Lattice Boltzmann for blood flow, aerodynamics
+- [ ] **Rigid Body Dynamics** - 6-DOF for spacecraft, surgical robots, mechanical systems
+
+### Data Pipeline
+
+- [x] **Time Series Buffer** - Circular buffers with GPU upload (vital signs, telemetry, sensor data)
+- [x] **Decimation** - LOD for large datasets (works across all chart types)
+- [x] **Streaming Protocol** - WebSocket/WebRTC for real-time data (works for medical + aerospace)
+- [x] **Data Interpolation** - Spline, cubic, linear (universal for all time-series)
+
+### Animation System
+
+- [x] **Spring Physics** - Natural motion (UI transitions, camera moves)
+- [x] **Easing Functions** - CSS-compatible timing
+- [x] **Animation Presets** - Ready-to-use sequences for orbital, UI, data animations
+
+### Coordinate Systems
+
+- [x] **Universal Transforms** - Convert between any reference frame
+  - ECI ↔ ECEF ↔ Geodetic (aerospace)
+  - Patient ↔ World ↔ Image (medical - placeholder)
+  - Local ↔ UTM ↔ Geographic (geospatial)
+- [ ] **Units System** - Type-safe dimensional analysis (meters, feet, nm, parsecs)
+
+### GPU Acceleration
+
+- [x] **Compute Shaders** - Physics, FFT, image processing on GPU
+- [x] **Instanced Rendering** - 1000s of identical objects in one draw call
+- [ ] **Texture Streaming** - Lazy-load large medical images, satellite tiles
+
+**Why This Matters:** An ECG component and an orbital path use the **same line renderer**. A thermal camera and a spectrogram use the **same heatmap canvas**. A skeleton and a spacecraft use the **same mesh renderer**. This is what makes the library unique—true cross-domain primitives.
+
+**The Innovation:** Same `<VectorField>` for surgical forces AND aerodynamic forces. Same `<TerrainMap>` for helicopter flight AND underwater drones. Same `<LineChart>` for ECG AND orbital telemetry. This is your competitive advantage.
+
+---
+
+## Phase 1: Planets ✓ (Completed)
+
 ## Phase 2: Scientific Charts & Analysis ✓ (Completed)
 
-- [x] **Waterfall Plot** - 3D spectral analysis over time
-- [x] **Spectrogram** - Time-frequency representation
+## Phase 2.6: Geospatial & Terrain Visualization
+
+> **Goal:** High-performance terrain rendering for aerospace, defense, and earth sciences. From your Laguna Beach terrain example.
+
+### Terrain Rendering
+
+- [ ] **3D Elevation Map** - DEM/DTM rendering from height data with texture mapping
+- [ ] **Topographic Contours** - Elevation lines on 3D terrain with adaptive LOD
+- [ ] **Path Overlay** - Routes on 3D surface
+- [ ] **Satellite Texture** - High-resolution imagery draped over terrain
+- [ ] **Viewshed Analysis** - Line-of-sight visibility calculations
+- [ ] **Slope/Aspect Visualization** - Terrain gradient with color coding
+- [ ] **Elevation Profile** - Cross-section along path with interactive scrubbing
+
+### GIS Components
+
+- [ ] **Map Projections** - Mercator, UTM, geographic coordinate transformations
+- [ ] **Coordinate Display** - Lat/long, MGRS, UTM with precision control
+- [ ] **Distance Measurement** - Great circle, geodesic distance calculations
+- [ ] **Area Calculation** - Polygon area on curved Earth surface
+- [ ] **Geofencing** - Boundary visualization and containment checking
+
+---
+
+## Phase 2.7: HUD & Tactical Interfaces (NEW)
+
+> **Goal:** Military/aerospace-grade heads-up displays.
+
+### HUD Elements
+
+- [ ] **Corner Brackets** - Tactical frame UI with animated states
+- [ ] **Targeting Reticle** - Crosshairs with range/bearing/elevation
+- [ ] **Heading Tape** - Cardinal direction scrolling tape indicator
+- [ ] **Pitch Ladder** - Flight director style attitude reference
+- [ ] **Range Finder Display** - Distance with unit conversion and precision
+- [ ] **Coordinate Overlay** - Lat/long with precision formatting
+
+### Tactical Displays
+
+- [ ] **Radar Scope** - PPI display with contacts, bearing, range rings
+- [ ] **Sonar Display** - Active/passive acoustic with bearing time history
+- [ ] **Situation Awareness** - Blue force tracking with IFF markers
+- [ ] **Target Tracking** - Multiple contact management with TMA
+- [ ] **Threat Assessment** - Priority-based contact sorting and display
+
+### Sensor Overlays
+
+- [ ] **Thermal Imaging** - False color temperature mapping with palettes
+- [ ] **Night Vision Overlay** - Green/white hot rendering modes
+- [ ] **LiDAR Point Cloud** - Real-time 3D point rendering
+
+---
 
 ### 3D Plotting & Fields
 
@@ -38,21 +145,13 @@
 - [ ] **Annotation Labels** - Callouts and markers in 3D space
 - [ ] **Grid Planes** - Reference planes (XY, YZ, XZ)
 
-## Phase 3: Network & System Architecture
-
-- [ ] Node Graph Editor - Visual programming/system design
-- [ ] Dataflow Visualizer - Signal routing between subsystems
-- [ ] State Machine Diagram - Interactive FSM visualization
-- [ ] Dependency Graph - System interdependencies
-- [ ] Pipeline Monitor - Data processing stages
-
 ## Phase 4: Flight Dynamics & Astrodynamics
 
 > **Goal:** STK-level accuracy for Earth and lunar mission analysis. Physics-based simulation with validated propagators, environmental models, and mission planning tools.
 
 ### Orbital Mechanics & Propagation
 
-- [ ] **Orbit Propagator** - Multiple propagators (SGP4, J2, high-fidelity w/ perturbations)
+- [x] **Orbit Propagator** - Multiple propagators (SGP4, J2, high-fidelity w/ perturbations)
 - [ ] **Two-Body Problem** - Keplerian orbits with classical orbital elements
 - [ ] **Orbital Elements Display** - Interactive visualization (a, e, i, Ω, ω, ν)
 - [ ] **Ground Track Plotter** - Satellite path over Earth/Moon surface
@@ -119,7 +218,7 @@
 
 ### Physics Simulation
 
-- [ ] **Rigid Body Simulator** - 6-DOF dynamics with collision
+- [ ] **Rigid Body Simulator** - 6-DOF dynambeics with collision
 - [ ] **Spring-Mass-Damper** - Interactive mechanical systems
 - [ ] **Pendulum Variants** - Simple, double, spherical, chaotic
 - [ ] **Particle System** - N-body simulation with forces
@@ -283,7 +382,6 @@
 
 ### Documentation Site
 
-- [ ] **Interactive Playground** - CodeSandbox-style editor
 - [ ] **Component API Explorer** - Auto-generated docs
 - [ ] **Physics Explainers** - Educational content
 - [ ] **Use Case Gallery** - Real-world examples
@@ -291,5 +389,4 @@
 
 ### Testing & Quality
 
-- [ ] **Accessibility Audit** - WCAG 2.1 AA compliance
 - [ ] **Performance Profiler** - Frame rate monitoring

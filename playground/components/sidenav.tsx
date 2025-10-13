@@ -53,16 +53,11 @@ export const Sidenav = () => {
           {proComponents.length > 0 && (
             <div>
               <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
                 Pro Components
               </div>
               <div className="flex flex-col gap-1">
                 {proComponents.map((comp) => (
-                  <Link
-                    key={comp.id}
-                    href={`/${comp.id}`}
-                    className="w-full"
-                  >
+                  <Link key={comp.id} href={`/${comp.id}`} className="w-full">
                     <Button
                       variant="ghost"
                       className={`${
@@ -72,7 +67,6 @@ export const Sidenav = () => {
                       } cursor-pointer group relative`}
                       size="sm"
                     >
-                      <Sparkles className="w-3 h-3 mr-1.5 text-purple-500 dark:text-purple-400" />
                       {comp.name}
                     </Button>
                   </Link>

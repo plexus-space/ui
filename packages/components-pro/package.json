@@ -1,0 +1,21 @@
+{
+  "name": "@plexusui/components-pro",
+  "version": "0.1.0",
+  "description": "Plexus UI Pro Components - Advanced aerospace and scientific visualization components",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./orbit-propagator": "./orbit-propagator.tsx",
+    "./orbital-elements-display": "./orbital-elements-display.tsx",
+    "./ground-track-plotter": "./ground-track-plotter.tsx",
+    "./orbit-transfer-planner": "./orbit-transfer-planner.tsx",
+    "./node-graph-editor": "./node-graph-editor.tsx",
+    "./dataflow-visualizer": "./dataflow-visualizer.tsx"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "@react-three/fiber": "^8.0.0",
+    "@react-three/drei": "^9.0.0",
+    "three": "^0.160.0"
+  }
+}

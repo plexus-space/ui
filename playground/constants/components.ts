@@ -81,13 +81,41 @@ export const components: Component[] = [
     tier: "free",
     textures: ["/flat-neptune.jpg"],
   },
+
   {
-    id: "orbital-path",
-    name: "Orbital Path",
+    id: "orbit-propagator",
+    name: "Orbit Propagator",
     category: "Orbital Mechanics",
-    tier: "free",
+    tier: "pro",
     description:
-      "Draw elliptical orbits around planets using real Keplerian orbital elements. Essential for visualizing satellite trajectories.",
+      "Real-time orbit propagation with multiple propagator types (Two-Body, J2, High-Fidelity). Features GPU-accelerated rendering, ground track visualization, orbital elements display, and time control. Supports multiple satellites, orbital perturbations, atmospheric drag, and mission analysis. Essential for mission planning, constellation design, and spacecraft operations.",
+    textures: [],
+  },
+  {
+    id: "orbital-elements-display",
+    name: "Orbital Elements Display",
+    category: "Orbital Mechanics",
+    tier: "pro",
+    description:
+      "Interactive HUD overlay displaying Keplerian orbital elements in real-time. Shows classical elements (semi-major axis, eccentricity, inclination, RAAN, argument of periapsis, true anomaly) and derived parameters (period, apoapsis, periapsis). Scientific accuracy with J2000 ECI reference frame. Perfect for mission control dashboards and orbital analysis.",
+    textures: [],
+  },
+  {
+    id: "ground-track-plotter",
+    name: "Ground Track Plotter",
+    category: "Orbital Mechanics",
+    tier: "pro",
+    description:
+      "Visualizes satellite ground track (sub-satellite point) on Earth's surface with ECI to geodetic coordinate transformations. Shows the path traced by satellites accounting for Earth rotation. Displays ascending/descending node markers for equator crossings. Essential for coverage analysis, visibility windows, and mission planning.",
+    textures: [],
+  },
+  {
+    id: "orbit-transfer-planner",
+    name: "Orbit Transfer Planner",
+    category: "Orbital Mechanics",
+    tier: "pro",
+    description:
+      "Calculate and visualize Hohmann and bi-elliptic orbital transfers between circular orbits. Displays complete delta-V budget breakdown, transfer times, and burn locations. Shows initial orbit, transfer ellipse(s), and final orbit with scientifically accurate calculations. Includes automatic optimization for radius ratio thresholds. Perfect for mission planning and propulsion system sizing.",
     textures: [],
   },
   {
@@ -162,15 +190,7 @@ export const components: Component[] = [
       "Statistical distribution visualization showing quartiles, median, whiskers, and outliers. Essential for comparing distributions across multiple categories with clear visual representation of spread and central tendency.",
     textures: [],
   },
-  {
-    id: "violin-plot",
-    name: "Violin Plot",
-    category: "Charts",
-    tier: "free",
-    description:
-      "Probability density visualization using kernel density estimation. Combines the benefits of box plots with detailed distribution shapes, revealing multimodal distributions and data density patterns.",
-    textures: [],
-  },
+
   {
     id: "spectrogram",
     name: "Spectrogram",

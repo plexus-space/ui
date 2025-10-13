@@ -98,32 +98,6 @@ export const registry = {
     // ============================================================================
     // Orbital Mechanics
     // ============================================================================
-    "orbital-path": {
-        name: "orbital-path",
-        type: "components:ui",
-        description: "Keplerian orbital path visualization",
-        files: [`${BASE_URL}/orbital-path.tsx`],
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        category: "orbital",
-    },
-    "solar-system": {
-        name: "solar-system",
-        type: "components:ui",
-        description: "Complete solar system with all planets",
-        files: [`${BASE_URL}/solar-system.tsx`],
-        dependencies: ["react", "@react-three/fiber", "@react-three/drei", "three"],
-        registryDependencies: [
-            "earth",
-            "mars",
-            "mercury",
-            "venus",
-            "jupiter",
-            "saturn",
-            "uranus",
-            "neptune",
-        ],
-        category: "3d",
-    },
     // ============================================================================
     // Chart Components
     // ============================================================================
@@ -215,20 +189,20 @@ export const registry = {
         registryDependencies: ["lib"],
         category: "charts",
     },
-    "violin-plot": {
-        name: "violin-plot",
-        type: "components:chart",
-        description: "Probability density visualization with kernel density estimation",
-        files: [`${BASE_URL}/violin-plot.tsx`],
-        dependencies: ["react"],
-        registryDependencies: ["lib"],
-        category: "charts",
-    },
     spectrogram: {
         name: "spectrogram",
         type: "components:chart",
         description: "Time-frequency representation with color-coded magnitude visualization",
         files: [`${BASE_URL}/spectrogram.tsx`],
+        dependencies: ["react"],
+        registryDependencies: ["lib"],
+        category: "charts",
+    },
+    "waterfall-plot": {
+        name: "waterfall-plot",
+        type: "components:chart",
+        description: "3D spectral analysis visualization with stacked waterfall lines color-coded by position",
+        files: [`${BASE_URL}/waterfall-plot.tsx`],
         dependencies: ["react"],
         registryDependencies: ["lib"],
         category: "charts",

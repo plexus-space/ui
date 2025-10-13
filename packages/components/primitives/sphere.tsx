@@ -208,6 +208,7 @@ export interface AtmosphereProps {
   intensity?: number;
   falloff?: number;
   scale?: number;
+  radius?: number; // Parent sphere radius for proper scaling
 }
 
 export function Atmosphere({
@@ -215,6 +216,7 @@ export function Atmosphere({
   intensity = 0.6,
   falloff = 3.0,
   scale = 1.015,
+  radius, // If provided, use this radius; otherwise assume parent scale handles it
 }: AtmosphereProps) {
   const uniforms = useMemo(
     () => ({
@@ -225,9 +227,13 @@ export function Atmosphere({
     [color, intensity, falloff]
   );
 
+  // If radius is provided, scale absolutely; otherwise use relative scale
+  const atmosphereRadius = radius ? radius * scale : 1;
+  const atmosphereScale = radius ? 1 : scale;
+
   return (
-    <mesh scale={scale}>
-      <sphereGeometry args={[1, 64, 32]} />
+    <mesh scale={atmosphereScale}>
+      <sphereGeometry args={[atmosphereRadius, 64, 32]} />
       <shaderMaterial
         uniforms={uniforms}
         vertexShader={ATMOSPHERE_SHADER.vertex}
@@ -260,6 +266,7 @@ export interface CloudsProps {
   height?: number;
   opacity?: number;
   rotationSpeed?: number;
+  radius?: number; // Parent sphere radius for proper scaling
 }
 
 export function Clouds({
@@ -267,6 +274,7 @@ export function Clouds({
   height = 1.003,
   opacity = 0.4,
   rotationSpeed = 0.0001,
+  radius,
 }: CloudsProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const texture = useLoader(THREE.TextureLoader, textureUrl);
@@ -277,9 +285,13 @@ export function Clouds({
     }
   });
 
+  // If radius is provided, scale absolutely; otherwise use relative scale
+  const cloudRadius = radius ? radius * height : 1;
+  const cloudScale = radius ? 1 : height;
+
   return (
-    <mesh ref={meshRef} scale={height}>
-      <sphereGeometry args={[1, 64, 32]} />
+    <mesh ref={meshRef} scale={cloudScale}>
+      <sphereGeometry args={[cloudRadius, 64, 32]} />
       <meshStandardMaterial
         map={texture}
         transparent

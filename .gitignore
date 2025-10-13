@@ -45,4 +45,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-/packages/components-pro
+# /packages/components-pro
