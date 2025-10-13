@@ -197,7 +197,34 @@ export const components: Component[] = [
     category: "Network & System Architecture",
     tier: "pro",
     description:
-      "Interactive node-based graph editor for visual programming, system design, and dataflow visualization. Features drag-and-drop node positioning, port-based connections, grid snapping, pan/zoom navigation, and a minimap for large graphs. Perfect for designing control systems, signal processing pipelines, and mission workflows.",
+      "Interactive node-based graph editor for visual programming, system design, and dataflow visualization. Features drag-and-drop node positioning, port-based connections, grid snapping, pan/zoom navigation. Perfect for designing control systems, signal processing pipelines, and mission workflows.",
+    textures: [],
+  },
+  {
+    id: "gpu-fluid-simulation",
+    name: "GPU Fluid Simulation",
+    category: "Physics Primitives",
+    tier: "free",
+    description:
+      "Beautiful GPU-accelerated fluid simulation using WebGL shaders. Drag to create mesmerizing vortices and inject vibrant colors. Real-time Navier-Stokes equation solving with bloom effects, velocity advection, and pressure projection. Inspired by Pavel Dobryakov's stunning WebGL demo.",
+    textures: [],
+  },
+  {
+    id: "fluid-simulation",
+    name: "SPH Fluid (Particles)",
+    category: "Physics Primitives",
+    tier: "free",
+    description:
+      "Real-time SPH (Smoothed Particle Hydrodynamics) fluid simulation demonstrating water behavior with particle-based physics. Features pressure forces, viscosity, gravity, and boundary collision. Perfect for understanding computational fluid dynamics and particle methods.",
+    textures: [],
+  },
+  {
+    id: "rigid-body",
+    name: "Rigid Body Dynamics",
+    category: "Physics Primitives",
+    tier: "free",
+    description:
+      "6-DOF (six degrees of freedom) rigid body physics with quaternion-based rotation. Demonstrates spacecraft attitude control, asteroid collisions, torque application, and proper inertia tensor handling. No gimbal lock, smooth dynamics.",
     textures: [],
   },
 ];

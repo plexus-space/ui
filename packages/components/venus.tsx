@@ -185,7 +185,17 @@ export interface VenusControlsProps {
  * Main Venus sphere with texture
  */
 export interface VenusGlobeProps
-  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'color' | 'rotationSpeed' | 'rotation' | 'segments' | 'roughness' | 'metalness'> {
+  extends Omit<
+    React.ComponentPropsWithRef<typeof Sphere>,
+    | "radius"
+    | "textureUrl"
+    | "color"
+    | "rotationSpeed"
+    | "rotation"
+    | "segments"
+    | "roughness"
+    | "metalness"
+  > {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128

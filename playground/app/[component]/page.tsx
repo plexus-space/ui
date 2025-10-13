@@ -16,8 +16,6 @@ import { BoxPlotExamples } from "@/examples/box";
 import { SpectrogramExamples } from "@/examples/spectrogram";
 import { WaterfallPlotExamples } from "@/examples/waterfall";
 import { NodeGraphEditorExamples } from "@/examples/node-graph-editor";
-import { OrbitPropagatorExamples } from "@/examples/orbit-propagator";
-import { OrbitTransferPlannerExamples } from "@/examples/orbit-transfer-planner";
 import { EarthExamples } from "@/examples/planets";
 import { MarsExamples } from "@/examples/planets";
 import { MercuryExamples } from "@/examples/planets";
@@ -48,8 +46,6 @@ const componentExamples: Record<string, React.ComponentType> = {
   spectrogram: SpectrogramExamples,
   "waterfall-plot": WaterfallPlotExamples,
   "node-graph-editor": NodeGraphEditorExamples,
-  "orbit-propagator": OrbitPropagatorExamples,
-  "orbit-transfer-planner": OrbitTransferPlannerExamples,
   earth: EarthExamples,
   mars: MarsExamples,
   mercury: MercuryExamples,

@@ -99,10 +99,19 @@ export const Sphere = forwardRef<THREE.Mesh, SphereProps>(
         map: textureUrl ? textureLoader.load(textureUrl) : null,
         normalMap: normalMapUrl ? textureLoader.load(normalMapUrl) : null,
         bumpMap: bumpMapUrl ? textureLoader.load(bumpMapUrl) : null,
-        roughnessMap: specularMapUrl ? textureLoader.load(specularMapUrl) : null,
+        roughnessMap: specularMapUrl
+          ? textureLoader.load(specularMapUrl)
+          : null,
         emissiveMap: emissiveMapUrl ? textureLoader.load(emissiveMapUrl) : null,
       };
-    }, [textureUrl, normalMapUrl, bumpMapUrl, specularMapUrl, emissiveMapUrl, textureLoader]);
+    }, [
+      textureUrl,
+      normalMapUrl,
+      bumpMapUrl,
+      specularMapUrl,
+      emissiveMapUrl,
+      textureLoader,
+    ]);
 
     // Cleanup lifecycle: dispose geometries, materials, and textures
     useEffect(() => {
@@ -172,7 +181,9 @@ export const Sphere = forwardRef<THREE.Mesh, SphereProps>(
               metalness={metalness}
               roughness={0.6}
               emissive={emissiveColor ?? (emissiveMapUrl ? 0xffffff : 0x000000)}
-              emissiveIntensity={emissiveIntensity ?? (emissiveMapUrl ? 2.0 : 0)}
+              emissiveIntensity={
+                emissiveIntensity ?? (emissiveMapUrl ? 2.0 : 0)
+              }
             />
           )}
         </mesh>

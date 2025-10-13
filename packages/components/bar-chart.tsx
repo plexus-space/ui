@@ -1,15 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  cn,
-  getDomain,
-  createScale,
-  formatValue,
-  formatTime,
-  getTicks,
-  type Point,
-} from "./lib";
+import { cn, createScale, formatValue, formatTime, getTicks } from "./lib";
 
 // ============================================================================
 // Types

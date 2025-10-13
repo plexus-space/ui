@@ -18,7 +18,14 @@ export interface LegendItem {
   /** Filled area (for polar/area charts) */
   filled?: boolean;
   /** Symbol shape (for scatter plots) */
-  symbol?: "line" | "circle" | "square" | "diamond" | "triangle" | "cross" | "plus";
+  symbol?:
+    | "line"
+    | "circle"
+    | "square"
+    | "diamond"
+    | "triangle"
+    | "cross"
+    | "plus";
   /** Active state for toggleable series */
   active?: boolean;
   /** Click handler for individual items */
@@ -260,14 +267,14 @@ export const ChartLegend = memo(
           <>
             <defs>
               <filter id="legend-shadow">
-                <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
-                <feOffset dx="0" dy="2" result="offsetblur"/>
+                <feGaussianBlur in="SourceAlpha" stdDeviation="4" />
+                <feOffset dx="0" dy="2" result="offsetblur" />
                 <feComponentTransfer>
-                  <feFuncA type="linear" slope="0.15"/>
+                  <feFuncA type="linear" slope="0.15" />
                 </feComponentTransfer>
                 <feMerge>
-                  <feMergeNode/>
-                  <feMergeNode in="SourceGraphic"/>
+                  <feMergeNode />
+                  <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
             </defs>
@@ -308,12 +315,18 @@ export const ChartLegend = memo(
               }}
               onMouseEnter={(e) => {
                 if (isClickable) {
-                  e.currentTarget.setAttribute("opacity", isActive ? "0.7" : "0.6");
+                  e.currentTarget.setAttribute(
+                    "opacity",
+                    isActive ? "0.7" : "0.6"
+                  );
                 }
               }}
               onMouseLeave={(e) => {
                 if (isClickable) {
-                  e.currentTarget.setAttribute("opacity", isActive ? "1" : "0.4");
+                  e.currentTarget.setAttribute(
+                    "opacity",
+                    isActive ? "1" : "0.4"
+                  );
                 }
               }}
               role={isClickable ? "button" : undefined}

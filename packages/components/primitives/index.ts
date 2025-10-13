@@ -1,43 +1,58 @@
 /**
- * Plexus UI Primitives
+ * Plexus UI Primitives - Minimal Building Blocks
  *
- * Core building blocks for aerospace and physics visualizations.
- * Import from this barrel file for convenience.
+ * **Philosophy: Less is more**
+ * - 6 rendering primitives (all GPU-accelerated)
+ * - Core physics & math utilities
+ * - Zero bloat, zero dependencies on unused code
  *
- * @example
- * ```tsx
- * import { Sphere, Atmosphere, useGPURenderer, vec3 } from './primitives';
- * ```
+ * **The 6 Building Blocks:**
+ * 1. LineRenderer - GPU lines (orbits, trajectories, waveforms)
+ * 2. Marker - Billboards (satellites, waypoints)
+ * 3. Trail - Streaming trails (satellite paths)
+ * 4. OrbitPath - Analytical orbits (Keplerian)
+ * 5. Sphere - Planets & celestial bodies
+ * 6. Clouds - Atmospheric effects
+ *
+ * Everything else has been removed. Build what you need from these blocks.
  */
 
-// Validation Utilities
-export {
-  isValidVec3,
-  isValidVec2,
-  isValidNumber,
-  validateVec3,
-  validateVec2,
-  validateNumber,
-  sanitizeVec3,
-  sanitizeVec2,
-  clamp,
-} from "./validation";
+// ============================================================================
+// 🎨 RENDERING PRIMITIVES (The 6 Core)
+// ============================================================================
 
-// Orbital Mechanics
+/**
+ * LineRenderer - GPU-accelerated polylines
+ * 100k+ points at 60fps, zero-copy updates, LOD
+ */
 export {
-  solveKeplersEquation,
-  eccentricToTrueAnomaly,
-  trueToEccentricAnomaly,
-  meanToTrueAnomaly,
-  trueToMeanAnomaly,
-  createPerifocalToECIMatrix,
-  transformPerifocalToECI,
-  computePositionAtAnomaly,
-  computeOrbitPath,
-  type OrbitalElements as OrbitalElementsBase,
-} from "./orbital-mechanics";
+  LineRenderer,
+  ThickLineRenderer,
+  useLineBuffer,
+  type LineRendererProps,
+  type LineRendererHandle,
+  type ThickLineRendererProps,
+  type Point3D,
+  type UseLineBufferOptions,
+  type UseLineBufferReturn,
+} from "./gpu-line-renderer";
 
-// 3D Primitives
+/**
+ * Marker - Simple billboards
+ * Lightweight, emissive, always faces camera
+ */
+export { Marker, type MarkerProps } from "./marker";
+
+/**
+ * Trail - Streaming trails
+ * GPU-accelerated via LineRenderer, circular buffer
+ */
+export { Trail, type TrailProps } from "./trail";
+
+/**
+ * Sphere - Planets & celestial bodies
+ * Textures, normal maps, atmosphere shaders
+ */
 export {
   Sphere,
   Atmosphere,
@@ -49,7 +64,14 @@ export {
   type RingProps,
 } from "./sphere";
 
-// Physics Engine
+// ============================================================================
+// 🧮 PHYSICS & MATH (Core Utilities)
+// ============================================================================
+
+/**
+ * Physics Engine
+ * Euler, Verlet, RK4 integrators with composable forces
+ */
 export {
   vec3,
   vec2,
@@ -74,217 +96,73 @@ export {
   type OrbitalElements,
 } from "./physics";
 
-// Animation System
+/**
+ * Units System
+ * Type-safe dimensional analysis (meters, km, radians, etc.)
+ */
 export {
-  updateSpring,
-  isSpringAtRest,
-  SPRING_PRESETS,
-  easing,
-  lerp,
-  easedLerp,
-  cubicBezier,
-  cssEasing,
-  tween,
-  stagger,
-  type SpringConfig,
-  type SpringState,
-  type EasingFunction,
-  type TimingOptions,
-} from "./animation";
+  // Length
+  meters,
+  kilometers,
+  feet,
+  miles,
+  nauticalMiles,
+  astronomicalUnits,
+  toMeters,
+  toKilometers,
+  // Mass
+  kilograms,
+  grams,
+  tonnes,
+  pounds,
+  toKilograms,
+  // Time
+  seconds,
+  minutes,
+  hours,
+  days,
+  years,
+  toSeconds,
+  // Velocity
+  metersPerSecond,
+  kilometersPerHour,
+  milesPerHour,
+  knots,
+  toMetersPerSecond,
+  // Angle
+  radians,
+  degrees,
+  toRadians,
+  toDegrees,
+  // Types
+  type Quantity,
+  type Dimensions,
+  type LengthDim,
+  type MassDim,
+  type TimeDim,
+  type VelocityDim,
+  type AngleDim,
+} from "./units";
 
-// Animation Presets
+/**
+ * Validation
+ * Input sanitization, bounds checking, NaN/Infinity handling
+ */
 export {
-  orbitPresets,
-  cameraPresets,
-  dataPresets,
-  particlePresets,
-  uiPresets,
-  physicsPresets,
-  sequences,
-  getPreset,
-  listPresets,
-  blendPresets,
-  executeSequence,
-  type OrbitAnimationPreset,
-  type CameraAnimationPreset,
-  type DataAnimationPreset,
-  type ParticleAnimationPreset,
-  type UITransitionPreset,
-  type PhysicsPreset,
-  type AnimationStep,
-  type AnimationSequence,
-} from "./animation-presets";
+  isValidVec3,
+  isValidVec2,
+  isValidNumber,
+  validateVec3,
+  validateVec2,
+  validateNumber,
+  sanitizeVec3,
+  sanitizeVec2,
+  clamp,
+} from "./validation";
 
-// WebAssembly Physics
-export {
-  createWASMPhysics,
-  supportsWASM,
-  isWASMLoaded,
-  simulateNBody,
-  detectCollisions,
-  benchmarkPhysics,
-  type WASMPhysicsModule,
-} from "./wasm-physics";
-
-// Chart Primitives - Heatmap
-export {
-  Heatmap,
-  type HeatmapCell,
-  type CellShape,
-  type HeatmapRootProps,
-} from "../heatmap";
-
-// Chart Primitives - Polar Plot
-export {
-  PolarPlot,
-  type PolarPoint,
-  type PolarSeries,
-  type PolarAxis,
-  type PolarVariant,
-  type PolarPlotRootProps,
-} from "../polar-plot";
-
-// GPU Line Renderer
-export {
-  LineRenderer,
-  ThickLineRenderer,
-  useLineBuffer,
-  type LineRendererProps,
-  type LineRendererHandle,
-  type ThickLineRendererProps,
-  type Point3D,
-  type UseLineBufferOptions,
-  type UseLineBufferReturn,
-} from "./gpu-line-renderer";
-
-// Orbital Mechanics Primitives
-export {
-  Trail,
-  type TrailProps,
-} from "./trail";
-
-export {
-  Marker,
-  type MarkerProps,
-} from "./marker";
-
-export {
-  OrbitPath,
-  type OrbitPathProps,
-} from "./orbit-path";
-
-// Point Cloud Renderer
-export {
-  PointCloud,
-  LODPointCloud,
-  generateColormap,
-  type PointCloudProps,
-  type PointCloudHandle,
-  type LODPointCloudProps,
-} from "./point-cloud";
-
-// Mesh Loader
-export {
-  MeshLoader,
-  InstancedMeshLoader,
-  MeshWithOutline,
-  type MeshLoaderProps,
-  type MeshLoaderHandle,
-  type InstancedMeshLoaderProps,
-  type MeshWithOutlineProps,
-} from "./mesh-loader";
-
-// Vector Field Renderer
-export {
-  VectorField,
-  Streamlines,
-  QuiverPlot,
-  type VectorFieldProps,
-  type VectorFieldHandle,
-  type StreamlinesProps,
-  type QuiverPlotProps,
-} from "./vector-field";
-
-// Volume Renderer
-export {
-  VolumeRenderer,
-  SliceViewer,
-  type VolumeRendererProps,
-  type VolumeRendererHandle,
-  type TransferFunctionPoint,
-  type SliceViewerProps,
-} from "./volume-renderer";
-
-// Visual Effects
-export {
-  GlowEffect,
-  StarField,
-  LensFlare,
-  MotionTrail,
-  ParticleEmitter,
-  StyledGrid,
-  type GlowEffectProps,
-  type StarFieldProps,
-  type LensFlareProps,
-  type MotionTrailProps,
-  type ParticleEmitterProps,
-  type StyledGridProps,
-} from "./visual-effects";
-
-// Data Pipeline
-export {
-  createTimeSeriesBuffer,
-  createDataStream,
-  createTimeSynchronizer,
-  createRealTimeStats,
-  interpolateLinear,
-  interpolateCubic,
-  interpolateSpline,
-  resampleData,
-  type TimeSeriesBufferInstance,
-  type DataStreamInstance,
-  type DataStreamOptions,
-  type TimeSynchronizerInstance,
-  type RealTimeStatsInstance,
-} from "./data-pipeline";
-
-// Coordinate Systems
-export {
-  geodeticToECEF,
-  ecefToGeodetic,
-  eciToECEF,
-  ecefToECI,
-  geodeticToECI,
-  eciToGeodetic,
-  ecefToENU,
-  enuToECEF,
-  geodeticToUTM,
-  utmToGeodetic,
-  calculateGMST,
-  greatCircleDistance,
-  calculateAzimuth,
-  calculateElevation,
-  convertCoordinates,
-  WGS84,
-  EARTH_ROTATION_RATE,
-  J2000_EPOCH,
-  type Vector3D,
-  type GeodeticCoordinates,
-  type ECEFCoordinates,
-  type ECICoordinates,
-  type ENUCoordinates,
-  type UTMCoordinates,
-  type CoordinateSystem,
-  type Coordinates,
-} from "./coordinate-systems";
-
-// GPU Compute
-export {
-  createGPUFFT,
-  createGPUConvolution,
-  KERNELS,
-  useGPUFFT,
-  useGPUConvolution,
-  type GPUFFTInstance,
-  type GPUConvolutionInstance,
-} from "./gpu-compute";
+// ============================================================================
+// That's it. Build everything else from these blocks.
+// ============================================================================
+//
+// For animations: Use Framer Motion, react-spring, or Three.js tweens
+// For easing: Use CSS transitions or animation libraries

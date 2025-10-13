@@ -615,7 +615,6 @@ export const NodeGraphEditorExamples = () => {
                 <NodeGraphEditor.Edges />
                 <NodeGraphEditor.Nodes />
               </NodeGraphEditor.Canvas>
-              <NodeGraphEditor.Minimap />
             </NodeGraphEditor.Container>
           </NodeGraphEditor.Root>
         }

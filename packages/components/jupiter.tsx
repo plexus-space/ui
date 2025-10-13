@@ -190,7 +190,17 @@ export interface JupiterControlsProps
  * Main Jupiter sphere with texture
  */
 export interface JupiterGlobeProps
-  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'color' | 'rotationSpeed' | 'rotation' | 'segments' | 'roughness' | 'metalness'> {
+  extends Omit<
+    React.ComponentPropsWithRef<typeof Sphere>,
+    | "radius"
+    | "textureUrl"
+    | "color"
+    | "rotationSpeed"
+    | "rotation"
+    | "segments"
+    | "roughness"
+    | "metalness"
+  > {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128

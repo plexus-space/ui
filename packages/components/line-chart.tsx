@@ -85,8 +85,8 @@ export interface Axis {
  * Visual variant styles for the chart
  */
 export type LineChartVariant =
-  | "default"   // Balanced styling for general use
-  | "minimal"   // Minimal styling with reduced visual weight
+  | "default" // Balanced styling for general use
+  | "minimal" // Minimal styling with reduced visual weight
   | "scientific" // Dense styling for data analysis
   | "dashboard"; // Polished styling for dashboards
 

@@ -100,9 +100,16 @@ export function isValidNumber(
  * @param paramName - Parameter name for error message
  * @returns true if valid, false if invalid (with console warning)
  */
-export function validateVec3(value: unknown, paramName = "position"): value is Vec3 {
+export function validateVec3(
+  value: unknown,
+  paramName = "position"
+): value is Vec3 {
   if (!isValidVec3(value)) {
-    console.warn(`[Validation] Invalid ${paramName}:`, value, "- Expected [number, number, number] with finite values");
+    console.warn(
+      `[Validation] Invalid ${paramName}:`,
+      value,
+      "- Expected [number, number, number] with finite values"
+    );
     return false;
   }
   return true;
@@ -115,9 +122,16 @@ export function validateVec3(value: unknown, paramName = "position"): value is V
  * @param paramName - Parameter name for error message
  * @returns true if valid, false if invalid (with console warning)
  */
-export function validateVec2(value: unknown, paramName = "position"): value is Vec2 {
+export function validateVec2(
+  value: unknown,
+  paramName = "position"
+): value is Vec2 {
   if (!isValidVec2(value)) {
-    console.warn(`[Validation] Invalid ${paramName}:`, value, "- Expected [number, number] with finite values");
+    console.warn(
+      `[Validation] Invalid ${paramName}:`,
+      value,
+      "- Expected [number, number] with finite values"
+    );
     return false;
   }
   return true;

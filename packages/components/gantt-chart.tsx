@@ -122,8 +122,8 @@ export interface GanttChartRootProps {
    * @default "default"
    */
   variant?:
-    | "default"   // Standard row height and spacing
-    | "compact"   // Reduced row height for dense layouts
+    | "default" // Standard row height and spacing
+    | "compact" // Reduced row height for dense layouts
     | "detailed"; // Increased height with descriptions
   /**
    * Use 12-hour time format instead of 24-hour

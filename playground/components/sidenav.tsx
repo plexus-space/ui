@@ -17,37 +17,42 @@ export const Sidenav = () => {
     <aside className="w-52 flex-shrink-0  bg-background overflow-y-auto">
       <nav className="p-4 pt-6">
         <div className="space-y-1">
-          {["Planetary Bodies", "Charts"].map((category) => (
+          {["Physics Primitives", "Planetary Bodies", "Charts"].map(
+            (category) => (
+              <div key={category}>
+                <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 ">
+                  {category}
+                </div>
+                <div className="flex flex-col gap-1">
+                  {freeComponents
+                    .filter((comp) => comp.category === category)
+                    .map((comp) => (
+                      <Link
+                        key={comp.id}
+                        href={`/${comp.id}`}
+                        className="w-full"
+                      >
+                        <Button
+                          variant="ghost"
+                          className={`${
+                            comp.id === componentId
+                              ? "bg-zinc-200 dark:bg-zinc-800"
+                              : ""
+                          } cursor-pointer`}
+                          size="sm"
+                        >
+                          {comp.name}
+                        </Button>
+                      </Link>
+                    ))}
+                </div>
+              </div>
+            )
+          )}
+          {["Flight Dynamics"].map((category) => (
             <div key={category}>
               <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 ">
                 {category}
-              </div>
-              <div className="flex flex-col gap-1">
-                {freeComponents
-                  .filter((comp) => comp.category === category)
-                  .map((comp) => (
-                    <Link key={comp.id} href={`/${comp.id}`} className="w-full">
-                      <Button
-                        variant="ghost"
-                        className={`${
-                          comp.id === componentId
-                            ? "bg-zinc-200 dark:bg-zinc-800"
-                            : ""
-                        } cursor-pointer`}
-                        size="sm"
-                      >
-                        {comp.name}
-                      </Button>
-                    </Link>
-                  ))}
-              </div>
-            </div>
-          ))}
-
-          {proComponents.length > 0 && (
-            <div>
-              <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 flex items-center gap-1">
-                Pro Components
               </div>
               <div className="flex flex-col gap-1">
                 {proComponents.map((comp) => (
@@ -56,9 +61,9 @@ export const Sidenav = () => {
                       variant="ghost"
                       className={`${
                         comp.id === componentId
-                          ? "bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30"
+                          ? "bg-zinc-200 dark:bg-zinc-800"
                           : ""
-                      } cursor-pointer group relative`}
+                      } cursor-pointer`}
                       size="sm"
                     >
                       {comp.name}
@@ -67,7 +72,7 @@ export const Sidenav = () => {
                 ))}
               </div>
             </div>
-          )}
+          ))}
         </div>
       </nav>
     </aside>

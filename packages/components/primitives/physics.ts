@@ -45,7 +45,8 @@ export const vec3 = {
     a[2] * b[0] - a[0] * b[2],
     a[0] * b[1] - a[1] * b[0],
   ],
-  magnitude: (a: Vec3): number => Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]),
+  magnitude: (a: Vec3): number =>
+    Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]),
   normalize: (a: Vec3): Vec3 => {
     const mag = vec3.magnitude(a);
     return mag > 0 ? vec3.div(a, mag) : [0, 0, 0];
@@ -103,7 +104,11 @@ export type ForceFunction2D = (state: PhysicsState2D) => Vec2;
  * @param M - Mass of central body
  * @param center - Position of central body
  */
-export function gravity(G: number, M: number, center: Vec3 = [0, 0, 0]): ForceFunction {
+export function gravity(
+  G: number,
+  M: number,
+  center: Vec3 = [0, 0, 0]
+): ForceFunction {
   return (state) => {
     const r = vec3.sub(state.position, center);
     const rMag = vec3.magnitude(r);
@@ -124,7 +129,11 @@ export function gravity(G: number, M: number, center: Vec3 = [0, 0, 0]): ForceFu
  * @param dragCoefficient - Cd (dimensionless)
  * @param area - Cross-sectional area (m²)
  */
-export function drag(density: number, dragCoefficient: number, area: number): ForceFunction {
+export function drag(
+  density: number,
+  dragCoefficient: number,
+  area: number
+): ForceFunction {
   const k = 0.5 * density * dragCoefficient * area;
   return (state) => {
     const vMag = vec3.magnitude(state.velocity);
@@ -145,7 +154,11 @@ export function drag(density: number, dragCoefficient: number, area: number): Fo
  * @param restLength - Equilibrium length
  * @param anchor - Anchor point
  */
-export function spring(k: number, restLength: number, anchor: Vec3): ForceFunction {
+export function spring(
+  k: number,
+  restLength: number,
+  anchor: Vec3
+): ForceFunction {
   return (state) => {
     const displacement = vec3.sub(state.position, anchor);
     const distance = vec3.magnitude(displacement);
@@ -180,7 +193,10 @@ export function constant(force: Vec3): ForceFunction {
  */
 export function combine(...forces: ForceFunction[]): ForceFunction {
   return (state) => {
-    return forces.reduce((acc, force) => vec3.add(acc, force(state)), vec3.zero());
+    return forces.reduce(
+      (acc, force) => vec3.add(acc, force(state)),
+      vec3.zero()
+    );
   };
 }
 
@@ -294,10 +310,7 @@ export function integrateRK4(
     6
   );
 
-  const velocity = vec3.add(
-    state.velocity,
-    vec3.mul(acceleration, dt)
-  );
+  const velocity = vec3.add(state.velocity, vec3.mul(acceleration, dt));
 
   const position = vec3.add(
     state.position,
@@ -389,7 +402,8 @@ export function stateToOrbitalElements(
 
   // Check for special cases
   const isCircular = eccentricity < TOL;
-  const isEquatorial = Math.abs(inclination) < TOL || Math.abs(inclination - Math.PI) < TOL;
+  const isEquatorial =
+    Math.abs(inclination) < TOL || Math.abs(inclination - Math.PI) < TOL;
 
   // Longitude of ascending node (RAAN)
   let longitudeAscendingNode = 0;
@@ -407,7 +421,10 @@ export function stateToOrbitalElements(
   if (!isCircular) {
     if (!isEquatorial && nMag > TOL) {
       // Standard case: eccentric + inclined orbit
-      const cosOmega_arg = Math.max(-1, Math.min(1, vec3.dot(n, e_vec) / (nMag * eccentricity)));
+      const cosOmega_arg = Math.max(
+        -1,
+        Math.min(1, vec3.dot(n, e_vec) / (nMag * eccentricity))
+      );
       argumentOfPeriapsis = Math.acos(cosOmega_arg);
       if (e_vec[2] < 0) {
         argumentOfPeriapsis = 2 * Math.PI - argumentOfPeriapsis;
@@ -426,7 +443,10 @@ export function stateToOrbitalElements(
   let trueAnomaly = 0;
   if (!isCircular) {
     // Eccentric orbit
-    const cosNu = Math.max(-1, Math.min(1, vec3.dot(e_vec, position) / (eccentricity * r)));
+    const cosNu = Math.max(
+      -1,
+      Math.min(1, vec3.dot(e_vec, position) / (eccentricity * r))
+    );
     trueAnomaly = Math.acos(cosNu);
     if (vec3.dot(position, velocity) < 0) {
       trueAnomaly = 2 * Math.PI - trueAnomaly;
@@ -435,7 +455,10 @@ export function stateToOrbitalElements(
     // Circular orbit: use argument of latitude
     if (!isEquatorial && nMag > TOL) {
       // Circular inclined: measure from ascending node
-      const cosU = Math.max(-1, Math.min(1, vec3.dot(n, position) / (nMag * r)));
+      const cosU = Math.max(
+        -1,
+        Math.min(1, vec3.dot(n, position) / (nMag * r))
+      );
       trueAnomaly = Math.acos(cosU);
       if (position[2] < 0) {
         trueAnomaly = 2 * Math.PI - trueAnomaly;
@@ -473,5 +496,5 @@ export function orbitalEnergy(state: PhysicsState, mu: number): number {
  * Calculate period of elliptical orbit
  */
 export function orbitalPeriod(semiMajorAxis: number, mu: number): number {
-  return 2 * Math.PI * Math.sqrt((semiMajorAxis ** 3) / mu);
+  return 2 * Math.PI * Math.sqrt(semiMajorAxis ** 3 / mu);
 }

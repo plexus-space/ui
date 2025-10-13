@@ -1,13 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  cn,
-  getDomain,
-  createScale,
-  formatValue,
-  getTicks,
-} from "./lib";
+import { cn, getDomain, createScale, formatValue, getTicks } from "./lib";
 
 // ============================================================================
 // Types
@@ -81,8 +75,8 @@ export interface BoxPlotAxis {
  * Visual variant styles for the box plot
  */
 export type BoxPlotVariant =
-  | "default"    // Balanced styling for general use
-  | "minimal"    // Minimal styling with reduced visual weight
+  | "default" // Balanced styling for general use
+  | "minimal" // Minimal styling with reduced visual weight
   | "scientific" // Dense styling for data analysis
   | "dashboard"; // Polished styling for dashboards
 
@@ -237,9 +231,10 @@ function calculateBoxStatistics(
 
   // Calculate quartiles
   const q1 = sorted[Math.floor(n * 0.25)];
-  const median = n % 2 === 0
-    ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2
-    : sorted[Math.floor(n / 2)];
+  const median =
+    n % 2 === 0
+      ? (sorted[n / 2 - 1] + sorted[n / 2]) / 2
+      : sorted[Math.floor(n / 2)];
   const q3 = sorted[Math.floor(n * 0.75)];
 
   const iqr = q3 - q1;
@@ -345,17 +340,19 @@ const BoxPlotRoot = React.forwardRef<HTMLDivElement, BoxPlotRootProps>(
 
     // Create scales
     const valueScale = React.useMemo(() => {
-      const range: [number, number] = orientation === "vertical"
-        ? [height - margin.bottom, margin.top]
-        : [margin.left, width - margin.right];
+      const range: [number, number] =
+        orientation === "vertical"
+          ? [height - margin.bottom, margin.top]
+          : [margin.left, width - margin.right];
       return createScale(valueDomain, range);
     }, [valueDomain, orientation, height, width, margin]);
 
     const categoryScale = React.useCallback(
       (index: number) => {
-        const range = orientation === "vertical"
-          ? [margin.left, width - margin.right]
-          : [height - margin.bottom, margin.top];
+        const range =
+          orientation === "vertical"
+            ? [margin.left, width - margin.right]
+            : [height - margin.bottom, margin.top];
         const step = (range[1] - range[0]) / data.length;
         return range[0] + step * (index + 0.5);
       },
@@ -366,7 +363,10 @@ const BoxPlotRoot = React.forwardRef<HTMLDivElement, BoxPlotRootProps>(
     const yScale = orientation === "vertical" ? valueScale : categoryScale;
 
     // Generate ticks
-    const valueTicks = React.useMemo(() => getTicks(valueDomain, 6), [valueDomain]);
+    const valueTicks = React.useMemo(
+      () => getTicks(valueDomain, 6),
+      [valueDomain]
+    );
     const xTicks = orientation === "vertical" ? [] : valueTicks;
     const yTicks = orientation === "vertical" ? valueTicks : [];
 
@@ -488,29 +488,28 @@ export interface BoxPlotViewportProps extends React.SVGProps<SVGSVGElement> {}
 /**
  * Viewport component - SVG canvas that contains all chart visual elements
  */
-const BoxPlotViewport = React.forwardRef<
-  SVGSVGElement,
-  BoxPlotViewportProps
->(({ className, children, ...props }, ref) => {
-  const { width, height } = useBoxPlot();
+const BoxPlotViewport = React.forwardRef<SVGSVGElement, BoxPlotViewportProps>(
+  ({ className, children, ...props }, ref) => {
+    const { width, height } = useBoxPlot();
 
-  return (
-    <svg
-      ref={ref}
-      width="100%"
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="xMidYMid meet"
-      className={cn("box-plot-svg", className)}
-      style={{ display: "block", userSelect: "none", maxWidth: "100%" }}
-      role="img"
-      aria-label="Box plot"
-      {...props}
-    >
-      {children}
-    </svg>
-  );
-});
+    return (
+      <svg
+        ref={ref}
+        width="100%"
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
+        className={cn("box-plot-svg", className)}
+        style={{ display: "block", userSelect: "none", maxWidth: "100%" }}
+        role="img"
+        aria-label="Box plot"
+        {...props}
+      >
+        {children}
+      </svg>
+    );
+  }
+);
 
 BoxPlotViewport.displayName = "BoxPlot.Viewport";
 
@@ -551,53 +550,64 @@ const BoxPlotGrid = React.forwardRef<SVGGElement, BoxPlotGridProps>(
     },
     ref
   ) => {
-    const { xTicks, yTicks, xScale, yScale, margin, width, height, animate, orientation } =
-      useBoxPlot();
+    const {
+      xTicks,
+      yTicks,
+      xScale,
+      yScale,
+      margin,
+      width,
+      height,
+      animate,
+      orientation,
+    } = useBoxPlot();
 
     return (
       <g ref={ref} className={cn("box-plot-grid", className)} {...props}>
         {/* Horizontal grid lines (for value axis) */}
-        {orientation === "vertical" && yTicks.map((tick, i) => (
-          <line
-            key={`hgrid-${i}`}
-            x1={margin.left}
-            y1={yScale(tick)}
-            x2={width - margin.right}
-            y2={yScale(tick)}
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-            opacity={opacity}
-            style={
-              animate
-                ? {
-                    animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
-                    opacity: 0,
-                  }
-                : undefined
-            }
-          />
-        ))}
+        {orientation === "vertical" &&
+          yTicks.map((tick, i) => (
+            <line
+              key={`hgrid-${i}`}
+              x1={margin.left}
+              y1={yScale(tick)}
+              x2={width - margin.right}
+              y2={yScale(tick)}
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+              opacity={opacity}
+              style={
+                animate
+                  ? {
+                      animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
+                      opacity: 0,
+                    }
+                  : undefined
+              }
+            />
+          ))}
         {/* Vertical grid lines (for value axis) */}
-        {orientation === "horizontal" && xTicks.map((tick, i) => (
-          <line
-            key={`vgrid-${i}`}
-            x1={xScale(tick)}
-            y1={margin.top}
-            x2={xScale(tick)}
-            y2={height - margin.bottom}
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-            opacity={opacity}
-            style={
-              animate
-                ? {
-                    animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
-                    opacity: 0,
-                  }
-                : undefined
-            }
-          />
-        ))}
+        {orientation === "horizontal" &&
+          xTicks.map((tick, i) => (
+            <line
+              key={`vgrid-${i}`}
+              x1={xScale(tick)}
+              y1={margin.top}
+              x2={xScale(tick)}
+              y2={height - margin.bottom}
+              stroke={stroke}
+              strokeWidth={strokeWidth}
+              opacity={opacity}
+              style={
+                animate
+                  ? {
+                      animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
+                      opacity: 0,
+                    }
+                  : undefined
+              }
+            />
+          ))}
       </g>
     );
   }
@@ -647,59 +657,59 @@ const BoxPlotAxes = React.forwardRef<SVGGElement, BoxPlotAxesProps>(
           strokeWidth={1.5}
           opacity={0.2}
         />
-        {orientation === "vertical" ? (
-          // Category labels for vertical orientation
-          data.map((d, i) => (
-            <g key={`xlabel-${i}`}>
-              <line
-                x1={categoryScale(i)}
-                y1={height - margin.bottom}
-                x2={categoryScale(i)}
-                y2={height - margin.bottom + 6}
-                stroke="currentColor"
-                strokeWidth={1.5}
-                opacity={0.2}
-              />
-              <text
-                x={categoryScale(i)}
-                y={height - margin.bottom + 20}
-                textAnchor="middle"
-                fontSize={10}
-                fill="currentColor"
-                opacity={0.6}
-                transform={`rotate(-45 ${categoryScale(i)} ${height - margin.bottom + 20})`}
-              >
-                {d.name}
-              </text>
-            </g>
-          ))
-        ) : (
-          // Value ticks for horizontal orientation
-          xTicks.map((tick, i) => (
-            <g key={`xtick-${i}`}>
-              <line
-                x1={xScale(tick)}
-                y1={height - margin.bottom}
-                x2={xScale(tick)}
-                y2={height - margin.bottom + 6}
-                stroke="currentColor"
-                strokeWidth={1.5}
-                opacity={0.2}
-              />
-              <text
-                x={xScale(tick)}
-                y={height - margin.bottom + 20}
-                textAnchor="middle"
-                fontSize={10}
-                fill="currentColor"
-                opacity={0.6}
-                style={{ fontVariantNumeric: "tabular-nums" }}
-              >
-                {formatTick(tick, xAxis)}
-              </text>
-            </g>
-          ))
-        )}
+        {orientation === "vertical"
+          ? // Category labels for vertical orientation
+            data.map((d, i) => (
+              <g key={`xlabel-${i}`}>
+                <line
+                  x1={categoryScale(i)}
+                  y1={height - margin.bottom}
+                  x2={categoryScale(i)}
+                  y2={height - margin.bottom + 6}
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  opacity={0.2}
+                />
+                <text
+                  x={categoryScale(i)}
+                  y={height - margin.bottom + 20}
+                  textAnchor="middle"
+                  fontSize={10}
+                  fill="currentColor"
+                  opacity={0.6}
+                  transform={`rotate(-45 ${categoryScale(i)} ${
+                    height - margin.bottom + 20
+                  })`}
+                >
+                  {d.name}
+                </text>
+              </g>
+            ))
+          : // Value ticks for horizontal orientation
+            xTicks.map((tick, i) => (
+              <g key={`xtick-${i}`}>
+                <line
+                  x1={xScale(tick)}
+                  y1={height - margin.bottom}
+                  x2={xScale(tick)}
+                  y2={height - margin.bottom + 6}
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  opacity={0.2}
+                />
+                <text
+                  x={xScale(tick)}
+                  y={height - margin.bottom + 20}
+                  textAnchor="middle"
+                  fontSize={10}
+                  fill="currentColor"
+                  opacity={0.6}
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
+                  {formatTick(tick, xAxis)}
+                </text>
+              </g>
+            ))}
         {xAxis.label && (
           <text
             x={(margin.left + width - margin.right) / 2}
@@ -724,58 +734,56 @@ const BoxPlotAxes = React.forwardRef<SVGGElement, BoxPlotAxesProps>(
           strokeWidth={1.5}
           opacity={0.2}
         />
-        {orientation === "vertical" ? (
-          // Value ticks for vertical orientation
-          yTicks.map((tick, i) => (
-            <g key={`ytick-${i}`}>
-              <line
-                x1={margin.left - 6}
-                y1={yScale(tick)}
-                x2={margin.left}
-                y2={yScale(tick)}
-                stroke="currentColor"
-                strokeWidth={1.5}
-                opacity={0.2}
-              />
-              <text
-                x={margin.left - 10}
-                y={yScale(tick) + 4}
-                textAnchor="end"
-                fontSize={10}
-                fill="currentColor"
-                opacity={0.6}
-                style={{ fontVariantNumeric: "tabular-nums" }}
-              >
-                {formatTick(tick, yAxis)}
-              </text>
-            </g>
-          ))
-        ) : (
-          // Category labels for horizontal orientation
-          data.map((d, i) => (
-            <g key={`ylabel-${i}`}>
-              <line
-                x1={margin.left - 6}
-                y1={categoryScale(i)}
-                x2={margin.left}
-                y2={categoryScale(i)}
-                stroke="currentColor"
-                strokeWidth={1.5}
-                opacity={0.2}
-              />
-              <text
-                x={margin.left - 10}
-                y={categoryScale(i) + 4}
-                textAnchor="end"
-                fontSize={10}
-                fill="currentColor"
-                opacity={0.6}
-              >
-                {d.name}
-              </text>
-            </g>
-          ))
-        )}
+        {orientation === "vertical"
+          ? // Value ticks for vertical orientation
+            yTicks.map((tick, i) => (
+              <g key={`ytick-${i}`}>
+                <line
+                  x1={margin.left - 6}
+                  y1={yScale(tick)}
+                  x2={margin.left}
+                  y2={yScale(tick)}
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  opacity={0.2}
+                />
+                <text
+                  x={margin.left - 10}
+                  y={yScale(tick) + 4}
+                  textAnchor="end"
+                  fontSize={10}
+                  fill="currentColor"
+                  opacity={0.6}
+                  style={{ fontVariantNumeric: "tabular-nums" }}
+                >
+                  {formatTick(tick, yAxis)}
+                </text>
+              </g>
+            ))
+          : // Category labels for horizontal orientation
+            data.map((d, i) => (
+              <g key={`ylabel-${i}`}>
+                <line
+                  x1={margin.left - 6}
+                  y1={categoryScale(i)}
+                  x2={margin.left}
+                  y2={categoryScale(i)}
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  opacity={0.2}
+                />
+                <text
+                  x={margin.left - 10}
+                  y={categoryScale(i) + 4}
+                  textAnchor="end"
+                  fontSize={10}
+                  fill="currentColor"
+                  opacity={0.6}
+                >
+                  {d.name}
+                </text>
+              </g>
+            ))}
         {yAxis.label && (
           <text
             x={margin.left - 50}
@@ -826,9 +834,16 @@ const BoxPlotBoxes = React.forwardRef<SVGGElement, BoxPlotBoxesProps>(
       margin,
     } = useBoxPlot();
 
-    const boxWidth = orientation === "vertical"
-      ? Math.min(60, (width - margin.left - margin.right) / data.length * 0.6)
-      : Math.min(60, (height - margin.top - margin.bottom) / data.length * 0.6);
+    const boxWidth =
+      orientation === "vertical"
+        ? Math.min(
+            60,
+            ((width - margin.left - margin.right) / data.length) * 0.6
+          )
+        : Math.min(
+            60,
+            ((height - margin.top - margin.bottom) / data.length) * 0.6
+          );
 
     return (
       <g ref={ref} className={cn("box-plot-boxes", className)} {...props}>
@@ -887,9 +902,23 @@ const BoxPlotBoxes = React.forwardRef<SVGGElement, BoxPlotBoxesProps>(
 
                 {/* Box with gradient */}
                 <defs>
-                  <linearGradient id={`boxGradient-${i}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor={color} stopOpacity={isHovered ? 0.95 : 0.85} />
-                    <stop offset="100%" stopColor={color} stopOpacity={isHovered ? 0.75 : 0.65} />
+                  <linearGradient
+                    id={`boxGradient-${i}`}
+                    x1="0%"
+                    y1="0%"
+                    x2="0%"
+                    y2="100%"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor={color}
+                      stopOpacity={isHovered ? 0.95 : 0.85}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={color}
+                      stopOpacity={isHovered ? 0.75 : 0.65}
+                    />
                   </linearGradient>
                 </defs>
                 <rect
@@ -902,11 +931,15 @@ const BoxPlotBoxes = React.forwardRef<SVGGElement, BoxPlotBoxesProps>(
                   strokeWidth={isHovered ? 2.5 : 2}
                   rx={isHovered ? 3 : 2}
                   style={{
-                    filter: isHovered ? "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))" : "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08))",
+                    filter: isHovered
+                      ? "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))"
+                      : "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08))",
                     transition: "all 0.2s ease",
                     ...(animate
                       ? {
-                          animation: `growIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.1}s forwards`,
+                          animation: `growIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${
+                            i * 0.1
+                          }s forwards`,
                           transformOrigin: `${center}px ${medianY}px`,
                           transform: "scaleY(0)",
                         }
@@ -1053,9 +1086,23 @@ const BoxPlotBoxes = React.forwardRef<SVGGElement, BoxPlotBoxesProps>(
 
                 {/* Box with gradient */}
                 <defs>
-                  <linearGradient id={`boxGradientH-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor={color} stopOpacity={isHovered ? 0.95 : 0.85} />
-                    <stop offset="100%" stopColor={color} stopOpacity={isHovered ? 0.75 : 0.65} />
+                  <linearGradient
+                    id={`boxGradientH-${i}`}
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor={color}
+                      stopOpacity={isHovered ? 0.95 : 0.85}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={color}
+                      stopOpacity={isHovered ? 0.75 : 0.65}
+                    />
                   </linearGradient>
                 </defs>
                 <rect
@@ -1068,11 +1115,15 @@ const BoxPlotBoxes = React.forwardRef<SVGGElement, BoxPlotBoxesProps>(
                   strokeWidth={isHovered ? 2.5 : 2}
                   rx={isHovered ? 3 : 2}
                   style={{
-                    filter: isHovered ? "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))" : "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08))",
+                    filter: isHovered
+                      ? "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15))"
+                      : "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08))",
                     transition: "all 0.2s ease",
                     ...(animate
                       ? {
-                          animation: `growIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.1}s forwards`,
+                          animation: `growIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${
+                            i * 0.1
+                          }s forwards`,
                           transformOrigin: `${medianX}px ${center}px`,
                           transform: "scaleX(0)",
                         }

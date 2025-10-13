@@ -819,7 +819,11 @@ const NodeGraphEditorNodes = React.forwardRef<
               stroke={color}
               strokeWidth={isSelected ? 2 : isHovered || isDragged ? 1.5 : 1}
               opacity={isSelected ? 0.9 : isHovered || isDragged ? 0.7 : 0.4}
-              filter={isSelected || isHovered || isDragged ? "url(#node-border-glow)" : undefined}
+              filter={
+                isSelected || isHovered || isDragged
+                  ? "url(#node-border-glow)"
+                  : undefined
+              }
             />
 
             {/* Vertical accent bar on the left */}
@@ -967,21 +971,39 @@ const NodeGraphEditorNodes = React.forwardRef<
       })}
 
       <defs>
-        <filter id="node-glow-outer" x="-50%" y="-50%" width="200%" height="200%">
+        <filter
+          id="node-glow-outer"
+          x="-50%"
+          y="-50%"
+          width="200%"
+          height="200%"
+        >
           <feGaussianBlur stdDeviation="8" result="coloredBlur" />
           <feMerge>
             <feMergeNode in="coloredBlur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="node-border-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <filter
+          id="node-border-glow"
+          x="-50%"
+          y="-50%"
+          width="200%"
+          height="200%"
+        >
           <feGaussianBlur stdDeviation="4" result="coloredBlur" />
           <feMerge>
             <feMergeNode in="coloredBlur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id="accent-bar-glow" x="-200%" y="-50%" width="400%" height="200%">
+        <filter
+          id="accent-bar-glow"
+          x="-200%"
+          y="-50%"
+          width="400%"
+          height="200%"
+        >
           <feGaussianBlur stdDeviation="3" result="coloredBlur" />
           <feMerge>
             <feMergeNode in="coloredBlur" />
@@ -995,103 +1017,6 @@ const NodeGraphEditorNodes = React.forwardRef<
 
 NodeGraphEditorNodes.displayName = "NodeGraphEditor.Nodes";
 
-export interface NodeGraphEditorMinimapProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
-}
-
-const NodeGraphEditorMinimap = React.forwardRef<
-  HTMLDivElement,
-  NodeGraphEditorMinimapProps
->(({ className, style, position = "bottom-right", ...props }, ref) => {
-  const { nodes, width, height } = useNodeGraphEditor();
-
-  const minimapWidth = 200;
-  const minimapHeight = 150;
-
-  const bounds = React.useMemo(() => {
-    if (nodes.length === 0)
-      return { minX: 0, maxX: width, minY: 0, maxY: height };
-
-    const minX = Math.min(...nodes.map((n) => n.position.x));
-    const maxX = Math.max(...nodes.map((n) => n.position.x + (n.width || 180)));
-    const minY = Math.min(...nodes.map((n) => n.position.y));
-    const maxY = Math.max(...nodes.map((n) => n.position.y + (n.height || 80)));
-
-    return { minX, maxX, minY, maxY };
-  }, [nodes, width, height]);
-
-  const scaleX = minimapWidth / (bounds.maxX - bounds.minX || width);
-  const scaleY = minimapHeight / (bounds.maxY - bounds.minY || height);
-  const scale = Math.min(scaleX, scaleY);
-
-  const positionStyles = {
-    "top-left": { top: 10, left: 10 },
-    "top-right": { top: 10, right: 10 },
-    "bottom-left": { bottom: 10, left: 10 },
-    "bottom-right": { bottom: 10, right: 10 },
-  };
-
-  return (
-    <div
-      ref={ref}
-      className={cn("node-graph-minimap", className)}
-      style={{
-        position: "absolute",
-        ...positionStyles[position],
-        width: minimapWidth,
-        height: minimapHeight,
-        backgroundColor: "rgba(0, 0, 0, 0.03)",
-        border: "1px solid currentColor",
-        borderColor: "rgba(0, 0, 0, 0.1)",
-        borderRadius: "6px",
-        overflow: "hidden",
-        backdropFilter: "blur(8px)",
-        ...style,
-      }}
-      {...props}
-    >
-      <svg width={minimapWidth} height={minimapHeight}>
-        <style>{`
-          @media (prefers-color-scheme: dark) {
-            .minimap-bg { fill: rgba(255, 255, 255, 0.05); }
-          }
-          @media (prefers-color-scheme: light) {
-            .minimap-bg { fill: rgba(0, 0, 0, 0.02); }
-          }
-        `}</style>
-        <rect
-          className="minimap-bg"
-          width={minimapWidth}
-          height={minimapHeight}
-        />
-        {nodes.map((node) => {
-          const x = (node.position.x - bounds.minX) * scale;
-          const y = (node.position.y - bounds.minY) * scale;
-          const w = (node.width || 180) * scale;
-          const h = (node.height || 80) * scale;
-          const color = getNodeTypeColor(node.type, node.color);
-
-          return (
-            <rect
-              key={node.id}
-              x={x}
-              y={y}
-              width={w}
-              height={h}
-              fill={color}
-              opacity={0.7}
-              rx={2}
-            />
-          );
-        })}
-      </svg>
-    </div>
-  );
-});
-
-NodeGraphEditorMinimap.displayName = "NodeGraphEditor.Minimap";
-
 // ============================================================================
 // Exports
 // ============================================================================
@@ -1103,5 +1028,4 @@ export const NodeGraphEditor = Object.assign(NodeGraphEditorRoot, {
   Grid: NodeGraphEditorGrid,
   Edges: NodeGraphEditorEdges,
   Nodes: NodeGraphEditorNodes,
-  Minimap: NodeGraphEditorMinimap,
 });

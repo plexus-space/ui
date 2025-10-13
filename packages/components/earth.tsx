@@ -94,7 +94,9 @@ export function geodeticToProjection(
       const latRadMiller = (lat * Math.PI) / 180;
       const clampedLatMiller = Math.max(-85, Math.min(85, lat));
       const clampedLatRadMiller = (clampedLatMiller * Math.PI) / 180;
-      const millerY = (5 / 4) * Math.log(Math.tan(Math.PI / 4 + (2 * clampedLatRadMiller) / 5));
+      const millerY =
+        (5 / 4) *
+        Math.log(Math.tan(Math.PI / 4 + (2 * clampedLatRadMiller) / 5));
       y = (millerY / Math.PI) * (mapHeight / 2);
       break;
 
@@ -113,7 +115,11 @@ export function geodeticToProjection(
 // Context
 // ============================================================================
 
-export type ProjectionType = "globe" | "equirectangular" | "mercator" | "miller";
+export type ProjectionType =
+  | "globe"
+  | "equirectangular"
+  | "mercator"
+  | "miller";
 
 interface EarthContext {
   radius: number;
@@ -314,7 +320,16 @@ export interface EarthControlsProps
  * Main Earth sphere with textures
  */
 export interface EarthGlobeProps
-  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'normalMapUrl' | 'specularMapUrl' | 'emissiveMapUrl' | 'rotationSpeed' | 'rotation'> {
+  extends Omit<
+    React.ComponentPropsWithRef<typeof Sphere>,
+    | "radius"
+    | "textureUrl"
+    | "normalMapUrl"
+    | "specularMapUrl"
+    | "emissiveMapUrl"
+    | "rotationSpeed"
+    | "rotation"
+  > {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128
@@ -751,7 +766,13 @@ const EarthFlatMap = React.forwardRef<THREE.Group, EarthFlatMapProps>(
       for (let lat = -90; lat <= 90; lat += gridSpacing) {
         const points: THREE.Vector3[] = [];
         for (let lon = -180; lon <= 180; lon += 1) {
-          const [x, y] = geodeticToProjection(lat, lon, projection, width, height);
+          const [x, y] = geodeticToProjection(
+            lat,
+            lon,
+            projection,
+            width,
+            height
+          );
           points.push(new THREE.Vector3(x, y, 0.01)); // Slightly above map
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -762,7 +783,13 @@ const EarthFlatMap = React.forwardRef<THREE.Group, EarthFlatMapProps>(
       for (let lon = -180; lon <= 180; lon += gridSpacing) {
         const points: THREE.Vector3[] = [];
         for (let lat = -90; lat <= 90; lat += 1) {
-          const [x, y] = geodeticToProjection(lat, lon, projection, width, height);
+          const [x, y] = geodeticToProjection(
+            lat,
+            lon,
+            projection,
+            width,
+            height
+          );
           points.push(new THREE.Vector3(x, y, 0.01));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -785,20 +812,26 @@ const EarthFlatMap = React.forwardRef<THREE.Group, EarthFlatMapProps>(
         </mesh>
 
         {/* Grid lines */}
-        {showGrid && gridLines && gridLines.map((geometry, i) => (
-          <line key={i} geometry={geometry}>
-            <lineBasicMaterial
-              color={gridColor}
-              opacity={gridOpacity}
-              transparent
-            />
-          </line>
-        ))}
+        {showGrid &&
+          gridLines &&
+          gridLines.map((geometry, i) => (
+            <line key={i} geometry={geometry}>
+              <lineBasicMaterial
+                color={gridColor}
+                opacity={gridOpacity}
+                transparent
+              />
+            </line>
+          ))}
 
         {/* Border frame */}
         <lineSegments>
           <edgesGeometry args={[new THREE.PlaneGeometry(width, height)]} />
-          <lineBasicMaterial color={gridColor} opacity={gridOpacity * 2} transparent />
+          <lineBasicMaterial
+            color={gridColor}
+            opacity={gridOpacity * 2}
+            transparent
+          />
         </lineSegments>
       </group>
     );

@@ -1,13 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  cn,
-  getDomain,
-  createScale,
-  formatValue,
-  getTicks,
-} from "./lib";
+import { cn, getDomain, createScale, formatValue, getTicks } from "./lib";
 
 // ============================================================================
 // Types
@@ -79,8 +73,8 @@ export interface HistogramAxis {
  * Visual variant styles for the histogram
  */
 export type HistogramVariant =
-  | "default"    // Balanced styling for general use
-  | "minimal"    // Minimal styling with reduced visual weight
+  | "default" // Balanced styling for general use
+  | "minimal" // Minimal styling with reduced visual weight
   | "scientific" // Dense styling for data analysis
   | "dashboard"; // Polished styling for dashboards
 
@@ -869,24 +863,13 @@ const HistogramStatistics = React.forwardRef<
   SVGGElement,
   HistogramStatisticsProps
 >(({ className, ...props }, ref) => {
-  const {
-    stats,
-    showMean,
-    showMedian,
-    xScale,
-    margin,
-    height,
-    showStats,
-  } = useHistogram();
+  const { stats, showMean, showMedian, xScale, margin, height, showStats } =
+    useHistogram();
 
   if (!showStats && !showMean && !showMedian) return null;
 
   return (
-    <g
-      ref={ref}
-      className={cn("histogram-statistics", className)}
-      {...props}
-    >
+    <g ref={ref} className={cn("histogram-statistics", className)} {...props}>
       {(showMean || showStats) && (
         <g>
           <line

@@ -95,8 +95,8 @@ export interface Axis {
  * Visual variant styles for the scatter plot
  */
 export type ScatterPlotVariant =
-  | "default"   // Balanced styling for general use
-  | "minimal"   // Minimal styling with reduced visual weight
+  | "default" // Balanced styling for general use
+  | "minimal" // Minimal styling with reduced visual weight
   | "scientific" // Dense styling for data analysis
   | "dashboard"; // Polished styling for dashboards
 
@@ -277,10 +277,7 @@ function sampleData(data: ScatterPoint[], maxPoints: number): ScatterPoint[] {
       sampled.push(...points);
     } else {
       // Dense cell: sample proportionally
-      const keepRatio = Math.max(
-        targetRatio,
-        sparsityThreshold / cellDensity
-      );
+      const keepRatio = Math.max(targetRatio, sparsityThreshold / cellDensity);
       const keepCount = Math.ceil(points.length * keepRatio);
 
       // Randomly sample from this cell
@@ -501,7 +498,8 @@ ScatterPlotRoot.displayName = "ScatterPlot.Root";
  * Props for ScatterPlot.Container component
  * Wraps the SVG viewport with proper dimensions and styling
  */
-export interface ScatterPlotContainerProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface ScatterPlotContainerProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
 
 /**
  * Container component - wraps the SVG content
@@ -539,7 +537,8 @@ ScatterPlotContainer.displayName = "ScatterPlot.Container";
  * Props for ScatterPlot.Viewport component
  * SVG canvas that contains all visual elements
  */
-export interface ScatterPlotViewportProps extends React.SVGProps<SVGSVGElement> {}
+export interface ScatterPlotViewportProps
+  extends React.SVGProps<SVGSVGElement> {}
 
 /**
  * Viewport component - SVG canvas that contains all chart visual elements
@@ -598,54 +597,63 @@ export interface ScatterPlotGridProps extends React.SVGProps<SVGGElement> {
  * Grid component - renders horizontal and vertical grid lines for the chart
  */
 const ScatterPlotGrid = React.forwardRef<SVGGElement, ScatterPlotGridProps>(
-  ({ className, stroke = "currentColor", strokeWidth = 1, opacity = 0.1, ...props }, ref) => {
+  (
+    {
+      className,
+      stroke = "currentColor",
+      strokeWidth = 1,
+      opacity = 0.1,
+      ...props
+    },
+    ref
+  ) => {
     const { xTicks, yTicks, xScale, yScale, margin, width, height, animate } =
       useScatterPlot();
 
     return (
       <g ref={ref} className={cn("scatter-plot-grid", className)} {...props}>
-      {/* Vertical grid lines */}
-      {xTicks.map((tick, i) => (
-        <line
-          key={`vgrid-${i}`}
-          x1={xScale(tick)}
-          y1={margin.top}
-          x2={xScale(tick)}
-          y2={height - margin.bottom}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-          opacity={opacity}
-          style={
-            animate
-              ? {
-                  animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
-                  opacity: 0,
-                }
-              : undefined
-          }
-        />
-      ))}
-      {/* Horizontal grid lines */}
-      {yTicks.map((tick, i) => (
-        <line
-          key={`hgrid-${i}`}
-          x1={margin.left}
-          y1={yScale(tick)}
-          x2={width - margin.right}
-          y2={yScale(tick)}
-          stroke={stroke}
-          strokeWidth={strokeWidth}
-          opacity={opacity}
-          style={
-            animate
-              ? {
-                  animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
-                  opacity: 0,
-                }
-              : undefined
-          }
-        />
-      ))}
+        {/* Vertical grid lines */}
+        {xTicks.map((tick, i) => (
+          <line
+            key={`vgrid-${i}`}
+            x1={xScale(tick)}
+            y1={margin.top}
+            x2={xScale(tick)}
+            y2={height - margin.bottom}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+            opacity={opacity}
+            style={
+              animate
+                ? {
+                    animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
+                    opacity: 0,
+                  }
+                : undefined
+            }
+          />
+        ))}
+        {/* Horizontal grid lines */}
+        {yTicks.map((tick, i) => (
+          <line
+            key={`hgrid-${i}`}
+            x1={margin.left}
+            y1={yScale(tick)}
+            x2={width - margin.right}
+            y2={yScale(tick)}
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+            opacity={opacity}
+            style={
+              animate
+                ? {
+                    animation: `fadeIn 0.3s ease ${i * 0.03}s forwards`,
+                    opacity: 0,
+                  }
+                : undefined
+            }
+          />
+        ))}
       </g>
     );
   }
@@ -662,131 +670,129 @@ export interface ScatterPlotAxesProps extends React.SVGProps<SVGGElement> {}
 /**
  * Axes component - renders X and Y axes with tick marks, tick labels, and axis labels
  */
-const ScatterPlotAxes = React.forwardRef<
-  SVGGElement,
-  ScatterPlotAxesProps
->(({ className, ...props }, ref) => {
-  const {
-    xTicks,
-    yTicks,
-    xScale,
-    yScale,
-    margin,
-    width,
-    height,
-    xAxis,
-    yAxis,
-  } = useScatterPlot();
+const ScatterPlotAxes = React.forwardRef<SVGGElement, ScatterPlotAxesProps>(
+  ({ className, ...props }, ref) => {
+    const {
+      xTicks,
+      yTicks,
+      xScale,
+      yScale,
+      margin,
+      width,
+      height,
+      xAxis,
+      yAxis,
+    } = useScatterPlot();
 
-  const formatTick = (value: number, axis: Axis): string => {
-    if (axis.formatter) return axis.formatter(value);
-    if (axis.type === "time") {
-      const timezone = axis.timezone || "UTC";
-      return formatTime(value, timezone);
-    }
-    return formatValue(value);
-  };
+    const formatTick = (value: number, axis: Axis): string => {
+      if (axis.formatter) return axis.formatter(value);
+      if (axis.type === "time") {
+        const timezone = axis.timezone || "UTC";
+        return formatTime(value, timezone);
+      }
+      return formatValue(value);
+    };
 
     return (
       <g ref={ref} className={cn("scatter-plot-axes", className)} {...props}>
-      {/* X-axis */}
-      <line
-        x1={margin.left}
-        y1={height - margin.bottom}
-        x2={width - margin.right}
-        y2={height - margin.bottom}
-        stroke="currentColor"
-        strokeWidth={1.5}
-        opacity={0.2}
-      />
-      {xTicks.map((tick, i) => (
-        <g key={`xtick-${i}`}>
-          <line
-            x1={xScale(tick)}
-            y1={height - margin.bottom}
-            x2={xScale(tick)}
-            y2={height - margin.bottom + 6}
-            stroke="currentColor"
-            strokeWidth={1.5}
-            opacity={0.2}
-          />
+        {/* X-axis */}
+        <line
+          x1={margin.left}
+          y1={height - margin.bottom}
+          x2={width - margin.right}
+          y2={height - margin.bottom}
+          stroke="currentColor"
+          strokeWidth={1.5}
+          opacity={0.2}
+        />
+        {xTicks.map((tick, i) => (
+          <g key={`xtick-${i}`}>
+            <line
+              x1={xScale(tick)}
+              y1={height - margin.bottom}
+              x2={xScale(tick)}
+              y2={height - margin.bottom + 6}
+              stroke="currentColor"
+              strokeWidth={1.5}
+              opacity={0.2}
+            />
+            <text
+              x={xScale(tick)}
+              y={height - margin.bottom + 20}
+              textAnchor="middle"
+              fontSize={10}
+              fill="currentColor"
+              opacity={0.6}
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatTick(tick, xAxis)}
+            </text>
+          </g>
+        ))}
+        {xAxis.label && (
           <text
-            x={xScale(tick)}
-            y={height - margin.bottom + 20}
+            x={(margin.left + width - margin.right) / 2}
+            y={height - 5}
             textAnchor="middle"
-            fontSize={10}
+            fontSize={12}
+            fontWeight={500}
             fill="currentColor"
-            opacity={0.6}
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            opacity={0.7}
           >
-            {formatTick(tick, xAxis)}
+            {xAxis.label}
           </text>
-        </g>
-      ))}
-      {xAxis.label && (
-        <text
-          x={(margin.left + width - margin.right) / 2}
-          y={height - 5}
-          textAnchor="middle"
-          fontSize={12}
-          fontWeight={500}
-          fill="currentColor"
-          opacity={0.7}
-        >
-          {xAxis.label}
-        </text>
-      )}
+        )}
 
-      {/* Y-axis */}
-      <line
-        x1={margin.left}
-        y1={margin.top}
-        x2={margin.left}
-        y2={height - margin.bottom}
-        stroke="currentColor"
-        strokeWidth={1.5}
-        opacity={0.2}
-      />
-      {yTicks.map((tick, i) => (
-        <g key={`ytick-${i}`}>
-          <line
-            x1={margin.left - 6}
-            y1={yScale(tick)}
-            x2={margin.left}
-            y2={yScale(tick)}
-            stroke="currentColor"
-            strokeWidth={1.5}
-            opacity={0.2}
-          />
+        {/* Y-axis */}
+        <line
+          x1={margin.left}
+          y1={margin.top}
+          x2={margin.left}
+          y2={height - margin.bottom}
+          stroke="currentColor"
+          strokeWidth={1.5}
+          opacity={0.2}
+        />
+        {yTicks.map((tick, i) => (
+          <g key={`ytick-${i}`}>
+            <line
+              x1={margin.left - 6}
+              y1={yScale(tick)}
+              x2={margin.left}
+              y2={yScale(tick)}
+              stroke="currentColor"
+              strokeWidth={1.5}
+              opacity={0.2}
+            />
+            <text
+              x={margin.left - 10}
+              y={yScale(tick) + 4}
+              textAnchor="end"
+              fontSize={10}
+              fill="currentColor"
+              opacity={0.6}
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {formatTick(tick, yAxis)}
+            </text>
+          </g>
+        ))}
+        {yAxis.label && (
           <text
-            x={margin.left - 10}
-            y={yScale(tick) + 4}
-            textAnchor="end"
-            fontSize={10}
+            x={margin.left - 50}
+            y={(margin.top + height - margin.bottom) / 2}
+            textAnchor="middle"
+            fontSize={12}
+            fontWeight={500}
             fill="currentColor"
-            opacity={0.6}
-            style={{ fontVariantNumeric: "tabular-nums" }}
+            opacity={0.7}
+            transform={`rotate(-90 ${margin.left - 50} ${
+              (margin.top + height - margin.bottom) / 2
+            })`}
           >
-            {formatTick(tick, yAxis)}
+            {yAxis.label}
           </text>
-        </g>
-      ))}
-      {yAxis.label && (
-        <text
-          x={margin.left - 50}
-          y={(margin.top + height - margin.bottom) / 2}
-          textAnchor="middle"
-          fontSize={12}
-          fontWeight={500}
-          fill="currentColor"
-          opacity={0.7}
-          transform={`rotate(-90 ${margin.left - 50} ${
-            (margin.top + height - margin.bottom) / 2
-          })`}
-        >
-          {yAxis.label}
-        </text>
-      )}
+        )}
       </g>
     );
   }
@@ -822,51 +828,68 @@ export interface ScatterPlotPointsProps extends React.SVGProps<SVGGElement> {
  * Points component - renders individual data point markers as circles
  */
 const ScatterPlotPoints = React.forwardRef<SVGGElement, ScatterPlotPointsProps>(
-  ({ className, hoverRadiusMultiplier = 1.5, hoverStrokeWidth = 2, defaultStrokeWidth = 1, ...props }, ref) => {
-    const { processedSeries, xScale, yScale, hiddenSeries, animate, hoveredPoint } =
-      useScatterPlot();
+  (
+    {
+      className,
+      hoverRadiusMultiplier = 1.5,
+      hoverStrokeWidth = 2,
+      defaultStrokeWidth = 1,
+      ...props
+    },
+    ref
+  ) => {
+    const {
+      processedSeries,
+      xScale,
+      yScale,
+      hiddenSeries,
+      animate,
+      hoveredPoint,
+    } = useScatterPlot();
 
     return (
       <g ref={ref} className={cn("scatter-plot-points", className)} {...props}>
-      {processedSeries.map((s, seriesIdx) => {
-        if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
+        {processedSeries.map((s, seriesIdx) => {
+          if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
 
-        const color = s.color || "#64748b";
-        const radius = s.radius || 4;
-        const opacity = s.opacity || 0.7;
+          const color = s.color || "#64748b";
+          const radius = s.radius || 4;
+          const opacity = s.opacity || 0.7;
 
-        return (
-          <g key={seriesIdx}>
-            {s.data.map((point, pointIdx) => {
-              const isHovered =
-                hoveredPoint?.seriesIdx === seriesIdx &&
-                hoveredPoint?.pointIdx === pointIdx;
+          return (
+            <g key={seriesIdx}>
+              {s.data.map((point, pointIdx) => {
+                const isHovered =
+                  hoveredPoint?.seriesIdx === seriesIdx &&
+                  hoveredPoint?.pointIdx === pointIdx;
 
-              return (
-                <circle
-                  key={pointIdx}
-                  cx={xScale(point.x)}
-                  cy={yScale(point.y)}
-                  r={isHovered ? radius * hoverRadiusMultiplier : radius}
-                  fill={color}
-                  strokeWidth={isHovered ? hoverStrokeWidth : defaultStrokeWidth}
-                  opacity={isHovered ? 1 : opacity}
-                  style={
-                    animate
-                      ? {
-                          animation: `fadeIn 0.3s ease ${
-                            pointIdx * 0.01
-                          }s forwards`,
-                          opacity: 0,
-                        }
-                      : undefined
-                  }
-                />
-              );
-            })}
-          </g>
-        );
-      })}
+                return (
+                  <circle
+                    key={pointIdx}
+                    cx={xScale(point.x)}
+                    cy={yScale(point.y)}
+                    r={isHovered ? radius * hoverRadiusMultiplier : radius}
+                    fill={color}
+                    strokeWidth={
+                      isHovered ? hoverStrokeWidth : defaultStrokeWidth
+                    }
+                    opacity={isHovered ? 1 : opacity}
+                    style={
+                      animate
+                        ? {
+                            animation: `fadeIn 0.3s ease ${
+                              pointIdx * 0.01
+                            }s forwards`,
+                            opacity: 0,
+                          }
+                        : undefined
+                    }
+                  />
+                );
+              })}
+            </g>
+          );
+        })}
       </g>
     );
   }
@@ -877,7 +900,8 @@ ScatterPlotPoints.displayName = "ScatterPlot.Points";
 /**
  * Props for ScatterPlot.Regression component
  */
-export interface ScatterPlotRegressionProps extends React.SVGProps<SVGGElement> {
+export interface ScatterPlotRegressionProps
+  extends React.SVGProps<SVGGElement> {
   /**
    * Stroke width for regression line in pixels
    * @default 2
@@ -904,52 +928,67 @@ export interface ScatterPlotRegressionProps extends React.SVGProps<SVGGElement> 
 const ScatterPlotRegression = React.forwardRef<
   SVGGElement,
   ScatterPlotRegressionProps
->(({ className, strokeWidth = 2, strokeDasharray = "6,6", opacity = 0.5, ...props }, ref) => {
-  const { series, xScale, yScale, xDomain, hiddenSeries, showRegression } =
-    useScatterPlot();
+>(
+  (
+    {
+      className,
+      strokeWidth = 2,
+      strokeDasharray = "6,6",
+      opacity = 0.5,
+      ...props
+    },
+    ref
+  ) => {
+    const { series, xScale, yScale, xDomain, hiddenSeries, showRegression } =
+      useScatterPlot();
 
-  if (!showRegression) return null;
+    if (!showRegression) return null;
 
-  return (
-    <g ref={ref} className={cn("scatter-plot-regression", className)} {...props}>
-      {series.map((s, seriesIdx) => {
-        if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
+    return (
+      <g
+        ref={ref}
+        className={cn("scatter-plot-regression", className)}
+        {...props}
+      >
+        {series.map((s, seriesIdx) => {
+          if (s.data.length === 0 || hiddenSeries.has(seriesIdx)) return null;
 
-        const { slope, intercept, r2 } = calculateLinearRegression(s.data);
-        const color = s.color || "#64748b";
+          const { slope, intercept, r2 } = calculateLinearRegression(s.data);
+          const color = s.color || "#64748b";
 
-        const x1 = xDomain[0];
-        const y1 = slope * x1 + intercept;
-        const x2 = xDomain[1];
-        const y2 = slope * x2 + intercept;
+          const x1 = xDomain[0];
+          const y1 = slope * x1 + intercept;
+          const x2 = xDomain[1];
+          const y2 = slope * x2 + intercept;
 
-        return (
-          <g key={seriesIdx}>
-            <line
-              x1={xScale(x1)}
-              y1={yScale(y1)}
-              x2={xScale(x2)}
-              y2={yScale(y2)}
-              stroke={color}
-              strokeWidth={strokeWidth}
-              strokeDasharray={strokeDasharray}
-              opacity={opacity}
-            />
-            <text
-              x={xScale(x2)}
-              y={yScale(y2) - 10}
-              fontSize={10}
-              fill={color}
-              opacity={0.7}
-            >
-              R² = {r2.toFixed(3)}
-            </text>
-          </g>
-        );
-      })}
-    </g>
-  );
-});
+          return (
+            <g key={seriesIdx}>
+              <line
+                x1={xScale(x1)}
+                y1={yScale(y1)}
+                x2={xScale(x2)}
+                y2={yScale(y2)}
+                stroke={color}
+                strokeWidth={strokeWidth}
+                strokeDasharray={strokeDasharray}
+                opacity={opacity}
+              />
+              <text
+                x={xScale(x2)}
+                y={yScale(y2) - 10}
+                fontSize={10}
+                fill={color}
+                opacity={0.7}
+              >
+                R² = {r2.toFixed(3)}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+    );
+  }
+);
 
 ScatterPlotRegression.displayName = "ScatterPlot.Regression";
 
@@ -1103,13 +1142,16 @@ ScatterPlotTooltip.displayName = "ScatterPlot.Tooltip";
  * Props for ScatterPlot.Interaction component
  * Transparent interaction layer for mouse/touch events
  */
-export interface ScatterPlotInteractionProps extends React.SVGProps<SVGRectElement> {
+export interface ScatterPlotInteractionProps
+  extends React.SVGProps<SVGRectElement> {
   /**
    * Callback function invoked when a point is hovered or unhovered
    * @param point Point coordinates or null when hover ends
    * @example (point) => console.log('Hovered:', point)
    */
-  onPointHover?: (point: { seriesIdx: number; pointIdx: number } | null) => void;
+  onPointHover?: (
+    point: { seriesIdx: number; pointIdx: number } | null
+  ) => void;
   /**
    * Callback function invoked when a point is clicked
    * @param point Coordinates of the clicked point
@@ -1182,7 +1224,10 @@ const ScatterPlotInteraction = React.forwardRef<
           hoveredPoint?.seriesIdx !== nearestSeriesIdx ||
           hoveredPoint?.pointIdx !== nearestPointIdx
         ) {
-          const point = { seriesIdx: nearestSeriesIdx, pointIdx: nearestPointIdx };
+          const point = {
+            seriesIdx: nearestSeriesIdx,
+            pointIdx: nearestPointIdx,
+          };
           setHoveredPoint(point);
           onPointHover?.(point);
         }
@@ -1248,7 +1293,10 @@ const ScatterPlotInteraction = React.forwardRef<
       });
 
       if (minDist < snapRadius) {
-        onPointClick({ seriesIdx: nearestSeriesIdx, pointIdx: nearestPointIdx });
+        onPointClick({
+          seriesIdx: nearestSeriesIdx,
+          pointIdx: nearestPointIdx,
+        });
       }
     },
     [onPointClick, series, xScale, yScale, snapRadius, hiddenSeries]
@@ -1293,10 +1341,11 @@ export interface ScatterPlotLegendProps extends React.SVGProps<SVGGElement> {
 /**
  * Legend component - SVG-based series legend rendered inside the chart with optional click-to-toggle functionality
  */
-const ScatterPlotLegend = React.forwardRef<
-  SVGGElement,
-  ScatterPlotLegendProps
->(({ className, interactive = false, position = "top-right", ...props }, ref) => {
+const ScatterPlotLegend = React.forwardRef<SVGGElement, ScatterPlotLegendProps>(
+  (
+    { className, interactive = false, position = "top-right", ...props },
+    ref
+  ) => {
     const { series, width, margin, height, hiddenSeries, toggleSeries } =
       useScatterPlot();
 
@@ -1365,14 +1414,16 @@ const ScatterPlotLegend = React.forwardRef<
         })}
       </g>
     );
-  });
+  }
+);
 
 ScatterPlotLegend.displayName = "ScatterPlot.Legend";
 
 /**
  * Props for ScatterPlot.LegendHTML component
  */
-export interface ScatterPlotLegendHTMLProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ScatterPlotLegendHTMLProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * Enable clicking legend items to toggle series visibility
    * @default false
@@ -1391,7 +1442,17 @@ export interface ScatterPlotLegendHTMLProps extends React.HTMLAttributes<HTMLDiv
 const ScatterPlotLegendHTML = React.forwardRef<
   HTMLDivElement,
   ScatterPlotLegendHTMLProps
->(({ className, style, interactive = false, orientation = "horizontal", ...props }, ref) => {
+>(
+  (
+    {
+      className,
+      style,
+      interactive = false,
+      orientation = "horizontal",
+      ...props
+    },
+    ref
+  ) => {
     const { series, hiddenSeries, toggleSeries } = useScatterPlot();
 
     return (
@@ -1453,7 +1514,8 @@ const ScatterPlotLegendHTML = React.forwardRef<
         })}
       </div>
     );
-  });
+  }
+);
 
 ScatterPlotLegendHTML.displayName = "ScatterPlot.LegendHTML";
 
@@ -1461,7 +1523,8 @@ ScatterPlotLegendHTML.displayName = "ScatterPlot.LegendHTML";
  * Props for ScatterPlot.Empty component
  * Displays when no data is available
  */
-export interface ScatterPlotEmptyProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface ScatterPlotEmptyProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
 
 /**
  * Empty state component - displays placeholder when no data is available
@@ -1522,7 +1585,8 @@ ScatterPlotEmpty.displayName = "ScatterPlot.Empty";
  * Props for ScatterPlot.Loading component
  * Displays loading spinner while data is being fetched
  */
-export interface ScatterPlotLoadingProps extends React.HTMLAttributes<HTMLDivElement> {}
+export interface ScatterPlotLoadingProps
+  extends React.HTMLAttributes<HTMLDivElement> {}
 
 /**
  * Loading state component - displays loading spinner while data is being fetched or processed

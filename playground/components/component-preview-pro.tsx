@@ -59,8 +59,7 @@ export function ComponentPreviewPro({
           </div>
         )}
         {activeTab === "code" && (
-          <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg p-12 bg-zinc-50 dark:bg-zinc-900 flex flex-col items-center justify-center text-center space-y-4">
-            <Lock className="w-12 h-12 text-zinc-400 dark:text-zinc-600" />
+          <div className="border border-zinc-200 dark:border-zinc-950 rounded-lg p-12 bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center text-center space-y-4">
             <div className="space-y-2">
               <h4 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                 Pro Component
