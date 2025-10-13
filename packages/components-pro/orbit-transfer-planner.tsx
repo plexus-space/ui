@@ -10,7 +10,7 @@ import type { Vec3 } from "../components/primitives/physics";
  * ORBIT TRANSFER PLANNER - PRO COMPONENT
  *
  * Visualizes and calculates orbital transfers between circular orbits.
- * Implements Hohmann and bi-elliptic transfer trajectories.
+ * Implements Hohmann transfer trajectories.
  *
  * **TRANSFER TYPES:**
  *
@@ -19,13 +19,6 @@ import type { Vec3 } from "../components/primitives/physics";
  *    - First burn at periapsis of initial orbit
  *    - Second burn at apoapsis of transfer orbit
  *    - ΔV = ΔV₁ + ΔV₂
- *
- * 2. **Bi-Elliptic Transfer** (More efficient for large radius ratios)
- *    - Three-impulse transfer via intermediate apoapsis
- *    - First burn to reach high apoapsis
- *    - Second burn at apoapsis to lower periapsis
- *    - Third burn at new periapsis to circularize
- *    - More efficient when r₂/r₁ > 11.94
  *
  * **REFERENCES:**
  * [1] Curtis, H. D. (2013). Orbital Mechanics for Engineering Students, Ch. 6
@@ -52,9 +45,7 @@ export interface OrbitTransferPlannerProps {
   /** Final circular orbit radius (km) */
   finalRadius: number;
   /** Type of transfer */
-  transferType: "hohmann" | "bi-elliptic";
-  /** Intermediate apoapsis radius for bi-elliptic (km), defaults to 2x final radius */
-  intermediateRadius?: number;
+  transferType: "hohmann";
   /** Gravitational parameter (km³/s²) */
   mu?: number;
   /** Color of initial orbit */
@@ -123,61 +114,6 @@ function calculateHohmannTransfer(
     transferOrbit1: {
       a: a_transfer,
       e: Math.abs(r2 - r1) / (r2 + r1),
-    },
-  };
-}
-
-/**
- * Calculate bi-elliptic transfer parameters
- *
- * @reference Curtis, H. D. (2013). Orbital Mechanics, Eq. 6.25-6.30
- */
-function calculateBiEllipticTransfer(
-  r1: number,
-  r2: number,
-  rb: number,
-  mu: number
-): TransferCalculation {
-  // Circular velocities
-  const v1 = Math.sqrt(mu / r1);
-  const v2 = Math.sqrt(mu / r2);
-
-  // First transfer orbit (r1 to rb)
-  const a1 = (r1 + rb) / 2;
-  const vp1 = Math.sqrt((2 * mu * rb) / (r1 * (r1 + rb)));
-  const va1 = Math.sqrt((2 * mu * r1) / (rb * (r1 + rb)));
-
-  // Second transfer orbit (rb to r2)
-  const a2 = (rb + r2) / 2;
-  const vp2 = Math.sqrt((2 * mu * r2) / (rb * (rb + r2)));
-  const va2 = Math.sqrt((2 * mu * rb) / (r2 * (rb + r2)));
-
-  // Delta-V requirements
-  const deltaV1 = Math.abs(vp1 - v1);
-  const deltaV2 = Math.abs(vp2 - va1);
-  const deltaV3 = Math.abs(v2 - va2);
-  const totalDeltaV = deltaV1 + deltaV2 + deltaV3;
-
-  // Transfer times
-  const transferTime1 = Math.PI * Math.sqrt(Math.pow(a1, 3) / mu);
-  const transferTime2 = Math.PI * Math.sqrt(Math.pow(a2, 3) / mu);
-  const totalTime = transferTime1 + transferTime2;
-
-  return {
-    deltaV1,
-    deltaV2,
-    deltaV3,
-    totalDeltaV,
-    transferTime1,
-    transferTime2,
-    totalTime,
-    transferOrbit1: {
-      a: a1,
-      e: Math.abs(rb - r1) / (rb + r1),
-    },
-    transferOrbit2: {
-      a: a2,
-      e: Math.abs(r2 - rb) / (r2 + rb),
     },
   };
 }
@@ -254,8 +190,6 @@ function formatTime(seconds: number): string {
 export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
   initialRadius,
   finalRadius,
-  transferType,
-  intermediateRadius,
   mu = 398600.4418, // Earth
   initialColor = "#00ff00",
   transferColor = "#ffaa00",
@@ -267,13 +201,8 @@ export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
 }) => {
   // Calculate transfer
   const transfer = React.useMemo(() => {
-    if (transferType === "hohmann") {
-      return calculateHohmannTransfer(initialRadius, finalRadius, mu);
-    } else {
-      const rb = intermediateRadius || finalRadius * 2;
-      return calculateBiEllipticTransfer(initialRadius, finalRadius, rb, mu);
-    }
-  }, [initialRadius, finalRadius, transferType, intermediateRadius, mu]);
+    return calculateHohmannTransfer(initialRadius, finalRadius, mu);
+  }, [initialRadius, finalRadius, mu]);
 
   // Generate orbit paths
   const initialOrbit = React.useMemo(
@@ -340,18 +269,6 @@ export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
         transparent
       />
 
-      {/* Transfer orbit 2 (bi-elliptic only) */}
-      {transferOrbit2 && (
-        <Line
-          points={transferOrbit2}
-          color={transferColor}
-          lineWidth={lineWidth * 1.5}
-          opacity={0.9}
-          transparent
-        />
-      )}
-
-      {/* Burn markers */}
       {showBurns && (
         <>
           {/* Burn 1 (initial orbit) */}
@@ -360,26 +277,10 @@ export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
             <meshBasicMaterial color="#00ff00" />
           </mesh>
 
-          {/* Burn 2 */}
-          {transferType === "hohmann" ? (
-            <mesh position={[finalRadius, 0, 0]}>
-              <sphereGeometry args={[100, 8, 8]} />
-              <meshBasicMaterial color="#ff00ff" />
-            </mesh>
-          ) : (
-            <>
-              {/* Intermediate burn */}
-              <mesh position={[-(intermediateRadius || finalRadius * 2), 0, 0]}>
-                <sphereGeometry args={[100, 8, 8]} />
-                <meshBasicMaterial color="#ffaa00" />
-              </mesh>
-              {/* Final burn */}
-              <mesh position={[finalRadius, 0, 0]}>
-                <sphereGeometry args={[100, 8, 8]} />
-                <meshBasicMaterial color="#ff00ff" />
-              </mesh>
-            </>
-          )}
+          <mesh position={[finalRadius, 0, 0]}>
+            <sphereGeometry args={[100, 8, 8]} />
+            <meshBasicMaterial color="#ff00ff" />
+          </mesh>
         </>
       )}
 
@@ -412,7 +313,7 @@ export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
                 fontSize: "14px",
               }}
             >
-              {transferType === "hohmann" ? "HOHMANN TRANSFER" : "BI-ELLIPTIC TRANSFER"}
+              HOHMANN TRANSFER
             </div>
 
             {/* Delta-V breakdown */}
@@ -426,11 +327,14 @@ export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
               >
                 DELTA-V BUDGET
               </div>
-              <StatRow label="ΔV₁ (Initial)" value={formatDeltaV(transfer.deltaV1)} />
-              <StatRow label="ΔV₂ (Transfer)" value={formatDeltaV(transfer.deltaV2)} />
-              {transfer.deltaV3 && (
-                <StatRow label="ΔV₃ (Final)" value={formatDeltaV(transfer.deltaV3)} />
-              )}
+              <StatRow
+                label="ΔV₁ (Initial)"
+                value={formatDeltaV(transfer.deltaV1)}
+              />
+              <StatRow
+                label="ΔV₂ (Transfer)"
+                value={formatDeltaV(transfer.deltaV2)}
+              />
               <div
                 style={{
                   marginTop: "8px",
@@ -459,10 +363,10 @@ export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
               >
                 TRANSFER TIME
               </div>
-              <StatRow label="Leg 1" value={formatTime(transfer.transferTime1)} />
-              {transfer.transferTime2 && (
-                <StatRow label="Leg 2" value={formatTime(transfer.transferTime2)} />
-              )}
+              <StatRow
+                label="Leg 1"
+                value={formatTime(transfer.transferTime1)}
+              />
               <div
                 style={{
                   marginTop: "8px",
@@ -470,7 +374,11 @@ export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
                   borderTop: "1px solid rgba(255, 255, 255, 0.1)",
                 }}
               >
-                <StatRow label="Total Time" value={formatTime(transfer.totalTime)} highlight />
+                <StatRow
+                  label="Total Time"
+                  value={formatTime(transfer.totalTime)}
+                  highlight
+                />
               </div>
             </div>
 
@@ -491,8 +399,14 @@ export const OrbitTransferPlanner: React.FC<OrbitTransferPlannerProps> = ({
               >
                 ORBIT PARAMETERS
               </div>
-              <StatRow label="Initial radius" value={`${initialRadius.toFixed(0)} km`} />
-              <StatRow label="Final radius" value={`${finalRadius.toFixed(0)} km`} />
+              <StatRow
+                label="Initial radius"
+                value={`${initialRadius.toFixed(0)} km`}
+              />
+              <StatRow
+                label="Final radius"
+                value={`${finalRadius.toFixed(0)} km`}
+              />
               <StatRow
                 label="Ratio (r₂/r₁)"
                 value={(finalRadius / initialRadius).toFixed(2)}

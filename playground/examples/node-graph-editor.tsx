@@ -333,12 +333,271 @@ export const NodeGraphEditorExamples = () => {
     },
   ];
 
+  // State machine example
+  const stateMachineNodes: GraphNode[] = [
+    {
+      id: "idle",
+      type: "input",
+      position: { x: 50, y: 200 },
+      label: "Idle",
+      outputs: [
+        { id: "start", label: "start" },
+        { id: "shutdown", label: "shutdown" },
+      ],
+    },
+    {
+      id: "initializing",
+      type: "process",
+      position: { x: 280, y: 100 },
+      label: "Initializing",
+      inputs: [{ id: "in", label: "" }],
+      outputs: [
+        { id: "success", label: "ready" },
+        { id: "fail", label: "error" },
+      ],
+    },
+    {
+      id: "running",
+      type: "process",
+      position: { x: 520, y: 100 },
+      label: "Running",
+      inputs: [{ id: "in", label: "" }],
+      outputs: [
+        { id: "pause", label: "pause" },
+        { id: "stop", label: "stop" },
+        { id: "error", label: "error" },
+      ],
+    },
+    {
+      id: "paused",
+      type: "decision",
+      position: { x: 520, y: 280 },
+      label: "Paused",
+      inputs: [{ id: "in", label: "" }],
+      outputs: [
+        { id: "resume", label: "resume" },
+        { id: "stop", label: "stop" },
+      ],
+    },
+    {
+      id: "error",
+      type: "output",
+      position: { x: 760, y: 200 },
+      label: "Error",
+      inputs: [{ id: "in", label: "" }],
+      color: "#ef4444",
+    },
+    {
+      id: "shutdown",
+      type: "output",
+      position: { x: 280, y: 320 },
+      label: "Shutdown",
+      inputs: [{ id: "in", label: "" }],
+    },
+  ];
+
+  const stateMachineEdges: Edge[] = [
+    {
+      id: "e1",
+      source: "idle",
+      sourcePort: "start",
+      target: "initializing",
+      targetPort: "in",
+      color: "#10b981",
+    },
+    {
+      id: "e2",
+      source: "initializing",
+      sourcePort: "success",
+      target: "running",
+      targetPort: "in",
+      color: "#10b981",
+    },
+    {
+      id: "e3",
+      source: "initializing",
+      sourcePort: "fail",
+      target: "error",
+      targetPort: "in",
+      color: "#ef4444",
+    },
+    {
+      id: "e4",
+      source: "running",
+      sourcePort: "pause",
+      target: "paused",
+      targetPort: "in",
+      color: "#f59e0b",
+    },
+    {
+      id: "e5",
+      source: "paused",
+      sourcePort: "resume",
+      target: "running",
+      targetPort: "in",
+      color: "#10b981",
+    },
+    {
+      id: "e6",
+      source: "running",
+      sourcePort: "error",
+      target: "error",
+      targetPort: "in",
+      color: "#ef4444",
+    },
+    {
+      id: "e7",
+      source: "running",
+      sourcePort: "stop",
+      target: "shutdown",
+      targetPort: "in",
+      color: "#6b7280",
+    },
+    {
+      id: "e8",
+      source: "paused",
+      sourcePort: "stop",
+      target: "shutdown",
+      targetPort: "in",
+      color: "#6b7280",
+    },
+    {
+      id: "e9",
+      source: "idle",
+      sourcePort: "shutdown",
+      target: "shutdown",
+      targetPort: "in",
+      color: "#6b7280",
+    },
+  ];
+
+  // Dependency graph example
+  const dependencyNodes: GraphNode[] = [
+    {
+      id: "core",
+      type: "input",
+      position: { x: 50, y: 200 },
+      label: "Core Library",
+      outputs: [{ id: "api", label: "API" }],
+      color: "#8b5cf6",
+    },
+    {
+      id: "utils",
+      type: "input",
+      position: { x: 50, y: 320 },
+      label: "Utilities",
+      outputs: [{ id: "helpers", label: "helpers" }],
+      color: "#8b5cf6",
+    },
+    {
+      id: "data-layer",
+      type: "process",
+      position: { x: 280, y: 180 },
+      label: "Data Layer",
+      inputs: [
+        { id: "core", label: "core" },
+        { id: "utils", label: "utils" },
+      ],
+      outputs: [{ id: "models", label: "models" }],
+      color: "#3b82f6",
+    },
+    {
+      id: "api-layer",
+      type: "process",
+      position: { x: 280, y: 320 },
+      label: "API Layer",
+      inputs: [{ id: "core", label: "core" }],
+      outputs: [{ id: "endpoints", label: "endpoints" }],
+      color: "#3b82f6",
+    },
+    {
+      id: "business-logic",
+      type: "process",
+      position: { x: 520, y: 220 },
+      label: "Business Logic",
+      inputs: [
+        { id: "data", label: "data" },
+        { id: "api", label: "api" },
+      ],
+      outputs: [{ id: "services", label: "services" }],
+      color: "#06b6d4",
+    },
+    {
+      id: "ui-components",
+      type: "output",
+      position: { x: 760, y: 160 },
+      label: "UI Components",
+      inputs: [{ id: "services", label: "services" }],
+      color: "#10b981",
+    },
+    {
+      id: "cli",
+      type: "output",
+      position: { x: 760, y: 280 },
+      label: "CLI Tool",
+      inputs: [{ id: "services", label: "services" }],
+      color: "#10b981",
+    },
+  ];
+
+  const dependencyEdges: Edge[] = [
+    {
+      id: "e1",
+      source: "core",
+      sourcePort: "api",
+      target: "data-layer",
+      targetPort: "core",
+    },
+    {
+      id: "e2",
+      source: "utils",
+      sourcePort: "helpers",
+      target: "data-layer",
+      targetPort: "utils",
+    },
+    {
+      id: "e3",
+      source: "core",
+      sourcePort: "api",
+      target: "api-layer",
+      targetPort: "core",
+    },
+    {
+      id: "e4",
+      source: "data-layer",
+      sourcePort: "models",
+      target: "business-logic",
+      targetPort: "data",
+    },
+    {
+      id: "e5",
+      source: "api-layer",
+      sourcePort: "endpoints",
+      target: "business-logic",
+      targetPort: "api",
+    },
+    {
+      id: "e6",
+      source: "business-logic",
+      sourcePort: "services",
+      target: "ui-components",
+      targetPort: "services",
+    },
+    {
+      id: "e7",
+      source: "business-logic",
+      sourcePort: "services",
+      target: "cli",
+      targetPort: "services",
+    },
+  ];
+
   return (
     <div className="space-y-12">
-      {/* Interactive Signal Processing Pipeline */}
+      {/* Data Flow Example */}
       <ComponentPreviewPro
-        title="Interactive Signal Processing Pipeline"
-        description="Drag nodes to rearrange the signal flow. Click and drag from output ports (right side) to input ports (left side) to create new connections. This example demonstrates real-time data processing from sensor input through filtering and decision logic to output systems."
+        title="Data Flow Pipeline"
+        description="Interactive signal processing pipeline showing data flow from sensor input through filtering and decision logic to output systems. Drag nodes to rearrange, click and drag from output ports to input ports to create connections."
         preview={
           <NodeGraphEditor.Root
             nodes={dataflowNodes}
@@ -362,6 +621,52 @@ export const NodeGraphEditorExamples = () => {
         }
       />
 
+      {/* State Machine Example */}
+      <ComponentPreviewPro
+        title="State Machine"
+        description="System lifecycle state machine showing transitions between idle, initialization, running, paused, error, and shutdown states. Demonstrates finite state machine patterns commonly used in control systems."
+        preview={
+          <NodeGraphEditor.Root
+            nodes={stateMachineNodes}
+            edges={stateMachineEdges}
+            width={1000}
+            height={450}
+            readOnly={true}
+          >
+            <NodeGraphEditor.Container>
+              <NodeGraphEditor.Canvas>
+                <NodeGraphEditor.Grid />
+                <NodeGraphEditor.Edges />
+                <NodeGraphEditor.Nodes />
+              </NodeGraphEditor.Canvas>
+            </NodeGraphEditor.Container>
+          </NodeGraphEditor.Root>
+        }
+      />
+
+      {/* Dependency Graph Example */}
+      <ComponentPreviewPro
+        title="Dependency Graph"
+        description="Software architecture dependency graph showing how different modules and layers depend on each other. Core libraries at the foundation, business logic in the middle, and consumer applications at the top."
+        preview={
+          <NodeGraphEditor.Root
+            nodes={dependencyNodes}
+            edges={dependencyEdges}
+            width={1000}
+            height={450}
+            readOnly={true}
+          >
+            <NodeGraphEditor.Container>
+              <NodeGraphEditor.Canvas>
+                <NodeGraphEditor.Grid />
+                <NodeGraphEditor.Edges />
+                <NodeGraphEditor.Nodes />
+              </NodeGraphEditor.Canvas>
+            </NodeGraphEditor.Container>
+          </NodeGraphEditor.Root>
+        }
+      />
+
       {/* Control System Architecture */}
       <ComponentPreviewPro
         title="Control System Architecture"
@@ -376,7 +681,7 @@ export const NodeGraphEditorExamples = () => {
           >
             <NodeGraphEditor.Container>
               <NodeGraphEditor.Canvas>
-                <NodeGraphEditor.Grid size={15} color="#d1d5db" />
+                <NodeGraphEditor.Grid />
                 <NodeGraphEditor.Edges />
                 <NodeGraphEditor.Nodes />
               </NodeGraphEditor.Canvas>

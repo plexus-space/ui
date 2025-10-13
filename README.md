@@ -64,9 +64,7 @@ High-quality planetary visualizations with real textures and rotation:
 Scientifically accurate orbital visualization using real astrodynamics equations:
 
 - `orbit-propagator` - Real-time orbit propagation (Two-Body, J2, High-Fidelity)
-- `orbital-elements-display` - Interactive HUD for Keplerian orbital elements
-- `ground-track-plotter` - Satellite ground track visualization on Earth
-- `orbit-transfer-planner` - Hohmann & bi-elliptic transfer calculations
+- `orbit-transfer-planner` - Hohmann transfer calculations
 
 ### 📊 Charts & Timelines (2D)
 

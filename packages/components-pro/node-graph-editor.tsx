@@ -326,10 +326,10 @@ const NodeGraphEditorContainer = React.forwardRef<
         position: "relative",
         width: "100%",
         height: `${height}px`,
-        borderRadius: "8px",
-        border: "1px solid rgba(0, 0, 0, 0.1)",
+        borderRadius: "12px",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
         overflow: "hidden",
-        backgroundColor: "transparent",
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
         ...style,
       }}
       {...props}
@@ -445,9 +445,8 @@ const NodeGraphEditorGrid = React.forwardRef<
           <circle
             cx={gridSize / 2}
             cy={gridSize / 2}
-            r={0.8}
-            fill="currentColor"
-            opacity={0.15}
+            r={1}
+            fill="rgba(255, 255, 255, 0.15)"
           />
         </pattern>
       </defs>
@@ -774,64 +773,87 @@ const NodeGraphEditorNodes = React.forwardRef<
             onMouseLeave={() => setHoveredNodeId(null)}
             style={{ cursor: readOnly ? "default" : "move" }}
           >
-            {/* Node shadow/glow */}
+            {/* Outer glow effect */}
             <rect
-              x={node.position.x - 2}
-              y={node.position.y - 2}
-              width={nodeWidth + 4}
-              height={nodeHeight + 4}
-              rx={8}
+              x={node.position.x - 4}
+              y={node.position.y - 4}
+              width={nodeWidth + 8}
+              height={nodeHeight + 8}
+              rx={10}
               fill={color}
-              opacity={isSelected ? 0.15 : isHovered || isDragged ? 0.1 : 0}
-              filter="url(#node-glow)"
+              opacity={isSelected ? 0.3 : isHovered || isDragged ? 0.2 : 0.08}
+              filter="url(#node-glow-outer)"
             />
 
-            {/* Node body gradient */}
+            {/* Node body - dark glassmorphic background */}
             <rect
               x={node.position.x}
               y={node.position.y}
               width={nodeWidth}
               height={nodeHeight}
-              rx={6}
-              fill={`url(#node-gradient-${node.id})`}
-              stroke="currentColor"
+              rx={8}
+              fill="rgba(0, 0, 0, 0.6)"
+              stroke="rgba(255, 255, 255, 0.05)"
               strokeWidth={1}
-              strokeOpacity={0.15}
             />
 
-            {/* Node border */}
+            {/* Gradient overlay */}
             <rect
               x={node.position.x}
               y={node.position.y}
               width={nodeWidth}
               height={nodeHeight}
-              rx={6}
+              rx={8}
+              fill={`url(#node-gradient-${node.id})`}
+              opacity={0.15}
+            />
+
+            {/* Glowing border */}
+            <rect
+              x={node.position.x}
+              y={node.position.y}
+              width={nodeWidth}
+              height={nodeHeight}
+              rx={8}
               fill="none"
               stroke={color}
-              strokeWidth={isSelected ? 2.5 : isHovered || isDragged ? 2 : 1.5}
-              opacity={isSelected ? 0.8 : 0.5}
+              strokeWidth={isSelected ? 2 : isHovered || isDragged ? 1.5 : 1}
+              opacity={isSelected ? 0.9 : isHovered || isDragged ? 0.7 : 0.4}
+              filter={isSelected || isHovered || isDragged ? "url(#node-border-glow)" : undefined}
             />
 
-            {/* Node header bar */}
+            {/* Vertical accent bar on the left */}
             <rect
-              x={node.position.x}
-              y={node.position.y}
-              width={nodeWidth}
-              height={28}
-              rx={6}
+              x={node.position.x + 6}
+              y={node.position.y + 10}
+              width={3}
+              height={nodeHeight - 20}
+              rx={1.5}
               fill={color}
-              opacity={0.12}
+              opacity={0.8}
+            />
+
+            {/* Accent bar glow */}
+            <rect
+              x={node.position.x + 6}
+              y={node.position.y + 10}
+              width={3}
+              height={nodeHeight - 20}
+              rx={1.5}
+              fill={color}
+              opacity={0.4}
+              filter="url(#accent-bar-glow)"
             />
 
             {/* Node label */}
             <text
               x={node.position.x + nodeWidth / 2}
-              y={node.position.y + 18}
-              fontSize={12}
+              y={node.position.y + 22}
+              fontSize={13}
               fontWeight={600}
-              fill="currentColor"
+              fill="white"
               textAnchor="middle"
-              opacity={0.9}
+              opacity={0.95}
             >
               {node.label}
             </text>
@@ -875,11 +897,12 @@ const NodeGraphEditorNodes = React.forwardRef<
                 />
                 {port.label && (
                   <text
-                    x={node.position.x + 12}
+                    x={node.position.x + 16}
                     y={node.position.y + 40 + idx * 24}
                     fontSize={10}
-                    fill="currentColor"
-                    opacity={0.7}
+                    fill="white"
+                    opacity={0.8}
+                    fontWeight={500}
                   >
                     {port.label}
                   </text>
@@ -926,11 +949,12 @@ const NodeGraphEditorNodes = React.forwardRef<
                 />
                 {port.label && (
                   <text
-                    x={node.position.x + nodeWidth - 12}
+                    x={node.position.x + nodeWidth - 16}
                     y={node.position.y + 40 + idx * 24}
                     fontSize={10}
-                    fill="currentColor"
-                    opacity={0.7}
+                    fill="white"
+                    opacity={0.8}
+                    fontWeight={500}
                     textAnchor="end"
                   >
                     {port.label}
@@ -943,7 +967,21 @@ const NodeGraphEditorNodes = React.forwardRef<
       })}
 
       <defs>
-        <filter id="node-glow">
+        <filter id="node-glow-outer" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="8" result="coloredBlur" />
+          <feMerge>
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="node-border-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+          <feMerge>
+            <feMergeNode in="coloredBlur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="accent-bar-glow" x="-200%" y="-50%" width="400%" height="200%">
           <feGaussianBlur stdDeviation="3" result="coloredBlur" />
           <feMerge>
             <feMergeNode in="coloredBlur" />

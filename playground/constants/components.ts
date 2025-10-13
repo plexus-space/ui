@@ -88,25 +88,7 @@ export const components: Component[] = [
     category: "Orbital Mechanics",
     tier: "pro",
     description:
-      "Real-time orbit propagation with multiple propagator types (Two-Body, J2, High-Fidelity). Features GPU-accelerated rendering, ground track visualization, orbital elements display, and time control. Supports multiple satellites, orbital perturbations, atmospheric drag, and mission analysis. Essential for mission planning, constellation design, and spacecraft operations.",
-    textures: [],
-  },
-  {
-    id: "orbital-elements-display",
-    name: "Orbital Elements Display",
-    category: "Orbital Mechanics",
-    tier: "pro",
-    description:
-      "Interactive HUD overlay displaying Keplerian orbital elements in real-time. Shows classical elements (semi-major axis, eccentricity, inclination, RAAN, argument of periapsis, true anomaly) and derived parameters (period, apoapsis, periapsis). Scientific accuracy with J2000 ECI reference frame. Perfect for mission control dashboards and orbital analysis.",
-    textures: [],
-  },
-  {
-    id: "ground-track-plotter",
-    name: "Ground Track Plotter",
-    category: "Orbital Mechanics",
-    tier: "pro",
-    description:
-      "Visualizes satellite ground track (sub-satellite point) on Earth's surface with ECI to geodetic coordinate transformations. Shows the path traced by satellites accounting for Earth rotation. Displays ascending/descending node markers for equator crossings. Essential for coverage analysis, visibility windows, and mission planning.",
+      "Real-time orbit propagation using composable primitives: useOrbitalPropagation hook + Marker, OrbitPath, and Trail primitives. Features J2 perturbation modeling, ground track visualization, and complete customization of rendering. Primitive-first architecture allows mixing and matching components for mission planning, constellation design, and spacecraft operations.",
     textures: [],
   },
   {
@@ -115,7 +97,7 @@ export const components: Component[] = [
     category: "Orbital Mechanics",
     tier: "pro",
     description:
-      "Calculate and visualize Hohmann and bi-elliptic orbital transfers between circular orbits. Displays complete delta-V budget breakdown, transfer times, and burn locations. Shows initial orbit, transfer ellipse(s), and final orbit with scientifically accurate calculations. Includes automatic optimization for radius ratio thresholds. Perfect for mission planning and propulsion system sizing.",
+      "Calculate and visualize Hohmann orbital transfers between circular orbits. Displays complete delta-V budget breakdown, transfer times, and burn locations. Shows initial orbit, transfer ellipse(s), and final orbit with scientifically accurate calculations. Includes automatic optimization for radius ratio thresholds. Perfect for mission planning and propulsion system sizing.",
     textures: [],
   },
   {

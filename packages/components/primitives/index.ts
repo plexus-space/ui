@@ -10,6 +10,33 @@
  * ```
  */
 
+// Validation Utilities
+export {
+  isValidVec3,
+  isValidVec2,
+  isValidNumber,
+  validateVec3,
+  validateVec2,
+  validateNumber,
+  sanitizeVec3,
+  sanitizeVec2,
+  clamp,
+} from "./validation";
+
+// Orbital Mechanics
+export {
+  solveKeplersEquation,
+  eccentricToTrueAnomaly,
+  trueToEccentricAnomaly,
+  meanToTrueAnomaly,
+  trueToMeanAnomaly,
+  createPerifocalToECIMatrix,
+  transformPerifocalToECI,
+  computePositionAtAnomaly,
+  computeOrbitPath,
+  type OrbitalElements as OrbitalElementsBase,
+} from "./orbital-mechanics";
+
 // 3D Primitives
 export {
   Sphere,
@@ -129,6 +156,22 @@ export {
   type UseLineBufferOptions,
   type UseLineBufferReturn,
 } from "./gpu-line-renderer";
+
+// Orbital Mechanics Primitives
+export {
+  Trail,
+  type TrailProps,
+} from "./trail";
+
+export {
+  Marker,
+  type MarkerProps,
+} from "./marker";
+
+export {
+  OrbitPath,
+  type OrbitPathProps,
+} from "./orbit-path";
 
 // Point Cloud Renderer
 export {

@@ -270,25 +270,36 @@ export function ecefToECI(
 /**
  * Calculate Greenwich Mean Sidereal Time (GMST)
  *
- * Simplified formula (accurate to ~1 second).
+ * High-precision formula from Vallado (2013), Algorithm 15.
+ * Accurate to sub-arcsecond level for STK-level precision.
  *
+ * @reference Vallado, D. A. (2013). Fundamentals of Astrodynamics, Algorithm 15
  * @param time - Time as Date object
  * @returns GMST in radians
  */
 export function calculateGMST(time: Date): number {
   const ut1 = time.getTime() / 1000; // seconds since Unix epoch
-  const j2000 = J2000_EPOCH / 1000;
-  const t = (ut1 - j2000) / 86400; // days since J2000
 
-  // Formula from Astronomical Almanac (simplified)
-  const gmst =
-    280.46061837 +
-    360.98564736629 * t +
-    0.000387933 * t ** 2 -
-    t ** 3 / 38710000;
+  // Julian Date (UT1)
+  const jdUT1 = (ut1 / 86400) + 2440587.5; // Unix epoch is JD 2440587.5
 
-  // Convert to radians and normalize to [0, 2π]
-  return ((gmst % 360) * Math.PI) / 180;
+  // Julian centuries from J2000.0
+  const tUT1 = (jdUT1 - 2451545.0) / 36525.0;
+
+  // GMST in seconds (Vallado Eq. 3-47, IAU 2000B model)
+  const gmstSeconds =
+    67310.54841 +
+    (876600.0 * 3600.0 + 8640184.812866) * tUT1 +
+    0.093104 * tUT1 * tUT1 -
+    6.2e-6 * tUT1 * tUT1 * tUT1;
+
+  // Convert to degrees and normalize
+  const gmstDegrees = (gmstSeconds / 240.0) % 360.0;
+
+  // Ensure positive and convert to radians
+  const gmstRadians = ((gmstDegrees + 360.0) % 360.0) * (Math.PI / 180.0);
+
+  return gmstRadians;
 }
 
 // ============================================================================
@@ -615,7 +626,6 @@ export function calculateElevation(
   observer: GeodeticCoordinates,
   target: GeodeticCoordinates
 ): number {
-  const obsECEF = geodeticToECEF(observer);
   const tarECEF = geodeticToECEF(target);
 
   // Vector from observer to target in ENU

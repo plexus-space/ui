@@ -5,7 +5,7 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { OrbitTransferPlanner } from "@plexusui/components-pro/orbit-transfer-planner";
 import { Sphere } from "@plexusui/components/primitives/sphere";
-import { EARTH_RADIUS } from "@plexusui/components-pro/orbit-propagator";
+import { EARTH_RADIUS } from "@plexusui/hooks/use-orbital-propagation";
 
 export const OrbitTransferPlannerExamples = () => {
   return (
@@ -29,10 +29,7 @@ export const OrbitTransferPlannerExamples = () => {
 </Canvas>`}
         preview={
           <div style={{ width: "100%", height: "600px" }}>
-            <Canvas
-              gl={{ antialias: false, alpha: false }}
-              dpr={[1, 1.5]}
-            >
+            <Canvas gl={{ antialias: false, alpha: false }} dpr={[1, 1.5]}>
               <color attach="background" args={["#000000"]} />
 
               <PerspectiveCamera
@@ -44,7 +41,10 @@ export const OrbitTransferPlannerExamples = () => {
               />
 
               <ambientLight intensity={0.5} />
-              <directionalLight position={[50000, 50000, 50000]} intensity={1.5} />
+              <directionalLight
+                position={[50000, 50000, 50000]}
+                intensity={1.5}
+              />
 
               <Sphere
                 radius={EARTH_RADIUS}
@@ -87,10 +87,7 @@ export const OrbitTransferPlannerExamples = () => {
 />`}
         preview={
           <div style={{ width: "100%", height: "600px" }}>
-            <Canvas
-              gl={{ antialias: false, alpha: false }}
-              dpr={[1, 1.5]}
-            >
+            <Canvas gl={{ antialias: false, alpha: false }} dpr={[1, 1.5]}>
               <color attach="background" args={["#000000"]} />
 
               <PerspectiveCamera
@@ -102,7 +99,10 @@ export const OrbitTransferPlannerExamples = () => {
               />
 
               <ambientLight intensity={0.5} />
-              <directionalLight position={[50000, 50000, 50000]} intensity={1.5} />
+              <directionalLight
+                position={[50000, 50000, 50000]}
+                intensity={1.5}
+              />
 
               <Sphere
                 radius={EARTH_RADIUS}
@@ -131,68 +131,6 @@ export const OrbitTransferPlannerExamples = () => {
           </div>
         }
       />
-
-      {/* Bi-Elliptic Transfer */}
-      <ComponentPreview
-        title="Bi-Elliptic Transfer: LEO to High Orbit"
-        description="Bi-elliptic transfer from LEO to a very high orbit. When the radius ratio exceeds 11.94, a bi-elliptic transfer can be more fuel-efficient than Hohmann, despite taking longer. This three-impulse maneuver goes through an intermediate high apoapsis before reaching the final orbit. Notice the additional burn and longer transfer time."
-        code={`<OrbitTransferPlanner
-  initialRadius={6778}
-  finalRadius={84328}       // 2x GEO altitude
-  transferType="bi-elliptic"
-  intermediateRadius={100000}  // High intermediate apoapsis
-  showStats
-  showBurns
-/>`}
-        preview={
-          <div style={{ width: "100%", height: "600px" }}>
-            <Canvas
-              gl={{ antialias: false, alpha: false }}
-              dpr={[1, 1.5]}
-            >
-              <color attach="background" args={["#000000"]} />
-
-              <PerspectiveCamera
-                makeDefault
-                position={[100000, 60000, 100000]}
-                fov={45}
-                near={100}
-                far={300000}
-              />
-
-              <ambientLight intensity={0.5} />
-              <directionalLight position={[50000, 50000, 50000]} intensity={1.5} />
-
-              <Sphere
-                radius={EARTH_RADIUS}
-                textureUrl="/day.jpg"
-                segments={64}
-              />
-
-              <OrbitTransferPlanner
-                initialRadius={6778}
-                finalRadius={84328}
-                transferType="bi-elliptic"
-                intermediateRadius={120000}
-                initialColor="#3b82f6"
-                transferColor="#ef4444"
-                finalColor="#8b5cf6"
-                showStats
-                showBurns
-              />
-
-              <OrbitControls
-                enableDamping
-                dampingFactor={0.05}
-                minDistance={10000}
-                maxDistance={250000}
-              />
-            </Canvas>
-          </div>
-        }
-      />
-
-      {/* Small Orbit Raise */}
       <ComponentPreview
         title="Small Orbit Raise: Station Keeping"
         description="Small Hohmann transfer for station keeping maneuvers. Raising orbit from 400 km to 420 km requires only about 8 m/s delta-V. This type of maneuver is performed regularly on satellites to maintain their desired orbit altitude."
@@ -204,10 +142,7 @@ export const OrbitTransferPlannerExamples = () => {
 />`}
         preview={
           <div style={{ width: "100%", height: "600px" }}>
-            <Canvas
-              gl={{ antialias: false, alpha: false }}
-              dpr={[1, 1.5]}
-            >
+            <Canvas gl={{ antialias: false, alpha: false }} dpr={[1, 1.5]}>
               <color attach="background" args={["#000000"]} />
 
               <PerspectiveCamera
@@ -219,7 +154,10 @@ export const OrbitTransferPlannerExamples = () => {
               />
 
               <ambientLight intensity={0.5} />
-              <directionalLight position={[50000, 50000, 50000]} intensity={1.5} />
+              <directionalLight
+                position={[50000, 50000, 50000]}
+                intensity={1.5}
+              />
 
               <Sphere
                 radius={EARTH_RADIUS}

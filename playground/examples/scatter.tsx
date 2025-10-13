@@ -187,7 +187,6 @@ export const ScatterPlotExamples = () => {
 </ScatterPlot.Root>`}
       />
 
-      {/* Orbital Mechanics */}
       <ComponentPreview
         title="Orbital Velocity vs Altitude"
         description="Relationship between circular orbital velocity and altitude above Earth. Shows inverse square root relationship from orbital mechanics."

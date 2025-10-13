@@ -41,9 +41,79 @@ export function calculateEarthRotation(timeScale: number = 1): number {
   return fractionOfDay * 2 * Math.PI * timeScale;
 }
 
+/**
+ * Convert geodetic coordinates (lat/lon) to 2D projection coordinates
+ *
+ * @param lat - Latitude in degrees (-90 to 90)
+ * @param lon - Longitude in degrees (-180 to 180)
+ * @param projection - Projection type
+ * @param mapWidth - Width of the map in scene units
+ * @param mapHeight - Height of the map in scene units
+ * @returns [x, y] coordinates in scene space
+ */
+export function geodeticToProjection(
+  lat: number,
+  lon: number,
+  projection: ProjectionType,
+  mapWidth: number,
+  mapHeight: number
+): [number, number] {
+  // Normalize lon to [-180, 180]
+  let normalizedLon = lon;
+  while (normalizedLon > 180) normalizedLon -= 360;
+  while (normalizedLon < -180) normalizedLon += 360;
+
+  let x: number, y: number;
+
+  switch (projection) {
+    case "equirectangular":
+      // Simple linear projection (Plate Carrée)
+      // x = λ, y = φ
+      x = (normalizedLon / 360) * mapWidth;
+      y = (lat / 180) * mapHeight;
+      break;
+
+    case "mercator":
+      // Mercator projection (conformal, preserves angles)
+      // x = λ
+      // y = ln(tan(π/4 + φ/2))
+      x = (normalizedLon / 360) * mapWidth;
+      const latRad = (lat * Math.PI) / 180;
+      // Clamp latitude to avoid infinity at poles
+      const clampedLat = Math.max(-85, Math.min(85, lat));
+      const clampedLatRad = (clampedLat * Math.PI) / 180;
+      const mercatorY = Math.log(Math.tan(Math.PI / 4 + clampedLatRad / 2));
+      // Normalize to map height (Mercator range is approximately -π to π)
+      y = (mercatorY / Math.PI) * (mapHeight / 2);
+      break;
+
+    case "miller":
+      // Miller Cylindrical projection (compromise between Mercator and equirectangular)
+      // Similar to Mercator but with less polar distortion
+      x = (normalizedLon / 360) * mapWidth;
+      const latRadMiller = (lat * Math.PI) / 180;
+      const clampedLatMiller = Math.max(-85, Math.min(85, lat));
+      const clampedLatRadMiller = (clampedLatMiller * Math.PI) / 180;
+      const millerY = (5 / 4) * Math.log(Math.tan(Math.PI / 4 + (2 * clampedLatRadMiller) / 5));
+      y = (millerY / Math.PI) * (mapHeight / 2);
+      break;
+
+    case "globe":
+    default:
+      // Shouldn't be used for flat maps, but provide fallback
+      x = (normalizedLon / 360) * mapWidth;
+      y = (lat / 180) * mapHeight;
+      break;
+  }
+
+  return [x, y];
+}
+
 // ============================================================================
 // Context
 // ============================================================================
+
+export type ProjectionType = "globe" | "equirectangular" | "mercator" | "miller";
 
 interface EarthContext {
   radius: number;
@@ -51,6 +121,7 @@ interface EarthContext {
   axialTilt: [number, number, number];
   brightness: number;
   timeScale: number;
+  projection: ProjectionType;
   dayMapUrl?: string;
   nightMapUrl?: string;
   cloudsMapUrl?: string;
@@ -126,6 +197,16 @@ export interface EarthRootProps {
    * @example 0.8 (dimmer), 1.2 (brighter)
    */
   brightness?: number;
+  /**
+   * Map projection type for visualization
+   * - "globe": 3D spherical Earth (default)
+   * - "equirectangular": Flat 2D map with simple lat/lon projection
+   * - "mercator": Flat 2D map preserving angles (good for navigation)
+   * - "miller": Flat 2D map with reduced polar distortion
+   * @default "globe"
+   * @example "equirectangular", "mercator"
+   */
+  projection?: ProjectionType;
   /**
    * Child components (Canvas, Globe, Atmosphere, etc.)
    */
@@ -326,6 +407,7 @@ const EarthRoot = React.forwardRef<HTMLDivElement, EarthRootProps>(
       enableRotation = true,
       timeScale = 1,
       brightness = 1.0,
+      projection = "globe",
       children,
     },
     ref
@@ -347,6 +429,7 @@ const EarthRoot = React.forwardRef<HTMLDivElement, EarthRootProps>(
         axialTilt,
         brightness,
         timeScale,
+        projection,
         dayMapUrl,
         nightMapUrl,
         cloudsMapUrl,
@@ -359,6 +442,7 @@ const EarthRoot = React.forwardRef<HTMLDivElement, EarthRootProps>(
         axialTilt,
         brightness,
         timeScale,
+        projection,
         dayMapUrl,
         nightMapUrl,
         cloudsMapUrl,
@@ -586,6 +670,143 @@ const EarthAxis = React.forwardRef<any, EarthAxisProps>(
 
 EarthAxis.displayName = "Earth.Axis";
 
+/**
+ * Props for Earth.FlatMap component
+ * 2D flat map projection for mission planning and ground track visualization
+ */
+export interface EarthFlatMapProps {
+  /**
+   * Map width in scene units
+   * @default 40
+   * @example 30, 50, 60
+   */
+  width?: number;
+  /**
+   * Map height in scene units
+   * @default 20
+   * @example 15, 25, 30
+   */
+  height?: number;
+  /**
+   * Show latitude/longitude grid lines
+   * @default false
+   */
+  showGrid?: boolean;
+  /**
+   * Grid line color
+   * @default "#ffffff"
+   */
+  gridColor?: string;
+  /**
+   * Grid line opacity
+   * @default 0.2
+   * @range 0.0-1.0
+   */
+  gridOpacity?: number;
+  /**
+   * Grid spacing in degrees
+   * @default 15
+   * @example 10, 30, 45
+   */
+  gridSpacing?: number;
+}
+
+/**
+ * FlatMap component - renders Earth as a 2D projected map
+ * Perfect for mission planning, ground track visualization, and coverage analysis
+ */
+const EarthFlatMap = React.forwardRef<THREE.Group, EarthFlatMapProps>(
+  (
+    {
+      width = 40,
+      height = 20,
+      showGrid = false,
+      gridColor = "#ffffff",
+      gridOpacity = 0.2,
+      gridSpacing = 15,
+    },
+    ref
+  ) => {
+    const { dayMapUrl, projection } = useEarth();
+    const textureLoader = React.useMemo(() => new THREE.TextureLoader(), []);
+    const [texture, setTexture] = React.useState<THREE.Texture | null>(null);
+
+    // Load texture
+    React.useEffect(() => {
+      if (!dayMapUrl) return;
+
+      textureLoader.load(dayMapUrl, (loadedTexture) => {
+        loadedTexture.colorSpace = THREE.SRGBColorSpace;
+        setTexture(loadedTexture);
+      });
+    }, [dayMapUrl, textureLoader]);
+
+    // Create grid lines
+    const gridLines = React.useMemo(() => {
+      if (!showGrid) return null;
+
+      const lines: THREE.BufferGeometry[] = [];
+
+      // Latitude lines (horizontal)
+      for (let lat = -90; lat <= 90; lat += gridSpacing) {
+        const points: THREE.Vector3[] = [];
+        for (let lon = -180; lon <= 180; lon += 1) {
+          const [x, y] = geodeticToProjection(lat, lon, projection, width, height);
+          points.push(new THREE.Vector3(x, y, 0.01)); // Slightly above map
+        }
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        lines.push(geometry);
+      }
+
+      // Longitude lines (vertical)
+      for (let lon = -180; lon <= 180; lon += gridSpacing) {
+        const points: THREE.Vector3[] = [];
+        for (let lat = -90; lat <= 90; lat += 1) {
+          const [x, y] = geodeticToProjection(lat, lon, projection, width, height);
+          points.push(new THREE.Vector3(x, y, 0.01));
+        }
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        lines.push(geometry);
+      }
+
+      return lines;
+    }, [showGrid, gridSpacing, projection, width, height]);
+
+    return (
+      <group ref={ref}>
+        {/* Map plane */}
+        <mesh position={[0, 0, 0]}>
+          <planeGeometry args={[width, height]} />
+          <meshBasicMaterial
+            map={texture}
+            side={THREE.DoubleSide}
+            toneMapped={false}
+          />
+        </mesh>
+
+        {/* Grid lines */}
+        {showGrid && gridLines && gridLines.map((geometry, i) => (
+          <line key={i} geometry={geometry}>
+            <lineBasicMaterial
+              color={gridColor}
+              opacity={gridOpacity}
+              transparent
+            />
+          </line>
+        ))}
+
+        {/* Border frame */}
+        <lineSegments>
+          <edgesGeometry args={[new THREE.PlaneGeometry(width, height)]} />
+          <lineBasicMaterial color={gridColor} opacity={gridOpacity * 2} transparent />
+        </lineSegments>
+      </group>
+    );
+  }
+);
+
+EarthFlatMap.displayName = "Earth.FlatMap";
+
 // ============================================================================
 // Exports
 // ============================================================================
@@ -595,6 +816,7 @@ export const Earth = Object.assign(EarthRoot, {
   Canvas: EarthCanvas,
   Controls: EarthControls,
   Globe: EarthGlobe,
+  FlatMap: EarthFlatMap,
   Atmosphere: EarthAtmosphere,
   Clouds: EarthClouds,
   Axis: EarthAxis,

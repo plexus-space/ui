@@ -10,6 +10,7 @@
 4. **Scientific Accuracy** - Peer-reviewed algorithms, cited sources, correct math
 5. **Performance Obsessed** - GPU acceleration, WebAssembly, optimal rendering
 6. **TypeScript Native** - Full type safety with proper generics
+7. **Simple at the core** - Fully functional but always as simple as possible
 
 ---
 
@@ -58,7 +59,6 @@
 
 - [x] **Compute Shaders** - Physics, FFT, image processing on GPU
 - [x] **Instanced Rendering** - 1000s of identical objects in one draw call
-- [ ] **Texture Streaming** - Lazy-load large medical images, satellite tiles
 
 **Why This Matters:** An ECG component and an orbital path use the **same line renderer**. A thermal camera and a spectrogram use the **same heatmap canvas**. A skeleton and a spacecraft use the **same mesh renderer**. This is what makes the library unique—true cross-domain primitives.
 
@@ -94,7 +94,7 @@
 
 ---
 
-## Phase 2.7: HUD & Tactical Interfaces (NEW)
+## Phase 2.7: HUD & Tactical Interfaces
 
 > **Goal:** Military/aerospace-grade heads-up displays.
 
@@ -153,34 +153,18 @@
 
 - [x] **Orbit Propagator** - Multiple propagators (SGP4, J2, high-fidelity w/ perturbations)
 - [ ] **Two-Body Problem** - Keplerian orbits with classical orbital elements
-- [ ] **Orbital Elements Display** - Interactive visualization (a, e, i, Ω, ω, ν)
-- [ ] **Ground Track Plotter** - Satellite path over Earth/Moon surface
-- [ ] **3D Orbit Visualizer** - Real-time orbit animation with celestial bodies
-- [ ] **Orbit Perturbations** - J2-J6, drag, SRP, third-body (Sun/Moon)
+- [x] **Ground Track Plotter** - Satellite path over Earth/Moon surface
 - [ ] **N-Body Simulator** - Multi-body gravitational interactions
 
 ### Trajectory Design & Optimization
 
-- [ ] **Hohmann Transfer** - Optimal two-impulse orbital transfer
-- [ ] **Bi-Elliptic Transfer** - Three-impulse high-altitude transfers
+- [x] **Hohmann Transfer** - Optimal two-impulse orbital transfer
 - [ ] **Lambert Solver** - Time-constrained trajectory between positions
-- [ ] **Porkchop Plotter** - ΔV and flight time contours for transfers
 - [ ] **Launch Window Calculator** - Optimal launch opportunities
 - [ ] **Trajectory Optimizer** - Low-thrust spiral transfers, gradient methods
 - [ ] **Gravity Assist Planner** - Swing-by trajectory design
 - [ ] **Interplanetary Trajectories** - Earth-Moon transfers, L-point orbits
-- [ ] **Landing Trajectory** - Powered descent guidance (lunar landing)
-
-### Attitude Dynamics & Control
-
-- [ ] **Attitude Visualizer** - 3D spacecraft orientation (quaternions/Euler)
-- [ ] **Torque-Free Motion** - Rigid body dynamics, polhode/herpolhode
-- [ ] **Gravity Gradient** - Torque from non-uniform gravity field
-- [ ] **Momentum Exchange** - Reaction wheels, control moment gyros
-- [ ] **Magnetic Torquers** - Dipole interaction with planetary field
-- [ ] **Spin Stabilization** - Gyroscopic stability visualization
-- [ ] **Three-Axis Stabilization** - Active control with actuators
-- [ ] **Attitude Determination** - Sensor fusion (sun, star tracker, magnetometer)
+- [ ] **Landing Trajectory** - Powered descent guidance (lunar landing) you will need to use the earth and moon component and make sure it is to scale
 
 ### Ground Systems & Coverage
 

@@ -17,38 +17,32 @@ export const Sidenav = () => {
     <aside className="w-52 flex-shrink-0  bg-background overflow-y-auto">
       <nav className="p-4 pt-6">
         <div className="space-y-1">
-          {["Planetary Bodies", "Orbital Mechanics", "Charts"].map(
-            (category) => (
-              <div key={category}>
-                <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 ">
-                  {category}
-                </div>
-                <div className="flex flex-col gap-1">
-                  {freeComponents
-                    .filter((comp) => comp.category === category)
-                    .map((comp) => (
-                      <Link
-                        key={comp.id}
-                        href={`/${comp.id}`}
-                        className="w-full"
-                      >
-                        <Button
-                          variant="ghost"
-                          className={`${
-                            comp.id === componentId
-                              ? "bg-zinc-200 dark:bg-zinc-800"
-                              : ""
-                          } cursor-pointer`}
-                          size="sm"
-                        >
-                          {comp.name}
-                        </Button>
-                      </Link>
-                    ))}
-                </div>
+          {["Planetary Bodies", "Charts"].map((category) => (
+            <div key={category}>
+              <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 ">
+                {category}
               </div>
-            )
-          )}
+              <div className="flex flex-col gap-1">
+                {freeComponents
+                  .filter((comp) => comp.category === category)
+                  .map((comp) => (
+                    <Link key={comp.id} href={`/${comp.id}`} className="w-full">
+                      <Button
+                        variant="ghost"
+                        className={`${
+                          comp.id === componentId
+                            ? "bg-zinc-200 dark:bg-zinc-800"
+                            : ""
+                        } cursor-pointer`}
+                        size="sm"
+                      >
+                        {comp.name}
+                      </Button>
+                    </Link>
+                  ))}
+              </div>
+            </div>
+          ))}
 
           {proComponents.length > 0 && (
             <div>

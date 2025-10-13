@@ -29,7 +29,8 @@
     "paths": {
       "@/*": ["./*"],
       "@plexusui/components/*": ["../packages/components/*"],
-      "@plexusui/components-pro/*": ["../packages/components-pro/*"]
+      "@plexusui/components-pro/*": ["../packages/components-pro/*"],
+      "@plexusui/hooks/*": ["../packages/hooks/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

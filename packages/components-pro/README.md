@@ -6,10 +6,10 @@ Advanced aerospace and scientific visualization components for mission-critical 
 
 ### Orbital Mechanics & Propagation
 
-- **OrbitPropagator** - Real-time orbit propagation with multiple propagator types (Two-Body, J2, High-Fidelity)
-- **OrbitalElementsDisplay** - Interactive HUD displaying Keplerian orbital elements
-- **GroundTrackPlotter** - Satellite ground track visualization on Earth's surface
-- **OrbitTransferPlanner** - Hohmann and bi-elliptic transfer calculations and visualization
+- **OrbitTransferPlanner** - Hohmann transfer calculations and visualization
+- For real-time orbit propagation, use the primitive-first architecture:
+  - `useOrbitalPropagation` hook (in `@plexusui/hooks`)
+  - `Marker`, `OrbitPath`, `Trail` primitives (in `@plexusui/components/primitives`)
 
 ### Network & System Architecture
 
@@ -23,15 +23,22 @@ These components are part of the Plexus UI Pro tier and are available in the pla
 ## Usage
 
 ```tsx
-import { OrbitPropagator } from "@plexusui/components-pro/orbit-propagator";
-import { OrbitalElementsDisplay } from "@plexusui/components-pro/orbital-elements-display";
-import { GroundTrackPlotter } from "@plexusui/components-pro/ground-track-plotter";
+// Orbital mechanics - primitive-first architecture
+import { useOrbitalPropagation } from "@plexusui/hooks/use-orbital-propagation";
+import { Marker, OrbitPath, Trail } from "@plexusui/components/primitives";
+
+// Orbit transfers
 import { OrbitTransferPlanner } from "@plexusui/components-pro/orbit-transfer-planner";
+
+// Node graph editor
+import { NodeGraphEditor } from "@plexusui/components-pro/node-graph-editor";
 ```
 
 ## Documentation
 
-Full documentation and examples are available in the playground at `/orbit-propagator`, `/orbital-elements-display`, `/ground-track-plotter`, and `/orbit-transfer-planner`.
+Full documentation and examples are available in the playground at `/orbit-propagator` and `/orbit-transfer-planner`.
+
+For migration from the deprecated `OrbitPropagator` component, see [MIGRATION.md](../../MIGRATION.md).
 
 ## License
 

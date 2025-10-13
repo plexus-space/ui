@@ -18,8 +18,21 @@
 // Vector Math
 // ============================================================================
 
-export type Vec3 = [number, number, number];
-export type Vec2 = [number, number];
+/**
+ * 3D Vector (immutable)
+ *
+ * Readonly array to prevent accidental mutations.
+ * All vec3 operations return new vectors.
+ */
+export type Vec3 = readonly [number, number, number];
+
+/**
+ * 2D Vector (immutable)
+ *
+ * Readonly array to prevent accidental mutations.
+ * All vec2 operations return new vectors.
+ */
+export type Vec2 = readonly [number, number];
 
 export const vec3 = {
   add: (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
@@ -325,55 +338,116 @@ export interface OrbitalElements {
   trueAnomaly: number;
 }
 
+/**
+ * Convert state vector to orbital elements
+ *
+ * Handles special cases for circular, equatorial, and circular equatorial orbits.
+ * Uses robust numerical methods to avoid singularities.
+ *
+ * @reference Vallado, D. A. (2013). Fundamentals of Astrodynamics, Algorithm 9
+ * @param position - Position vector (km)
+ * @param velocity - Velocity vector (km/s)
+ * @param mu - Gravitational parameter (km³/s²)
+ * @returns Orbital elements
+ */
 export function stateToOrbitalElements(
   position: Vec3,
   velocity: Vec3,
   mu: number
 ): OrbitalElements {
+  const TOL = 1e-8; // Tolerance for singularities
+
   const r = vec3.magnitude(position);
   const v = vec3.magnitude(velocity);
 
-  // Angular momentum
+  // Angular momentum vector
   const h = vec3.cross(position, velocity);
   const hMag = vec3.magnitude(h);
 
+  // Node vector (K × h)
+  const K: Vec3 = [0, 0, 1];
+  const n = vec3.cross(K, h);
+  const nMag = vec3.magnitude(n);
+
   // Eccentricity vector
-  const e = vec3.sub(
+  const e_vec = vec3.sub(
     vec3.mul(vec3.cross(velocity, h), 1 / mu),
     vec3.div(position, r)
   );
-  const eccentricity = vec3.magnitude(e);
+  const eccentricity = vec3.magnitude(e_vec);
 
-  // Semi-major axis
+  // Specific orbital energy
   const energy = (v * v) / 2 - mu / r;
-  const semiMajorAxis = -mu / (2 * energy);
 
-  // Inclination
-  const inclination = Math.acos(h[2] / hMag);
+  // Semi-major axis (with safeguard against parabolic/hyperbolic)
+  const semiMajorAxis = Math.abs(energy) > TOL ? -mu / (2 * energy) : r;
 
-  // Node vector
-  const n = vec3.cross([0, 0, 1], h);
-  const nMag = vec3.magnitude(n);
+  // Inclination (always well-defined)
+  // Clamp to avoid numerical issues with acos
+  const cosI = Math.max(-1, Math.min(1, h[2] / hMag));
+  const inclination = Math.acos(cosI);
 
-  // Longitude of ascending node
+  // Check for special cases
+  const isCircular = eccentricity < TOL;
+  const isEquatorial = Math.abs(inclination) < TOL || Math.abs(inclination - Math.PI) < TOL;
+
+  // Longitude of ascending node (RAAN)
   let longitudeAscendingNode = 0;
-  if (nMag > 1e-10) {
-    longitudeAscendingNode = Math.acos(n[0] / nMag);
-    if (n[1] < 0) longitudeAscendingNode = 2 * Math.PI - longitudeAscendingNode;
+  if (!isEquatorial && nMag > TOL) {
+    // Standard case: inclined orbit
+    const cosOmega = Math.max(-1, Math.min(1, n[0] / nMag));
+    longitudeAscendingNode = Math.acos(cosOmega);
+    if (n[1] < 0) {
+      longitudeAscendingNode = 2 * Math.PI - longitudeAscendingNode;
+    }
   }
 
   // Argument of periapsis
   let argumentOfPeriapsis = 0;
-  if (nMag > 1e-10 && eccentricity > 1e-10) {
-    argumentOfPeriapsis = Math.acos(vec3.dot(n, e) / (nMag * eccentricity));
-    if (e[2] < 0) argumentOfPeriapsis = 2 * Math.PI - argumentOfPeriapsis;
+  if (!isCircular) {
+    if (!isEquatorial && nMag > TOL) {
+      // Standard case: eccentric + inclined orbit
+      const cosOmega_arg = Math.max(-1, Math.min(1, vec3.dot(n, e_vec) / (nMag * eccentricity)));
+      argumentOfPeriapsis = Math.acos(cosOmega_arg);
+      if (e_vec[2] < 0) {
+        argumentOfPeriapsis = 2 * Math.PI - argumentOfPeriapsis;
+      }
+    } else {
+      // Equatorial eccentric orbit: use longitude of periapsis
+      const cosOmega_arg = Math.max(-1, Math.min(1, e_vec[0] / eccentricity));
+      argumentOfPeriapsis = Math.acos(cosOmega_arg);
+      if (e_vec[1] < 0) {
+        argumentOfPeriapsis = 2 * Math.PI - argumentOfPeriapsis;
+      }
+    }
   }
 
   // True anomaly
   let trueAnomaly = 0;
-  if (eccentricity > 1e-10) {
-    trueAnomaly = Math.acos(vec3.dot(e, position) / (eccentricity * r));
-    if (vec3.dot(position, velocity) < 0) trueAnomaly = 2 * Math.PI - trueAnomaly;
+  if (!isCircular) {
+    // Eccentric orbit
+    const cosNu = Math.max(-1, Math.min(1, vec3.dot(e_vec, position) / (eccentricity * r)));
+    trueAnomaly = Math.acos(cosNu);
+    if (vec3.dot(position, velocity) < 0) {
+      trueAnomaly = 2 * Math.PI - trueAnomaly;
+    }
+  } else {
+    // Circular orbit: use argument of latitude
+    if (!isEquatorial && nMag > TOL) {
+      // Circular inclined: measure from ascending node
+      const cosU = Math.max(-1, Math.min(1, vec3.dot(n, position) / (nMag * r)));
+      trueAnomaly = Math.acos(cosU);
+      if (position[2] < 0) {
+        trueAnomaly = 2 * Math.PI - trueAnomaly;
+      }
+    } else {
+      // Circular equatorial: use true longitude
+      const cosL = Math.max(-1, Math.min(1, position[0] / r));
+      trueAnomaly = Math.acos(cosL);
+      if (position[1] < 0) {
+        trueAnomaly = 2 * Math.PI - trueAnomaly;
+      }
+    }
   }
 
   return {

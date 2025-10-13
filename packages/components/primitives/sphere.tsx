@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, forwardRef, ReactNode } from "react";
+import { useRef, useMemo, forwardRef, ReactNode, useEffect } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -90,17 +90,41 @@ export const Sphere = forwardRef<THREE.Mesh, SphereProps>(
     const meshRef = useRef<THREE.Mesh>(null);
     const groupRef = useRef<THREE.Group>(null);
 
+    // Singleton texture loader (created once, reused)
+    const textureLoader = useMemo(() => new THREE.TextureLoader(), []);
+
     // Load textures
     const textures = useMemo(() => {
-      const loader = new THREE.TextureLoader();
       return {
-        map: textureUrl ? loader.load(textureUrl) : null,
-        normalMap: normalMapUrl ? loader.load(normalMapUrl) : null,
-        bumpMap: bumpMapUrl ? loader.load(bumpMapUrl) : null,
-        roughnessMap: specularMapUrl ? loader.load(specularMapUrl) : null,
-        emissiveMap: emissiveMapUrl ? loader.load(emissiveMapUrl) : null,
+        map: textureUrl ? textureLoader.load(textureUrl) : null,
+        normalMap: normalMapUrl ? textureLoader.load(normalMapUrl) : null,
+        bumpMap: bumpMapUrl ? textureLoader.load(bumpMapUrl) : null,
+        roughnessMap: specularMapUrl ? textureLoader.load(specularMapUrl) : null,
+        emissiveMap: emissiveMapUrl ? textureLoader.load(emissiveMapUrl) : null,
       };
-    }, [textureUrl, normalMapUrl, bumpMapUrl, specularMapUrl, emissiveMapUrl]);
+    }, [textureUrl, normalMapUrl, bumpMapUrl, specularMapUrl, emissiveMapUrl, textureLoader]);
+
+    // Cleanup lifecycle: dispose geometries, materials, and textures
+    useEffect(() => {
+      return () => {
+        // Dispose textures
+        textures.map?.dispose();
+        textures.normalMap?.dispose();
+        textures.bumpMap?.dispose();
+        textures.roughnessMap?.dispose();
+        textures.emissiveMap?.dispose();
+
+        // Dispose geometry and material
+        if (meshRef.current) {
+          meshRef.current.geometry.dispose();
+          if (Array.isArray(meshRef.current.material)) {
+            meshRef.current.material.forEach((mat) => mat.dispose());
+          } else {
+            meshRef.current.material.dispose();
+          }
+        }
+      };
+    }, [textures]);
 
     // Apply rotation
     useFrame(() => {
