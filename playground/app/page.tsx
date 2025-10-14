@@ -2,7 +2,6 @@
 
 import { CopyButton } from "@/components/copy-button";
 import { Footer } from "@/components/footer";
-import Image from "next/image";
 
 export default function Home() {
   return (
@@ -10,18 +9,20 @@ export default function Home() {
       <div className="mb-16">
         <div className="flex items-center gap-4 mb-4">
           <h1 className="text-5xl text-foreground">
-            Aerospace. Physics. Deep Tech. UI Components
+            The foundation for all future human-computer interaction for
+            physical systems.
           </h1>
         </div>
 
         <p className="max-w-3xl text-lg text-zinc-600 dark:text-zinc-400 mb-8">
-          Thoughtfully designed components that you can customize, extend, and
-          build on. Start here then make it your own.
+          A primitive-first, WebGPU-powered component library for medical,
+          aerospace, defense, and autonomous systems. Built for real-time
+          sensor fusion, HUD interfaces, and mission-critical visualization.
         </p>
-        {/* <Image src="/main.png" alt="Plexus UI Logo" width={200} height={200} /> */}
       </div>
+      {/* TODO amazing demo here */}
 
-      <div className="mb-12 flex flex-col gap-2">
+      {/* <div className="mb-12 flex flex-col gap-2">
         <h1 className="text-4xl mb-4">Documentation</h1>
         <p className="text-zinc-600  dark:text-zinc-400 mb-4">
           Install cli and use it to add components to your project - get all the
@@ -38,12 +39,12 @@ export default function Home() {
         <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md p-2">
           <div className="flex items-center justify-between gap-2">
             <pre className="text-sm font-geist-mono text-emerald-600 dark:text-emerald-400">
-              npx @plexusui/cli add earth
+              npx @plexusui/cli add hud
             </pre>
-            <CopyButton hideText copyText={`npx @plexusui/cli earth`} />
+            <CopyButton hideText copyText={`npx @plexusui/cli hud`} />
           </div>
         </div>
-      </div>
+      </div> */}
 
       <Footer />
     </div>

@@ -1,436 +1,166 @@
 # Plexus UI
 
-> **"Radix UI for Aerospace Visualization"** - Primitive-first, WebGPU-powered React components for HUD interfaces and real-time sensor fusion. Built for defense, aerospace, and autonomous systems.
+> The foundation for all future human-computer interaction for physical systems.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+A primitive-first, WebGPU-powered component library for medical, aerospace, defense, and autonomous systems. Built for real-time sensor fusion, HUD interfaces, and mission-critical visualization.
 
-**What makes us unique:**
+## Why Plexus UI?
 
-- 🎯 **HUD & Tactical Interfaces** - The only web-based component library for heads-up displays, targeting systems, and radar scopes
-- 🔬 **Sensor Fusion Visualization** - Real-time multi-sensor overlay (LiDAR + thermal + radar + RGB) with WebGPU acceleration
-- ⚡ **WebGPU Primitives** - 4 core GPU-accelerated building blocks (1M+ points @ 60fps)
-- 🎨 **Copy-Paste Philosophy** - You own the code, not install npm packages
-- 🧩 **Shadcn-Style Composability** - Dot notation API (`HUD.PitchLadder`, `SensorFusion.ThermalOverlay`)
+**For Physical Systems:** Standard web UI libraries optimize for forms, dashboards, and CRUD apps. Plexus UI is purpose-built for real-time physical system visualization: medical devices, aircraft HUDs, autonomous vehicle perception, and defense systems.
 
----
+**WebGPU-First:** True GPU compute shaders deliver 10x performance over WebGL. Render 1M+ data points at 60fps. Handle real-time sensor fusion with zero-copy buffer updates.
 
-## 🎯 What We're Building
+**Primitive-First Architecture:** You get the core WebGPU primitives and control the data pipeline. Maximum performance for deep-tech use cases. No black-box abstractions.
 
-### Phase 1: HUD & Tactical Interfaces (Q1-Q2 2025)
+**Enterprise Ready:** Built for sensitive data, offline deployment, and compliance requirements (HIPAA, MIL-STD, DO-178C).
 
-**Market Gap:** ZERO web-based HUD component libraries exist. Only Unity/Unreal assets and proprietary military systems.
+## Features
 
-```tsx
-<HUD.Root width={1920} height={1080}>
-  <HUD.HeadingTape heading={245} range={45} showCardinals />
-  <HUD.PitchLadder pitch={15} roll={-5} fov={60} />
-  <HUD.Reticle target={[lat, lon, alt]} range={12500} lockState="tracking" />
-  <HUD.CornerBrackets state="locked" animated />
-  <HUD.CoordinateOverlay position={[lat, lon, alt]} format="dms" />
-</HUD.Root>
-```
+- **High-Performance Primitives:**
+  - `WebGPULineRenderer` - 1M+ points @ 60fps
+  - `WebGPUPointCloud` - 100k+ points @ 60fps (LiDAR, sensor data)
+  - `WebGPUTextRenderer` - GPU-accelerated text rendering (coming soon)
+  - `WebGPUFFT` - Real-time FFT compute shaders (coming soon)
 
-**Use Cases:**
+- **Sensor Fusion Components:**
+  - Multi-layer visualization (LiDAR + camera + thermal)
+  - Real-time coordinate transforms
+  - Zero-copy buffer updates for minimal latency
 
-- Military training simulators
-- Aerospace mission control dashboards
-- Drone operator interfaces (UAV ground control stations)
-- Defense contractor proposals/demos
+- **HUD & Tactical Displays:**
+  - Text rendering, reticles, heading tapes
+  - Radar and sonar displays
+  - Polar coordinate systems
 
-### Phase 2: Sensor Fusion Visualization (Q3-Q4 2025)
+- **TypeScript/Rust Native:**
+  - Full type safety with dimensional analysis
+  - Prevents unit conversion errors
+  - Zero-copy data pipelines
 
-**Market Gap:** Sensor fusion algorithms exist (MATLAB, Python), but ZERO visualization libraries.
-
-```tsx
-<SensorFusion.Root>
-  <SensorFusion.Canvas width={1920} height={1080}>
-    <SensorFusion.LidarLayer points={lidarPoints} colorBy="range" />
-    <SensorFusion.ThermalOverlay
-      thermal={thermalImage}
-      palette="whiteHot"
-      opacity={0.6}
-    />
-    <SensorFusion.RadarContacts contacts={radarTracks} showVelocity />
-    <SensorFusion.ObjectDetection
-      boxes={aiDetections}
-      showLabels
-      showConfidence
-    />
-    <SensorFusion.VideoLayer
-      stream={rgbVideo}
-      opacity={0.3}
-      blendMode="overlay"
-    />
-  </SensorFusion.Canvas>
-</SensorFusion.Root>
-```
-
-**Use Cases:**
-
-- Autonomous vehicle perception dashboards
-- Defense surveillance systems
-- Drone multi-sensor payloads (thermal + LiDAR drones)
-- Industrial inspection
-- Search & rescue operations
-
----
-
-## ✨ Current Features (Phase 0: Foundation)
-
-### WebGPU Rendering Primitives
-
-**TRUE GPU Compute Shaders - 10x Faster than WebGL**
-
-- ⚡ **WebGPULineRenderer** - 1M+ points @ 60fps (telemetry, waveforms)
-- ⚡ **WebGPUPointCloud** - 100k+ points @ 60fps (LiDAR, scatter plots, particles)
-- ⚡ **WebGPUMeshRenderer** - 100k+ triangles @ 60fps (terrain, CAD models)
-- ⚡ **WebGPUVectorField** - 100k+ vectors @ 60fps (CFD, flow visualization)
-
-### Math & Physics Primitives
-
-- 🧮 **Vector/Matrix Math** - vec3, vec4, 4x4 transforms
-- 🌍 **Coordinate Systems** - ECI ↔ ECEF ↔ Geodetic ↔ UTM
-- 🔬 **Physics Engine** - Euler, Verlet, RK4 integrators
-- 🛰️ **Orbital Mechanics** - Kepler solvers, state vectors, elements (useful for HUD data)
-- 📏 **Units System** - Type-safe dimensional analysis
-- ✅ **Validation** - NaN/Infinity handling, bounds checking
-
-### Demo Components (Show Performance)
-
-- 📊 **LineChart** - WebGPU auto-switching @ 5k points, 1M points @ 60fps
-
----
-
-## 🚀 Quick Start
+## Installation
 
 ```bash
-# Initialize your project (one time)
+npm install @plexusui/components
+```
+
+Or use the CLI to copy components directly into your project:
+
+```bash
 npx @plexusui/cli init
-
-# Add WebGPU primitives
-npx @plexusui/cli add line-renderer point-cloud
-
-# Add demo chart
 npx @plexusui/cli add line-chart
-
-# Coming soon: HUD components (Q1-Q2 2025)
-npx @plexusui/cli add hud-heading-tape hud-pitch-ladder hud-reticle
 ```
 
-Components are **copied** to your project (you own the code!):
+## Quick Start
 
 ```tsx
-import { WebGPULineRenderer } from "@/components/plexusui/primitives/webgpu/line-renderer";
-import { LineChart } from "@/components/plexusui/line-chart";
+import { LineChart } from "@plexusui/components";
 
-// 1M points @ 60fps with WebGPU
-<LineChart.Root series={[{ name: "Telemetry", data: largeDataset }]} />;
+function App() {
+  const data = [
+    { x: 0, y: 0 },
+    { x: 1, y: 2 },
+    { x: 2, y: 1 },
+    { x: 3, y: 4 },
+  ];
+
+  return (
+    <LineChart.Root
+      series={[{ name: "Series 1", data, color: "#3b82f6" }]}
+      width={800}
+      height={400}
+    >
+      <LineChart.Container>
+        <LineChart.Viewport>
+          <LineChart.Grid />
+          <LineChart.Axes />
+          <LineChart.Lines /> {/* Auto-switches to WebGPU at 5k+ points */}
+          <LineChart.Tooltip />
+          <LineChart.Interaction />
+        </LineChart.Viewport>
+      </LineChart.Container>
+    </LineChart.Root>
+  );
+}
 ```
 
----
+## Performance
 
-## 💡 Why Copy Instead of Install?
+Plexus UI automatically switches to WebGPU when your data exceeds performance thresholds:
 
-Inspired by shadcn/ui:
+- **LineChart:** Switches to WebGPU at 5,000 points
+- **PointCloud:** WebGPU-only, 100k+ points @ 60fps
+- **Sensor Fusion:** Multiple layers with 100k+ total points @ 60fps
 
-- ✅ **Full control** - Modify components to fit your exact needs
-- ✅ **No version lock-in** - Update on your own schedule
-- ✅ **Bundle optimization** - Only ship what you use
-- ✅ **Easier debugging** - Component code is right in your project
-- ✅ **No black boxes** - See exactly how WebGPU rendering works
+Graceful fallback to SVG/Canvas2D for smaller datasets and older browsers.
 
----
+## Use Cases
 
-## 📦 Available Components
+- **Medical:** Surgical displays, patient monitoring, medical imaging
+- **Aerospace:** Aircraft HUDs, mission control, flight simulation
+- **Defense:** Radar displays, tactical maps, sensor fusion
+- **Autonomous Vehicles:** Perception dashboards, sensor visualization
+- **Industrial:** Vibration analysis, predictive maintenance, RF monitoring
 
-### WebGPU Primitives (Production Ready)
+## Enterprise Features
 
-**Core building blocks - zero dependencies, composable:**
+- **Offline-Capable:** Runs on air-gapped networks
+- **Self-Hostable:** No CDN dependencies
+- **Secure:** Zero telemetry, zero external API calls
+- **Compliant:** Documentation for HIPAA, MIL-STD, DO-178C
+- **Tested:** 90%+ code coverage, visual regression tests
 
-### Demo Charts
+## Documentation
 
-- `line-chart` - Multi-series with WebGPU acceleration (1M+ points @ 60fps)
+- [Roadmap](./ROADMAP.md) - Development roadmap and future features
+- [Examples](./playground/examples/) - Example components
+- [API Reference](./packages/components/) - Component documentation
 
-### Coming Soon: HUD Components (Q1-Q2 2025)
-
-- `hud-root` - Container with responsive scaling
-- `hud-heading-tape` - Infinite scrolling compass
-- `hud-pitch-ladder` - Artificial horizon with roll
-- `hud-reticle` - Targeting crosshair with lock-on states
-- `hud-corner-brackets` - F-16/F-35 style lock-on (animated)
-- `hud-coordinate-overlay` - Lat/lon/alt display (DMS, decimal, MGRS)
-- `hud-range-finder` - Distance with unit conversion
-- `hud-radar-scope` - PPI display with rotating sweep
-
-### Coming Soon: Sensor Fusion (Q3-Q4 2025)
-
-- `sensor-fusion-root` - Coordinate system manager
-- `sensor-fusion-canvas` - WebGPU multi-layer renderer
-- `sensor-fusion-lidar-layer` - 3D point cloud
-- `sensor-fusion-thermal-overlay` - False-color thermal with LUTs
-- `sensor-fusion-radar-contacts` - Track-level fusion display
-- `sensor-fusion-object-detection` - AI bounding boxes
-- `sensor-fusion-video-layer` - RGB/IR video with GPU decode
-
----
-
-## 🎯 Who Is This For?
-
-**Target Users:**
-
-- 🛡️ Defense contractors building web dashboards
-- 🚀 Aerospace companies (mission control, flight dynamics)
-- 🤖 Autonomous vehicle teams (perception debugging)
-- 🛸 Drone operators (UAV ground control stations)
-- 🎮 Training simulator developers
-
-**Not For:**
-
-- Generic business dashboards (use Recharts, Victory, etc.)
-- Map/geospatial viz (use Cesium, deck.gl, Mapbox)
-- Academic/educational math viz (use Desmos, Manim)
-
----
-
-## 🏗️ Architecture Philosophy
-
-### Primitive-First Design
-
-Everything builds from **4 core WebGPU primitives**:
-
-```
-┌─────────────────────────────────────────────────┐
-│  Domain Components (Aerospace-Specific)         │
-│  HUD.PitchLadder, SensorFusion.ThermalOverlay  │
-└────────────────┬────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────┐
-│  Demo Components (Show Performance)             │
-│  LineChart (1M points @ 60fps)                  │
-└────────────────┬────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────┐
-│  WebGPU Primitives (Building Blocks)           │
-│  WebGPULineRenderer, WebGPUPointCloud          │
-│  WebGPUMeshRenderer, WebGPUVectorField         │
-└────────────────┬────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────┐
-│  WebGPU Core (Low-Level GPU Abstractions)      │
-│  Device, Buffers, Pipelines, Compute Shaders   │
-└─────────────────────────────────────────────────┘
-```
-
-**Key Principle:** Domain components compose primitives. Primitives are zero-dependency.
-
-### Why This Matters
-
-- **Visx** is primitive-first but D3/SVG (not GPU-accelerated)
-- **Three.js/Babylon.js** aren't primitive-focused (full scene graphs)
-- **We're the only "Radix UI for WebGPU visualization"**
-
----
-
-## 🎨 Rendering Strategy
-
-### Automatic Fallback Chain
-
-```
-WebGPU (if available)
-    ↓
-WebGL2 (Three.js)
-    ↓
-Canvas2D (< 1k elements)
-    ↓
-SVG (< 100 elements)
-```
-
-**WebGPU Support:**
-
-- ✅ Chrome 113+ (2023)
-- ✅ Edge 113+ (2023)
-- ✅ Firefox 115+ (experimental flag)
-- ✅ Safari 18+ (macOS Sonoma)
-
-**Detection is automatic:**
-
-```tsx
-<LineChart.Root series={data}>
-  {/* Auto-detects and falls back */}
-</LineChart.Root>
-```
-
----
-
-## 📥 Installation
-
-### Prerequisites
+## Development
 
 ```bash
-# Required for all components
-npm install react react-dom
-
-# Required for 3D components (future Earth/terrain demos)
-npm install three @react-three/fiber @react-three/drei
-```
-
-### Add Components
-
-```bash
-# Initialize (one time setup)
-npx @plexusui/cli init
-
-# Add WebGPU primitives
-npx @plexusui/cli add line-renderer point-cloud
-
-# Add chart
-npx @plexusui/cli add line-chart
-
-```
-
----
-
-## 🏗️ Repository Structure
-
-```
-packages/
-├── components/             # Source components (copied by CLI)
-│   ├── primitives/
-│   │   ├── webgpu/        # WebGPU rendering primitives
-│   │   ├── math/          # Vector/matrix/coordinate utils
-│   │   └── physics/       # Physics engine, orbital mechanics
-│   ├── line-chart.tsx     # Demo: WebGPU line chart (1M+ points @ 60fps)
-│   └── colormaps.ts       # Scientific colormaps
-│
-├── cli/                    # CLI tool (published to npm)
-│   └── src/registry/      # Component registry
-│
-└── playground/            # Demo application (Next.js 15)
-```
-
----
-
-## 🎨 Playground
-
-See all components in action:
-
-```bash
-git clone https://github.com/plexus-space/ui.git
-cd ui
+# Install dependencies
 npm install
+
+# Start playground
 npm run dev
+
+# Build all packages
+npm run build
+
+# Run tests
+npm test
 ```
 
-Open http://localhost:3000
+## Architecture
+
+Plexus UI follows a **primitive-first** architecture:
+
+1. **Core WebGPU Primitives** - Low-level rendering primitives (text, shapes, particles)
+2. **Composable Components** - Built on primitives, domain-specific (HUD, sensor fusion)
+3. **Your Application** - Control data pipeline and rendering loop
+
+This gives you maximum performance and control for mission-critical applications.
+
+## Browser Support
+
+- **Chrome/Edge:** 113+ (WebGPU stable)
+- **Safari:** 18+ (WebGPU stable)
+- **Firefox:** Experimental (behind flag)
+
+Graceful fallback to Canvas2D/SVG for older browsers.
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+## License
+
+MIT License - see [LICENSE](./LICENSE) for details.
+
+## Acknowledgments
+
+Built with care for the deep-tech community. Inspired by military/aerospace UI design and real-time systems engineering.
 
 ---
 
-## 📊 Performance Targets
-
-| Component          | Dataset Size       | Target              | Status     |
-| ------------------ | ------------------ | ------------------- | ---------- |
-| **LineChart**      | 1M points          | ✅ 60fps (WebGPU)   | Complete   |
-| **PointCloud**     | 100k points        | ✅ 60fps (WebGPU)   | Complete   |
-| **VectorField**    | 100k vectors       | ✅ 60fps (WebGPU)   | Complete   |
-| **RadarScope**     | 100+ contacts      | 🎯 60fps (Canvas2D) | Q2 2025    |
-| **SensorFusion**   | 4 layers real-time | 🎯 60fps (WebGPU)   | Q3-Q4 2025 |
-| **ThermalOverlay** | 1920x1080 @ 30Hz   | 🎯 30fps (WebGPU)   | Q3-Q4 2025 |
-
-**Key Optimizations:**
-
-- ✅ Compute shaders for decimation (10x faster than CPU)
-- ✅ Spatial indexing on GPU (O(1) hover)
-- ✅ Zero-copy buffer updates
-
----
-
-## 📚 Documentation
-
-- [Roadmap](./ROADMAP.md) - Full vision, market analysis, component details
-- [Examples](./playground/examples/) - Usage examples for all components
-- API Reference (coming soon)
-- Video tutorials (coming soon)
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! To add a new component:
-
-1. Create component in `packages/components/`
-2. Add to CLI registry in `packages/cli/src/registry/index.ts`
-3. Add example to `playground/examples/`
-4. Submit a PR
-
----
-
-## 💰 Monetization
-
-### Open Source (MIT License)
-
-- WebGPU primitives
-- Math/physics utilities
-- Demo charts
-- Basic HUD components
-
-### Pro License ($5k/year per developer)
-
-- All HUD components
-- All sensor fusion components
-- Advanced tactical displays
-- Priority support
-
-### Enterprise ($50k+/year)
-
-- Custom sensor integrations
-- On-premise deployment
-- White-label branding
-- Dedicated support engineer
-
-**Why premium pricing works:**
-
-- Defense contractors have budget authority
-- Aerospace companies pay for specialized tools
-- No open-source alternatives exist for HUD/sensor fusion
-
----
-
-## 📄 License
-
-MIT © Plexus Aerospace
-
-**Core primitives and foundation:** MIT License (open source)
-
-**Advanced components:** Pro/Enterprise licenses (coming Q2 2025)
-
----
-
-## 🎯 Positioning
-
-**"Radix UI for Aerospace Visualization"**
-
-We're **NOT** competing with:
-
-- Cesium/deck.gl (geospatial - billion-dollar ecosystems)
-- Recharts/Victory (generic charts - commoditized)
-- STK/GMAT (orbital mechanics software - enterprise)
-
-We **ARE** the only library for:
-
-- HUD & tactical interfaces (web-based)
-- Real-time sensor fusion visualization
-- Primitive-first WebGPU aerospace components
-
-**Revenue Target:** $10M+ ARR by 2027 through defense/aerospace enterprise licenses.
-
----
-
-## 🚀 Roadmap Summary
-
-- **Q1-Q2 2025:** HUD & Tactical Interfaces (10-12 components)
-- **Q2-Q3 2025:** Tactical Displays (5 components)
-- **Q3-Q4 2025:** Sensor Fusion Visualization (8 components)
-- **2026 Q1:** Advanced Sensors (5 components)
-- **2026 Q2+:** Polish, documentation, examples
-
-See [ROADMAP.md](./ROADMAP.md) for detailed plans, market analysis, and component specifications.
+**Questions?** Open an issue or reach out to [@annschulte](https://github.com/annschulte)

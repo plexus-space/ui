@@ -1,16 +1,16 @@
 # Plexus UI Roadmap
 
-> **Vision:** The definitive primitive-first, WebGPU-powered component library for deeptech: medical, aerospace HUD interfaces and real-time sensor fusion visualization. Built for defense, aerospace, healthcare and autonomous systems.
+> **Vision:** The foundation for all future human-computer interaction for physical systems. A primitive-first, WebGPU-powered component library for medical, aerospace, and autonomous systems. Built for real-time sensor fusion, HUD interfaces, and mission-critical visualization.
 
 ## Guiding Principles
 
 1. **Primitive-First Architecture** - core WebGPU primitives, everything else composes
-2. **Aerospace Domain Expertise** - HUD, sensor fusion, tactical interfaces, mission control
+2. **Physical Systems Expertise** - Medical, aerospace, defense HUD, sensor fusion, mission control
 3. **WebGPU-Accelerated Performance** - 100k+ points @ 60fps, real-time multi-sensor rendering
-4. **Shadcn-Style Composability** - Dot notation API (`HUD.PitchLadder`, `SensorFusion.ThermalOverlay`)
-5. **Copy-Paste Philosophy** - Components you own and customize (not npm dependencies)
-6. **TypeScript Native** - Full type safety with dimensional analysis
-7. **Beautiful by Default** - Inspired by military/aerospace UI design language
+4. **Deep-Tech Copy-Paste Philosophy** - You get the core WebGPU primitives and control the data pipeline and rendering loop. Maximum control for performance-critical use cases.
+5. **TypeScript/Rust Native** - Full type safety with zero-copy buffer updates for guaranteed performance
+6. **Beautiful by Default** - Inspired by military/aerospace UI design language
+7. **Enterprise Ready** - Built for sensitive data, offline deployment, and compliance requirements
 
 ---
 
@@ -23,16 +23,6 @@
 - [x] **WebGPULineRenderer** - 1M+ points @ 60fps (telemetry, waveforms, ground tracks)
 - [x] **WebGPUPointCloud** - 100k+ points @ 60fps (LiDAR, scatter plots, particles)
 - [x] **WebGPUMeshRenderer** - 100k+ triangles @ 60fps (terrain, CAD models)
-- [x] **WebGPUVectorField** - 100k+ vectors @ 60fps (CFD, magnetic fields)
-
-### ✅ Math & Physics Primitives
-
-- [x] **Vector/Matrix Math** - vec3, vec4, 4x4 transforms
-- [x] **Coordinate Systems** - ECI ↔ ECEF ↔ Geodetic ↔ UTM
-- [x] **Physics Engine** - Euler, Verlet, RK4 integrators
-- [x] **Orbital Mechanics** - Kepler solvers, state vectors, elements
-- [x] **Units System** - Type-safe dimensional analysis
-- [x] **Validation** - NaN/Infinity handling, bounds checking
 
 ### ✅ Demo Components (Show Performance)
 
@@ -40,499 +30,479 @@
 
 ---
 
-## Phase 1: HUD & Tactical Interfaces
+## Phase 1: WebGPU Text Rendering & Core HUD Primitives
 
-> **Market Analysis:** ZERO web-based component libraries exist. Only Unity/Unreal assets ($49) and proprietary military systems. Defense contractors and aerospace companies building web dashboards have no open-source options.
+**Architecture:** 100% WebGPU-first. No SVG/CSS fallbacks. Build the hardest primitives first to validate the vision.
 
-### HUD Core Elements (SVG-Based)
+### Critical WebGPU Primitives
 
-**Architecture:** SVG with transforms, CSS animations, no canvas complexity
+**Priority 1: Text Rendering (The Foundation)** ✅
+
+- [x] **WebGPUTextRenderer** - High-performance text rendering primitive
+  - GPU-accelerated glyph rendering @ 60fps
+  - Dynamic text updates without CPU bottleneck
+  - Subpixel rendering for readability
+  - SDF (Signed Distance Field) font atlas for crisp text at any scale
+
+**Priority 2: 2D Shape Primitives**
+
+- [ ] **WebGPU2DRenderer** - Core 2D drawing primitive
+  - Lines (horizontal, vertical, angled) with anti-aliasing
+  - Circles and arcs (for heading tapes, reticles)
+  - Rectangles and rounded rectangles
+  - Polygons (for pitch ladder, velocity vector)
+  - Instanced rendering for thousands of shapes @ 60fps
+
+**Priority 3: Transform & Animation System**
+
+- [ ] **WebGPUTransform** - GPU-accelerated transforms
+  - 2D/3D rotations, translations, scales
+  - Matrix operations in compute shaders
+  - Batch transform updates
+- [ ] **WebGPUAnimation** - Smooth interpolation system
+  - Easing functions in shaders
+  - Property animation (position, rotation, opacity)
+  - Timeline-based animations
+
+### Initial HUD Components (Built on Primitives)
+
+Once the primitives are proven, build these components:
 
 ```tsx
-<HUD.Root width={1920} height={1080}>
-  <HUD.HeadingTape heading={245} range={45} showCardinals />
-  <HUD.PitchLadder pitch={15} roll={-5} fov={60} />
-  <HUD.Reticle target={[lat, lon, alt]} range={12500} lockState="tracking" />
-  <HUD.CornerBrackets state="locked" animated />
+<HUD.Root width={1920} height={1080} renderer="webgpu">
+  <HUD.Text content="TARGET LOCKED" x={960} y={100} size={16} />
+  <HUD.Reticle x={960} y={540} size={40} animated />
+  <HUD.HeadingTape heading={245} range={45} />
   <HUD.CoordinateOverlay position={[lat, lon, alt]} format="dms" />
-  <HUD.RangeFinder range={12500} unit="meters" label="TARGET" />
 </HUD.Root>
 ```
 
-**Components to Build:**
+- [x] **HUD.Root** - WebGPU canvas manager with coordinate systems ✅
+- [x] **HUD.Text** - Text component (uses WebGPUTextRenderer) ✅
+  - Multiple text styles (normal, outline, glow)
+  - Text alignment (left, center, right)
+  - Per-label color and opacity
+  - Real-time text updates at 60fps
+  - Performance: 1000+ labels in single draw call
+- [ ] **HUD.Reticle** - Targeting crosshair (uses WebGPU2DRenderer)
+- [ ] **HUD.HeadingTape** - Compass tape (uses WebGPUTextRenderer + WebGPU2DRenderer)
+- [ ] **HUD.CoordinateOverlay** - Lat/lon/alt display (uses WebGPUTextRenderer)
 
-- [ ] **HUD.Root** - Canvas/SVG container with responsive scaling
-- [ ] **HUD.HeadingTape** - Infinite scrolling compass with runway markers
-- [ ] **HUD.PitchLadder** - Artificial horizon with flight director
-- [ ] **HUD.Reticle** - Targeting crosshair with range/bearing data
-- [ ] **HUD.CornerBrackets** - F-16/F-35 style lock-on brackets (animated)
-- [ ] **HUD.CoordinateOverlay** - Lat/lon/alt display (DMS, decimal, MGRS)
-- [ ] **HUD.RangeFinder** - Distance display with unit conversion
-- [ ] **HUD.VelocityVector** - Flight path marker
-- [ ] **HUD.AltitudeTape** - Vertical tape with ground/terrain warnings
-- [ ] **HUD.SpeedTape** - Vertical tape with airspeed/groundspeed
+**Success Criteria:** ✅
+
+- ✅ Render 1000+ text labels @ 60fps
+- ✅ Smooth animations with no jank
+- ✅ Text remains readable at all zoom levels (SDF rendering)
+- ✅ Zero-copy buffer updates for text content changes
+- ✅ Multiple text styles (normal, outline, glow)
+- ✅ Text alignment support (left, center, right)
 
 **Use Cases:**
 
 - Military training simulators
 - Aerospace mission control dashboards
+- Medical device interfaces (surgical displays)
 - Drone operator interfaces
-- Defense contractor proposals/demos
-- UAV ground control stations
 
-**Deliverable:** Complete HUD component library and demo in playground that uses user camera.
+**Deliverable:** ✅ WebGPU text rendering primitive + 2 HUD components built on top (HUD.Root, HUD.Text). Live demo in playground showing performance with 1000+ labels. **See:** `/playground/examples/hud-text.tsx`
+
+**Implementation Details:**
+- SDF Font Atlas: 512x512 texture with full ASCII character set
+- Distance Transform: 8-point Sequential Euclidean Distance Transform
+- Rendering: Instanced draw calls (all text in single GPU pass)
+- Font: Courier New monospace (critical for tactical displays)
+- Shader Effects: Normal, outline (black border), glow (emphasis)
+- Layout Engine: Automatic text positioning with alignment support
 
 ---
 
-## Phase 2: Tactical Displays
+## Phase 2: Advanced WebGPU Building Blocks for Tactical Displays
 
-### Radar & Sonar Interfaces
+**Architecture:** WebGPU primitives only. No Canvas2D fallback. Build reusable blocks that power multiple tactical displays.
+
+### Core Primitives (Not Discrete Displays)
+
+**Priority 1: Particle System Primitive**
+
+Tactical displays need efficient rendering of hundreds of dynamic objects (contacts, tracks, markers). Build a general-purpose particle system instead of discrete components.
+
+- [ ] **WebGPUParticleSystem** - High-performance 2D particle primitive
+  - Instance-based rendering for 10,000+ particles @ 60fps
+  - Per-particle properties (position, velocity, color, size, rotation)
+  - GPU-based particle updates (compute shaders)
+  - Spatial culling for performance
+  - Alpha blending and additive blending modes
+  - LOD system (distant particles = smaller/simpler)
+
+**Priority 2: Polar Coordinate Primitive**
+
+Radar and sonar displays use polar coordinates. Build a primitive that handles polar-to-screen transformations efficiently.
+
+- [ ] **WebGPUPolarRenderer** - Polar coordinate system primitive
+  - Polar grid rendering (range rings, bearing lines)
+  - Polar-to-cartesian transform in vertex shader
+  - Arc and sector rendering
+  - Rotating sweep effect (for radar)
+  - Bearing labels with WebGPUTextRenderer
+
+**Priority 3: Trail/Path History Primitive**
+
+Tracking systems need to show object history. Build a general-purpose trail renderer.
+
+- [ ] **WebGPUTrailRenderer** - Historical path visualization
+  - Polyline rendering with fade-out over time
+  - Time-based alpha decay
+  - Efficient ring buffer for path points
+  - Configurable trail length and decay rate
+
+### Example Tactical Components (Built from Primitives)
+
+Once primitives are proven, these components become trivial:
 
 ```tsx
-<HUD.RadarScope
-  contacts={radarContacts}
-  sweepAngle={0}
-  range={50000}
-  rangeRings={[10000, 25000, 50000]}
-  mode="ppi" // Plan Position Indicator
-/>
+<TacticalDisplay.Root width={1920} height={1080}>
+  {/* Radar scope uses PolarRenderer + ParticleSystem */}
+  <TacticalDisplay.RadarScope
+    contacts={radarContacts}
+    range={50000}
+    sweepAngle={currentSweep}
+  />
 
-<HUD.SonarDisplay
-  contacts={acousticContacts}
-  bearingRange={180}
-  timeWindow={300}
-  colorMap="acoustic"
-/>
+  {/* Sonar uses PolarRenderer + custom shader */}
+  <TacticalDisplay.SonarWaterfall
+    contacts={acousticContacts}
+    bearingRange={180}
+  />
+</TacticalDisplay.Root>
 ```
 
-**Components to Build:**
+**Rust/WASM Integration:**
 
-- [ ] **HUD.RadarScope** - PPI display with rotating sweep, bearing lines
-- [ ] **HUD.SonarDisplay** - Waterfall-style bearing vs. time
-- [ ] **HUD.SituationDisplay** - Blue Force Tracker (IFF markers, velocity vectors)
-- [ ] **HUD.ThreatRing** - Weapon range circles with threat level
-- [ ] **HUD.IFFMarker** - Friend/Foe identification symbology
+For performance-critical operations that don't fit WebGPU's model:
 
-**Architecture:** Canvas2D or WebGPU for 100+ contacts
+- [ ] **Rust WASM module** for spatial indexing (quad-tree, R-tree)
+- [ ] **Rust WASM module** for contact correlation algorithms
+- Zero-copy data transfer between WASM and WebGPU
 
-**Deliverable:** 5 tactical display components
+**Success Criteria:**
+
+- Render 1000+ radar contacts @ 60fps
+- Smooth sweep animation with no stutter
+- Sub-1ms contact position updates
+- Trail history for 100+ objects simultaneously
+
+**Use Cases:**
+
+- Military radar displays
+- Sonar operator consoles
+- Air traffic control systems
+- Maritime navigation interfaces
+
+**Deliverable:** 3 core WebGPU primitives (Particle, Polar, Trail) + 2 tactical display components built from primitives. Performance benchmarks demonstrating 1000+ contacts @ 60fps.
 
 ---
 
-## Phase 3: Sensor Fusion Visualization
+## Phase 3: Sensor Fusion for Autonomous Vehicles (Focus: Single Use Case)
 
-> **Market Analysis:** Sensor fusion algorithms exist (MATLAB, Python), but ZERO visualization libraries. Autonomous vehicles, defense surveillance, and industrial inspection all need this. $100B+ TAM across autonomous, aerospace, and defense sectors.
+**Architecture:** Build sensor fusion primitives alongside the components. Develop for one use case: autonomous vehicle perception dashboards. This reduces risk and provides a path to real-world testing.
 
-### Multi-Sensor Overlay
+### Strategy: Develop Primitives + Components Together
 
-**Architecture:** WebGPU-powered layered rendering with blend modes
+Instead of building all primitives first (risky), develop primitives alongside their first use case. This ensures primitives are practical and properly scoped.
+
+### Primitive 1: Color Mapping & Thermal Rendering
+
+**Build this primitive alongside ThermalOverlay component:**
+
+- [ ] **WebGPUColorMapper** - GPU-accelerated color LUT primitive
+  - Upload 1D color lookup tables (LUTs) to GPU
+  - Shader-based color mapping (value → RGB)
+  - Pre-built palettes: whiteHot, blackHot, ironbow, rainbow, turbo
+  - Custom palette support
+  - Per-pixel value remapping in fragment shader
+
+**Component built alongside:**
+
+- [ ] **SensorFusion.ThermalOverlay** - First real use of ColorMapper
+  - False-color thermal imaging
+  - Temperature range normalization
+  - Opacity control for layering
+
+### Primitive 2: Coordinate Transform System
+
+**Build this primitive alongside LidarLayer component:**
+
+- [ ] **WebGPUCoordinateTransform** - Real-time coordinate transforms
+  - Sensor frame → world frame transforms
+  - 4x4 transformation matrices in uniform buffers
+  - Batch transform for 100k+ points
+  - Time-synchronized transforms (handle sensor lag)
+  - TypeScript/Rust types for coordinate frames
+
+**Component built alongside:**
+
+- [ ] **SensorFusion.LidarLayer** - 3D point cloud for autonomous vehicles
+  - Uses existing WebGPUPointCloud primitive
+  - Integrates WebGPUCoordinateTransform
+  - Color by range, intensity, or height
+  - Point size LOD based on distance
+
+### Primitive 3: Multi-Layer Compositor
+
+**Build this primitive alongside the entire sensor fusion stack:**
+
+- [ ] **WebGPULayerCompositor** - Multi-layer blending
+  - Multiple render targets
+  - Blend modes (overlay, additive, multiply, screen)
+  - Per-layer opacity
+  - Z-ordering for layers
+  - Efficient GPU-based compositing
+
+### Focused Component Set (Autonomous Vehicle Dashboard)
 
 ```tsx
-<SensorFusion.Root>
+<SensorFusion.Root
+  coordinateFrame="vehicle" // ego-vehicle coordinate frame
+  timeSync={currentTimestamp}
+>
   <SensorFusion.Canvas width={1920} height={1080}>
-    {/* Base layer: LiDAR point cloud */}
+    {/* Base layer: LiDAR */}
     <SensorFusion.LidarLayer
       points={lidarPoints}
-      colorBy="range"
-      pointSize={2}
+      transform={lidarToVehicle}
+      colorBy="height"
     />
 
-    {/* Overlay: Thermal camera */}
-    <SensorFusion.ThermalOverlay
-      thermal={thermalImage}
-      palette="whiteHot" // or blackHot, ironbow, rainbow
-      opacity={0.6}
-      minTemp={0}
-      maxTemp={100}
+    {/* Overlay: Camera with AI detections */}
+    <SensorFusion.CameraLayer
+      image={frontCamera}
+      transform={cameraToVehicle}
+      opacity={0.4}
     />
 
-    {/* Overlay: Radar tracks */}
-    <SensorFusion.RadarContacts
-      contacts={radarTracks}
-      showVelocity
-      showUncertainty
-    />
-
-    {/* Overlay: AI detections */}
-    <SensorFusion.ObjectDetection
-      boxes={aiDetections}
+    {/* Overlay: AI bounding boxes */}
+    <SensorFusion.DetectionBoxes
+      detections={aiDetections}
       showLabels
       showConfidence
     />
 
-    {/* Overlay: RGB video */}
-    <SensorFusion.VideoLayer
-      stream={rgbVideo}
-      opacity={0.3}
-      blendMode="overlay"
+    {/* Overlay: Planned path */}
+    <SensorFusion.PathOverlay
+      plannedPath={trajectoryPoints}
+      color="green"
+      width={2}
     />
   </SensorFusion.Canvas>
 </SensorFusion.Root>
 ```
 
-**Components to Build:**
+**TypeScript/Rust Integration:**
 
-- [ ] **SensorFusion.Root** - Coordinate system manager, time synchronization
-- [ ] **SensorFusion.Canvas** - WebGPU-powered multi-layer renderer
-- [ ] **SensorFusion.LidarLayer** - 3D point cloud (use WebGPUPointCloud primitive)
-- [ ] **SensorFusion.ThermalOverlay** - False-color thermal imaging with LUTs
-- [ ] **SensorFusion.RadarContacts** - Track-level fusion display
-- [ ] **SensorFusion.ObjectDetection** - Bounding boxes with labels/confidence
-- [ ] **SensorFusion.VideoLayer** - RGB/IR video with GPU decode
-- [ ] **SensorFusion.TrackHistory** - Historical path with fade (trails)
+Critical for zero-copy performance:
 
-**WebGPU Features:**
+- [ ] **Rust/TypeScript types** for coordinate frames (with dimensional analysis)
+- [ ] **Zero-copy buffer updates** for sensor data streams
+- [ ] **Rust WASM module** for transform calculations (if CPU-bound)
 
-- Real-time coordinate transforms (sensor → world frame)
-- GPU-based color mapping (thermal palettes)
-- Multi-layer compositing with blend modes
-- Spatial indexing for fast hover/selection
-- Zero-copy buffer updates
+**Success Criteria:**
+
+- 100k LiDAR points + camera overlay @ 60fps
+- <5ms latency for new sensor data to screen
+- Accurate coordinate transforms across 4+ sensors
+- Smooth playback of recorded sensor data
+
+**Target Use Case: Autonomous Vehicle Perception Dashboard**
+
+Why this focus?
+
+- Clear, high-value market
+- Testable with public datasets (KITTI, nuScenes, Waymo Open)
+- Entry point for real-world adoption
+- Validates entire primitive stack
+
+**Deliverable:**
+
+- 3 core primitives (ColorMapper, CoordinateTransform, LayerCompositor)
+- 4 sensor fusion components purpose-built for AV perception
+- Demo using public autonomous vehicle dataset (KITTI or nuScenes)
+- Performance benchmarks on real sensor data
+
+---
+
+## Phase 4: GPU Compute Shaders - Spectrum Analyzer
+
+**Realistic Timeline:** Pushed back to allow 1-year development cycle after Phase 3. Re-evaluate scope based on Phase 1-3 learnings.
+
+**Focus:** Single compute shader showcase - Real-time Spectrum Analyzer. This demonstrates WebGPU's compute shader capability (a major selling point) without over-committing.
+
+### Priority: Real-Time Spectrum Analyzer
+
+**Why this component?**
+
+- Showcases WebGPU compute shaders (true GPU compute)
+- Applicable across multiple domains (RF, audio, vibration, medical)
+- Clear performance advantage over CPU FFT
+- Validates GPU compute pipeline for future work
+
+### Primitive: GPU-Accelerated FFT
+
+- [ ] **WebGPUFFT** - Fast Fourier Transform compute shader primitive
+  - Radix-2 FFT algorithm in compute shader
+  - 8192-point FFT in <1ms
+  - Windowing functions (Hamming, Hann, Blackman)
+  - Real-time streaming data support
+  - Zero-copy buffer updates
+
+### Component: Spectrum Analyzer
+
+```tsx
+<SignalProcessing.SpectrumAnalyzer
+  rfData={signalBuffer} // Float32Array of time-domain samples
+  fftSize={8192} // FFT size (power of 2)
+  sampleRate={100e6} // 100 MHz sample rate
+  window="blackman" // Windowing function
+  colorMap="inferno" // Color palette
+  dBRange={[-120, 0]} // Display range in dB
+  realTime // Enable streaming mode
+/>
+```
+
+**Component features:**
+
+- [ ] **SignalProcessing.SpectrumAnalyzer**
+  - Waterfall display (time vs frequency)
+  - Power spectral density plot
+  - Peak detection and annotation
+  - Configurable averaging
+  - GPU-accelerated color mapping
+
+**Success Criteria:**
+
+- 8192-point FFT @ 60fps (streaming)
+- <1ms FFT compute time
+- Waterfall display with 100+ history lines
+- Works with live data streams (SDR, audio interface)
 
 **Use Cases:**
 
-- Autonomous vehicle perception dashboards
-- Defense surveillance systems
-- Drone multi-sensor payloads
-- Industrial inspection (thermal + LiDAR drones)
-- Search & rescue operations
+- Software-defined radio (SDR) applications
+- RF spectrum monitoring
+- Audio analysis and music visualization
+- Vibration analysis (predictive maintenance)
+- Medical signal processing (ECG, EEG)
 
-**Deliverable:** 8 sensor fusion components
-
----
-
-## Phase 4: Sensor Processing & Overlays (2026 Q1)
-
-### Advanced Sensor Visualization
-
-```tsx
-{
-  /* Night vision with gain control */
-}
-<SensorFusion.NightVisionOverlay mode="greenHot" gain={1.5} autoGain />;
-
-{
-  /* 3D radiometric mapping */
-}
-<SensorFusion.RadiometricMap
-  lidarPoints={points}
-  thermalData={thermal}
-  colorBy="temperature"
-/>;
-
-{
-  /* Real-time FFT for RF signals */
-}
-<SensorFusion.SpectrumAnalyzer
-  rfData={rfSignal}
-  fftSize={8192}
-  colorMap="inferno"
-  realTime
-/>;
-```
-
-**Components to Build:**
+**Stretch Goals (if time permits):**
 
 - [ ] **SensorFusion.NightVisionOverlay** - Green/white hot with gain
 - [ ] **SensorFusion.RadiometricMap** - 3D thermal point cloud
-- [ ] **SensorFusion.SpectrumAnalyzer** - Real-time FFT with GPU compute
-- [ ] **SensorFusion.ImagingRadar** - SAR/ISAR visualization
-- [ ] **SensorFusion.FusionAlgorithm** - Kalman filter visualization
 
-**Deliverable:** 5 advanced sensor components
+**Deliverable:**
 
----
-
-## Phase 5: Polish, DevEx, Documentation (2026 Q2+)
-
-### Developer Experience
-
-- [ ] Documentation site with live demos (Docusaurus or Nextra)
-- [ ] Storybook for component exploration
-- [ ] Performance benchmarks (WebGPU vs WebGL vs CPU)
-- [ ] Example gallery (aerospace/defense use cases)
-- [ ] Video tutorials (HUD setup, sensor fusion)
-
-### Examples & Templates
-
-- [ ] UAV Ground Control Station template
-- [ ] Military trainer HUD template
-- [ ] Autonomous vehicle perception dashboard
-- [ ] Multi-sensor fusion demo (LiDAR + thermal + radar)
-- [ ] Air traffic control display
-
-### Performance Tooling
-
-- [ ] WebGPU DevTools integration
-- [ ] Frame time profiler
-- [ ] Memory usage tracker
-- [ ] Component performance analyzer
+- 1 core primitive: WebGPUFFT compute shader
+- 1 advanced component: Real-time Spectrum Analyzer
+- Live demo with SDR hardware or audio input
+- Performance benchmarks vs CPU FFT libraries (FFTW, KissFFT)
 
 ---
 
-## Architecture Layers
-
-```
-┌─────────────────────────────────────────────────┐
-│  Domain Components (Aerospace-Specific)         │
-│  HUD.PitchLadder, SensorFusion.ThermalOverlay  │
-│  HUD.RadarScope, SensorFusion.LidarLayer       │
-└────────────────┬────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────┐
-│  Demo Components (Show Performance)             │
-│  LineChart (1M points @ 60fps)                  │
-└────────────────┬────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────┐
-│  WebGPU Primitives (Building Blocks)           │
-│  WebGPULineRenderer, WebGPUPointCloud          │
-│  WebGPUMeshRenderer, WebGPUVectorField         │
-└────────────────┬────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────┐
-│  WebGPU Core (Low-Level GPU Abstractions)      │
-│  Device, Buffers, Pipelines, Compute Shaders   │
-└─────────────────────────────────────────────────┘
-```
-
-**Key Principle:** Domain components compose primitives. Primitives are zero-dependency.
-
----
-
-## Performance Targets
-
-| Component          | Dataset Size       | Target              | Use Case                  |
-| ------------------ | ------------------ | ------------------- | ------------------------- |
-| **LineChart**      | 1M points          | ✅ 60fps (WebGPU)   | Telemetry waveforms       |
-| **PointCloud**     | 100k points        | ✅ 60fps (WebGPU)   | LiDAR visualization       |
-| **VectorField**    | 100k vectors       | ✅ 60fps (WebGPU)   | CFD flow viz              |
-| **RadarScope**     | 100+ contacts      | 🎯 60fps (Canvas2D) | Air traffic control       |
-| **SensorFusion**   | 4 layers real-time | 🎯 60fps (WebGPU)   | Autonomous perception     |
-| **ThermalOverlay** | 1920x1080 @ 30Hz   | 🎯 30fps (WebGPU)   | Real-time thermal imaging |
-
-**Optimizations:**
-
-- ✅ Compute shaders for decimation (10x faster)
-- ✅ Spatial indexing on GPU (O(1) hover)
-- ✅ Zero-copy buffer updates
-- 🎯 GPU color mapping (thermal palettes)
-- 🎯 Multi-layer compositing
-- 🎯 Real-time FFT on GPU
-
----
-
-## Browser Support Strategy
-
-### Automatic Fallback Chain
-
-```
-WebGPU (if available)
-    ↓
-WebGL2 (Three.js)
-    ↓
-Canvas2D (< 1k elements)
-    ↓
-SVG (< 100 elements)
-```
-
-**WebGPU Support:**
-
-- ✅ Chrome 113+ (2023)
-- ✅ Edge 113+ (2023)
-- ✅ Firefox 115+ (experimental flag)
-- ✅ Safari 18+ (macOS Sonoma)
-
-**Detection:**
-
-```typescript
-if ("gpu" in navigator) {
-  // Use WebGPU
-} else if ("WebGL2RenderingContext" in window) {
-  // Use Three.js (WebGL2)
-} else {
-  // Use Canvas2D/SVG
-}
-```
+## Enterprise Readiness & Compliance
 
----
-
-## Target Component Count
-
-**Current:** ~11 components
-**Q4 2025 Target:** ~34 components
-**2026 Target:** ~44 components
+**Architecture Note:** Deep-tech companies have unique requirements beyond performance. These must be addressed from the start.
 
-**Distribution:**
-
-- **WebGPU Primitives:** 4 (Line, Point, Mesh, VectorField)
-- **Math/Physics Utils:** 8 (Vectors, Matrices, Coordinates, Units, Validation, Constants, Colormaps)
-- **Demo Charts:** 1 (LineChart - validates WebGPU performance)
-- **HUD Core:** 10 (HeadingTape, PitchLadder, Reticle, CornerBrackets, CoordinateOverlay, RangeFinder, VelocityVector, AltitudeTape, SpeedTape)
-- **Tactical Displays:** 5 (RadarScope, SonarDisplay, SituationDisplay, ThreatRing, IFFMarker)
-- **Sensor Fusion:** 8 (LidarLayer, ThermalOverlay, RadarContacts, ObjectDetection, VideoLayer, TrackHistory)
-- **Advanced Sensors:** 5 (NightVision, RadiometricMap, SpectrumAnalyzer, ImagingRadar, FusionAlgorithm)
-- **Support:** 2-4 (Legend, Tooltip, Export, Timestamp)
+### Data Security & Privacy
 
-**Focus:** Quality over quantity. Every component must be:
+**Challenge:** Medical, defense, and autonomous vehicle applications handle sensitive data (patient records, classified information, sensor data).
 
-1. GPU-accelerated (where applicable)
-2. Primitive-based (composable)
-3. Aerospace-relevant (domain-specific)
-4. Production-ready (tested, documented)
+**Solutions:**
 
----
+- [ ] **No telemetry, no analytics** - Zero data leaves the client browser
+- [ ] **No CDN dependencies** - All assets can be self-hosted
+- [ ] **No external API calls** - Framework operates entirely offline
+- [ ] **Subresource integrity** - All CDN scripts include SRI hashes
+- [ ] **Content Security Policy** - Example CSP headers for deployment
+- [ ] **Data encryption at rest** - Documentation for encrypted local storage
+- [ ] **Audit logging** - Optional hooks for user action logging
 
-## Success Metrics
+### Offline & Local Deployment
 
-### Technical Performance
+**Challenge:** Defense and medical systems often run on air-gapped networks or require offline operation.
 
-- ✅ 1M points @ 60fps (LineChart)
-- 🎯 100k points @ 60fps (LiDAR point cloud)
-- 🎯 4-layer sensor fusion @ 60fps
-- 🎯 Real-time thermal imaging @ 30fps
+**Solutions:**
 
-### Adoption
+- [ ] **Fully offline-capable** - Framework works without internet connection
+- [ ] **Self-contained builds** - Single bundle with all dependencies
+- [ ] **Local WebGPU runtime** - No cloud compute dependencies
+- [ ] **Electron support** - Desktop application packaging guide
+- [ ] **Docker deployment** - Container images for local hosting
+- [ ] **Installation package** - Offline installer with all assets
 
-- **Target Users:** Aerospace companies, defense contractors, autonomous vehicle teams, drone operators
-- **Use Cases:** Mission control dashboards, UAV ground stations, training simulators, perception debugging
-- **Differentiation:** Only primitive-first, WebGPU-powered aerospace visualization library
+### Compliance & Certification
 
-### Developer Experience
+**Challenge:** Medical and defense applications require regulatory compliance (FDA, HIPAA, MIL-STD, DO-178C).
 
-- Composable API (shadcn-style)
-- Full TypeScript support
-- Automatic WebGPU/WebGL fallback
-- Copy-paste component installation
-- Live examples for all components
+**Solutions:**
 
----
+- [ ] **HIPAA compliance documentation** - Guide for healthcare deployments
+  - PHI data handling guidelines
+  - Encryption requirements
+  - Audit trail implementation
+  - Access control patterns
+- [ ] **MIL-STD-882E safety documentation** - Guide for defense applications
+  - Hazard analysis templates
+  - Risk assessment procedures
+  - Verification and validation plans
+- [ ] **DO-178C documentation** (future) - For aerospace certification
+  - Software life cycle data
+  - Requirements traceability
+  - Test coverage reports
+- [ ] **FDA 21 CFR Part 11** (future) - For medical device software
+  - Electronic signature support
+  - Audit trail requirements
+  - System validation guides
 
-## Monetization Strategy
+### Performance Guarantees
 
-### Open Source Core (MIT License)
+**Challenge:** Mission-critical systems need predictable, provable performance.
 
-- WebGPU primitives
-- Math/physics utilities
-- Demo charts (LineChart only - validates performance)
-- Basic HUD components (HeadingTape, PitchLadder, Reticle)
+**Solutions:**
 
-### Pro License ($5k/year per developer)
+- [ ] **Performance benchmarks** - Published benchmarks for all primitives
+  - Minimum: Intel Iris Xe, Apple M1, NVIDIA GTX 1650
+  - Target: 60fps with specified data volumes
+  - Graceful degradation for older hardware
+- [ ] **TypeScript/Rust dimensional analysis** - Compile-time unit checking
+  - Prevents unit confusion errors (Mars Climate Orbiter)
+  - Enforces coordinate frame correctness
+  - Type-safe sensor fusion
+- [ ] **Zero-copy buffer updates** - Documented performance guarantees
+  - Maximum latency from data → screen
+  - Memory usage bounds
+  - GPU memory management
 
-- All HUD components
-- All sensor fusion components
-- Advanced tactical displays
-- Priority support
+### Testing & Validation
 
-### Enterprise ($50k+/year)
+**Challenge:** Safety-critical systems need extensive testing.
 
-- Custom sensor integrations
-- On-premise deployment
-- White-label branding
-- Dedicated support engineer
-- SLA guarantees
+**Solutions:**
 
-**Why This Works:**
+- [ ] **Automated test suite** - 90%+ code coverage
+- [ ] **Visual regression tests** - Screenshot comparison for rendering
+- [ ] **Performance regression tests** - Automated performance monitoring
+- [ ] **Fuzzing infrastructure** - Test with malformed data
+- [ ] **Example validation plans** - Templates for customer validation
 
-- Defense contractors have budget authority
-- Aerospace companies pay for specialized tools
-- No open-source expectations for niche aerospace software
-- High perceived value (looks expensive/complex)
+### Deployment Support
 
----
+**Challenge:** Enterprises need support for deployment and integration.
 
-## Next Steps (Immediate)
+**Solutions:**
 
-### Q1 2025: HUD Core (3 months)
+- [ ] **Integration guides** - Examples for common frameworks (React, Vue, Svelte)
+- [ ] **Embedding guide** - How to embed in native applications
+- [ ] **Scaling guide** - Multi-monitor, high-DPI, ultra-wide displays
+- [ ] **Browser compatibility matrix** - Tested browsers and versions
+- [ ] **GPU compatibility list** - Tested GPUs with performance data
+- [ ] **Troubleshooting guide** - Common issues and solutions
 
-1. Build HUD.Root container with responsive scaling
-2. Implement HeadingTape with infinite scroll
-3. Implement PitchLadder with roll rotation
-4. Build Reticle with lock-on states
-5. Add CornerBrackets with CSS animations
-6. Documentation site with live demos
-
-### Q2 2025: Tactical Displays (3 months)
-
-1. RadarScope with PPI display
-2. SituationDisplay with IFF markers
-3. Coordinate/range overlays
-4. AltitudeTape and SpeedTape
-5. Example: UAV ground control station
-
-### Q3 2025: Sensor Fusion Foundation (3 months)
-
-1. SensorFusion.Root architecture
-2. LidarLayer (WebGPUPointCloud)
-3. ThermalOverlay with color LUTs
-4. Multi-layer compositing
-5. Example: Autonomous perception dashboard
-
-### Q4 2025: Sensor Fusion Complete (3 months)
-
-1. RadarContacts with track history
-2. ObjectDetection with AI boxes
-3. VideoLayer with GPU decode
-4. Example: Multi-sensor fusion demo
-
----
-
-## Why This Strategy Wins
-
-### 1. **Completely Unserved Market**
-
-- No web-based HUD component libraries exist
-- No sensor fusion visualization libraries exist
-- Defense/aerospace building web dashboards have zero options
-
-### 2. **High Technical Moat**
-
-- WebGPU expertise is rare
-- Domain knowledge (aerospace/defense) is rare
-- Combination is nearly unique
-
-### 3. **Premium Pricing**
-
-- Defense contractors pay $$$
-- Aerospace companies pay $$$
-- Can charge 10x more than generic chart libraries
-
-### 4. **Primitive-First Differentiation**
-
-- Visx is primitive-first but SVG (not GPU)
-- Three.js/Babylon.js aren't primitive-focused
-- We're the only "Radix UI for WebGPU visualization"
-
-### 5. **Clear GTM Path**
-
-- Target: Defense contractors, aerospace startups, drone companies
-- Demo at: I/ITSEC, AUVSI XPONENTIAL, DefenseNews conferences
-- Case studies: Autonomous vehicle companies, training simulators
-
----
-
-## What We're NOT Building
-
-### ❌ Dropped Entirely:
-
-1. **Planet components** (Venus, Mars, Jupiter, etc.) - Already deleted
-   - Reason: Niche use case, Cesium does this better
-2. **Full terrain visualization** - Cesium/deck.gl dominate
-3. **Generic orbital mechanics GUI** - STK is the standard
-4. **Standard 2D chart library** - Market is commoditized
-
-### ✅ Keeping Minimal (as foundation/demos):
-
-1. **LineChart only** - Validates WebGPU infrastructure works (1M points @ 60fps), not a product
-2. **Physics/orbital primitives** - Could be useful for HUD data (altitude, velocity, etc.)
-3. **Math utilities** - Foundation for coordinate transforms in sensor fusion
-
-**Note:** Generic heatmap removed - domain-specific `SensorFusion.ThermalOverlay` (Phase 3) is the real product for defense/aerospace thermal imaging needs.
-
----
-
-**The Goal:** The definitive component library for aerospace HUD interfaces and real-time sensor fusion visualization. Primitive-first, WebGPU-powered, composable React components for defense, aerospace, and autonomous systems.
-
-**Positioning:** "Radix UI for Aerospace Visualization"
-
-**Revenue Target:** $10M+ ARR by 2027 through enterprise licenses to defense contractors and aerospace companies.
+**Deliverable Timeline:** Enterprise features developed alongside Phases 1-4, documented in dedicated enterprise deployment guide.

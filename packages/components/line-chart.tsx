@@ -10,7 +10,7 @@ import {
   getTicks,
   generateSmoothPath,
   type Point,
-} from "./lib";
+} from "./utils";
 
 // ============================================================================
 // Types
@@ -719,7 +719,9 @@ const LineChartLines = React.forwardRef<SVGGElement, LineChartLinesProps>(
     // Calculate total points across all series
     const totalPoints = React.useMemo(() => {
       return processedSeries.reduce(
-        (sum, s) => sum + (hiddenSeries.has(processedSeries.indexOf(s)) ? 0 : s.data.length),
+        (sum, s) =>
+          sum +
+          (hiddenSeries.has(processedSeries.indexOf(s)) ? 0 : s.data.length),
         0
       );
     }, [processedSeries, hiddenSeries]);
@@ -1155,7 +1157,12 @@ function WebGPULinesRenderer({
         if (!mounted) return;
 
         console.log(
-          `[WebGPU] Rendering ${seriesBuffers.length} series with ${seriesBuffers.reduce((sum, s) => sum + s.vertexCount, 0)} total vertices`
+          `[WebGPU] Rendering ${
+            seriesBuffers.length
+          } series with ${seriesBuffers.reduce(
+            (sum, s) => sum + s.vertexCount,
+            0
+          )} total vertices`
         );
 
         // Render function

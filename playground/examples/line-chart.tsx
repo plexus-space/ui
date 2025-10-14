@@ -278,59 +278,6 @@ export const LineChartExamples = () => {
 </LineChart.Root>`}
       />
 
-      {/* Orbital Velocity */}
-      <ComponentPreview
-        title="Orbital Velocity vs Altitude"
-        description="Earth orbital mechanics using v = √(μ/r). Shows how orbital velocity decreases with altitude."
-        preview={
-          <div className="w-full">
-            <LineChart.Root
-              series={[
-                {
-                  name: "Velocity",
-                  data: orbitalVelocity,
-                  color: color,
-                  strokeWidth: 2.5,
-                },
-              ]}
-              xAxis={{ label: "Altitude (km)" }}
-              yAxis={{ label: "Orbital Velocity (km/s)" }}
-            >
-              <LineChart.Container>
-                <LineChart.Viewport>
-                  <LineChart.Grid />
-                  <LineChart.Axes />
-                  <LineChart.Lines />
-                  <LineChart.Interaction />
-                  <LineChart.Tooltip />
-                </LineChart.Viewport>
-              </LineChart.Container>
-            </LineChart.Root>
-          </div>
-        }
-        code={`<LineChart.Root
-  series={[{
-    name: "Velocity",
-    data: orbitalVelocity,
-    color: "#3b82f6",
-  }]}
-  xAxis={{ label: "Altitude (km)" }}
-  yAxis={{ label: "Orbital Velocity (km/s)" }}
-  width={850}
-  height={350}
->
-  <LineChart.Container>
-    <LineChart.Viewport>
-      <LineChart.Grid />
-      <LineChart.Axes />
-      <LineChart.Lines />
-      <LineChart.Interaction />
-      <LineChart.Tooltip />
-    </LineChart.Viewport>
-  </LineChart.Container>
-</LineChart.Root>`}
-      />
-
       {/* Real-Time Streaming */}
       <ComponentPreview
         title="Real-Time Telemetry Streaming"
@@ -402,7 +349,11 @@ useEffect(() => {
           <div className="w-full space-y-2">
             <LineChart.Root
               series={[
-                { name: "High-Frequency Sensor", data: highVolumeData, color: color },
+                {
+                  name: "High-Frequency Sensor",
+                  data: highVolumeData,
+                  color: color,
+                },
               ]}
               xAxis={{ label: "Time (s)" }}
               yAxis={{ label: "Signal Amplitude" }}
@@ -425,7 +376,10 @@ useEffect(() => {
             </div>
             <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800">
               <p className="text-xs text-purple-900 dark:text-purple-100">
-                <strong>GPU-Accelerated:</strong> Automatically switches to WebGPU for datasets over 5,000 points. Supports Chrome 113+, Firefox 115+, Safari 18+. Check the console to see active renderer.
+                <strong>GPU-Accelerated:</strong> Automatically switches to
+                WebGPU for datasets over 5,000 points. Supports Chrome 113+,
+                Firefox 115+, Safari 18+. Check the console to see active
+                renderer.
               </p>
             </div>
           </div>
