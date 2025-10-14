@@ -22,8 +22,8 @@ export function ApiReferenceTable({ props }: ApiReferenceTableProps) {
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {props.map((prop) => (
-            <tr key={prop.name}>
+          {props.map((prop, index) => (
+            <tr key={prop.name + index}>
               <td className="p-3 font-mono text-xs">{prop.name}</td>
               <td className="p-3 font-mono text-xs">{prop.type}</td>
               <td

@@ -117,7 +117,10 @@ export function createScale(
  * Generate evenly spaced tick values
  * Rounds tick values to ensure stability across renders
  */
-export function getTicks(domain: [number, number], count: number = 5): number[] {
+export function getTicks(
+  domain: [number, number],
+  count: number = 5
+): number[] {
   const [min, max] = domain;
   const step = (max - min) / (count - 1);
 
@@ -144,14 +147,18 @@ export function formatValue(value: number): string {
   if (Math.abs(rounded) >= 1e9) return `${(rounded / 1e9).toFixed(1)}B`;
   if (Math.abs(rounded) >= 1e6) return `${(rounded / 1e6).toFixed(1)}M`;
   if (Math.abs(rounded) >= 1e3) return `${(rounded / 1e3).toFixed(1)}K`;
-  if (Math.abs(rounded) < 0.01 && rounded !== 0) return rounded.toExponential(1);
+  if (Math.abs(rounded) < 0.01 && rounded !== 0)
+    return rounded.toExponential(1);
   return rounded.toFixed(2);
 }
 
 /**
  * Format timestamp values
  */
-export function formatTime(timestamp: number, timezone: string = "UTC"): string {
+export function formatTime(
+  timestamp: number,
+  timezone: string = "UTC"
+): string {
   try {
     const date = new Date(timestamp);
     const formatter = new Intl.DateTimeFormat("en-US", {

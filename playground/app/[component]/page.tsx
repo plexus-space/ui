@@ -6,19 +6,6 @@ import { components } from "@/constants/components";
 import { Footer } from "@/components/footer";
 import { CopyButton } from "@/components/copy-button";
 import { LineChartExamples } from "@/examples/line-chart";
-import { HeatmapExample } from "@/examples/heatmap";
-import { GanttChartExamples } from "@/examples/gantt";
-import { SpectrogramExamples } from "@/examples/spectrogram";
-import { WaterfallPlotExamples } from "@/examples/waterfall";
-import { EarthExamples } from "@/examples/planets";
-import { MarsExamples } from "@/examples/planets";
-import { MercuryExamples } from "@/examples/planets";
-import { VenusExamples } from "@/examples/planets";
-import { MoonExamples } from "@/examples/planets";
-import { JupiterExamples } from "@/examples/planets";
-import { SaturnExamples } from "@/examples/planets";
-import { UranusExamples } from "@/examples/planets";
-import { NeptuneExamples } from "@/examples/planets";
 import {
   ApiReferenceTable,
   type ApiProp,
@@ -30,36 +17,10 @@ import * as apiData from "@/examples/api";
 // ============================================================================
 const componentExamples: Record<string, React.ComponentType> = {
   "line-chart": LineChartExamples,
-  heatmap: HeatmapExample,
-  "gantt-chart": GanttChartExamples,
-  spectrogram: SpectrogramExamples,
-  "waterfall-plot": WaterfallPlotExamples,
-  earth: EarthExamples,
-  mars: MarsExamples,
-  mercury: MercuryExamples,
-  venus: VenusExamples,
-  moon: MoonExamples,
-  jupiter: JupiterExamples,
-  saturn: SaturnExamples,
-  uranus: UranusExamples,
-  neptune: NeptuneExamples,
 };
 
 const componentApiData: Record<string, ApiProp[]> = {
   "line-chart": apiData.lineChartApiProps,
-  heatmap: apiData.heatmapApiProps,
-  "gantt-chart": apiData.ganttChartApiProps,
-  spectrogram: apiData.spectrogramApiProps,
-  "waterfall-plot": apiData.waterfallPlotApiProps,
-  earth: apiData.earthApiProps,
-  mars: apiData.planetApiProps,
-  mercury: apiData.planetApiProps,
-  venus: apiData.planetApiProps,
-  moon: apiData.planetApiProps,
-  jupiter: apiData.planetApiProps,
-  saturn: apiData.saturnApiProps,
-  uranus: apiData.planetApiProps,
-  neptune: apiData.planetApiProps,
 };
 
 // ============================================================================

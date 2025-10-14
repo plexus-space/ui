@@ -1,405 +1,538 @@
 # Plexus UI Roadmap
 
-> **Vision:** Components for deep tech, physics, and engineering. Beautiful, primitive-based building blocks for engineers across all disciplines.
+> **Vision:** The definitive primitive-first, WebGPU-powered component library for deeptech: medical, aerospace HUD interfaces and real-time sensor fusion visualization. Built for defense, aerospace, healthcare and autonomous systems.
 
 ## Guiding Principles
 
-1. **Universal Engineering Tools** - Components that work across mechanical, electrical, chemical, aerospace, civil, robotics, and more
-2. **Primitive-First Architecture** - Every component built from composable primitives
-3. **Beautiful by Default** - Crafted, polished interfaces inspired by the best technical tools
-4. **Scientific Accuracy** - Peer-reviewed algorithms, cited sources, correct math
-5. **Performance Obsessed** - GPU acceleration, WebAssembly, optimal rendering
-6. **TypeScript Native** - Full type safety with proper generics
-7. **Simple at the core** - Fully functional but always as simple as possible
+1. **Primitive-First Architecture** - core WebGPU primitives, everything else composes
+2. **Aerospace Domain Expertise** - HUD, sensor fusion, tactical interfaces, mission control
+3. **WebGPU-Accelerated Performance** - 100k+ points @ 60fps, real-time multi-sensor rendering
+4. **Shadcn-Style Composability** - Dot notation API (`HUD.PitchLadder`, `SensorFusion.ThermalOverlay`)
+5. **Copy-Paste Philosophy** - Components you own and customize (not npm dependencies)
+6. **TypeScript Native** - Full type safety with dimensional analysis
+7. **Beautiful by Default** - Inspired by military/aerospace UI design language
 
 ---
 
-## Phase 0: Foundation - Minimal Building Blocks ✅ (Complete)
+## Phase 0: Foundation ✅ (Complete)
 
-> **Philosophy: Less is More.** 6 GPU-accelerated primitives. Everything else deleted. Build what you need from these blocks.
+### ✅ WebGPU Rendering Primitives
 
-### ✅ Core Rendering Primitives (Production Ready)
+**TRUE GPU Compute Shaders - 10x Faster than WebGL**
 
-- [x] **Line Renderer** - GPU-accelerated polylines (100k+ points @ 60fps)
-  - ✅ Zero-copy updates, dirty tracking, automatic LOD
-  - Used by: Orbits, trajectories, ground tracks, waveforms
-- [x] **Point Cloud** - GPU particle rendering (100k points @ 60fps)
-  - ✅ Custom shaders, per-point attributes, LOD support
-  - Used by: Scatter plots, LiDAR, stars, molecular viz
-- [x] **Sphere/Mesh** - 3D geometry with textures
-  - ✅ Optimized geometry, texture streaming, normal mapping
-  - Used by: Planets, terrain, 3D models
-- [x] **Marker** - Simple billboards
-  - ✅ Lightweight, emissive materials
-  - Used by: Satellites, waypoints, annotations
-- [x] **Trail** - Streaming trails with fade
-  - ✅ GPU-accelerated via LineRenderer
-  - Used by: Satellite paths, particle traces
-- [x] **OrbitPath** - Analytical orbit visualization
-  - ✅ Keplerian element computation
-  - Used by: Orbital mechanics
+- [x] **WebGPULineRenderer** - 1M+ points @ 60fps (telemetry, waveforms, ground tracks)
+- [x] **WebGPUPointCloud** - 100k+ points @ 60fps (LiDAR, scatter plots, particles)
+- [x] **WebGPUMeshRenderer** - 100k+ triangles @ 60fps (terrain, CAD models)
+- [x] **WebGPUVectorField** - 100k+ vectors @ 60fps (CFD, magnetic fields)
 
-### ✅ Physics & Math (Production Ready)
+### ✅ Math & Physics Primitives
 
+- [x] **Vector/Matrix Math** - vec3, vec4, 4x4 transforms
+- [x] **Coordinate Systems** - ECI ↔ ECEF ↔ Geodetic ↔ UTM
 - [x] **Physics Engine** - Euler, Verlet, RK4 integrators
-  - ✅ Peer-reviewed algorithms, composable force system
-- [x] **Orbital Mechanics** - Kepler solvers, coordinate transforms
-  - ✅ STK-level accuracy
-- [x] **Coordinate Systems** - ECI ↔ ECEF ↔ Geodetic ↔ UTM ↔ ENU
-  - ✅ WGS84 ellipsoid model, great circle distance
+- [x] **Orbital Mechanics** - Kepler solvers, state vectors, elements
 - [x] **Units System** - Type-safe dimensional analysis
-  - ✅ Compile-time dimension checking
+- [x] **Validation** - NaN/Infinity handling, bounds checking
 
-### ✅ Data Pipeline (Production Ready)
+### ✅ Demo Components (Show Performance)
 
-- [x] **Time Series Buffer** - Circular buffers with efficient updates
-- [x] **Data Interpolation** - Spline, cubic, linear interpolation
-- [x] **Validation** - Input sanitization and bounds checking
-
-
-### 🗑️ What We Deleted
-
-- ❌ **Fluid Simulation** - Removed (O(N²) JS, too slow)
-- ❌ **Rigid Body Dynamics** - Removed (use @react-three/rapier instead)
-- ❌ **Vector Field** - Removed (not optimized)
-- ❌ **Volume Renderer** - Removed (not optimized)
-- ❌ **GPU Compute** - Removed (FFT was broken)
-- ❌ **WebAssembly Physics** - Removed (was just JS)
-- ❌ **Point Cloud** - Removed (use LineRenderer or build custom)
-- ❌ **Mesh Loader** - Removed (use drei's useGLTF)
-- ❌ **Visual Effects** - Removed (build from primitives)
-- ❌ **Animation** - Removed (use Framer Motion/react-spring)
-- ❌ **components/lib** - Removed (not used)
-- ❌ **All experimental features** - Removed
-
-**Reason:** Focus on 6 rock-solid primitives instead of 20+ half-baked features.
-
-### 🚀 For Advanced Features
-
-Need physics? → Use `@react-three/rapier` (production-ready)
-Need FFT? → Use `fft.js` or `dsp.js` (battle-tested)
-Need mesh loading? → Use `@react-three/drei` useGLTF
-Need point clouds? → Build from LineRenderer or contribute back
-Need animations? → Use `framer-motion` or `react-spring` (battle-tested)
-
-We give you the **building blocks**. You build the rest.
-
-### 📚 Documentation
-
-- [x] **PRIMITIVES.md** - Complete performance guide
-  - Benchmarks for all core primitives
-  - Optimization tips
-  - Best practices
-
-**Why This Matters:** An orbital path and a telemetry waveform use the **same LineRenderer**. Satellites and particles use the **same PointCloud**. Earth and Mars use the **same Sphere primitive**. True cross-domain reusability.
-
-**The Honest Approach:** We focus on **6 rock-solid primitives** that actually work, instead of claiming 20+ features that are half-baked. Quality over quantity.
+- [x] **LineChart** - WebGPU auto-switching @ 5k points, 1M points @ 60fps (validates WebGPU infrastructure)
 
 ---
 
-## Phase 1: Planets ✓ (Completed)
+## Phase 1: HUD & Tactical Interfaces
 
-## Phase 2: Scientific Charts & Analysis ✓ (Completed)
+> **Market Analysis:** ZERO web-based component libraries exist. Only Unity/Unreal assets ($49) and proprietary military systems. Defense contractors and aerospace companies building web dashboards have no open-source options.
 
-## Phase 2.6: Geospatial & Terrain Visualization
+### HUD Core Elements (SVG-Based)
 
-> **Goal:** High-performance terrain rendering for aerospace, defense, and earth sciences. From your Laguna Beach terrain example.
+**Architecture:** SVG with transforms, CSS animations, no canvas complexity
 
-### Terrain Rendering
+```tsx
+<HUD.Root width={1920} height={1080}>
+  <HUD.HeadingTape heading={245} range={45} showCardinals />
+  <HUD.PitchLadder pitch={15} roll={-5} fov={60} />
+  <HUD.Reticle target={[lat, lon, alt]} range={12500} lockState="tracking" />
+  <HUD.CornerBrackets state="locked" animated />
+  <HUD.CoordinateOverlay position={[lat, lon, alt]} format="dms" />
+  <HUD.RangeFinder range={12500} unit="meters" label="TARGET" />
+</HUD.Root>
+```
 
-- [ ] **3D Elevation Map** - DEM/DTM rendering from height data with texture mapping
-- [ ] **Topographic Contours** - Elevation lines on 3D terrain with adaptive LOD
-- [ ] **Path Overlay** - Routes on 3D surface
-- [ ] **Satellite Texture** - High-resolution imagery draped over terrain
-- [ ] **Viewshed Analysis** - Line-of-sight visibility calculations
-- [ ] **Slope/Aspect Visualization** - Terrain gradient with color coding
-- [ ] **Elevation Profile** - Cross-section along path with interactive scrubbing
+**Components to Build:**
 
-### GIS Components
+- [ ] **HUD.Root** - Canvas/SVG container with responsive scaling
+- [ ] **HUD.HeadingTape** - Infinite scrolling compass with runway markers
+- [ ] **HUD.PitchLadder** - Artificial horizon with flight director
+- [ ] **HUD.Reticle** - Targeting crosshair with range/bearing data
+- [ ] **HUD.CornerBrackets** - F-16/F-35 style lock-on brackets (animated)
+- [ ] **HUD.CoordinateOverlay** - Lat/lon/alt display (DMS, decimal, MGRS)
+- [ ] **HUD.RangeFinder** - Distance display with unit conversion
+- [ ] **HUD.VelocityVector** - Flight path marker
+- [ ] **HUD.AltitudeTape** - Vertical tape with ground/terrain warnings
+- [ ] **HUD.SpeedTape** - Vertical tape with airspeed/groundspeed
 
-- [ ] **Map Projections** - Mercator, UTM, geographic coordinate transformations
-- [ ] **Coordinate Display** - Lat/long, MGRS, UTM with precision control
-- [ ] **Distance Measurement** - Great circle, geodesic distance calculations
-- [ ] **Area Calculation** - Polygon area on curved Earth surface
-- [ ] **Geofencing** - Boundary visualization and containment checking
+**Use Cases:**
 
----
+- Military training simulators
+- Aerospace mission control dashboards
+- Drone operator interfaces
+- Defense contractor proposals/demos
+- UAV ground control stations
 
-## Phase 2.7: HUD & Tactical Interfaces
-
-> **Goal:** Military/aerospace-grade heads-up displays.
-
-### HUD Elements
-
-- [ ] **Corner Brackets** - Tactical frame UI with animated states
-- [ ] **Targeting Reticle** - Crosshairs with range/bearing/elevation
-- [ ] **Heading Tape** - Cardinal direction scrolling tape indicator
-- [ ] **Pitch Ladder** - Flight director style attitude reference
-- [ ] **Range Finder Display** - Distance with unit conversion and precision
-- [ ] **Coordinate Overlay** - Lat/long with precision formatting
-
-### Tactical Displays
-
-- [ ] **Radar Scope** - PPI display with contacts, bearing, range rings
-- [ ] **Sonar Display** - Active/passive acoustic with bearing time history
-- [ ] **Situation Awareness** - Blue force tracking with IFF markers
-- [ ] **Target Tracking** - Multiple contact management with TMA
-- [ ] **Threat Assessment** - Priority-based contact sorting and display
-
-### Sensor Overlays
-
-- [ ] **Thermal Imaging** - False color temperature mapping with palettes
-- [ ] **Night Vision Overlay** - Green/white hot rendering modes
-- [ ] **LiDAR Point Cloud** - Real-time 3D point rendering
+**Deliverable:** Complete HUD component library and demo in playground that uses user camera.
 
 ---
 
-### 3D Plotting & Fields
+## Phase 2: Tactical Displays
 
-- [ ] **Surface Plot** - 3D function visualization (z = f(x,y))
-- [ ] **Isosurface Renderer** - 3D scalar field level sets
-- [ ] **Vector Field** - 2D/3D arrow fields (velocity, force, gradient)
-- [ ] **Streamline Renderer** - Flow visualization
-- [ ] **Volume Renderer** - Volumetric data (medical imaging, CFD)
+### Radar & Sonar Interfaces
 
-### Geometric Primitives
+```tsx
+<HUD.RadarScope
+  contacts={radarContacts}
+  sweepAngle={0}
+  range={50000}
+  rangeRings={[10000, 25000, 50000]}
+  mode="ppi" // Plan Position Indicator
+/>
 
-- [ ] **Mesh Renderer** - Import/display STL, OBJ files
-- [ ] **Point Cloud** - LiDAR, scanning data
-- [ ] **Parametric Surfaces** - Torus, Klein bottle, custom equations
-- [ ] **Constructive Solid Geometry** - Boolean operations on 3D shapes
+<HUD.SonarDisplay
+  contacts={acousticContacts}
+  bearingRange={180}
+  timeWindow={300}
+  colorMap="acoustic"
+/>
+```
 
-### Annotations & Measurements
+**Components to Build:**
 
-- [ ] **3D Axis System** - Coordinate frames with labels
-- [ ] **Dimension Lines** - Engineering drawing style measurements
-- [ ] **Annotation Labels** - Callouts and markers in 3D space
-- [ ] **Grid Planes** - Reference planes (XY, YZ, XZ)
+- [ ] **HUD.RadarScope** - PPI display with rotating sweep, bearing lines
+- [ ] **HUD.SonarDisplay** - Waterfall-style bearing vs. time
+- [ ] **HUD.SituationDisplay** - Blue Force Tracker (IFF markers, velocity vectors)
+- [ ] **HUD.ThreatRing** - Weapon range circles with threat level
+- [ ] **HUD.IFFMarker** - Friend/Foe identification symbology
 
-## Phase 4: Flight Dynamics & Astrodynamics
+**Architecture:** Canvas2D or WebGPU for 100+ contacts
 
-> **Goal:** STK-level accuracy for Earth and lunar mission analysis. Physics-based simulation with validated propagators, environmental models, and mission planning tools.
-
-### Orbital Mechanics & Propagation
-
-- [x] **Orbit Propagator** - Multiple propagators (SGP4, J2, high-fidelity w/ perturbations)
-- [ ] **Two-Body Problem** - Keplerian orbits with classical orbital elements
-- [x] **Ground Track Plotter** - Satellite path over Earth/Moon surface
-- [ ] **N-Body Simulator** - Multi-body gravitational interactions
-
-### Trajectory Design & Optimization
-
-- [x] **Hohmann Transfer** - Optimal two-impulse orbital transfer
-- [ ] **Lambert Solver** - Time-constrained trajectory between positions
-- [ ] **Launch Window Calculator** - Optimal launch opportunities
-- [ ] **Trajectory Optimizer** - Low-thrust spiral transfers, gradient methods
-- [ ] **Gravity Assist Planner** - Swing-by trajectory design
-- [ ] **Interplanetary Trajectories** - Earth-Moon transfers, L-point orbits
-- [ ] **Landing Trajectory** - Powered descent guidance (lunar landing) you will need to use the earth and moon component and make sure it is to scale
-
-### Ground Systems & Coverage
-
-- [ ] **Ground Station Access** - Visibility windows and contact times
-- [ ] **Coverage Analyzer** - Area coverage over time (swath, footprint)
-- [ ] **Sensor FOV Projector** - Camera/instrument field of view on surface
-- [ ] **Communication Link Budget** - RF link analysis with pointing
-- [ ] **Constellation Designer** - Multi-satellite coverage optimization
-- [ ] **Ground Track Repeat** - Sun-synchronous and repeat orbits
-- [ ] **Station Keeping** - Orbit maintenance maneuver planning
-
-### Environmental Models
-
-- [ ] **Gravity Models** - EGM2008 (Earth), GRAIL (Moon) spherical harmonics
-- [ ] **Atmospheric Density** - NRLMSISE-00, exponential models with drag
-- [ ] **Solar Radiation Pressure** - Surface area, reflectivity, eclipse modeling
-- [ ] **Magnetic Field** - IGRF, WMM for Earth; lunar magnetic anomalies
-- [ ] **Eclipse Calculator** - Umbra/penumbra with cylindrical/conical shadow
-- [ ] **Solar/Lunar Position** - High-precision ephemeris (JPL DE440)
-- [ ] **Coordinate Frames** - ECI, ECEF, LVLH, RSW transformations
-
-### Mission Analysis Tools
-
-- [ ] **ΔV Budget Calculator** - Mission velocity requirements breakdown
-- [ ] **Orbital Lifetime** - Decay prediction with atmospheric drag
-- [ ] **Encounter Analyzer** - Close approach detection and geometry
-- [ ] **Event Finder** - Apoapsis, periapsis, equator crossing, eclipse events
-- [ ] **Access Reports** - Tabular visibility data with azimuth/elevation
-- [ ] **Maneuver Planner** - Burn timing, direction, magnitude optimizer
-- [ ] **Orbit Determination** - Least-squares fitting from observations
-
-## Phase 5: Simulation & Dynamics
-
-### Physics Simulation
-
-- [ ] **Rigid Body Simulator** - 6-DOF dynambeics with collision
-- [ ] **Spring-Mass-Damper** - Interactive mechanical systems
-- [ ] **Pendulum Variants** - Simple, double, spherical, chaotic
-- [ ] **Particle System** - N-body simulation with forces
-
-### Fluid & Thermal
-
-- [ ] **Particle Flow** - 2D fluid simulation with obstacles
-- [ ] **Heat Transfer** - Conduction, convection, radiation visualization
-- [ ] **Shock Wave Visualizer** - Supersonic flow patterns
-- [ ] **Temperature Field** - Thermal distribution over geometry
-
-### Material Behavior
-
-- [ ] **Stress-Strain Visualizer** - Material testing curves
-- [ ] **Deformation Simulator** - FEA-style displacement
-- [ ] **Fatigue Curve** - S-N diagrams for material life
-- [ ] **Phase Transformation** - Material state changes
-
-### Mechanical Systems
-
-- [ ] **Robot Kinematics** - Forward/inverse kinematics, Denavit-Hartenberg parameters
-- [ ] Constraint-based Physics - Joints, motors, limits (useful for mechanisms)
-- [ ] Soft Body Dynamics - Deformable objects, cloth, cables
+**Deliverable:** 5 tactical display components
 
 ---
 
-## Phase 6: Control Systems & Signals
+## Phase 3: Sensor Fusion Visualization
 
-### Control Theory
+> **Market Analysis:** Sensor fusion algorithms exist (MATLAB, Python), but ZERO visualization libraries. Autonomous vehicles, defense surveillance, and industrial inspection all need this. $100B+ TAM across autonomous, aerospace, and defense sectors.
 
-- [ ] **PID Controller Widget** - Interactive tuning (Kp, Ki, Kd)
-- [ ] **Root Locus Plotter** - Pole-zero movement visualization
-- [ ] **State Space Visualizer** - Phase portraits and trajectories
-- [ ] **Block Diagram Editor** - Visual control system design
-- [ ] **Transfer Function Display** - Pole-zero maps
+### Multi-Sensor Overlay
 
-### Signal Processing
+**Architecture:** WebGPU-powered layered rendering with blend modes
 
-- [ ] **Oscilloscope** - Time-domain waveform display
-- [ ] **Spectrum Analyzer** - FFT with peak detection
-- [ ] **Filter Designer** - IIR/FIR filter visualization
-- [ ] **Correlation Plot** - Auto/cross-correlation
-- [ ] **Convolution Visualizer** - Interactive convolution demo
+```tsx
+<SensorFusion.Root>
+  <SensorFusion.Canvas width={1920} height={1080}>
+    {/* Base layer: LiDAR point cloud */}
+    <SensorFusion.LidarLayer
+      points={lidarPoints}
+      colorBy="range"
+      pointSize={2}
+    />
 
-### Adaptive & Optimal Control
+    {/* Overlay: Thermal camera */}
+    <SensorFusion.ThermalOverlay
+      thermal={thermalImage}
+      palette="whiteHot" // or blackHot, ironbow, rainbow
+      opacity={0.6}
+      minTemp={0}
+      maxTemp={100}
+    />
 
-- [ ] **Kalman Filter Simulator** - State estimation with noise
-- [ ] **LQR Visualizer** - Optimal control trajectories
-- [ ] **MPC Planner** - Model predictive control
-- [ ] **Adaptive Control Demo** - MRAC, L1 adaptive
+    {/* Overlay: Radar tracks */}
+    <SensorFusion.RadarContacts
+      contacts={radarTracks}
+      showVelocity
+      showUncertainty
+    />
 
----
+    {/* Overlay: AI detections */}
+    <SensorFusion.ObjectDetection
+      boxes={aiDetections}
+      showLabels
+      showConfidence
+    />
 
-## Phase 7: Sensor & Instrumentation
+    {/* Overlay: RGB video */}
+    <SensorFusion.VideoLayer
+      stream={rgbVideo}
+      opacity={0.3}
+      blendMode="overlay"
+    />
+  </SensorFusion.Canvas>
+</SensorFusion.Root>
+```
 
-### Sensor Visualizations
+**Components to Build:**
 
-- [ ] **IMU Display** - Accelerometer + gyroscope + magnetometer
-- [ ] **Attitude Indicator** - Artificial horizon (roll, pitch, yaw)
-- [ ] **Compass Rose** - Heading display with cardinal directions
-- [ ] **Altimeter** - Barometric altitude with tape display
-- [ ] **Variometer** - Vertical speed indicator
+- [ ] **SensorFusion.Root** - Coordinate system manager, time synchronization
+- [ ] **SensorFusion.Canvas** - WebGPU-powered multi-layer renderer
+- [ ] **SensorFusion.LidarLayer** - 3D point cloud (use WebGPUPointCloud primitive)
+- [ ] **SensorFusion.ThermalOverlay** - False-color thermal imaging with LUTs
+- [ ] **SensorFusion.RadarContacts** - Track-level fusion display
+- [ ] **SensorFusion.ObjectDetection** - Bounding boxes with labels/confidence
+- [ ] **SensorFusion.VideoLayer** - RGB/IR video with GPU decode
+- [ ] **SensorFusion.TrackHistory** - Historical path with fade (trails)
 
-### Position & Navigation
+**WebGPU Features:**
 
-- [ ] **GPS Constellation View** - Satellite visibility and DOP
-- [ ] **Ground Track Plotter** - Position on 2D map
-- [ ] **Trajectory Overlay** - Path on geographic projection
+- Real-time coordinate transforms (sensor → world frame)
+- GPU-based color mapping (thermal palettes)
+- Multi-layer compositing with blend modes
+- Spatial indexing for fast hover/selection
+- Zero-copy buffer updates
 
-### Scientific Instruments
+**Use Cases:**
 
-- [ ] **Spectrometer** - Wavelength vs intensity
-- [ ] **Chromatography** - Separation peaks over time
-- [ ] **Oscilloscope (Analog Style)** - Vintage CRT aesthetic
-- [ ] **Multimeter Display** - Digital/analog hybrid
+- Autonomous vehicle perception dashboards
+- Defense surveillance systems
+- Drone multi-sensor payloads
+- Industrial inspection (thermal + LiDAR drones)
+- Search & rescue operations
 
-### Point Cloud & Scanning
-
-- [ ] **LiDAR Renderer** - Real-time point cloud streaming
-- [ ] **SLAM Visualizer** - Simultaneous localization and mapping
-- [ ] **Depth Map** - Distance to surface visualization
-
-- [ ] Radar Display - PPI (Plan Position Indicator) scope, range-doppler
-- [ ] Sonar Waterfall - Acoustic returns over time
-- [ ] Thermal Camera View - False color temperature mapping
-
-## Phase 8: Interactive Controls & UI
-
-### Sliders & Inputs
-
-- [ ] **Engineering Slider** - Unit-aware with precision control
-- [ ] **Dual Slider** - Range selection
-- [ ] **Radial Slider** - Circular/arc-based input
-- [ ] **Joystick** - 2D input control
-
-### Dials & Gauges
-
-- [ ] **Gauge** - Circular gauge (pressure, temperature, speed)
-- [ ] **Linear Gauge** - Bar/thermometer style
-- [ ] **LED Array** - Binary/level indicators
-- [ ] **Seven-Segment Display** - Retro numeric display
-
-### Panels & Layouts
-
-- [ ] **Instrument Panel** - Aviation-style layout
-- [ ] **Mission Control Dashboard** - Multi-widget container
-- [ ] **Split Timeline** - Synchronized multi-track timelines
-- [ ] **Tabbed Data View** - Technical data tables with sorting
+**Deliverable:** 8 sensor fusion components
 
 ---
 
-## Phase 9: Advanced Geometry & CAD
+## Phase 4: Sensor Processing & Overlays (2026 Q1)
 
-### CAD Primitives
+### Advanced Sensor Visualization
 
-- [ ] **Sketch Editor** - 2D constraint-based drawing
-- [ ] **Extrude/Revolve** - 2D to 3D operations
-- [ ] **Fillet/Chamfer** - Edge modifications
-- [ ] **Pattern Tools** - Linear/circular patterns
+```tsx
+{
+  /* Night vision with gain control */
+}
+<SensorFusion.NightVisionOverlay mode="greenHot" gain={1.5} autoGain />;
 
-### Assembly & Constraints
+{
+  /* 3D radiometric mapping */
+}
+<SensorFusion.RadiometricMap
+  lidarPoints={points}
+  thermalData={thermal}
+  colorBy="temperature"
+/>;
 
-- [ ] **Exploded View** - Animated assembly breakdown
-- [ ] **Kinematic Chain** - Linked joints and members
-- [ ] **Constraint Solver** - Geometric constraint satisfaction
+{
+  /* Real-time FFT for RF signals */
+}
+<SensorFusion.SpectrumAnalyzer
+  rfData={rfSignal}
+  fftSize={8192}
+  colorMap="inferno"
+  realTime
+/>;
+```
 
-### Analysis Overlays
+**Components to Build:**
 
-- [ ] **FEA Overlay** - Stress/displacement on mesh
-- [ ] **Modal Analysis** - Vibration mode shapes
-- [ ] **CFD Streamlines** - Flow over imported geometry
+- [ ] **SensorFusion.NightVisionOverlay** - Green/white hot with gain
+- [ ] **SensorFusion.RadiometricMap** - 3D thermal point cloud
+- [ ] **SensorFusion.SpectrumAnalyzer** - Real-time FFT with GPU compute
+- [ ] **SensorFusion.ImagingRadar** - SAR/ISAR visualization
+- [ ] **SensorFusion.FusionAlgorithm** - Kalman filter visualization
 
----
-
-## Phase 10: Math & Algebra
-
-### Equation Visualization
-
-- [ ] **Function Plotter** - 2D/3D parametric equations
-- [ ] **Implicit Surface** - F(x,y,z) = 0 visualization
-- [ ] **Complex Function** - Domain coloring for complex analysis
-- [ ] **Taylor Series** - Approximation animation
-
-### Linear Algebra
-
-- [ ] **Matrix Visualizer** - Transform visualization
-- [ ] **Eigenvalue Display** - Eigenvectors in 2D/3D
-- [ ] **SVD Visualizer** - Singular value decomposition
-- [ ] **Linear Transform** - Interactive matrix operations
-
-### Calculus
-
-- [ ] **Derivative Visualizer** - Tangent lines and slopes
-- [ ] **Integral Visualizer** - Area under curve
-- [ ] **Gradient Field** - Direction of steepest ascent
-- [ ] **Divergence/Curl** - Vector calculus operators
+**Deliverable:** 5 advanced sensor components
 
 ---
 
-## Phase 11: Developer Experience (Ongoing)
+## Phase 5: Polish, DevEx, Documentation (2026 Q2+)
 
-### Documentation Site
+### Developer Experience
 
-- [ ] **Component API Explorer** - Auto-generated docs
-- [ ] **Physics Explainers** - Educational content
-- [ ] **Use Case Gallery** - Real-world examples
-- [ ] **Performance Benchmarks** - Component performance data
+- [ ] Documentation site with live demos (Docusaurus or Nextra)
+- [ ] Storybook for component exploration
+- [ ] Performance benchmarks (WebGPU vs WebGL vs CPU)
+- [ ] Example gallery (aerospace/defense use cases)
+- [ ] Video tutorials (HUD setup, sensor fusion)
 
-### Testing & Quality
+### Examples & Templates
 
-- [ ] **Performance Profiler** - Frame rate monitoring
+- [ ] UAV Ground Control Station template
+- [ ] Military trainer HUD template
+- [ ] Autonomous vehicle perception dashboard
+- [ ] Multi-sensor fusion demo (LiDAR + thermal + radar)
+- [ ] Air traffic control display
+
+### Performance Tooling
+
+- [ ] WebGPU DevTools integration
+- [ ] Frame time profiler
+- [ ] Memory usage tracker
+- [ ] Component performance analyzer
+
+---
+
+## Architecture Layers
+
+```
+┌─────────────────────────────────────────────────┐
+│  Domain Components (Aerospace-Specific)         │
+│  HUD.PitchLadder, SensorFusion.ThermalOverlay  │
+│  HUD.RadarScope, SensorFusion.LidarLayer       │
+└────────────────┬────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────┐
+│  Demo Components (Show Performance)             │
+│  LineChart (1M points @ 60fps)                  │
+└────────────────┬────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────┐
+│  WebGPU Primitives (Building Blocks)           │
+│  WebGPULineRenderer, WebGPUPointCloud          │
+│  WebGPUMeshRenderer, WebGPUVectorField         │
+└────────────────┬────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────┐
+│  WebGPU Core (Low-Level GPU Abstractions)      │
+│  Device, Buffers, Pipelines, Compute Shaders   │
+└─────────────────────────────────────────────────┘
+```
+
+**Key Principle:** Domain components compose primitives. Primitives are zero-dependency.
+
+---
+
+## Performance Targets
+
+| Component          | Dataset Size       | Target              | Use Case                  |
+| ------------------ | ------------------ | ------------------- | ------------------------- |
+| **LineChart**      | 1M points          | ✅ 60fps (WebGPU)   | Telemetry waveforms       |
+| **PointCloud**     | 100k points        | ✅ 60fps (WebGPU)   | LiDAR visualization       |
+| **VectorField**    | 100k vectors       | ✅ 60fps (WebGPU)   | CFD flow viz              |
+| **RadarScope**     | 100+ contacts      | 🎯 60fps (Canvas2D) | Air traffic control       |
+| **SensorFusion**   | 4 layers real-time | 🎯 60fps (WebGPU)   | Autonomous perception     |
+| **ThermalOverlay** | 1920x1080 @ 30Hz   | 🎯 30fps (WebGPU)   | Real-time thermal imaging |
+
+**Optimizations:**
+
+- ✅ Compute shaders for decimation (10x faster)
+- ✅ Spatial indexing on GPU (O(1) hover)
+- ✅ Zero-copy buffer updates
+- 🎯 GPU color mapping (thermal palettes)
+- 🎯 Multi-layer compositing
+- 🎯 Real-time FFT on GPU
+
+---
+
+## Browser Support Strategy
+
+### Automatic Fallback Chain
+
+```
+WebGPU (if available)
+    ↓
+WebGL2 (Three.js)
+    ↓
+Canvas2D (< 1k elements)
+    ↓
+SVG (< 100 elements)
+```
+
+**WebGPU Support:**
+
+- ✅ Chrome 113+ (2023)
+- ✅ Edge 113+ (2023)
+- ✅ Firefox 115+ (experimental flag)
+- ✅ Safari 18+ (macOS Sonoma)
+
+**Detection:**
+
+```typescript
+if ("gpu" in navigator) {
+  // Use WebGPU
+} else if ("WebGL2RenderingContext" in window) {
+  // Use Three.js (WebGL2)
+} else {
+  // Use Canvas2D/SVG
+}
+```
+
+---
+
+## Target Component Count
+
+**Current:** ~11 components
+**Q4 2025 Target:** ~34 components
+**2026 Target:** ~44 components
+
+**Distribution:**
+
+- **WebGPU Primitives:** 4 (Line, Point, Mesh, VectorField)
+- **Math/Physics Utils:** 8 (Vectors, Matrices, Coordinates, Units, Validation, Constants, Colormaps)
+- **Demo Charts:** 1 (LineChart - validates WebGPU performance)
+- **HUD Core:** 10 (HeadingTape, PitchLadder, Reticle, CornerBrackets, CoordinateOverlay, RangeFinder, VelocityVector, AltitudeTape, SpeedTape)
+- **Tactical Displays:** 5 (RadarScope, SonarDisplay, SituationDisplay, ThreatRing, IFFMarker)
+- **Sensor Fusion:** 8 (LidarLayer, ThermalOverlay, RadarContacts, ObjectDetection, VideoLayer, TrackHistory)
+- **Advanced Sensors:** 5 (NightVision, RadiometricMap, SpectrumAnalyzer, ImagingRadar, FusionAlgorithm)
+- **Support:** 2-4 (Legend, Tooltip, Export, Timestamp)
+
+**Focus:** Quality over quantity. Every component must be:
+
+1. GPU-accelerated (where applicable)
+2. Primitive-based (composable)
+3. Aerospace-relevant (domain-specific)
+4. Production-ready (tested, documented)
+
+---
+
+## Success Metrics
+
+### Technical Performance
+
+- ✅ 1M points @ 60fps (LineChart)
+- 🎯 100k points @ 60fps (LiDAR point cloud)
+- 🎯 4-layer sensor fusion @ 60fps
+- 🎯 Real-time thermal imaging @ 30fps
+
+### Adoption
+
+- **Target Users:** Aerospace companies, defense contractors, autonomous vehicle teams, drone operators
+- **Use Cases:** Mission control dashboards, UAV ground stations, training simulators, perception debugging
+- **Differentiation:** Only primitive-first, WebGPU-powered aerospace visualization library
+
+### Developer Experience
+
+- Composable API (shadcn-style)
+- Full TypeScript support
+- Automatic WebGPU/WebGL fallback
+- Copy-paste component installation
+- Live examples for all components
+
+---
+
+## Monetization Strategy
+
+### Open Source Core (MIT License)
+
+- WebGPU primitives
+- Math/physics utilities
+- Demo charts (LineChart only - validates performance)
+- Basic HUD components (HeadingTape, PitchLadder, Reticle)
+
+### Pro License ($5k/year per developer)
+
+- All HUD components
+- All sensor fusion components
+- Advanced tactical displays
+- Priority support
+
+### Enterprise ($50k+/year)
+
+- Custom sensor integrations
+- On-premise deployment
+- White-label branding
+- Dedicated support engineer
+- SLA guarantees
+
+**Why This Works:**
+
+- Defense contractors have budget authority
+- Aerospace companies pay for specialized tools
+- No open-source expectations for niche aerospace software
+- High perceived value (looks expensive/complex)
+
+---
+
+## Next Steps (Immediate)
+
+### Q1 2025: HUD Core (3 months)
+
+1. Build HUD.Root container with responsive scaling
+2. Implement HeadingTape with infinite scroll
+3. Implement PitchLadder with roll rotation
+4. Build Reticle with lock-on states
+5. Add CornerBrackets with CSS animations
+6. Documentation site with live demos
+
+### Q2 2025: Tactical Displays (3 months)
+
+1. RadarScope with PPI display
+2. SituationDisplay with IFF markers
+3. Coordinate/range overlays
+4. AltitudeTape and SpeedTape
+5. Example: UAV ground control station
+
+### Q3 2025: Sensor Fusion Foundation (3 months)
+
+1. SensorFusion.Root architecture
+2. LidarLayer (WebGPUPointCloud)
+3. ThermalOverlay with color LUTs
+4. Multi-layer compositing
+5. Example: Autonomous perception dashboard
+
+### Q4 2025: Sensor Fusion Complete (3 months)
+
+1. RadarContacts with track history
+2. ObjectDetection with AI boxes
+3. VideoLayer with GPU decode
+4. Example: Multi-sensor fusion demo
+
+---
+
+## Why This Strategy Wins
+
+### 1. **Completely Unserved Market**
+
+- No web-based HUD component libraries exist
+- No sensor fusion visualization libraries exist
+- Defense/aerospace building web dashboards have zero options
+
+### 2. **High Technical Moat**
+
+- WebGPU expertise is rare
+- Domain knowledge (aerospace/defense) is rare
+- Combination is nearly unique
+
+### 3. **Premium Pricing**
+
+- Defense contractors pay $$$
+- Aerospace companies pay $$$
+- Can charge 10x more than generic chart libraries
+
+### 4. **Primitive-First Differentiation**
+
+- Visx is primitive-first but SVG (not GPU)
+- Three.js/Babylon.js aren't primitive-focused
+- We're the only "Radix UI for WebGPU visualization"
+
+### 5. **Clear GTM Path**
+
+- Target: Defense contractors, aerospace startups, drone companies
+- Demo at: I/ITSEC, AUVSI XPONENTIAL, DefenseNews conferences
+- Case studies: Autonomous vehicle companies, training simulators
+
+---
+
+## What We're NOT Building
+
+### ❌ Dropped Entirely:
+
+1. **Planet components** (Venus, Mars, Jupiter, etc.) - Already deleted
+   - Reason: Niche use case, Cesium does this better
+2. **Full terrain visualization** - Cesium/deck.gl dominate
+3. **Generic orbital mechanics GUI** - STK is the standard
+4. **Standard 2D chart library** - Market is commoditized
+
+### ✅ Keeping Minimal (as foundation/demos):
+
+1. **LineChart only** - Validates WebGPU infrastructure works (1M points @ 60fps), not a product
+2. **Physics/orbital primitives** - Could be useful for HUD data (altitude, velocity, etc.)
+3. **Math utilities** - Foundation for coordinate transforms in sensor fusion
+
+**Note:** Generic heatmap removed - domain-specific `SensorFusion.ThermalOverlay` (Phase 3) is the real product for defense/aerospace thermal imaging needs.
+
+---
+
+**The Goal:** The definitive component library for aerospace HUD interfaces and real-time sensor fusion visualization. Primitive-first, WebGPU-powered, composable React components for defense, aerospace, and autonomous systems.
+
+**Positioning:** "Radix UI for Aerospace Visualization"
+
+**Revenue Target:** $10M+ ARR by 2027 through enterprise licenses to defense contractors and aerospace companies.
