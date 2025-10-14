@@ -27,7 +27,7 @@ export {
  * Efficient GPU buffer management
  */
 export {
-  BufferManager,
+  bufferManager,
   createVertexBuffer,
   createUniformBuffer,
   createStorageBuffer,
@@ -48,14 +48,19 @@ export {
 } from "./webgpu/point-cloud";
 
 /**
- * WebGPU Mesh Renderer - TRUE GPU rendering
- * 100k+ triangles at 60fps with lighting and textures
- * Use cases: STL/OBJ models, surface plots, terrain, FEA
+ * MSDF Text Renderer - WORKING GPU-accelerated MSDF text rendering
+ * Based on WebGPU samples - proven implementation
+ * 1000+ text labels at 60fps with crisp rendering at any scale
+ * Use cases: HUD interfaces, tactical displays, telemetry labels
+ *
+ * NOTE: Requires pre-generated MSDF font atlas (see MSDF_FONTS.md)
+ * Use font from: https://raw.githubusercontent.com/webgpu/webgpu-samples/main/sample/assets/font/ya-hei-ascii-msdf.json
  */
 export {
-  WebGPUMeshRenderer,
-  type WebGPUMeshRendererProps,
-} from "./webgpu/mesh-renderer";
+  MsdfTextRenderer,
+  type MsdfTextRendererProps,
+  type TextLabel as MsdfTextLabel,
+} from "./webgpu/msdf-text-renderer";
 
 /**
  * Validation

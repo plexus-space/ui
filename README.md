@@ -17,17 +17,20 @@ A primitive-first, WebGPU-powered component library for medical, aerospace, defe
 ## Features
 
 - **High-Performance Primitives:**
+
   - `WebGPULineRenderer` - 1M+ points @ 60fps
   - `WebGPUPointCloud` - 100k+ points @ 60fps (LiDAR, sensor data)
-  - `WebGPUTextRenderer` - GPU-accelerated text rendering (coming soon)
+  - `MsfdTextRender` - GPU-accelerated text rendering (coming soon)
   - `WebGPUFFT` - Real-time FFT compute shaders (coming soon)
 
 - **Sensor Fusion Components:**
+
   - Multi-layer visualization (LiDAR + camera + thermal)
   - Real-time coordinate transforms
   - Zero-copy buffer updates for minimal latency
 
 - **HUD & Tactical Displays:**
+
   - Text rendering, reticles, heading tapes
   - Radar and sonar displays
   - Polar coordinate systems

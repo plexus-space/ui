@@ -23,7 +23,7 @@ const componentExamples: Record<string, React.ComponentType> = {
 
 const componentApiData: Record<string, ApiProp[]> = {
   "line-chart": apiData.lineChartApiProps,
-  // TODO: Add HUD text API data
+  // "hud-text": apiData.hudTextApiProps,
 };
 
 // ============================================================================

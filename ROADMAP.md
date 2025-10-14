@@ -38,7 +38,7 @@
 
 **Priority 1: Text Rendering (The Foundation)** ✅
 
-- [x] **WebGPUTextRenderer** - High-performance text rendering primitive
+- [x] **MSDFTextRender** - High-performance text rendering primitive ✅
   - GPU-accelerated glyph rendering @ 60fps
   - Dynamic text updates without CPU bottleneck
   - Subpixel rendering for readability
@@ -107,6 +107,7 @@ Once the primitives are proven, build these components:
 **Deliverable:** ✅ WebGPU text rendering primitive + 2 HUD components built on top (HUD.Root, HUD.Text). Live demo in playground showing performance with 1000+ labels. **See:** `/playground/examples/hud-text.tsx`
 
 **Implementation Details:**
+
 - SDF Font Atlas: 512x512 texture with full ASCII character set
 - Distance Transform: 8-point Sequential Euclidean Distance Transform
 - Rendering: Instanced draw calls (all text in single GPU pass)

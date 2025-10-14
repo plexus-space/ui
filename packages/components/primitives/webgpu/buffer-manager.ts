@@ -4,358 +4,400 @@
  * Efficient GPU buffer management with automatic resizing, circular buffers,
  * and zero-copy updates. Optimized for real-time physics simulations and
  * streaming data.
- *
- * Features:
- * - Circular buffers for streaming data (telemetry, trajectories)
- * - Automatic buffer resizing (grows as needed)
- * - Dirty region tracking (partial updates)
- * - Buffer pooling (reuse allocated buffers)
- * - Memory profiling
- *
- * @example
- * ```tsx
- * const manager = new BufferManager(device);
- * const buffer = manager.createVertexBuffer(points, GPUBufferUsage.VERTEX);
- * manager.updateBuffer(buffer, newPoints, 0); // Partial update
- * ```
  */
 
 import { getWebGPUDevice } from "./device";
 
 // ============================================================================
-// Types
+// Types & Constants
 // ============================================================================
 
+export const BUFFER_ALIGNMENT = {
+  UNIFORM: 256,
+  STORAGE: 16,
+  VERTEX: 4,
+} as const;
+
+export const DEFAULT_BUFFER_SIZE = 1024 * 1024; // 1MB
+export const DEFAULT_CIRCULAR_CAPACITY = 10000;
+
+export type BufferUsage = GPUBufferUsageFlags;
+export type BufferData = Float32Array | Uint32Array | Uint16Array;
+export type Point3D = readonly [number, number, number];
+
 export interface BufferOptions {
-  /** Buffer usage flags */
-  usage: GPUBufferUsageFlags;
-  /** Initial size in bytes (will grow if needed) */
-  initialSize?: number;
-  /** Label for debugging */
-  label?: string;
-  /** Enable circular buffer mode (for streaming) */
-  circular?: boolean;
-  /** Circular buffer capacity */
-  capacity?: number;
+  readonly usage: BufferUsage;
+  readonly initialSize?: number;
+  readonly label?: string;
+  readonly circular?: boolean;
+  readonly capacity?: number;
 }
 
 export interface BufferMetadata {
-  buffer: GPUBuffer;
-  size: number;
-  usage: GPUBufferUsageFlags;
-  label: string;
-  circular: boolean;
-  capacity: number;
-  writeIndex: number; // For circular buffers
-  allocatedAt: number; // Timestamp
+  readonly buffer: GPUBuffer;
+  readonly size: number;
+  readonly usage: BufferUsage;
+  readonly label: string;
+  readonly circular: boolean;
+  readonly capacity: number;
+  readonly writeIndex: number;
+  readonly allocatedAt: number;
+}
+
+export interface BufferStats {
+  readonly totalBuffers: number;
+  readonly totalAllocated: number;
+  readonly buffers: ReadonlyArray<{
+    readonly id: string;
+    readonly size: number;
+    readonly label: string;
+  }>;
+}
+
+export interface BufferManagerState {
+  readonly device: GPUDevice;
+  readonly buffers: Map<string, BufferMetadata>;
+  readonly totalAllocated: number;
 }
 
 // ============================================================================
-// Buffer Manager
+// Error Utilities
 // ============================================================================
 
-export class BufferManager {
-  private device: GPUDevice;
-  private buffers: Map<string, BufferMetadata> = new Map();
-  private totalAllocated: number = 0;
+export const createBufferError = (message: string): Error => {
+  const error = new Error(message);
+  error.name = "BufferError";
+  return error;
+};
 
-  constructor(device: GPUDevice) {
-    this.device = device;
+export const bufferNotFoundError = (id: string): Error =>
+  createBufferError(`Buffer ${id} not found`);
+
+export const bufferOutOfBoundsError = (
+  offset: number,
+  dataSize: number,
+  bufferSize: number
+): Error =>
+  createBufferError(
+    `Buffer update out of bounds: offset=${offset}, dataSize=${dataSize}, bufferSize=${bufferSize}`
+  );
+
+export const notCircularBufferError = (id: string): Error =>
+  createBufferError(`Buffer ${id} is not a circular buffer`);
+
+// ============================================================================
+// Pure Utility Functions
+// ============================================================================
+
+export const alignSize = (size: number, alignment: number): number =>
+  Math.ceil(size / alignment) * alignment;
+
+export const calculateBufferSize = (
+  data: BufferData | null,
+  options: BufferOptions
+): number => {
+  if (options.circular) {
+    const capacity = options.capacity ?? DEFAULT_CIRCULAR_CAPACITY;
+    return capacity * 4 * 3; // 3 floats * 4 bytes
   }
+  return data?.byteLength ?? options.initialSize ?? DEFAULT_BUFFER_SIZE;
+};
 
-  /**
-   * Create or resize a buffer
-   */
-  createBuffer(
-    id: string,
-    data: Float32Array | Uint32Array | Uint16Array | null,
-    options: BufferOptions
-  ): GPUBuffer {
-    const {
-      usage,
-      initialSize = 1024 * 1024, // 1MB default
-      label = id,
-      circular = false,
-      capacity = 10000,
-    } = options;
+export const flattenPoints = (points: ReadonlyArray<Point3D>): Float32Array => {
+  const data = new Float32Array(points.length * 3);
+  let idx = 0;
+  for (const [x, y, z] of points) {
+    data[idx++] = x;
+    data[idx++] = y;
+    data[idx++] = z;
+  }
+  return data;
+};
 
-    // Calculate required size
-    const dataSize = data ? data.byteLength : initialSize;
-    const size = circular ? capacity * 4 * 3 : dataSize; // 3 floats per point
+export const formatBytes = (bytes: number): string =>
+  `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 
-    // Check if buffer exists and is large enough
-    const existing = this.buffers.get(id);
-    if (existing && existing.size >= size) {
-      // Reuse existing buffer
-      if (data) {
-        this.device.queue.writeBuffer(existing.buffer, 0, data.buffer);
-      }
-      return existing.buffer;
-    }
+// ============================================================================
+// Buffer Creation & Management
+// ============================================================================
 
-    // Destroy old buffer if exists
-    if (existing) {
-      existing.buffer.destroy();
-      this.totalAllocated -= existing.size;
-      this.buffers.delete(id);
-    }
+export const createBufferManager = (device: GPUDevice): BufferManagerState => ({
+  device,
+  buffers: new Map(),
+  totalAllocated: 0,
+});
 
-    // Create new buffer
-    const buffer = this.device.createBuffer({
-      size,
-      usage: usage | GPUBufferUsage.COPY_DST, // Always allow writes
-      label,
-    });
+export const createBuffer = (
+  state: BufferManagerState,
+  id: string,
+  data: BufferData | null,
+  options: BufferOptions
+): [BufferManagerState, GPUBuffer] => {
+  const size = calculateBufferSize(data, options);
+  const existing = state.buffers.get(id);
 
-    // Write initial data if provided
+  // Reuse existing buffer if large enough
+  if (existing?.size >= size) {
     if (data) {
-      this.device.queue.writeBuffer(buffer, 0, data.buffer);
+      state.device.queue.writeBuffer(existing.buffer, 0, data.buffer);
     }
-
-    // Store metadata
-    this.buffers.set(id, {
-      buffer,
-      size,
-      usage,
-      label,
-      circular,
-      capacity,
-      writeIndex: 0,
-      allocatedAt: Date.now(),
-    });
-
-    this.totalAllocated += size;
-
-    return buffer;
+    return [state, existing.buffer];
   }
 
-  /**
-   * Update buffer with new data (supports partial updates)
-   */
-  updateBuffer(
-    id: string,
-    data: Float32Array | Uint32Array | Uint16Array,
-    offset: number = 0
-  ): void {
-    const metadata = this.buffers.get(id);
-    if (!metadata) {
-      throw new Error(`Buffer ${id} not found`);
-    }
+  // Clean up old buffer if exists
+  let newState = existing ? destroyBuffer(state, id) : state;
 
-    // Check bounds
-    if (offset + data.byteLength > metadata.size) {
-      throw new Error(
-        `Buffer update out of bounds: offset=${offset}, dataSize=${data.byteLength}, bufferSize=${metadata.size}`
-      );
-    }
+  // Create new buffer
+  const buffer = state.device.createBuffer({
+    size,
+    usage: options.usage | GPUBufferUsage.COPY_DST,
+    label: options.label ?? id,
+  });
 
-    // Write data to GPU
-    this.device.queue.writeBuffer(metadata.buffer, offset, data.buffer);
+  // Write initial data
+  if (data) {
+    state.device.queue.writeBuffer(buffer, 0, data.buffer);
   }
 
-  /**
-   * Add point to circular buffer (streaming mode)
-   */
-  addToCircularBuffer(id: string, point: [number, number, number]): void {
-    const metadata = this.buffers.get(id);
-    if (!metadata || !metadata.circular) {
-      throw new Error(`Circular buffer ${id} not found`);
-    }
+  // Create metadata
+  const metadata: BufferMetadata = {
+    buffer,
+    size,
+    usage: options.usage,
+    label: options.label ?? id,
+    circular: options.circular ?? false,
+    capacity: options.capacity ?? DEFAULT_CIRCULAR_CAPACITY,
+    writeIndex: 0,
+    allocatedAt: Date.now(),
+  };
 
-    const data = new Float32Array(point);
-    const offset = metadata.writeIndex * 3 * 4; // 3 floats * 4 bytes
+  // Update state immutably
+  const newBuffers = new Map(newState.buffers);
+  newBuffers.set(id, metadata);
 
-    this.device.queue.writeBuffer(metadata.buffer, offset, data.buffer);
+  return [
+    {
+      ...newState,
+      buffers: newBuffers,
+      totalAllocated: newState.totalAllocated + size,
+    },
+    buffer,
+  ];
+};
 
-    metadata.writeIndex = (metadata.writeIndex + 1) % metadata.capacity;
+export const updateBuffer = (
+  state: BufferManagerState,
+  id: string,
+  data: BufferData,
+  offset = 0
+): void => {
+  const metadata = state.buffers.get(id);
+  if (!metadata) throw bufferNotFoundError(id);
+
+  if (offset + data.byteLength > metadata.size) {
+    throw bufferOutOfBoundsError(offset, data.byteLength, metadata.size);
   }
 
-  /**
-   * Add multiple points to circular buffer
-   */
-  addManyToCircularBuffer(
-    id: string,
-    points: ReadonlyArray<readonly [number, number, number]>
-  ): void {
-    const metadata = this.buffers.get(id);
-    if (!metadata || !metadata.circular) {
-      throw new Error(`Circular buffer ${id} not found`);
-    }
+  state.device.queue.writeBuffer(metadata.buffer, offset, data.buffer);
+};
 
-    // Convert points to flat array
-    const data = new Float32Array(points.length * 3);
-    points.forEach((p, i) => {
-      data[i * 3] = p[0];
-      data[i * 3 + 1] = p[1];
-      data[i * 3 + 2] = p[2];
-    });
+export const addToCircularBuffer = (
+  state: BufferManagerState,
+  id: string,
+  point: Point3D
+): BufferManagerState => {
+  const metadata = state.buffers.get(id);
+  if (!metadata) throw bufferNotFoundError(id);
+  if (!metadata.circular) throw notCircularBufferError(id);
 
-    // Check if we need to wrap
-    const remainingSpace = metadata.capacity - metadata.writeIndex;
+  const data = new Float32Array(point);
+  const offset = metadata.writeIndex * 3 * 4;
 
-    if (points.length <= remainingSpace) {
-      // No wrap needed
-      const offset = metadata.writeIndex * 3 * 4;
-      this.device.queue.writeBuffer(metadata.buffer, offset, data.buffer);
-      metadata.writeIndex =
-        (metadata.writeIndex + points.length) % metadata.capacity;
-    } else {
-      // Need to wrap - write in two chunks
-      const firstChunk = data.slice(0, remainingSpace * 3);
-      const secondChunk = data.slice(remainingSpace * 3);
+  state.device.queue.writeBuffer(metadata.buffer, offset, data.buffer);
 
-      const offset1 = metadata.writeIndex * 3 * 4;
-      this.device.queue.writeBuffer(
-        metadata.buffer,
-        offset1,
-        firstChunk.buffer
-      );
+  // Update metadata immutably
+  const newMetadata: BufferMetadata = {
+    ...metadata,
+    writeIndex: (metadata.writeIndex + 1) % metadata.capacity,
+  };
 
-      this.device.queue.writeBuffer(metadata.buffer, 0, secondChunk.buffer);
+  const newBuffers = new Map(state.buffers);
+  newBuffers.set(id, newMetadata);
 
-      metadata.writeIndex = secondChunk.length / 3;
-    }
+  return {
+    ...state,
+    buffers: newBuffers,
+  };
+};
+
+export const addManyToCircularBuffer = (
+  state: BufferManagerState,
+  id: string,
+  points: ReadonlyArray<Point3D>
+): BufferManagerState => {
+  if (points.length === 0) return state;
+
+  const metadata = state.buffers.get(id);
+  if (!metadata) throw bufferNotFoundError(id);
+  if (!metadata.circular) throw notCircularBufferError(id);
+
+  const data = flattenPoints(points);
+  const remainingSpace = metadata.capacity - metadata.writeIndex;
+
+  let newWriteIndex: number;
+
+  if (points.length <= remainingSpace) {
+    // No wrap needed
+    const offset = metadata.writeIndex * 3 * 4;
+    state.device.queue.writeBuffer(metadata.buffer, offset, data.buffer);
+    newWriteIndex = (metadata.writeIndex + points.length) % metadata.capacity;
+  } else {
+    // Wrap around - write in two chunks
+    const firstChunk = data.subarray(0, remainingSpace * 3);
+    const secondChunk = data.subarray(remainingSpace * 3);
+
+    // Write first chunk at current position
+    const offset1 = metadata.writeIndex * 3 * 4;
+    state.device.queue.writeBuffer(metadata.buffer, offset1, firstChunk.buffer);
+
+    // Write second chunk at beginning
+    state.device.queue.writeBuffer(metadata.buffer, 0, secondChunk.buffer);
+
+    newWriteIndex = secondChunk.length / 3;
   }
 
-  /**
-   * Get buffer by ID
-   */
-  getBuffer(id: string): GPUBuffer | null {
-    return this.buffers.get(id)?.buffer ?? null;
+  // Update metadata immutably
+  const newMetadata: BufferMetadata = {
+    ...metadata,
+    writeIndex: newWriteIndex,
+  };
+
+  const newBuffers = new Map(state.buffers);
+  newBuffers.set(id, newMetadata);
+
+  return {
+    ...state,
+    buffers: newBuffers,
+  };
+};
+
+export const getBuffer = (
+  state: BufferManagerState,
+  id: string
+): GPUBuffer | null => state.buffers.get(id)?.buffer ?? null;
+
+export const getMetadata = (
+  state: BufferManagerState,
+  id: string
+): BufferMetadata | null => state.buffers.get(id) ?? null;
+
+export const destroyBuffer = (
+  state: BufferManagerState,
+  id: string
+): BufferManagerState => {
+  const metadata = state.buffers.get(id);
+  if (!metadata) return state;
+
+  metadata.buffer.destroy();
+
+  const newBuffers = new Map(state.buffers);
+  newBuffers.delete(id);
+
+  return {
+    ...state,
+    buffers: newBuffers,
+    totalAllocated: state.totalAllocated - metadata.size,
+  };
+};
+
+export const destroyAllBuffers = (
+  state: BufferManagerState
+): BufferManagerState => {
+  for (const metadata of state.buffers.values()) {
+    metadata.buffer.destroy();
   }
 
-  /**
-   * Get buffer metadata
-   */
-  getMetadata(id: string): BufferMetadata | null {
-    return this.buffers.get(id) ?? null;
-  }
+  return {
+    ...state,
+    buffers: new Map(),
+    totalAllocated: 0,
+  };
+};
 
-  /**
-   * Destroy specific buffer
-   */
-  destroyBuffer(id: string): void {
-    const metadata = this.buffers.get(id);
-    if (metadata) {
-      metadata.buffer.destroy();
-      this.totalAllocated -= metadata.size;
-      this.buffers.delete(id);
-    }
-  }
+export const getStats = (state: BufferManagerState): BufferStats => {
+  const buffers = Array.from(state.buffers.entries()).map(([id, metadata]) => ({
+    id,
+    size: metadata.size,
+    label: metadata.label,
+  }));
 
-  /**
-   * Destroy all buffers
-   */
-  destroyAll(): void {
-    for (const metadata of this.buffers.values()) {
-      metadata.buffer.destroy();
-    }
-    this.buffers.clear();
-    this.totalAllocated = 0;
-  }
+  return {
+    totalBuffers: state.buffers.size,
+    totalAllocated: state.totalAllocated,
+    buffers,
+  };
+};
 
-  /**
-   * Get memory usage statistics
-   */
-  getStats(): {
-    totalBuffers: number;
-    totalAllocated: number;
-    buffers: Array<{ id: string; size: number; label: string }>;
-  } {
-    const buffers: Array<{ id: string; size: number; label: string }> = [];
+export const logStats = (state: BufferManagerState): void => {
+  const stats = getStats(state);
 
-    for (const [id, metadata] of this.buffers.entries()) {
-      buffers.push({
-        id,
-        size: metadata.size,
-        label: metadata.label,
-      });
-    }
-
-    return {
-      totalBuffers: this.buffers.size,
-      totalAllocated: this.totalAllocated,
-      buffers,
-    };
-  }
-
-  /**
-   * Log memory usage to console
-   */
-  logStats(): void {
-    const stats = this.getStats();
-    console.group("WebGPU Buffer Manager Stats");
-    console.log(`Total Buffers: ${stats.totalBuffers}`);
-    console.log(
-      `Total Allocated: ${(stats.totalAllocated / 1024 / 1024).toFixed(2)} MB`
-    );
-    console.table(
-      stats.buffers.map((b) => ({
-        ...b,
-        sizeMB: (b.size / 1024 / 1024).toFixed(2),
-      }))
-    );
-    console.groupEnd();
-  }
-}
+  console.group("WebGPU Buffer Manager Stats");
+  console.log(`Total Buffers: ${stats.totalBuffers}`);
+  console.log(`Total Allocated: ${formatBytes(stats.totalAllocated)}`);
+  console.table(
+    stats.buffers.map((b) => ({
+      ...b,
+      sizeMB: formatBytes(b.size),
+    }))
+  );
+  console.groupEnd();
+};
 
 // ============================================================================
-// Convenience Functions
+// Factory Functions
 // ============================================================================
 
-/**
- * Create a vertex buffer
- */
-export async function createVertexBuffer(
+export const createVertexBuffer = async (
   data: Float32Array,
   label?: string
-): Promise<GPUBuffer | null> {
+): Promise<GPUBuffer | null> => {
   const deviceInfo = await getWebGPUDevice();
   if (!deviceInfo) return null;
 
   const buffer = deviceInfo.device.createBuffer({
     size: data.byteLength,
     usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    label: label || "Vertex Buffer",
+    label: label ?? "Vertex Buffer",
   });
 
   deviceInfo.device.queue.writeBuffer(buffer, 0, data.buffer);
-
   return buffer;
-}
+};
 
-/**
- * Create a uniform buffer
- */
-export async function createUniformBuffer(
+export const createUniformBuffer = async (
   data: Float32Array,
   label?: string
-): Promise<GPUBuffer | null> {
+): Promise<GPUBuffer | null> => {
   const deviceInfo = await getWebGPUDevice();
   if (!deviceInfo) return null;
 
-  // Uniform buffers must be aligned to 256 bytes
-  const size = Math.max(256, Math.ceil(data.byteLength / 256) * 256);
+  const size = alignSize(data.byteLength, BUFFER_ALIGNMENT.UNIFORM);
 
   const buffer = deviceInfo.device.createBuffer({
     size,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    label: label || "Uniform Buffer",
+    label: label ?? "Uniform Buffer",
   });
 
   deviceInfo.device.queue.writeBuffer(buffer, 0, data.buffer);
-
   return buffer;
-}
+};
 
-/**
- * Create a storage buffer (for compute shaders)
- */
-export async function createStorageBuffer(
-  data: Float32Array | Uint32Array,
-  readable: boolean = true,
+export const createStorageBuffer = async (
+  data: BufferData,
+  readable = true,
   label?: string
-): Promise<GPUBuffer | null> {
+): Promise<GPUBuffer | null> => {
   const deviceInfo = await getWebGPUDevice();
   if (!deviceInfo) return null;
 
@@ -366,38 +408,134 @@ export async function createStorageBuffer(
   const buffer = deviceInfo.device.createBuffer({
     size: data.byteLength,
     usage,
-    label: label || "Storage Buffer",
+    label: label ?? "Storage Buffer",
   });
 
   deviceInfo.device.queue.writeBuffer(buffer, 0, data.buffer);
-
   return buffer;
-}
+};
 
-/**
- * Read data back from GPU buffer (for debugging)
- */
-export async function readBuffer(
+// ============================================================================
+// Buffer Operations
+// ============================================================================
+
+export const readBuffer = async (
   device: GPUDevice,
   buffer: GPUBuffer,
   size: number
-): Promise<Float32Array | null> {
+): Promise<Float32Array> => {
   // Create staging buffer
   const stagingBuffer = device.createBuffer({
     size,
     usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
+    label: "Staging Buffer",
   });
 
-  // Copy GPU buffer to staging buffer
+  try {
+    // Copy GPU buffer to staging buffer
+    const commandEncoder = device.createCommandEncoder();
+    commandEncoder.copyBufferToBuffer(buffer, 0, stagingBuffer, 0, size);
+    device.queue.submit([commandEncoder.finish()]);
+
+    // Map and read
+    await stagingBuffer.mapAsync(GPUMapMode.READ);
+    const mappedRange = stagingBuffer.getMappedRange();
+    const data = new Float32Array(new ArrayBuffer(mappedRange.byteLength));
+    data.set(new Float32Array(mappedRange));
+
+    stagingBuffer.unmap();
+    return data;
+  } finally {
+    stagingBuffer.destroy();
+  }
+};
+
+export const copyBuffer = (
+  device: GPUDevice,
+  source: GPUBuffer,
+  destination: GPUBuffer,
+  size: number
+): void => {
   const commandEncoder = device.createCommandEncoder();
-  commandEncoder.copyBufferToBuffer(buffer, 0, stagingBuffer, 0, size);
+  commandEncoder.copyBufferToBuffer(source, 0, destination, 0, size);
   device.queue.submit([commandEncoder.finish()]);
+};
 
-  // Map and read
-  await stagingBuffer.mapAsync(GPUMapMode.READ);
-  const data = new Float32Array(stagingBuffer.getMappedRange().slice(0));
-  stagingBuffer.unmap();
-  stagingBuffer.destroy();
+// ============================================================================
+// Composable Buffer Manager API
+// ============================================================================
 
-  return data;
+export interface BufferManagerAPI {
+  readonly state: BufferManagerState;
+  readonly create: (
+    id: string,
+    data: BufferData | null,
+    options: BufferOptions
+  ) => [BufferManagerAPI, GPUBuffer];
+  readonly update: (
+    id: string,
+    data: BufferData,
+    offset?: number
+  ) => BufferManagerAPI;
+  readonly addPoint: (id: string, point: Point3D) => BufferManagerAPI;
+  readonly addPoints: (
+    id: string,
+    points: ReadonlyArray<Point3D>
+  ) => BufferManagerAPI;
+  readonly get: (id: string) => GPUBuffer | null;
+  readonly getMeta: (id: string) => BufferMetadata | null;
+  readonly destroy: (id: string) => BufferManagerAPI;
+  readonly destroyAll: () => BufferManagerAPI;
+  readonly stats: () => BufferStats;
+  readonly log: () => void;
 }
+
+export const bufferManager = (device: GPUDevice): BufferManagerAPI => {
+  const withState = (state: BufferManagerState): BufferManagerAPI => ({
+    state,
+    create: (id, data, options) => {
+      const [newState, buffer] = createBuffer(state, id, data, options);
+      return [withState(newState), buffer];
+    },
+    update: (id, data, offset) => {
+      updateBuffer(state, id, data, offset);
+      return withState(state);
+    },
+    addPoint: (id, point) => withState(addToCircularBuffer(state, id, point)),
+    addPoints: (id, points) =>
+      withState(addManyToCircularBuffer(state, id, points)),
+    get: (id) => getBuffer(state, id),
+    getMeta: (id) => getMetadata(state, id),
+    destroy: (id) => withState(destroyBuffer(state, id)),
+    destroyAll: () => withState(destroyAllBuffers(state)),
+    stats: () => getStats(state),
+    log: () => logStats(state),
+  });
+
+  return withState(createBufferManager(device));
+};
+
+// ============================================================================
+// Usage Example
+// ============================================================================
+
+/*
+const device = await getWebGPUDevice();
+const manager = bufferManager(device!.device);
+
+// Create a buffer
+const [manager2, buffer] = manager.create('vertices', data, {
+  usage: GPUBufferUsage.VERTEX,
+});
+
+// Update buffer
+const manager3 = manager2.update('vertices', newData);
+
+// Add points to circular buffer
+const manager4 = manager3
+  .addPoint('trajectory', [1, 2, 3])
+  .addPoints('trajectory', [[4, 5, 6], [7, 8, 9]]);
+
+// Get stats
+manager4.log();
+*/
