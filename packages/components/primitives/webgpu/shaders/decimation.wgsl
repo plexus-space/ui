@@ -9,9 +9,6 @@
 // 1. Divide data into N buckets
 // 2. For each bucket, find point that forms largest triangle with neighbors
 // 3. This preserves peaks, valleys, and trends
-//
-// @reference Sveinn Steinarsson (2013) "Downsampling Time Series for Visual Representation"
-// @reference https://skemman.is/bitstream/1946/15343/3/SS_MSthesis.pdf
 
 // ============================================================================
 // Bindings

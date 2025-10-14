@@ -394,45 +394,65 @@ useEffect(() => {
 </LineChart.Root>`}
       />
 
-      {/* High-Volume Data */}
+      {/* WebGPU High-Performance Rendering */}
       <ComponentPreview
-        title="High-Volume Data (50,000 Points)"
-        description="Rendering 50,000 data points with automatic decimation (LTTB) and Canvas rendering for smooth 60fps performance."
+        title="WebGPU Performance (50,000 Points)"
+        description="Automatic GPU acceleration for large datasets. This chart renders 50,000 data points at 60fps using WebGPU, with intelligent fallback to SVG for older browsers."
         preview={
           <div className="w-full space-y-2">
             <LineChart.Root
               series={[
-                { name: "Sensor Data", data: highVolumeData, color: color },
+                { name: "High-Frequency Sensor", data: highVolumeData, color: color },
               ]}
               xAxis={{ label: "Time (s)" }}
-              yAxis={{ label: "Signal" }}
-              maxPoints={2000}
+              yAxis={{ label: "Signal Amplitude" }}
+              maxPoints={50000}
             >
               <LineChart.Container>
                 <LineChart.Viewport>
                   <LineChart.Grid />
                   <LineChart.Axes />
-                  <LineChart.Lines />
+                  <LineChart.Lines renderer="auto" webgpuThreshold={5000} />
                   <LineChart.Interaction />
                   <LineChart.Tooltip />
                 </LineChart.Viewport>
               </LineChart.Container>
             </LineChart.Root>
-            <p className="text-xs text-zinc-500">
-              • Original: 50,000 points • Decimated: 2,000 points • Renderer:
-              Canvas • FPS: 60
-            </p>
+            <div className="flex items-center gap-4 text-xs text-zinc-500">
+              <span>• Data Points: 50,000</span>
+              <span>• Renderer: WebGPU (Auto)</span>
+              <span>• Frame Rate: 60fps</span>
+            </div>
+            <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800">
+              <p className="text-xs text-purple-900 dark:text-purple-100">
+                <strong>GPU-Accelerated:</strong> Automatically switches to WebGPU for datasets over 5,000 points. Supports Chrome 113+, Firefox 115+, Safari 18+. Check the console to see active renderer.
+              </p>
+            </div>
           </div>
         }
-        code={`<LineChart
+        code={`<LineChart.Root
   series={[{
-    name: "Sensor Data",
+    name: "High-Frequency Sensor",
     data: highVolumeData, // 50,000 points
+    color: "#a855f7"
   }]}
-  renderer="canvas"
-  maxPoints={2000}
-  decimation="lttb"
-/>`}
+  xAxis={{ label: "Time (s)" }}
+  yAxis={{ label: "Signal Amplitude" }}
+  maxPoints={50000}
+>
+  <LineChart.Container>
+    <LineChart.Viewport>
+      <LineChart.Grid />
+      <LineChart.Axes />
+      <LineChart.Lines
+        renderer="auto"           // auto | svg | webgpu
+        webgpuThreshold={5000}    // Switch at 5k+ points
+      />
+      <LineChart.Interaction />
+      <LineChart.Tooltip />
+    </LineChart.Viewport>
+  </LineChart.Container>
+</LineChart.Root>`}
       />
     </div>
   );

@@ -6,16 +6,10 @@ import { components } from "@/constants/components";
 import { Footer } from "@/components/footer";
 import { CopyButton } from "@/components/copy-button";
 import { LineChartExamples } from "@/examples/line-chart";
-import { PolarPlotExamples } from "@/examples/polar";
 import { HeatmapExample } from "@/examples/heatmap";
 import { GanttChartExamples } from "@/examples/gantt";
-import { ScatterPlotExamples } from "@/examples/scatter";
-import { BarChartExamples } from "@/examples/bar";
-import { HistogramExamples } from "@/examples/histogram";
-import { BoxPlotExamples } from "@/examples/box";
 import { SpectrogramExamples } from "@/examples/spectrogram";
 import { WaterfallPlotExamples } from "@/examples/waterfall";
-import { NodeGraphEditorExamples } from "@/examples/node-graph-editor";
 import { EarthExamples } from "@/examples/planets";
 import { MarsExamples } from "@/examples/planets";
 import { MercuryExamples } from "@/examples/planets";
@@ -36,16 +30,10 @@ import * as apiData from "@/examples/api";
 // ============================================================================
 const componentExamples: Record<string, React.ComponentType> = {
   "line-chart": LineChartExamples,
-  "polar-plot": PolarPlotExamples,
   heatmap: HeatmapExample,
   "gantt-chart": GanttChartExamples,
-  "scatter-plot": ScatterPlotExamples,
-  "bar-chart": BarChartExamples,
-  histogram: HistogramExamples,
-  "box-plot": BoxPlotExamples,
   spectrogram: SpectrogramExamples,
   "waterfall-plot": WaterfallPlotExamples,
-  "node-graph-editor": NodeGraphEditorExamples,
   earth: EarthExamples,
   mars: MarsExamples,
   mercury: MercuryExamples,
@@ -59,13 +47,8 @@ const componentExamples: Record<string, React.ComponentType> = {
 
 const componentApiData: Record<string, ApiProp[]> = {
   "line-chart": apiData.lineChartApiProps,
-  "polar-plot": apiData.polarPlotApiProps,
   heatmap: apiData.heatmapApiProps,
   "gantt-chart": apiData.ganttChartApiProps,
-  "scatter-plot": apiData.scatterPlotApiProps,
-  "bar-chart": apiData.barChartApiProps,
-  histogram: apiData.histogramApiProps,
-  "box-plot": apiData.boxPlotApiProps,
   spectrogram: apiData.spectrogramApiProps,
   "waterfall-plot": apiData.waterfallPlotApiProps,
   earth: apiData.earthApiProps,

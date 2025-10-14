@@ -4,15 +4,6 @@
  */
 
 /**
- * Utility function for conditionally joining class names
- * @param classes - Class names to join
- * @returns Joined class name string
- */
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
-
-/**
  * Clamp a value between min and max
  */
 export function clamp(value: number, min: number, max: number): number {

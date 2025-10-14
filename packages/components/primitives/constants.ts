@@ -22,7 +22,7 @@ export const ASTRONOMICAL_UNIT_KM = 149597870.7;
 export const SPEED_OF_LIGHT_KM_S = 299792.458;
 
 /** Gravitational constant in km³/kg/s² */
-export const GRAVITATIONAL_CONSTANT = 6.67430e-20;
+export const GRAVITATIONAL_CONSTANT = 6.6743e-20;
 
 // ============================================================================
 // Sun
@@ -42,7 +42,7 @@ export const MERCURY_ROTATION_PERIOD_SECONDS = 5067014.4; // 58.646 days
 export const MERCURY_ORBITAL_PERIOD_DAYS = 87.969;
 export const MERCURY_AXIAL_TILT_DEG = 0.034;
 export const MERCURY_SEMI_MAJOR_AXIS_KM = 57909050;
-export const MERCURY_ECCENTRICITY = 0.205630;
+export const MERCURY_ECCENTRICITY = 0.20563;
 
 // ============================================================================
 // Venus
@@ -91,7 +91,7 @@ export const MOON_AXIAL_TILT_DEG = 6.687;
 export const MARS_RADIUS_KM = 3389.5;
 export const MARS_MASS_KG = 6.4171e23;
 export const MARS_ROTATION_PERIOD_SECONDS = 88642.66; // 24.6229 hours
-export const MARS_ORBITAL_PERIOD_DAYS = 686.980;
+export const MARS_ORBITAL_PERIOD_DAYS = 686.98;
 export const MARS_AXIAL_TILT_DEG = 25.19;
 export const MARS_SEMI_MAJOR_AXIS_KM = 227939200;
 export const MARS_ECCENTRICITY = 0.0934;
@@ -135,7 +135,7 @@ export const SATURN_RING_OUTER_RADIUS_KM = 140220;
 export const URANUS_RADIUS_KM = 25362;
 export const URANUS_EQUATORIAL_RADIUS_KM = 25559;
 export const URANUS_POLAR_RADIUS_KM = 24973;
-export const URANUS_MASS_KG = 8.6810e25;
+export const URANUS_MASS_KG = 8.681e25;
 export const URANUS_ROTATION_PERIOD_SECONDS = -62063.712; // Retrograde, 17.24 hours
 export const URANUS_ORBITAL_PERIOD_DAYS = 30688.5;
 export const URANUS_AXIAL_TILT_DEG = 97.77; // Extreme tilt
@@ -195,7 +195,7 @@ export const TITAN_AXIAL_TILT_DEG = 0.3;
 
 export const ENCELADUS_RADIUS_KM = 252.1;
 export const ENCELADUS_MASS_KG = 1.08022e20;
-export const ENCELADUS_ORBITAL_PERIOD_DAYS = 1.370;
+export const ENCELADUS_ORBITAL_PERIOD_DAYS = 1.37;
 export const ENCELADUS_SEMI_MAJOR_AXIS_KM = 238042;
 export const ENCELADUS_ECCENTRICITY = 0.0047;
 
@@ -214,7 +214,7 @@ export const MIRANDA_ECCENTRICITY = 0.0013;
 
 export const ARIEL_RADIUS_KM = 578.9;
 export const ARIEL_MASS_KG = 1.353e21;
-export const ARIEL_ORBITAL_PERIOD_DAYS = 2.520;
+export const ARIEL_ORBITAL_PERIOD_DAYS = 2.52;
 export const ARIEL_SEMI_MAJOR_AXIS_KM = 191020;
 export const ARIEL_ECCENTRICITY = 0.0012;
 
@@ -666,7 +666,9 @@ export function getBodiesByType(
  */
 export function getMoonsOf(parent: string): CelestialBody[] {
   return Object.values(celestialBodies).filter(
-    (body) => body.type === "moon" && body.parent?.toLowerCase() === parent.toLowerCase()
+    (body) =>
+      body.type === "moon" &&
+      body.parent?.toLowerCase() === parent.toLowerCase()
   );
 }
 

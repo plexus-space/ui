@@ -20,7 +20,7 @@
  * ```
  */
 
-import { getWebGPUDevice } from "./webgpu-device";
+import { getWebGPUDevice } from "./device";
 
 // ============================================================================
 // Types
@@ -205,7 +205,11 @@ export class BufferManager {
       const secondChunk = data.slice(remainingSpace * 3);
 
       const offset1 = metadata.writeIndex * 3 * 4;
-      this.device.queue.writeBuffer(metadata.buffer, offset1, firstChunk.buffer);
+      this.device.queue.writeBuffer(
+        metadata.buffer,
+        offset1,
+        firstChunk.buffer
+      );
 
       this.device.queue.writeBuffer(metadata.buffer, 0, secondChunk.buffer);
 

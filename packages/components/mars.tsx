@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { Sphere } from "./primitives/sphere";
+import { Sphere } from "./primitives/three/sphere";
 
 // ============================================================================
 // Constants - Astronomically Accurate Values
@@ -185,7 +185,17 @@ export interface MarsControlsProps {
  * Main Mars sphere with texture
  */
 export interface MarsGlobeProps
-  extends Omit<React.ComponentPropsWithRef<typeof Sphere>, 'radius' | 'textureUrl' | 'color' | 'rotationSpeed' | 'rotation' | 'segments' | 'roughness' | 'metalness'> {
+  extends Omit<
+    React.ComponentPropsWithRef<typeof Sphere>,
+    | "radius"
+    | "textureUrl"
+    | "color"
+    | "rotationSpeed"
+    | "rotation"
+    | "segments"
+    | "roughness"
+    | "metalness"
+  > {
   /**
    * Number of segments for sphere geometry (higher = smoother)
    * @default 128

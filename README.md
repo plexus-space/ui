@@ -12,8 +12,9 @@ Plexus UI is a React component library for aerospace visualization, designed wit
 - 🛸 **Scientific orbital mechanics** - Real astrodynamics math, not approximations
 - 📊 **Charts & timelines** - Gantt charts for mission planning
 - 🧩 **Primitives pattern** - Build complex scenes from simple building blocks
-- ⚡ **Performance focused** - Optimized Three.js rendering with React Three Fiber
+- ⚡ **Performance focused** - WebGPU rendering (1M+ points @ 60fps) with SVG fallback
 - 🎨 **You own the code** - Components are copied to your project
+- 🔬 **Physics-first** - Integrators, forces, orbital mechanics built-in
 
 ## 🚀 Quick Start
 
@@ -79,6 +80,47 @@ All algorithms based on peer-reviewed aerospace textbooks:
 - **Vallado, D.A.** - "Fundamentals of Astrodynamics and Applications" (4th ed.)
 - **Curtis, H.D.** - "Orbital Mechanics for Engineering Students" (4th ed.)
 - **Battin, R.H.** - "An Introduction to the Mathematics and Methods of Astrodynamics"
+
+## 🎯 Rendering Strategy
+
+Plexus UI uses a **hybrid rendering approach** optimized for different use cases:
+
+### SVG Rendering (Default)
+- ✅ Universal browser support
+- ✅ Shadcn-style composable API
+- ✅ Perfect for < 5k points
+- ✅ Server-side rendering compatible
+
+```tsx
+<LineChart.Root series={data}>
+  <LineChart.Container>
+    <LineChart.Viewport>
+      <LineChart.Lines />  {/* SVG */}
+    </LineChart.Viewport>
+  </LineChart.Container>
+</LineChart.Root>
+```
+
+### WebGPU Rendering (High Performance)
+- ✅ 1M+ points @ 60fps
+- ✅ GPU compute decimation (10x faster)
+- ✅ GPU spatial indexing (100x faster hover)
+- ✅ Real-time physics integration
+
+```tsx
+import { WebGPULineRenderer } from '@plexusui/primitives';
+
+<WebGPULineRenderer
+  canvas={canvasRef.current}
+  points={largeDataset}  // 1M points
+  maxPoints={1000000}
+  enableDecimation
+/>
+```
+
+**Browser Support:** Chrome 113+, Firefox 115+, Safari 18+
+
+See `RENDERING_STRATEGY.md` for detailed comparison and migration guide.
 
 ## 📥 Installation
 

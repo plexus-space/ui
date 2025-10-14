@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import type { Vec3 } from "./physics";
-import { validateVec3 } from "./validation";
+import type { Vec3 } from "../math/vectors";
+import { validateVec3 } from "../validation";
 
 /**
  * MARKER - Rendering Primitive

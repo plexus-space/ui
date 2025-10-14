@@ -15,7 +15,7 @@
  * ```
  */
 
-import type { Vec3, Vec2 } from "./physics";
+import type { Vec3, Vec2 } from "./math/vectors";
 
 // ============================================================================
 // Type Guards

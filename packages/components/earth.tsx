@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { Sphere, Atmosphere, Clouds } from "./primitives/sphere";
+import { Sphere, Atmosphere, Clouds } from "./primitives/three/sphere";
 
 // ============================================================================
 // Constants - Astronomically Accurate Values

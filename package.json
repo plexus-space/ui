@@ -37,6 +37,7 @@
     "url": "https://github.com/plexus-space/ui.git"
   },
   "devDependencies": {
+    "@webgpu/types": "^0.1.65",
     "typescript": "^5.4.5"
   }
 }

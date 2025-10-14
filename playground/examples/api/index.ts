@@ -1,12 +1,7 @@
-export { barChartApiProps } from "./bar-chart";
-export { boxPlotApiProps } from "./box-plot";
 export { earthApiProps } from "./earth";
 export { ganttChartApiProps } from "./gantt-chart";
 export { heatmapApiProps } from "./heatmap";
-export { histogramApiProps } from "./histogram";
 export { lineChartApiProps } from "./line-chart";
 export { planetApiProps, saturnApiProps } from "./planets";
-export { polarPlotApiProps } from "./polar-plot";
-export { scatterPlotApiProps } from "./scatter-plot";
 export { spectrogramApiProps } from "./spectrogram";
 export { waterfallPlotApiProps } from "./waterfall-plot";

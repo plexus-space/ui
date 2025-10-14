@@ -3,8 +3,8 @@
 import * as React from "react";
 import { LineRenderer, type LineRendererHandle } from "./gpu-line-renderer";
 import { useFrame } from "@react-three/fiber";
-import type { Vec3 } from "./physics";
-import { isValidVec3 } from "./validation";
+import type { Vec3 } from "../math/vectors";
+import { isValidVec3 } from "../validation";
 
 /**
  * TRAIL - Rendering Primitive

@@ -679,16 +679,143 @@ LineChartAxes.displayName = "LineChart.Axes";
  * Props for LineChart.Lines component
  * Renders the actual data lines for all series
  */
-export interface LineChartLinesProps extends React.SVGProps<SVGGElement> {}
+export interface LineChartLinesProps extends React.SVGProps<SVGGElement> {
+  /**
+   * Preferred renderer (auto-selects based on data size and browser support)
+   * @default "auto"
+   */
+  renderer?: "auto" | "svg" | "webgpu";
+  /**
+   * Threshold for switching to WebGPU (number of total points)
+   * @default 5000
+   */
+  webgpuThreshold?: number;
+}
 
 /**
- * Lines component - renders the actual data lines with optional fills and animations
+ * Lines component - intelligently renders data lines using SVG or WebGPU
+ * - Small datasets (< 5k points): SVG for universal support
+ * - Large datasets (> 5k points): WebGPU for performance (if available)
  */
 const LineChartLines = React.forwardRef<SVGGElement, LineChartLinesProps>(
-  ({ className, ...props }, ref) => {
-    const { processedSeries, xScale, yScale, hiddenSeries, animate } =
-      useLineChart();
+  ({ className, renderer = "auto", webgpuThreshold = 5000, ...props }, ref) => {
+    const {
+      processedSeries,
+      xScale,
+      yScale,
+      hiddenSeries,
+      animate,
+      width,
+      height,
+      margin,
+      xDomain,
+      yDomain,
+    } = useLineChart();
 
+    const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const [useWebGPU, setUseWebGPU] = React.useState(false);
+    const [webgpuError, setWebgpuError] = React.useState<string | null>(null);
+
+    // Calculate total points across all series
+    const totalPoints = React.useMemo(() => {
+      return processedSeries.reduce(
+        (sum, s) => sum + (hiddenSeries.has(processedSeries.indexOf(s)) ? 0 : s.data.length),
+        0
+      );
+    }, [processedSeries, hiddenSeries]);
+
+    // Determine which renderer to use
+    React.useEffect(() => {
+      const shouldUseWebGPU = async () => {
+        if (renderer === "svg") {
+          setUseWebGPU(false);
+          return;
+        }
+
+        if (renderer === "webgpu") {
+          setUseWebGPU(true);
+          return;
+        }
+
+        // Auto mode: check if we should use WebGPU
+        if (totalPoints < webgpuThreshold) {
+          setUseWebGPU(false);
+          return;
+        }
+
+        // Check WebGPU support
+        if (!("gpu" in navigator)) {
+          console.warn(
+            `[LineChart] Dataset has ${totalPoints} points (>${webgpuThreshold}), but WebGPU is not supported. Falling back to SVG.`
+          );
+          setUseWebGPU(false);
+          return;
+        }
+
+        try {
+          const adapter = await navigator.gpu?.requestAdapter();
+          if (adapter) {
+            console.log(
+              `[LineChart] Using WebGPU renderer for ${totalPoints} points (performance mode)`
+            );
+            setUseWebGPU(true);
+          } else {
+            setUseWebGPU(false);
+          }
+        } catch (error) {
+          console.warn("[LineChart] WebGPU initialization failed:", error);
+          setWebgpuError((error as Error).message);
+          setUseWebGPU(false);
+        }
+      };
+
+      shouldUseWebGPU();
+    }, [renderer, totalPoints, webgpuThreshold]);
+
+    // WebGPU rendering (for large datasets)
+    if (useWebGPU) {
+      return (
+        <>
+          {/* Canvas for WebGPU rendering */}
+          <foreignObject
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            style={{ pointerEvents: "none" }}
+          >
+            <canvas
+              ref={canvasRef}
+              width={width}
+              height={height}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+              }}
+            />
+          </foreignObject>
+
+          {/* WebGPU renderer component */}
+          {canvasRef.current && (
+            <WebGPULinesRenderer
+              canvas={canvasRef.current}
+              series={processedSeries}
+              hiddenSeries={hiddenSeries}
+              width={width}
+              height={height}
+              margin={margin}
+              xDomain={xDomain}
+              yDomain={yDomain}
+            />
+          )}
+        </>
+      );
+    }
+
+    // SVG rendering (default, for small datasets)
     return (
       <g ref={ref} className={cn("line-chart-lines", className)} {...props}>
         {processedSeries.map((s, seriesIdx) => {
@@ -770,6 +897,337 @@ const LineChartLines = React.forwardRef<SVGGElement, LineChartLinesProps>(
 );
 
 LineChartLines.displayName = "LineChart.Lines";
+
+// ============================================================================
+// WebGPU Renderer Component (Internal)
+// ============================================================================
+
+interface WebGPULinesRendererProps {
+  canvas: HTMLCanvasElement;
+  series: Series[];
+  hiddenSeries: Set<number>;
+  width: number;
+  height: number;
+  margin: { top: number; right: number; bottom: number; left: number };
+  xDomain: [number, number];
+  yDomain: [number, number];
+}
+
+function WebGPULinesRenderer({
+  canvas,
+  series,
+  hiddenSeries,
+  width,
+  height,
+  margin,
+  xDomain,
+  yDomain,
+}: WebGPULinesRendererProps) {
+  React.useEffect(() => {
+    let mounted = true;
+    let device: GPUDevice | null = null;
+    let context: GPUCanvasContext | null = null;
+    let pipeline: GPURenderPipeline | null = null;
+    let uniformBuffer: GPUBuffer | null = null;
+    let vertexBuffers: GPUBuffer[] = [];
+    let animationFrameId: number | null = null;
+
+    const initWebGPU = async () => {
+      try {
+        // Get WebGPU device
+        if (!navigator.gpu) {
+          console.error("WebGPU not supported");
+          return;
+        }
+
+        const adapter = await navigator.gpu.requestAdapter({
+          powerPreference: "high-performance",
+        });
+
+        if (!adapter) {
+          console.error("Failed to get WebGPU adapter");
+          return;
+        }
+
+        device = await adapter.requestDevice();
+        context = canvas.getContext("webgpu");
+
+        if (!context) {
+          console.error("Failed to get WebGPU context");
+          return;
+        }
+
+        // Configure canvas
+        const format = navigator.gpu.getPreferredCanvasFormat();
+        context.configure({
+          device,
+          format,
+          alphaMode: "premultiplied",
+        });
+
+        if (!mounted) return;
+
+        // Create shader module (inlined WGSL)
+        const shaderModule = device.createShaderModule({
+          label: "Line Shader",
+          code: `
+            struct Uniforms {
+              width: f32,
+              height: f32,
+              minX: f32,
+              maxX: f32,
+              minY: f32,
+              maxY: f32,
+              marginLeft: f32,
+              marginRight: f32,
+              marginTop: f32,
+              marginBottom: f32,
+              time: f32,
+              _padding: f32,
+            }
+
+            @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+
+            struct VertexInput {
+              @location(0) position: vec2f,
+              @location(1) color: vec3f,
+            }
+
+            struct VertexOutput {
+              @builtin(position) position: vec4f,
+              @location(0) color: vec3f,
+            }
+
+            @vertex
+            fn vs_main(in: VertexInput) -> VertexOutput {
+              var out: VertexOutput;
+
+              let plotWidth = uniforms.width - uniforms.marginLeft - uniforms.marginRight;
+              let plotHeight = uniforms.height - uniforms.marginTop - uniforms.marginBottom;
+
+              let normalizedX = (in.position.x - uniforms.minX) / (uniforms.maxX - uniforms.minX);
+              let normalizedY = (in.position.y - uniforms.minY) / (uniforms.maxY - uniforms.minY);
+
+              let screenX = uniforms.marginLeft + normalizedX * plotWidth;
+              let screenY = uniforms.marginTop + (1.0 - normalizedY) * plotHeight;
+
+              let ndcX = (screenX / uniforms.width) * 2.0 - 1.0;
+              let ndcY = 1.0 - (screenY / uniforms.height) * 2.0;
+
+              out.position = vec4f(ndcX, ndcY, 0.0, 1.0);
+              out.color = in.color;
+
+              return out;
+            }
+
+            @fragment
+            fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+              return vec4f(in.color, 1.0);
+            }
+          `,
+        });
+
+        // Create pipeline
+        pipeline = device.createRenderPipeline({
+          label: "Line Render Pipeline",
+          layout: "auto",
+          vertex: {
+            module: shaderModule,
+            entryPoint: "vs_main",
+            buffers: [
+              {
+                arrayStride: 20, // 2 floats (position) + 3 floats (color) = 20 bytes
+                attributes: [
+                  {
+                    shaderLocation: 0,
+                    offset: 0,
+                    format: "float32x2", // position
+                  },
+                  {
+                    shaderLocation: 1,
+                    offset: 8,
+                    format: "float32x3", // color
+                  },
+                ],
+              },
+            ],
+          },
+          fragment: {
+            module: shaderModule,
+            entryPoint: "fs_main",
+            targets: [
+              {
+                format,
+                blend: {
+                  color: {
+                    srcFactor: "src-alpha",
+                    dstFactor: "one-minus-src-alpha",
+                  },
+                  alpha: {
+                    srcFactor: "one",
+                    dstFactor: "one-minus-src-alpha",
+                  },
+                },
+              },
+            ],
+          },
+          primitive: {
+            topology: "line-strip",
+            stripIndexFormat: undefined,
+          },
+        });
+
+        // Create uniform buffer
+        const uniformData = new Float32Array([
+          width, // width
+          height, // height
+          xDomain[0], // minX
+          xDomain[1], // maxX
+          yDomain[0], // minY
+          yDomain[1], // maxY
+          margin.left, // marginLeft
+          margin.right, // marginRight
+          margin.top, // marginTop
+          margin.bottom, // marginBottom
+          0, // time
+          0, // padding
+        ]);
+
+        uniformBuffer = device.createBuffer({
+          label: "Uniform Buffer",
+          size: uniformData.byteLength,
+          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+        // Create bind group
+        const bindGroup = device.createBindGroup({
+          label: "Bind Group",
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [
+            {
+              binding: 0,
+              resource: { buffer: uniformBuffer },
+            },
+          ],
+        });
+
+        // Create vertex buffers for each series
+        const seriesBuffers: Array<{
+          buffer: GPUBuffer;
+          vertexCount: number;
+          color: [number, number, number];
+        }> = [];
+
+        series.forEach((s, idx) => {
+          if (hiddenSeries.has(idx) || s.data.length === 0) return;
+
+          // Parse color
+          const color = s.color || "#64748b";
+          const rgb = hexToRgb(color);
+
+          // Create vertex data: [x, y, r, g, b, x, y, r, g, b, ...]
+          const vertexData = new Float32Array(s.data.length * 5);
+          s.data.forEach((point, i) => {
+            const offset = i * 5;
+            vertexData[offset + 0] = point.x;
+            vertexData[offset + 1] = point.y;
+            vertexData[offset + 2] = rgb[0];
+            vertexData[offset + 3] = rgb[1];
+            vertexData[offset + 4] = rgb[2];
+          });
+
+          const buffer = device.createBuffer({
+            label: `Vertex Buffer ${idx}`,
+            size: vertexData.byteLength,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(buffer, 0, vertexData);
+
+          vertexBuffers.push(buffer);
+          seriesBuffers.push({
+            buffer,
+            vertexCount: s.data.length,
+            color: rgb,
+          });
+        });
+
+        if (!mounted) return;
+
+        console.log(
+          `[WebGPU] Rendering ${seriesBuffers.length} series with ${seriesBuffers.reduce((sum, s) => sum + s.vertexCount, 0)} total vertices`
+        );
+
+        // Render function
+        const render = () => {
+          if (!mounted || !device || !context || !pipeline) return;
+
+          const commandEncoder = device.createCommandEncoder();
+          const textureView = context.getCurrentTexture().createView();
+
+          const renderPass = commandEncoder.beginRenderPass({
+            colorAttachments: [
+              {
+                view: textureView,
+                clearValue: { r: 0, g: 0, b: 0, a: 0 },
+                loadOp: "clear",
+                storeOp: "store",
+              },
+            ],
+          });
+
+          renderPass.setPipeline(pipeline);
+          renderPass.setBindGroup(0, bindGroup);
+
+          // Draw each series
+          seriesBuffers.forEach((s) => {
+            renderPass.setVertexBuffer(0, s.buffer);
+            renderPass.draw(s.vertexCount);
+          });
+
+          renderPass.end();
+          device.queue.submit([commandEncoder.finish()]);
+        };
+
+        // Initial render
+        render();
+      } catch (error) {
+        console.error("[WebGPU] Initialization error:", error);
+      }
+    };
+
+    initWebGPU();
+
+    return () => {
+      mounted = false;
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      if (device) {
+        device.destroy();
+      }
+      vertexBuffers.forEach((buffer) => buffer.destroy());
+      if (uniformBuffer) {
+        uniformBuffer.destroy();
+      }
+    };
+  }, [canvas, series, hiddenSeries, width, height, margin, xDomain, yDomain]);
+
+  return null;
+}
+
+// Helper function to convert hex color to RGB
+function hexToRgb(hex: string): [number, number, number] {
+  // Remove # if present
+  hex = hex.replace("#", "");
+
+  // Parse hex values
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+  return [r, g, b];
+}
 
 /**
  * Props for LineChart.Points component

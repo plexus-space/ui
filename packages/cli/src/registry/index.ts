@@ -126,20 +126,6 @@ export const registry: Registry = {
     category: "charts",
   },
 
-  "polar-plot": {
-    name: "polar-plot",
-    type: "components:chart",
-    description: "Polar/radar plots for radiation patterns and phase diagrams",
-    files: [
-      `${BASE_URL}/polar-plot.tsx`,
-      `${BASE_URL}/canvas-renderer.tsx`,
-      `${BASE_URL}/chart-legend.tsx`,
-      `${BASE_URL}/chart-tooltip.tsx`,
-    ],
-    dependencies: ["react"],
-    registryDependencies: ["lib"],
-    category: "charts",
-  },
   heatmap: {
     name: "heatmap",
     type: "components:chart",
@@ -169,27 +155,6 @@ export const registry: Registry = {
     type: "components:chart",
     description: "2D/3D scatter plot with clustering and regression analysis",
     files: [`${BASE_URL}/scatter-plot.tsx`],
-    dependencies: ["react"],
-    registryDependencies: ["lib"],
-    category: "charts",
-  },
-
-  "bar-chart": {
-    name: "bar-chart",
-    type: "components:chart",
-    description: "Horizontal/vertical bar chart with grouped and stacked modes",
-    files: [`${BASE_URL}/bar-chart.tsx`],
-    dependencies: ["react"],
-    registryDependencies: ["lib"],
-    category: "charts",
-  },
-
-  histogram: {
-    name: "histogram",
-    type: "components:chart",
-    description:
-      "Distribution analysis with automatic binning and statistical overlays",
-    files: [`${BASE_URL}/histogram.tsx`],
     dependencies: ["react"],
     registryDependencies: ["lib"],
     category: "charts",
