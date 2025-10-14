@@ -63,6 +63,36 @@ export {
 } from "./webgpu/msdf-text-renderer";
 
 /**
+ * WebGPU 2D Shape Renderer - TRUE GPU-accelerated 2D shapes with SDF anti-aliasing
+ * 10,000+ shapes at 60fps with perfect anti-aliasing at any scale
+ * Use cases: HUD interfaces (reticles, crosshairs), tactical displays, gauges, diagrams
+ *
+ * Supported shapes:
+ * - Lines (horizontal, vertical, angled) with configurable thickness
+ * - Circles and arcs (for gauges, heading tapes, reticles)
+ * - Rectangles and rounded rectangles
+ * - Regular polygons (triangles, pentagons, hexagons, etc.)
+ *
+ * Features:
+ * - SDF-based anti-aliasing (smooth at any scale)
+ * - Instanced rendering (single draw call for all shapes)
+ * - Rotation and transformation support
+ * - Zero-copy buffer updates
+ */
+export {
+  WebGPU2DRenderer,
+  ShapeType,
+  createLine,
+  createCircle,
+  createRectangle,
+  createRoundedRectangle,
+  createArc,
+  createPolygon,
+  type WebGPU2DRendererProps,
+  type Shape,
+} from "./webgpu/shape-2d-renderer";
+
+/**
  * Validation
  * Input sanitization, bounds checking, NaN/Infinity handling
  */

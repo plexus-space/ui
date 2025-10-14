@@ -28,4 +28,13 @@ export const components: Component[] = [
       "WebGPU-accelerated text rendering with SDF (Signed Distance Field) fonts. Renders 1000+ text labels at 60fps with crisp, scalable glyphs. Perfect for HUD overlays, tactical displays, and mission control interfaces.",
     textures: [],
   },
+  {
+    id: "shape-2d",
+    name: "2D Shapes",
+    category: "Primitives",
+    tier: "free",
+    description:
+      "WebGPU-accelerated 2D shape renderer with SDF-based anti-aliasing. Renders 10,000+ shapes at 60fps with perfect smoothing at any scale. Supports lines, circles, rectangles, rounded rectangles, arcs, and polygons. Ideal for HUD reticles, gauges, tactical displays, and diagramming.",
+    textures: [],
+  },
 ];

@@ -125,37 +125,52 @@ export const createInstanceData = (
   const data = new Float32Array(shapes.length * INSTANCE_STRIDE);
   let idx = 0;
 
-  for (const shape of shapes) {
+  for (let i = 0; i < shapes.length; i++) {
+    const shape = shapes[i];
     const color = shape.color ?? DEFAULT_COLOR;
     const params = shape.params ?? DEFAULT_PARAMS;
     const rotation = shape.rotation ?? 0;
 
-    // ShapeInstance layout (64 bytes):
-    // position: vec2f (8 bytes)
-    // size: vec2f (8 bytes)
-    // rotation: f32 (4 bytes)
-    // shapeType: u32 (4 bytes)
-    // color: vec4f (16 bytes)
-    // params: vec4f (16 bytes)
-    // padding to align to 16 bytes (8 bytes)
+    // Debug log first 3 shapes
+    if (i < 3) {
+      console.log(`[2DShape] Shape #${i}:`, {
+        type: ShapeType[shape.type],
+        position: shape.position,
+        size: shape.size,
+        rotation,
+        color,
+        params,
+      });
+    }
 
-    data[idx++] = shape.position[0]; // position.x
-    data[idx++] = shape.position[1]; // position.y
-    data[idx++] = shape.size[0]; // size.x
-    data[idx++] = shape.size[1]; // size.y
-    data[idx++] = rotation; // rotation
-    data[idx++] = shape.type; // shapeType (as float, interpreted as u32)
-    data[idx++] = color[0]; // color.r
-    data[idx++] = color[1]; // color.g
-    data[idx++] = color[2]; // color.b
-    data[idx++] = color[3]; // color.a
-    data[idx++] = params[0]; // params.x
-    data[idx++] = params[1]; // params.y
-    data[idx++] = params[2]; // params.z
-    data[idx++] = params[3]; // params.w
-    data[idx++] = 0; // padding
-    data[idx++] = 0; // padding
+    // ShapeInstance layout (64 bytes) - must match WGSL struct alignment:
+    // position: vec2f (offset 0, 8 bytes)
+    // size: vec2f (offset 8, 8 bytes)
+    // rotation: f32 (offset 16, 4 bytes)
+    // shapeType: u32 (offset 20, 4 bytes)
+    // _pad1, _pad2: 8 bytes to align color to 16-byte boundary
+    // color: vec4f (offset 32, 16 bytes) - MUST be 16-byte aligned!
+    // params: vec4f (offset 48, 16 bytes)
+
+    data[idx++] = shape.position[0]; // position.x (offset 0)
+    data[idx++] = shape.position[1]; // position.y (offset 4)
+    data[idx++] = shape.size[0]; // size.x (offset 8)
+    data[idx++] = shape.size[1]; // size.y (offset 12)
+    data[idx++] = rotation; // rotation (offset 16)
+    data[idx++] = shape.type; // shapeType (offset 20)
+    data[idx++] = 0; // _pad1 (offset 24)
+    data[idx++] = 0; // _pad2 (offset 28)
+    data[idx++] = color[0]; // color.r (offset 32)
+    data[idx++] = color[1]; // color.g (offset 36)
+    data[idx++] = color[2]; // color.b (offset 40)
+    data[idx++] = color[3]; // color.a (offset 44)
+    data[idx++] = params[0]; // params.x (offset 48)
+    data[idx++] = params[1]; // params.y (offset 52)
+    data[idx++] = params[2]; // params.z (offset 56)
+    data[idx++] = params[3]; // params.w (offset 60)
   }
+
+  console.log(`[2DShape] Created instance data for ${shapes.length} shapes, ${data.length} floats (${data.byteLength} bytes)`);
 
   return data;
 };
@@ -293,6 +308,19 @@ export const createPipeline = (
     code: shape2DShader,
   });
 
+  // Check for shader compilation errors
+  shaderModule.getCompilationInfo().then((info) => {
+    if (info.messages.length > 0) {
+      console.error("[2DShape] Shader compilation messages:");
+      info.messages.forEach((msg) => {
+        const severity = msg.type === 'error' ? '❌' : msg.type === 'warning' ? '⚠️' : 'ℹ️';
+        console.log(`${severity} Line ${msg.lineNum}: ${msg.message}`);
+      });
+    } else {
+      console.log("[2DShape] Shader compiled successfully");
+    }
+  });
+
   const bindGroupLayout = createBindGroupLayout(device);
 
   return device.createRenderPipeline({
@@ -312,12 +340,12 @@ export const createPipeline = (
           format,
           blend: {
             color: {
-              srcFactor: "src-alpha",
+              srcFactor: "one", // Use 'one' for premultiplied alpha
               dstFactor: "one-minus-src-alpha",
             },
             alpha: {
               srcFactor: "one",
-              dstFactor: "one",
+              dstFactor: "one-minus-src-alpha",
             },
           },
         },
@@ -372,7 +400,10 @@ export const updateShapes = (
   state: RendererState,
   shapes: ReadonlyArray<Shape>
 ): RendererState => {
+  console.log("[2DShape] updateShapes called with", shapes.length, "shapes");
+
   if (shapes.length === 0) {
+    console.log("[2DShape] No shapes, clearing bind group");
     return {
       ...state,
       shapeCount: 0,
@@ -382,6 +413,8 @@ export const updateShapes = (
 
   // Create uniform buffer
   const uniformData = createUniformData(state.config);
+  console.log("[2DShape] Uniform data:", uniformData);
+
   const [buffers1, uniformBuffer] = state.buffers.create(
     "uniforms",
     uniformData,
@@ -390,6 +423,7 @@ export const updateShapes = (
       label: "2D Shape Uniform Buffer",
     }
   );
+  console.log("[2DShape] Uniform buffer created:", uniformBuffer);
 
   // Create instance data
   const instanceData = createInstanceData(shapes);
@@ -401,6 +435,7 @@ export const updateShapes = (
       label: "2D Shape Instance Buffer",
     }
   );
+  console.log("[2DShape] Instance buffer created:", instanceBuffer);
 
   // Create bind group
   const bindGroup = state.device.createBindGroup({
@@ -411,6 +446,7 @@ export const updateShapes = (
       { binding: 1, resource: { buffer: instanceBuffer } },
     ],
   });
+  console.log("[2DShape] Bind group created");
 
   return {
     ...state,
@@ -423,7 +459,20 @@ export const updateShapes = (
 };
 
 export const render = (state: RendererState): void => {
-  if (!state.bindGroup || state.shapeCount === 0) return;
+  if (!state.bindGroup || state.shapeCount === 0) {
+    console.log("[2DShape] Render skipped:", {
+      hasBindGroup: !!state.bindGroup,
+      shapeCount: state.shapeCount,
+    });
+    return;
+  }
+
+  console.log("[2DShape] Rendering:", {
+    shapeCount: state.shapeCount,
+    hasBindGroup: !!state.bindGroup,
+    hasUniformBuffer: !!state.uniformBuffer,
+    hasInstanceBuffer: !!state.instanceBuffer,
+  });
 
   try {
     const textureView = state.context.getCurrentTexture().createView();
@@ -436,7 +485,7 @@ export const render = (state: RendererState): void => {
       colorAttachments: [
         {
           view: textureView,
-          clearValue: { r: 0, g: 0, b: 0, a: 1 },
+          clearValue: { r: 0, g: 0, b: 0, a: 0 }, // Transparent black
           loadOp: "clear",
           storeOp: "store",
         },
@@ -449,6 +498,7 @@ export const render = (state: RendererState): void => {
     renderPass.end();
 
     state.device.queue.submit([commandEncoder.finish()]);
+    console.log("[2DShape] Frame submitted");
   } catch (error) {
     console.error("2D Shape render error:", error);
     throw error;

@@ -108,8 +108,25 @@ export async function getWebGPUSupportLevel(): Promise<WebGPUSupportLevel> {
 export async function getWebGPUDevice(
   options: WebGPUDeviceOptions = {}
 ): Promise<WebGPUDeviceInfo | null> {
-  // Return cached device if available
+  // Return cached device if available (but create new context if canvas provided)
   if (cachedDevice) {
+    // If a new canvas is provided, create a context for it
+    if (options.canvas) {
+      const context = options.canvas.getContext("webgpu");
+      if (context) {
+        const format = navigator.gpu.getPreferredCanvasFormat();
+        context.configure({
+          device: cachedDevice.device,
+          format,
+          alphaMode: "premultiplied",
+        });
+        // Return device with new context
+        return {
+          ...cachedDevice,
+          context,
+        };
+      }
+    }
     return cachedDevice;
   }
 

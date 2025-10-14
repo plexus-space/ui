@@ -7,6 +7,7 @@ import { Footer } from "@/components/footer";
 import { CopyButton } from "@/components/copy-button";
 import { LineChartExamples } from "@/examples/line-chart";
 import { HUDTextExamples } from "@/examples/hud-text";
+import { Shape2DExamples } from "@/examples/shape-2d";
 import {
   ApiReferenceTable,
   type ApiProp,
@@ -19,10 +20,12 @@ import * as apiData from "@/examples/api";
 const componentExamples: Record<string, React.ComponentType> = {
   "line-chart": LineChartExamples,
   "hud-text": HUDTextExamples,
+  "shape-2d": Shape2DExamples,
 };
 
 const componentApiData: Record<string, ApiProp[]> = {
   "line-chart": apiData.lineChartApiProps,
+  "shape-2d": apiData.shape2DApiProps,
   // "hud-text": apiData.hudTextApiProps,
 };
 

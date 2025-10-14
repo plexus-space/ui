@@ -2,9 +2,6 @@
 // Supports: lines, circles, rectangles, rounded rectangles, arcs, polygons
 // Uses signed distance fields for smooth anti-aliasing at any scale
 
-// Quad geometry for triangle strip (covers -1 to 1 in both axes)
-const pos = array(vec2f(-1, -1), vec2f(1, -1), vec2f(-1, 1), vec2f(1, 1));
-
 // ============================================================================
 // Shape Type Constants
 // ============================================================================
@@ -21,8 +18,8 @@ const SHAPE_POLYGON: u32 = 5u;
 // ============================================================================
 
 struct VertexInput {
-    @builtin(vertex_index) vertex: u32,
-    @builtin(instance_index) instance: u32,
+    @builtin(vertex_index) vertexIndex: u32,
+    @builtin(instance_index) instanceIndex: u32,
 };
 
 struct VertexOutput {
@@ -35,16 +32,20 @@ struct VertexOutput {
 };
 
 struct ShapeInstance {
-    position: vec2f,      // Center position in screen space (pixels)
-    size: vec2f,          // Width, height (or radius for circles)
-    rotation: f32,        // Rotation in radians
-    shapeType: u32,       // Shape type enum
-    color: vec4f,         // RGBA color
-    params: vec4f,        // Shape-specific parameters
-    // Line: thickness, 0, 0, 0
-    // Rounded rect: cornerRadius, 0, 0, 0
-    // Arc: startAngle, endAngle, innerRadius, thickness
-    // Polygon: sides, 0, 0, 0
+    position: vec2f,      // offset 0, 8 bytes
+    size: vec2f,          // offset 8, 8 bytes
+    rotation: f32,        // offset 16, 4 bytes
+    shapeType: u32,       // offset 20, 4 bytes
+    _pad1: f32,           // offset 24, 4 bytes - explicit padding for vec4f alignment
+    _pad2: f32,           // offset 28, 4 bytes - explicit padding for vec4f alignment
+    color: vec4f,         // offset 32, 16 bytes - MUST be 16-byte aligned!
+    params: vec4f,        // offset 48, 16 bytes
+    // Total: 64 bytes
+    // Shape-specific params usage:
+    // Line: [thickness, 0, 0, 0]
+    // Rounded rect: [cornerRadius, 0, 0, 0]
+    // Arc: [startAngle, endAngle, radius, thickness]
+    // Polygon: [sides, 0, 0, 0]
 };
 
 struct Uniforms {
@@ -58,7 +59,7 @@ struct Uniforms {
 // ============================================================================
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var<storage> instances: array<ShapeInstance>;
+@group(0) @binding(1) var<storage, read> instances: array<ShapeInstance>;
 
 // ============================================================================
 // Utility Functions
@@ -148,28 +149,39 @@ fn sdPolygon(p: vec2f, sides: u32, r: f32) -> f32 {
 
 @vertex
 fn vertexMain(input: VertexInput) -> VertexOutput {
-    let instance = instances[input.instance];
-    let quadPos = pos[input.vertex];
+    // Quad vertices for triangle strip (covers -1 to 1 in both dimensions)
+    var quadPositions = array<vec2f, 4>(
+        vec2f(-1.0, -1.0),
+        vec2f( 1.0, -1.0),
+        vec2f(-1.0,  1.0),
+        vec2f( 1.0,  1.0)
+    );
 
-    // Rotate quad based on instance rotation
+    let instance = instances[input.instanceIndex];
+    let quadPos = quadPositions[input.vertexIndex];
+
+    // Apply rotation to quad vertex
     let rotatedPos = rotate2D(quadPos, instance.rotation);
 
-    // Scale to shape size (adding padding for anti-aliasing and effects)
-    let padding = 4.0; // pixels of padding for AA
-    let scaledPos = rotatedPos * (instance.size + vec2f(padding));
+    // Scale by half-size (quad is -1 to 1, so multiply by halfSize to get actual pixel size)
+    let halfSize = instance.size * 0.5;
+    let padding = 4.0; // Extra pixels for anti-aliasing
+    let pixelPos = rotatedPos * (halfSize + vec2f(padding));
 
-    // Transform to screen space
-    let screenPos = scaledPos + instance.position;
+    // Translate to world position
+    let worldPos = pixelPos + instance.position;
 
-    // Convert to clip space (NDC)
-    let clipPos = vec2f(
-        (screenPos.x / uniforms.viewportSize.x) * 2.0 - 1.0,
-        1.0 - (screenPos.y / uniforms.viewportSize.y) * 2.0
+    // Convert pixel coordinates to NDC (clip space)
+    // X: [0, width] -> [-1, 1]
+    // Y: [0, height] -> [1, -1] (flipped because screen Y goes down)
+    let ndc = vec2f(
+        (worldPos.x / uniforms.viewportSize.x) * 2.0 - 1.0,
+        1.0 - (worldPos.y / uniforms.viewportSize.y) * 2.0
     );
 
     var output: VertexOutput;
-    output.position = vec4f(clipPos, 0.0, 1.0);
-    output.localPos = rotatedPos * instance.size; // Local position relative to shape center
+    output.position = vec4f(ndc, 0.0, 1.0);
+    output.localPos = rotatedPos * halfSize; // Local space for SDF: [-halfSize, halfSize]
     output.color = instance.color;
     output.shapeType = instance.shapeType;
     output.params = instance.params;
@@ -187,42 +199,34 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     var dist: f32;
 
     // Calculate signed distance based on shape type
-    switch (input.shapeType) {
-        case SHAPE_LINE: {
-            let thickness = input.params.x;
-            let halfSize = input.size * 0.5;
-            dist = sdLine(input.localPos, vec2f(-halfSize.x, 0.0), vec2f(halfSize.x, 0.0)) - thickness * 0.5;
-        }
-        case SHAPE_CIRCLE: {
-            let radius = input.size.x * 0.5;
-            dist = sdCircle(input.localPos, radius);
-        }
-        case SHAPE_RECTANGLE: {
-            let halfSize = input.size * 0.5;
-            dist = sdBox(input.localPos, halfSize);
-        }
-        case SHAPE_ROUNDED_RECT: {
-            let halfSize = input.size * 0.5;
-            let cornerRadius = input.params.x;
-            dist = sdRoundedBox(input.localPos, halfSize, cornerRadius);
-        }
-        case SHAPE_ARC: {
-            let startAngle = input.params.x;
-            let endAngle = input.params.y;
-            let radius = input.size.x * 0.5;
-            let thickness = input.params.w;
-            dist = sdArc(input.localPos, startAngle, endAngle, radius, thickness);
-        }
-        case SHAPE_POLYGON: {
-            let sides = u32(input.params.x);
-            let radius = input.size.x * 0.5;
-            dist = sdPolygon(input.localPos, sides, radius);
-        }
-        default: {
-            // Fallback to circle
-            let radius = input.size.x * 0.5;
-            dist = sdCircle(input.localPos, radius);
-        }
+    if (input.shapeType == SHAPE_LINE) {
+        let thickness = input.params.x;
+        let halfSize = input.size * 0.5;
+        dist = sdLine(input.localPos, vec2f(-halfSize.x, 0.0), vec2f(halfSize.x, 0.0)) - thickness * 0.5;
+    } else if (input.shapeType == SHAPE_CIRCLE) {
+        let radius = input.size.x * 0.5;
+        dist = sdCircle(input.localPos, radius);
+    } else if (input.shapeType == SHAPE_RECTANGLE) {
+        let halfSize = input.size * 0.5;
+        dist = sdBox(input.localPos, halfSize);
+    } else if (input.shapeType == SHAPE_ROUNDED_RECT) {
+        let halfSize = input.size * 0.5;
+        let cornerRadius = input.params.x;
+        dist = sdRoundedBox(input.localPos, halfSize, cornerRadius);
+    } else if (input.shapeType == SHAPE_ARC) {
+        let startAngle = input.params.x;
+        let endAngle = input.params.y;
+        let radius = input.size.x * 0.5;
+        let thickness = input.params.w;
+        dist = sdArc(input.localPos, startAngle, endAngle, radius, thickness);
+    } else if (input.shapeType == SHAPE_POLYGON) {
+        let sides = u32(input.params.x);
+        let radius = input.size.x * 0.5;
+        dist = sdPolygon(input.localPos, sides, radius);
+    } else {
+        // Fallback to circle
+        let radius = input.size.x * 0.5;
+        dist = sdCircle(input.localPos, radius);
     }
 
     // Anti-aliasing: smooth the edge
@@ -234,5 +238,7 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
         discard;
     }
 
-    return vec4f(input.color.rgb, input.color.a * alpha);
+    // Return premultiplied alpha (required for alphaMode: 'premultiplied')
+    let finalAlpha = input.color.a * alpha;
+    return vec4f(input.color.rgb * finalAlpha, finalAlpha);
 }
