@@ -21,9 +21,7 @@ export interface ComponentMetadata {
  * Extract chart components from registry
  * Filters to only include components in the "charts" category
  */
-export function getChartsFromRegistry(
-  registry: any
-): ComponentMetadata[] {
+export function getChartsFromRegistry(registry: any): ComponentMetadata[] {
   return Object.entries(registry.components)
     .filter(([_, component]: [string, any]) => {
       return component.category === "charts";
@@ -68,7 +66,7 @@ export function getAllComponentsFromRegistry(
 
 /**
  * Convert component ID to example export name
- * Example: "waveform-monitor" -> "WaveformMonitorExamples"
+ * Example: "gantt-chart" -> "GanttChartExamples"
  */
 export function getExampleExportName(componentId: string): string {
   return (

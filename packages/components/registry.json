@@ -15,27 +15,6 @@
     "registryDependencies": []
   },
   "components": {
-    "waveform-monitor": {
-      "name": "waveform-monitor",
-      "version": "2.0.0",
-      "displayName": "Waveform Monitor",
-      "category": "charts",
-      "type": "components:chart",
-      "description": "High-performance multi-trace waveform display for real-time sensor data with WebGPU acceleration. Renders 10,000+ points per trace at 60fps. Perfect for medical vitals (ECG, SpO2), aerospace telemetry, and defense applications.",
-      "files": [
-        "charts/waveform-monitor.tsx",
-        "primitives/line-renderer.tsx",
-        "primitives/device.ts"
-      ],
-      "dependencies": [
-        "react"
-      ],
-      "registryDependencies": [
-        "lib"
-      ],
-      "tier": "free",
-      "textures": []
-    },
     "gantt-chart": {
       "name": "gantt-chart",
       "version": "1.0.0",

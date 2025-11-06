@@ -9,21 +9,23 @@ import { CopyButton } from "@/components/copy-button";
 /**
  * Auto-discover example components by convention
  * Converts component-id to PascalCase + "Examples"
- * Example: "waveform-monitor" -> "WaveformMonitorExamples"
  */
 function loadExampleComponent(componentId: string): React.ComponentType | null {
   // Convert kebab-case to PascalCase + "Examples"
-  const exportName = componentId
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join('') + 'Examples';
+  const exportName =
+    componentId
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join("") + "Examples";
 
   return lazy(() =>
-    import(`@/examples/${componentId}`).then((module) => ({
-      default: module[exportName],
-    })).catch(() => ({
-      default: () => null,
-    }))
+    import(`@/examples/${componentId}`)
+      .then((module) => ({
+        default: module[exportName],
+      }))
+      .catch(() => ({
+        default: () => null,
+      }))
   );
 }
 
@@ -112,7 +114,9 @@ export default function ComponentPage() {
       {ExampleComponent ? (
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-6">Examples</h2>
-          <Suspense fallback={<div className="text-zinc-500">Loading example...</div>}>
+          <Suspense
+            fallback={<div className="text-zinc-500">Loading example...</div>}
+          >
             <ExampleComponent />
           </Suspense>
         </section>

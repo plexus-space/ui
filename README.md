@@ -25,8 +25,6 @@ A primitive-first, WebGPU-powered component library for medical, aerospace, defe
 
 ```bash
 npx @plexusui/cli init
-npx @plexusui/cli add waveform-monitor
-# or
 npx @plexusui/cli add gantt-chart
 ```
 

@@ -36,9 +36,12 @@ export default function Home() {
         <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md p-2">
           <div className="flex items-center justify-between gap-2">
             <pre className="text-sm font-geist-mono text-emerald-600 dark:text-emerald-400">
-              npx @plexusui/cli add waveform-monitor
+              npx @plexusui/cli add gantt-chart
             </pre>
-            <CopyButton hideText copyText={`npx @plexusui/cli add waveform-monitor`} />
+            <CopyButton
+              hideText
+              copyText={`npx @plexusui/cli add gantt-chart`}
+            />
           </div>
         </div>
       </div>

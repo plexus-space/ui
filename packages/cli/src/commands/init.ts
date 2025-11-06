@@ -95,7 +95,7 @@ export async function init() {
 
   // Check if package.json exists
   const packageJsonPath = path.join(cwd, "package.json");
-  if (!await fs.pathExists(packageJsonPath)) {
+  if (!(await fs.pathExists(packageJsonPath))) {
     console.log(
       chalk.red(
         "❌ No package.json found. Please run this in a Node.js project."
@@ -116,9 +116,21 @@ export async function init() {
       name: "style",
       message: "Which style would you like to use?",
       choices: [
-        { title: "Default", value: "default", description: "Standard aerospace style" },
-        { title: "Minimal", value: "minimal", description: "Clean, minimal interface" },
-        { title: "Space", value: "space", description: "Space-themed dark mode" },
+        {
+          title: "Default",
+          value: "default",
+          description: "Standard aerospace style",
+        },
+        {
+          title: "Minimal",
+          value: "minimal",
+          description: "Clean, minimal interface",
+        },
+        {
+          title: "Space",
+          value: "space",
+          description: "Space-themed dark mode",
+        },
       ],
       initial: 0,
     },
@@ -149,7 +161,9 @@ export async function init() {
     const plexusuiPath = path.join(componentsPath, "plexusui");
     const hasAtSymbol = componentsPath.startsWith("@/");
 
-    const componentsAlias = hasAtSymbol ? componentsPath : `@/${componentsPath}`;
+    const componentsAlias = hasAtSymbol
+      ? componentsPath
+      : `@/${componentsPath}`;
     const utilsAlias = structure.hasSrc ? "@/lib/utils" : "@/lib/utils";
     const plexusuiAlias = `${componentsAlias}/plexusui`;
 
@@ -164,8 +178,18 @@ export async function init() {
         plexusui: plexusuiAlias,
       },
       resolvedPaths: {
-        components: path.join(cwd, componentsPath.replace("@/", "").replace("src/", structure.hasSrc ? "src/" : "")),
-        plexusui: path.join(cwd, plexusuiPath.replace("@/", "").replace("src/", structure.hasSrc ? "src/" : "")),
+        components: path.join(
+          cwd,
+          componentsPath
+            .replace("@/", "")
+            .replace("src/", structure.hasSrc ? "src/" : "")
+        ),
+        plexusui: path.join(
+          cwd,
+          plexusuiPath
+            .replace("@/", "")
+            .replace("src/", structure.hasSrc ? "src/" : "")
+        ),
       },
     };
 
@@ -181,7 +205,8 @@ export async function init() {
     const { installDeps } = await prompts({
       type: "confirm",
       name: "installDeps",
-      message: "Install required peer dependencies (React, Three.js, R3F, Drei)?",
+      message:
+        "Install required peer dependencies (React, Three.js, R3F, Drei)?",
       initial: true,
     });
 
@@ -196,7 +221,6 @@ export async function init() {
       );
       console.log(chalk.green("✅ Configuration complete!"));
       console.log(chalk.dim("\nAdd components with:"));
-      console.log(chalk.cyan("  npx @plexusui/cli add waveform-monitor"));
       console.log(chalk.cyan("  npx @plexusui/cli add gantt-chart"));
       return;
     }
@@ -222,7 +246,6 @@ export async function init() {
 
     console.log(chalk.green("\n✅ Ready to go!"));
     console.log(chalk.dim("\nAdd components with:"));
-    console.log(chalk.cyan("  npx @plexusui/cli add waveform-monitor"));
     console.log(chalk.cyan("  npx @plexusui/cli add gantt-chart"));
     console.log(chalk.dim("\nOr interactively:"));
     console.log(chalk.cyan("  npx @plexusui/cli add"));
