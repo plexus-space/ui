@@ -34,7 +34,7 @@ export interface WaveformTrace {
 }
 
 export interface WaveformMonitorProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "children"> {
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "children" | "onError"> {
   /** Width in pixels */
   readonly width: number;
   /** Height in pixels */
