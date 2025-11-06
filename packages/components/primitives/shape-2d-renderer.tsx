@@ -30,7 +30,6 @@
 
 import * as React from "react";
 import { getWebGPUDevice, isWebGPUAvailable } from "./device";
-import { bufferManager, type BufferManagerAPI } from "./buffer-manager";
 
 // Import shader
 import shape2DShader from "./shaders/shape-2d.wgsl?raw";
@@ -82,7 +81,6 @@ interface RendererConfig {
 interface RendererState {
   readonly device: GPUDevice;
   readonly context: GPUCanvasContext;
-  readonly buffers: BufferManagerAPI;
   readonly pipeline: GPURenderPipeline;
   readonly uniformBuffer?: GPUBuffer;
   readonly instanceBuffer?: GPUBuffer;
@@ -366,12 +364,9 @@ const createRenderer = async (
   const format = navigator.gpu.getPreferredCanvasFormat();
   const pipeline = createPipeline(device, format);
 
-  const buffers = bufferManager(device);
-
   return {
     device,
     context,
-    buffers,
     pipeline,
     uniformBuffer: undefined,
     instanceBuffer: undefined,
@@ -395,26 +390,21 @@ const updateShapes = (
 
   // Create uniform buffer
   const uniformData = createUniformData(state.config);
-
-  const [buffers1, uniformBuffer] = state.buffers.create(
-    "uniforms",
-    uniformData,
-    {
-      usage: GPUBufferUsage.UNIFORM,
-      label: "2D Shape Uniform Buffer",
-    }
-  );
+  const uniformBuffer = state.device.createBuffer({
+    size: uniformData.byteLength,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    label: "2D Shape Uniform Buffer",
+  });
+  state.device.queue.writeBuffer(uniformBuffer, 0, uniformData.buffer);
 
   // Create instance data
   const instanceData = createInstanceData(shapes);
-  const [buffers2, instanceBuffer] = buffers1.create(
-    "instances",
-    instanceData,
-    {
-      usage: GPUBufferUsage.STORAGE,
-      label: "2D Shape Instance Buffer",
-    }
-  );
+  const instanceBuffer = state.device.createBuffer({
+    size: instanceData.byteLength,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    label: "2D Shape Instance Buffer",
+  });
+  state.device.queue.writeBuffer(instanceBuffer, 0, instanceData.buffer);
 
   // Create bind group
   const bindGroup = state.device.createBindGroup({
@@ -426,9 +416,12 @@ const updateShapes = (
     ],
   });
 
+  // Destroy old buffers
+  if (state.uniformBuffer) state.uniformBuffer.destroy();
+  if (state.instanceBuffer) state.instanceBuffer.destroy();
+
   return {
     ...state,
-    buffers: buffers2,
     uniformBuffer,
     instanceBuffer,
     bindGroup,
@@ -472,7 +465,8 @@ const render = (state: RendererState): void => {
 };
 
 const destroy = (state: RendererState): void => {
-  state.buffers.destroyAll();
+  if (state.uniformBuffer) state.uniformBuffer.destroy();
+  if (state.instanceBuffer) state.instanceBuffer.destroy();
   // NOTE: Do NOT destroy device - it's a shared singleton managed by device.ts
   // Destroying it here would break all other components using the same device
 };
@@ -600,3 +594,25 @@ export const WebGPU2DRenderer: React.FC<WebGPU2DRendererProps> = React.memo(
     return null;
   }
 );
+
+// ============================================================================
+// Standalone Component with Canvas
+// ============================================================================
+
+export const ShapeRenderer: React.FC<
+  Omit<WebGPU2DRendererProps, "canvas"> & { className?: string }
+> = ({ width, height, className, ...props }) => {
+  const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null);
+
+  return (
+    <div style={{ position: "relative", width, height }} className={className}>
+      <canvas
+        ref={setCanvas}
+        width={width}
+        height={height}
+        style={{ display: "block", width: "100%", height: "100%" }}
+      />
+      {canvas && <WebGPU2DRenderer canvas={canvas} width={width} height={height} {...props} />}
+    </div>
+  );
+};

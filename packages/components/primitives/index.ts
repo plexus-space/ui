@@ -1,16 +1,14 @@
 /**
- * WebGPU Line Renderer - TRUE GPU compute shaders
- * 1M+ points at 60fps, GPU decimation, spatial indexing
+ * Plexus UI Primitives
+ *
+ * High-performance WebGPU primitives for medical, defense, and robotics applications.
+ * Each primitive is optimized for 60fps rendering with large datasets.
  */
-export {
-  WebGPULineRenderer,
-  type WebGPULineRendererProps,
-} from "./line-renderer";
 
-/**
- * WebGPU Device Manager
- * Initialize and manage WebGPU devices
- */
+// ============================================================================
+// WebGPU Device Manager
+// ============================================================================
+
 export {
   getWebGPUDevice,
   isWebGPUAvailable,
@@ -22,53 +20,23 @@ export {
   type WebGPUSupportLevel,
 } from "./device";
 
-/**
- * WebGPU Buffer Manager
- * Efficient GPU buffer management
- */
-export {
-  bufferManager,
-  BUFFER_ALIGNMENT,
-  type BufferOptions,
-  type BufferMetadata,
-  type BufferStats,
-  type BufferUsage,
-  type BufferData,
-} from "./buffer-manager";
+// ============================================================================
+// Line Renderer - Waveforms & Time-Series
+// ============================================================================
 
-/**
- * MSDF Text Renderer - WORKING GPU-accelerated MSDF text rendering
- * Based on WebGPU samples - proven implementation
- * 1000+ text labels at 60fps with crisp rendering at any scale
- * Use cases: HUD interfaces, tactical displays, telemetry labels
- *
- * NOTE: Requires pre-generated MSDF font atlas (see MSDF_FONTS.md)
- * Use font from: https://raw.githubusercontent.com/webgpu/webgpu-samples/main/sample/assets/font/ya-hei-ascii-msdf.json
- */
 export {
-  MsdfTextRenderer,
-  type MsdfTextRendererProps,
-  type TextLabel as MsdfTextLabel,
-} from "./msdf-text-renderer";
+  LineRenderer,
+  WebGPULineRenderer,
+  type LineRendererProps,
+  type LineTrace,
+} from "./line-renderer";
 
-/**
- * WebGPU 2D Shape Renderer - TRUE GPU-accelerated 2D shapes with SDF anti-aliasing
- * 10,000+ shapes at 60fps with perfect anti-aliasing at any scale
- * Use cases: HUD interfaces (reticles, crosshairs), tactical displays, gauges, diagrams
- *
- * Supported shapes:
- * - Lines (horizontal, vertical, angled) with configurable thickness
- * - Circles and arcs (for gauges, heading tapes, reticles)
- * - Rectangles and rounded rectangles
- * - Regular polygons (triangles, pentagons, hexagons, etc.)
- *
- * Features:
- * - SDF-based anti-aliasing (smooth at any scale)
- * - Instanced rendering (single draw call for all shapes)
- * - Rotation and transformation support
- * - Zero-copy buffer updates
- */
+// ============================================================================
+// 2D Shape Renderer - HUD & Tactical Displays
+// ============================================================================
+
 export {
+  ShapeRenderer,
   WebGPU2DRenderer,
   ShapeType,
   createLine,
@@ -82,13 +50,14 @@ export {
 } from "./shape-2d-renderer";
 
 // ============================================================================
-// That's it. Build everything else from these blocks.
+// MSDF Text Renderer - Crisp Text at Any Scale
 // ============================================================================
-//
-// For animations: Use Framer Motion, react-spring,
-// For easing: Use CSS transitions or animation libraries
-//
-// **Performance Notes:**
-// - WebGPU primitives: Use for large datasets (>5k points/triangles)
-// - Three.js primitives: Use for 3D scenes with cameras and lighting
-// - Automatic fallback: WebGPU primitives will fallback to CPU if unavailable
+
+export {
+  TextRenderer,
+  MsdfTextRenderer,
+  type MsdfTextRendererProps,
+  type TextLabel,
+  type MsdfChar,
+  type MsdfFontJson,
+} from "./msdf-text-renderer";

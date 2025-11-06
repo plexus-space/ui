@@ -32,7 +32,7 @@
  */
 
 import * as React from "react";
-import { UnifiedWaveformRenderer } from "../primitives/unified-waveform-renderer";
+import { LineRenderer, type LineTrace } from "../primitives/line-renderer";
 import { DEFAULT_MARGIN, DEFAULT_BACKGROUND_COLOR, cn } from "../lib/utils";
 import type {
   RGB,
@@ -315,18 +315,24 @@ const WaveformMonitorTraces = React.forwardRef<
       className={cn("waveform-monitor-traces", className)}
       {...props}
     >
-      <UnifiedWaveformRenderer
-        canvas={canvas}
-        traces={traces}
-        width={width}
-        height={height}
-        margin={margin}
-        xDomain={xDomain}
-        yDomain={yDomain}
-        backgroundColor={backgroundColor}
-        onReady={onReady}
-        onError={onError}
-      />
+      {canvas && (
+        <LineRenderer
+          traces={traces.map((t): LineTrace => ({
+            id: t.id,
+            data: t.data,
+            color: t.color,
+          }))}
+          width={width}
+          height={height}
+          margin={margin}
+          xDomain={xDomain}
+          yDomain={yDomain}
+          backgroundColor={backgroundColor}
+          onReady={onReady}
+          onError={onError}
+          className="absolute inset-0"
+        />
+      )}
     </div>
   );
 });

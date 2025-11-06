@@ -680,3 +680,25 @@ export const MsdfTextRenderer: React.FC<MsdfTextRendererProps> = React.memo(
     return null;
   }
 );
+
+// ============================================================================
+// Standalone Component with Canvas
+// ============================================================================
+
+export const TextRenderer: React.FC<
+  Omit<MsdfTextRendererProps, "canvas"> & { className?: string }
+> = ({ width, height, className, ...props }) => {
+  const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null);
+
+  return (
+    <div style={{ position: "relative", width, height }} className={className}>
+      <canvas
+        ref={setCanvas}
+        width={width}
+        height={height}
+        style={{ display: "block", width: "100%", height: "100%" }}
+      />
+      {canvas && <MsdfTextRenderer canvas={canvas} width={width} height={height} {...props} />}
+    </div>
+  );
+};
