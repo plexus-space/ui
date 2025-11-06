@@ -5,33 +5,11 @@ import { useMemo } from "react";
 import { components } from "@/constants/components";
 import { Footer } from "@/components/footer";
 import { CopyButton } from "@/components/copy-button";
-import { LineChartExamples } from "@/examples/line-chart";
-import { HUDTextExamples } from "@/examples/hud-text";
-import { Shape2DExamples } from "@/examples/shape-2d";
-import {
-  ApiReferenceTable,
-  type ApiProp,
-} from "@/components/api-reference-table";
-import * as apiData from "@/examples/api";
+import { WaveformMonitorExample } from "@/examples/waveform-monitor";
 
-// ============================================================================
-// Component Registry
-// ============================================================================
 const componentExamples: Record<string, React.ComponentType> = {
-  "line-chart": LineChartExamples,
-  "hud-text": HUDTextExamples,
-  "shape-2d": Shape2DExamples,
+  "waveform-monitor": WaveformMonitorExample,
 };
-
-const componentApiData: Record<string, ApiProp[]> = {
-  "line-chart": apiData.lineChartApiProps,
-  "shape-2d": apiData.shape2DApiProps,
-  // "hud-text": apiData.hudTextApiProps,
-};
-
-// ============================================================================
-// Main Page Component
-// ============================================================================
 
 export default function ComponentPage() {
   const params = useParams();
@@ -43,8 +21,6 @@ export default function ComponentPage() {
   );
 
   const ExampleComponent = componentExamples[componentId];
-  const apiProps = componentApiData[componentId];
-
   if (!component) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -165,14 +141,6 @@ export default function ComponentPage() {
           </div>
         </section>
       )}
-
-      {apiProps && (
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4">API Reference</h2>
-          <ApiReferenceTable props={apiProps} />
-        </section>
-      )}
-
       <Footer />
     </div>
   );

@@ -17,7 +17,7 @@ export const Sidenav = () => {
     <aside className="w-52 flex-shrink-0  bg-background overflow-y-auto">
       <nav className="p-4 pt-6">
         <div className="space-y-1">
-          {["Primitives", "Planetary Bodies", "Charts"].map((category) => (
+          {["Primitives", "Charts"].map((category) => (
             <div key={category}>
               <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 ">
                 {category}
