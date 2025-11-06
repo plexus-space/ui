@@ -207,7 +207,7 @@ async function initializeDevice(
         error: event.error,
         message: event.error?.message,
         type: event.error?.constructor?.name,
-        fullError: JSON.stringify(event.error, null, 2)
+        fullError: JSON.stringify(event.error, null, 2),
       });
     });
 
@@ -237,8 +237,7 @@ async function initializeDevice(
       },
       limits: {
         maxBufferSize: device.limits.maxBufferSize,
-        maxStorageBufferBindingSize:
-          device.limits.maxStorageBufferBindingSize,
+        maxStorageBufferBindingSize: device.limits.maxStorageBufferBindingSize,
         maxComputeWorkgroupSizeX: device.limits.maxComputeWorkgroupSizeX,
         maxComputeWorkgroupsPerDimension:
           device.limits.maxComputeWorkgroupsPerDimension,
@@ -278,47 +277,3 @@ export async function createCanvasContext(
   return deviceInfo?.context ?? null;
 }
 
-// ============================================================================
-// Utilities
-// ============================================================================
-
-/**
- * Format bytes to human-readable string
- */
-export function formatBytes(bytes: number): string {
-  const units = ["B", "KB", "MB", "GB"];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  return `${size.toFixed(2)} ${units[unitIndex]}`;
-}
-
-/**
- * Get recommended workgroup size for compute shader
- */
-export function getWorkgroupSize(
-  dataSize: number,
-  device: GPUDevice
-): { x: number; y: number; z: number } {
-  const maxWorkgroupSize = device.limits.maxComputeWorkgroupSizeX;
-
-  // Use 256 as default (good balance)
-  const workgroupSize = Math.min(256, maxWorkgroupSize);
-
-  return { x: workgroupSize, y: 1, z: 1 };
-}
-
-/**
- * Calculate dispatch size for compute shader
- */
-export function getDispatchSize(
-  dataSize: number,
-  workgroupSize: number
-): number {
-  return Math.ceil(dataSize / workgroupSize);
-}

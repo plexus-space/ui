@@ -61,32 +61,6 @@
       "tier": "free",
       "textures": []
     },
-    "point-cloud": {
-      "name": "point-cloud",
-      "version": "1.0.0",
-      "displayName": "Point Cloud",
-      "category": "primitives",
-      "type": "components:primitive",
-      "description": "WebGPU-accelerated point cloud renderer handling 100k+ points at 60fps. Perfect for scatter plots, LiDAR visualization, particle systems, star fields, and molecular visualization. Features per-point color, size, opacity with GPU-based culling and LOD.",
-      "files": [
-        "primitives/point-cloud.tsx",
-        "primitives/device.ts",
-        "primitives/buffer-manager.ts",
-        "primitives/validation.ts",
-        "primitives/shaders/point-cloud.wgsl"
-      ],
-      "dependencies": [
-        "react"
-      ],
-      "devDependencies": [
-        "@webgpu/types"
-      ],
-      "registryDependencies": [
-        "lib"
-      ],
-      "tier": "free",
-      "textures": []
-    },
     "msdf-text-renderer": {
       "name": "msdf-text-renderer",
       "version": "1.0.0",

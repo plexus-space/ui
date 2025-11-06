@@ -70,13 +70,13 @@ export interface MsdfTextRendererProps {
   readonly onError?: (error: Error) => void;
 }
 
-export interface RendererConfig {
+interface RendererConfig {
   readonly width: number;
   readonly height: number;
   readonly pixelScale: number;
 }
 
-export interface FontData {
+interface FontData {
   readonly json: MsdfFontJson;
   readonly charMap: Map<number, MsdfChar>;
   readonly charIndexMap: Map<number, number>; // Add this
@@ -84,7 +84,7 @@ export interface FontData {
   readonly charsBuffer: GPUBuffer;
 }
 
-export interface RendererState {
+interface RendererState {
   readonly device: GPUDevice;
   readonly context: GPUCanvasContext;
   readonly pipeline: GPURenderPipeline;
@@ -108,7 +108,7 @@ const SPACE_CHAR_CODE = 32;
 // Pure Utility Functions
 // ============================================================================
 
-export const createCharMap = (
+const createCharMap = (
   chars: ReadonlyArray<MsdfChar>
 ): Map<number, MsdfChar> => {
   const map = new Map<number, MsdfChar>();
@@ -118,7 +118,7 @@ export const createCharMap = (
   return map;
 };
 
-export const createUniformData = (config: RendererConfig): Float32Array =>
+const createUniformData = (config: RendererConfig): Float32Array =>
   new Float32Array([
     config.width,
     config.height,
@@ -126,7 +126,7 @@ export const createUniformData = (config: RendererConfig): Float32Array =>
     0, // padding
   ]);
 
-export const createCharsArray = (fontData: MsdfFontJson): Float32Array => {
+const createCharsArray = (fontData: MsdfFontJson): Float32Array => {
   const charCount = fontData.chars.length;
   const charsArray = new Float32Array(charCount * CHAR_DATA_STRIDE);
 
@@ -148,7 +148,8 @@ export const createCharsArray = (fontData: MsdfFontJson): Float32Array => {
 
   return charsArray;
 };
-export const createInstanceData = (
+
+const createInstanceData = (
   labels: ReadonlyArray<TextLabel>,
   fontData: FontData,
   pixelScale: number
@@ -241,7 +242,7 @@ export const createInstanceData = (
 // Pipeline Creation
 // ============================================================================
 
-export const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout =>
+const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout =>
   device.createBindGroupLayout({
     entries: [
       { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: {} },
@@ -264,7 +265,7 @@ export const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout =>
     ],
   });
 
-export const createPipeline = (
+const createPipeline = (
   device: GPUDevice,
   format: GPUTextureFormat
 ): GPURenderPipeline => {
@@ -313,7 +314,7 @@ export const createPipeline = (
 // Font Loading
 // ============================================================================
 
-export const loadFontTexture = async (
+const loadFontTexture = async (
   device: GPUDevice,
   imageUrl: string
 ): Promise<GPUTexture> => {
@@ -338,7 +339,7 @@ export const loadFontTexture = async (
   return texture;
 };
 
-export const loadFont = async (
+const loadFont = async (
   device: GPUDevice,
   jsonUrl: string
 ): Promise<FontData> => {
@@ -377,7 +378,7 @@ export const loadFont = async (
 // Renderer State Management
 // ============================================================================
 
-export const createRenderer = async (
+const createRenderer = async (
   canvas: HTMLCanvasElement,
   config: RendererConfig
 ): Promise<RendererState> => {
@@ -424,7 +425,7 @@ export const createRenderer = async (
   };
 };
 
-export const loadFontIntoState = async (
+const loadFontIntoState = async (
   state: RendererState,
   fontJsonUrl: string
 ): Promise<RendererState> => {
@@ -432,7 +433,7 @@ export const loadFontIntoState = async (
   return { ...state, fontData };
 };
 
-export const updateLabels = (
+const updateLabels = (
   state: RendererState,
   labels: ReadonlyArray<TextLabel>
 ): RendererState => {
@@ -492,7 +493,7 @@ export const updateLabels = (
 };
 
 let renderCount = 0;
-export const render = (state: RendererState): void => {
+const render = (state: RendererState): void => {
   if (!state.bindGroup || state.instanceCount === 0 || !state.fontData) {
     console.log("[MSDF] Render skipped:", {
       hasBindGroup: !!state.bindGroup,
@@ -537,7 +538,7 @@ export const render = (state: RendererState): void => {
   }
 };
 
-export const destroy = (state: RendererState): void => {
+const destroy = (state: RendererState): void => {
   if (state.fontData?.texture) {
     state.fontData.texture.destroy();
   }
@@ -554,7 +555,7 @@ export const destroy = (state: RendererState): void => {
 // React Hook
 // ============================================================================
 
-export const useMsdfRenderer = (
+const useMsdfRenderer = (
   canvas: HTMLCanvasElement | null,
   fontJsonUrl: string,
   config: RendererConfig

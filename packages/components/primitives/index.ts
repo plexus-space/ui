@@ -28,24 +28,13 @@ export {
  */
 export {
   bufferManager,
-  createVertexBuffer,
-  createUniformBuffer,
-  createStorageBuffer,
-  readBuffer,
+  BUFFER_ALIGNMENT,
   type BufferOptions,
   type BufferMetadata,
+  type BufferStats,
+  type BufferUsage,
+  type BufferData,
 } from "./buffer-manager";
-
-/**
- * WebGPU Point Cloud - TRUE GPU rendering
- * 100k+ points at 60fps with per-point attributes
- * Use cases: Scatter plots, LiDAR, particles, stars, molecular viz
- */
-export {
-  WebGPUPointCloud,
-  type WebGPUPointCloudProps,
-  type Point,
-} from "./point-cloud";
 
 /**
  * MSDF Text Renderer - WORKING GPU-accelerated MSDF text rendering
@@ -91,22 +80,6 @@ export {
   type WebGPU2DRendererProps,
   type Shape,
 } from "./shape-2d-renderer";
-
-/**
- * Validation
- * Input sanitization, bounds checking, NaN/Infinity handling
- */
-export {
-  isValidVec3,
-  isValidVec2,
-  isValidNumber,
-  validateVec3,
-  validateVec2,
-  validateNumber,
-  sanitizeVec3,
-  sanitizeVec2,
-  clamp,
-} from "./validation";
 
 // ============================================================================
 // That's it. Build everything else from these blocks.

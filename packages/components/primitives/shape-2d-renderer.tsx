@@ -72,14 +72,14 @@ export interface WebGPU2DRendererProps {
   readonly onError?: (error: Error) => void;
 }
 
-export interface RendererConfig {
+interface RendererConfig {
   readonly width: number;
   readonly height: number;
   readonly pixelScale: number;
   readonly antialiasWidth: number;
 }
 
-export interface RendererState {
+interface RendererState {
   readonly device: GPUDevice;
   readonly context: GPUCanvasContext;
   readonly buffers: BufferManagerAPI;
@@ -103,7 +103,7 @@ const UNIFORM_ALIGNMENT = 256;
 // Pure Utility Functions
 // ============================================================================
 
-export const createUniformData = (config: RendererConfig): Float32Array => {
+const createUniformData = (config: RendererConfig): Float32Array => {
   const data = new Float32Array([
     config.width,
     config.height,
@@ -119,7 +119,7 @@ export const createUniformData = (config: RendererConfig): Float32Array => {
   return alignedData;
 };
 
-export const createInstanceData = (
+const createInstanceData = (
   shapes: ReadonlyArray<Shape>
 ): Float32Array => {
   const data = new Float32Array(shapes.length * INSTANCE_STRIDE);
@@ -268,7 +268,7 @@ export const createPolygon = (
 // Pipeline Creation
 // ============================================================================
 
-export const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout =>
+const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout =>
   device.createBindGroupLayout({
     label: "2D Shape Bind Group Layout",
     entries: [
@@ -285,7 +285,7 @@ export const createBindGroupLayout = (device: GPUDevice): GPUBindGroupLayout =>
     ],
   });
 
-export const createPipeline = (
+const createPipeline = (
   device: GPUDevice,
   format: GPUTextureFormat
 ): GPURenderPipeline => {
@@ -296,10 +296,10 @@ export const createPipeline = (
 
   // Check for shader compilation errors
   shaderModule.getCompilationInfo().then((info) => {
-    if (info.messages.some((m) => m.type === 'error')) {
+    if (info.messages.some((m) => m.type === "error")) {
       console.error("[2DShape] Shader compilation errors:");
       info.messages.forEach((msg) => {
-        if (msg.type === 'error') {
+        if (msg.type === "error") {
           console.error(`  Line ${msg.lineNum}: ${msg.message}`);
         }
       });
@@ -348,7 +348,7 @@ export const createPipeline = (
 // Renderer State Management
 // ============================================================================
 
-export const createRenderer = async (
+const createRenderer = async (
   canvas: HTMLCanvasElement,
   config: RendererConfig
 ): Promise<RendererState> => {
@@ -381,7 +381,7 @@ export const createRenderer = async (
   };
 };
 
-export const updateShapes = (
+const updateShapes = (
   state: RendererState,
   shapes: ReadonlyArray<Shape>
 ): RendererState => {
@@ -436,7 +436,7 @@ export const updateShapes = (
   };
 };
 
-export const render = (state: RendererState): void => {
+const render = (state: RendererState): void => {
   if (!state.bindGroup || state.shapeCount === 0) {
     return;
   }
@@ -471,7 +471,7 @@ export const render = (state: RendererState): void => {
   }
 };
 
-export const destroy = (state: RendererState): void => {
+const destroy = (state: RendererState): void => {
   state.buffers.destroyAll();
   // NOTE: Do NOT destroy device - it's a shared singleton managed by device.ts
   // Destroying it here would break all other components using the same device
@@ -481,7 +481,7 @@ export const destroy = (state: RendererState): void => {
 // React Hook
 // ============================================================================
 
-export const use2DRenderer = (
+const use2DRenderer = (
   canvas: HTMLCanvasElement | null,
   config: RendererConfig
 ) => {
