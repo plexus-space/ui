@@ -5,7 +5,7 @@ import * as fs from "fs-extra";
 import * as path from "path";
 import https from "https";
 import { execSync } from "child_process";
-import { registry, getComponent, isMonorepo, getLocalFilePath, getFileUrl } from "../registry/index.js";
+import { registry, getComponent, getLib, isMonorepo, getLocalFilePath, getFileUrl } from "../registry/index.js";
 /**
  * Download file from URL
  */
@@ -105,8 +105,34 @@ async function installDependencies(deps, devDeps) {
             (devDeps.length > 0 ? `  npm install -D ${devDeps.join(" ")}` : ""));
     }
 }
+/**
+ * Load plexusui.config.json
+ */
+async function loadConfig() {
+    const cwd = process.cwd();
+    const configPath = path.join(cwd, "plexusui.config.json");
+    if (await fs.pathExists(configPath)) {
+        try {
+            return await fs.readJson(configPath);
+        }
+        catch (error) {
+            console.log(chalk.yellow("⚠️  Failed to parse plexusui.config.json"));
+            return null;
+        }
+    }
+    return null;
+}
 async function detectProjectStructure() {
     const cwd = process.cwd();
+    // First, try to load config
+    const config = await loadConfig();
+    if (config?.resolvedPaths?.plexusui) {
+        return {
+            componentsDir: config.resolvedPaths.plexusui,
+            srcDir: path.dirname(config.resolvedPaths.components),
+        };
+    }
+    // Fallback to detection
     // Check for app/components directory (Next.js app router)
     if (await fs.pathExists(path.join(cwd, "app"))) {
         return {
@@ -200,22 +226,32 @@ export async function add(components) {
         components.forEach(collectDependencies);
         spinner.text = "Downloading components...";
         // Check if lib already exists
-        const libUtilsPath = path.join(componentsDir, "lib", "plexusui-utils.ts");
+        const libUtilsPath = path.join(componentsDir, "lib", "utils.ts");
         const libExists = await fs.pathExists(libUtilsPath);
+        // Always install lib infrastructure if not present
+        if (!libExists) {
+            const libConfig = getLib();
+            if (libConfig) {
+                allComponentsToInstall.add("lib");
+            }
+        }
         // Download and save each component
         const installedComponents = [];
         const skippedComponents = [];
         const failedComponents = [];
         for (const component of allComponentsToInstall) {
-            const config = getComponent(component);
+            let config = getComponent(component);
+            // Handle lib specially - it's infrastructure, not a component
+            if (component === "lib") {
+                config = getLib();
+                if (libExists) {
+                    spinner.text = `Skipping lib (already exists)...`;
+                    skippedComponents.push("lib");
+                    continue;
+                }
+            }
             if (!config)
                 continue;
-            // Skip lib if it already exists
-            if (component === "lib" && libExists) {
-                spinner.text = `Skipping ${component} (already exists)...`;
-                skippedComponents.push(component);
-                continue;
-            }
             spinner.text = `Adding ${component}...`;
             try {
                 // Download or copy all files for this component
@@ -351,12 +387,14 @@ export async function add(components) {
             console.log(chalk.green("\n✅ All dependencies already installed!"));
         }
         console.log(chalk.dim("\n🎨 Import and use:"));
+        const config = await loadConfig();
+        const importAlias = config?.aliases?.plexusui || "@/components/plexusui";
         components.forEach((c) => {
             const componentName = c
                 .split("-")
                 .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
                 .join("");
-            console.log(chalk.cyan(`   import { ${componentName} } from '@/components/plexusui/${c}'`));
+            console.log(chalk.cyan(`   import { ${componentName} } from '${importAlias}/${c}'`));
         });
     }
     catch (error) {

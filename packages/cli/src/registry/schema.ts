@@ -2,8 +2,9 @@ export type ComponentTier = "free" | "pro";
 
 export interface ComponentConfig {
   name: string;
+  version?: string;
   displayName?: string;
-  type: "components:ui" | "components:primitive" | "components:chart" | "components:lib";
+  type: "components:ui" | "components:primitive" | "components:chart" | "components:lib" | "infrastructure";
   description?: string;
   files: string[];
   dependencies?: string[];

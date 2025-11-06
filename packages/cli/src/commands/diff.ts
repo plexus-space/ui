@@ -77,12 +77,25 @@ export async function diff(componentName: string) {
 
     const { componentsDir } = await detectProjectStructure();
 
-    // Check if component exists locally
+    // Check if component exists locally by checking for first file
     const mainFile = config.files[0];
     const filename = mainFile.split("/").pop()!;
-    const localPath = mainFile.includes("/primitives/")
-      ? path.join(componentsDir, "primitives", filename)
-      : path.join(componentsDir, filename);
+    const dirname = path.dirname(mainFile);
+
+    let localPath: string;
+    if (dirname.includes("lib")) {
+      localPath = path.join(componentsDir, "lib", filename);
+    } else if (dirname.includes("primitives")) {
+      if (dirname.includes("shaders")) {
+        localPath = path.join(componentsDir, "primitives", "shaders", filename);
+      } else {
+        localPath = path.join(componentsDir, "primitives", filename);
+      }
+    } else if (dirname.includes("charts")) {
+      localPath = path.join(componentsDir, "charts", filename);
+    } else {
+      localPath = path.join(componentsDir, filename);
+    }
 
     if (!(await fs.pathExists(localPath))) {
       spinner.info(chalk.yellow(`Component "${componentName}" is not installed locally`));
@@ -91,17 +104,73 @@ export async function diff(componentName: string) {
       return;
     }
 
-    // Download remote version
-    spinner.text = "Downloading latest version...";
-    const remoteContent = await downloadFile(mainFile);
-    const localContent = await fs.readFile(localPath, "utf-8");
+    // Check all files in the component
+    spinner.text = "Comparing files...";
+    const filesWithDiff: string[] = [];
+    const missingFiles: string[] = [];
+    let totalFiles = 0;
 
-    if (remoteContent === localContent) {
-      spinner.succeed(chalk.green(`${componentName} is up to date!`));
-    } else {
+    for (const file of config.files) {
+      totalFiles++;
+      const filename = file.split("/").pop()!;
+      const dirname = path.dirname(file);
+
+      // Determine local file path
+      let filePath: string;
+      if (dirname.includes("lib")) {
+        filePath = path.join(componentsDir, "lib", filename);
+      } else if (dirname.includes("primitives")) {
+        if (dirname.includes("shaders")) {
+          filePath = path.join(componentsDir, "primitives", "shaders", filename);
+        } else {
+          filePath = path.join(componentsDir, "primitives", filename);
+        }
+      } else if (dirname.includes("charts")) {
+        filePath = path.join(componentsDir, "charts", filename);
+      } else {
+        filePath = path.join(componentsDir, filename);
+      }
+
+      // Check if file exists
+      if (!(await fs.pathExists(filePath))) {
+        missingFiles.push(file);
+        continue;
+      }
+
+      // Download remote version and compare
+      try {
+        const remoteUrl = `https://raw.githubusercontent.com/plexus-space/ui/main/packages/components/${file}`;
+        const remoteContent = await downloadFile(remoteUrl);
+        const localContent = await fs.readFile(filePath, "utf-8");
+
+        if (remoteContent !== localContent) {
+          filesWithDiff.push(file);
+        }
+      } catch (error) {
+        // If download fails, skip this file
+        console.log(chalk.dim(`\n⚠️  Could not download ${file}`));
+      }
+    }
+
+    // Show results
+    if (missingFiles.length > 0) {
+      spinner.warn(chalk.yellow(`${componentName} is partially installed`));
+      console.log(chalk.dim("\n⚠️  Missing files:"));
+      missingFiles.forEach((file) => {
+        console.log(chalk.yellow(`   • ${file}`));
+      });
+    } else if (filesWithDiff.length > 0) {
       spinner.warn(chalk.yellow(`${componentName} has updates available`));
-      console.log(chalk.dim("\nLocal file:  ") + chalk.cyan(localPath));
-      console.log(chalk.dim("Remote URL:  ") + chalk.cyan(mainFile));
+      console.log(chalk.dim("\n📝 Files with changes:"));
+      filesWithDiff.forEach((file) => {
+        console.log(chalk.yellow(`   • ${file}`));
+      });
+      console.log(chalk.dim(`\n✓ ${totalFiles - filesWithDiff.length}/${totalFiles} files up to date`));
+    } else {
+      spinner.succeed(chalk.green(`${componentName} is up to date! (${totalFiles}/${totalFiles} files)`));
+    }
+
+    if (missingFiles.length > 0 || filesWithDiff.length > 0) {
       console.log(chalk.dim("\nTo update, run:"));
       console.log(chalk.cyan(`  npx @plexusui/cli add ${componentName}\n`));
     }

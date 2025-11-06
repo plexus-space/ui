@@ -2,20 +2,100 @@ import chalk from "chalk";
 import prompts from "prompts";
 import ora from "ora";
 import { execSync } from "child_process";
-import { existsSync } from "fs";
-import { join } from "path";
+import * as fs from "fs-extra";
+import * as path from "path";
+
+interface PlexusConfig {
+  $schema: string;
+  style: "default" | "minimal" | "space";
+  tsx: boolean;
+  aliases: {
+    components: string;
+    utils: string;
+    plexusui: string;
+  };
+  resolvedPaths: {
+    components: string;
+    plexusui: string;
+  };
+}
+
+async function detectProjectStructure(): Promise<{
+  componentsDir: string;
+  srcDir: string;
+  hasSrc: boolean;
+}> {
+  const cwd = process.cwd();
+
+  // Check for src/app directory (Next.js app router with src)
+  if (await fs.pathExists(path.join(cwd, "src", "app"))) {
+    return {
+      componentsDir: path.join(cwd, "src", "components"),
+      srcDir: path.join(cwd, "src"),
+      hasSrc: true,
+    };
+  }
+
+  // Check for app directory (Next.js app router)
+  if (await fs.pathExists(path.join(cwd, "app"))) {
+    return {
+      componentsDir: path.join(cwd, "components"),
+      srcDir: cwd,
+      hasSrc: false,
+    };
+  }
+
+  // Check for src/components directory (Next.js/React app)
+  if (await fs.pathExists(path.join(cwd, "src", "components"))) {
+    return {
+      componentsDir: path.join(cwd, "src", "components"),
+      srcDir: path.join(cwd, "src"),
+      hasSrc: true,
+    };
+  }
+
+  // Check for components directory
+  if (await fs.pathExists(path.join(cwd, "components"))) {
+    return {
+      componentsDir: path.join(cwd, "components"),
+      srcDir: cwd,
+      hasSrc: false,
+    };
+  }
+
+  // Default: assume src directory
+  return {
+    componentsDir: path.join(cwd, "src", "components"),
+    srcDir: path.join(cwd, "src"),
+    hasSrc: true,
+  };
+}
 
 export async function init() {
+  const cwd = process.cwd();
+  const configPath = path.join(cwd, "plexusui.config.json");
+
   console.log(chalk.bold("\n🚀 Welcome to Plexus UI!\n"));
 
-  console.log(
-    chalk.dim("Plexus UI provides aerospace visualization components.")
-  );
-  console.log(chalk.dim("Components are installed as npm packages.\n"));
+  // Check if config already exists
+  if (await fs.pathExists(configPath)) {
+    console.log(chalk.yellow("⚠️  plexusui.config.json already exists."));
+    const { overwrite } = await prompts({
+      type: "confirm",
+      name: "overwrite",
+      message: "Overwrite existing configuration?",
+      initial: false,
+    });
+
+    if (!overwrite) {
+      console.log(chalk.dim("\nKeeping existing configuration."));
+      return;
+    }
+  }
 
   // Check if package.json exists
-  const packageJsonPath = join(process.cwd(), "package.json");
-  if (!existsSync(packageJsonPath)) {
+  const packageJsonPath = path.join(cwd, "package.json");
+  if (!await fs.pathExists(packageJsonPath)) {
     console.log(
       chalk.red(
         "❌ No package.json found. Please run this in a Node.js project."
@@ -24,62 +104,132 @@ export async function init() {
     return;
   }
 
-  const { installDeps } = await prompts({
-    type: "confirm",
-    name: "installDeps",
-    message: "Install required peer dependencies (React, Three.js, R3F, Drei)?",
-    initial: true,
-  });
+  console.log(chalk.dim("This will configure Plexus UI for your project.\n"));
 
-  if (!installDeps) {
-    console.log(chalk.yellow("\nSkipped dependency installation."));
-    console.log(chalk.dim("You'll need to install these manually:\n"));
-    console.log(
-      "  npm install react react-dom three @react-three/fiber @react-three/drei"
-    );
-    console.log(
-      "  npm install -D @types/react @types/react-dom @types/three\n"
-    );
+  // Detect project structure
+  const structure = await detectProjectStructure();
+
+  // Prompt for configuration
+  const config = await prompts([
+    {
+      type: "select",
+      name: "style",
+      message: "Which style would you like to use?",
+      choices: [
+        { title: "Default", value: "default", description: "Standard aerospace style" },
+        { title: "Minimal", value: "minimal", description: "Clean, minimal interface" },
+        { title: "Space", value: "space", description: "Space-themed dark mode" },
+      ],
+      initial: 0,
+    },
+    {
+      type: "confirm",
+      name: "typescript",
+      message: "Use TypeScript?",
+      initial: true,
+    },
+    {
+      type: "text",
+      name: "componentsPath",
+      message: "Where should components be installed?",
+      initial: structure.hasSrc ? "src/components" : "components",
+    },
+  ]);
+
+  if (!config.style || config.componentsPath === undefined) {
+    console.log(chalk.red("\n❌ Configuration cancelled."));
     return;
   }
 
-  const spinner = ora("Installing peer dependencies...").start();
+  const spinner = ora("Creating configuration...").start();
 
   try {
+    // Compute aliases based on user input
+    const componentsPath = config.componentsPath;
+    const plexusuiPath = path.join(componentsPath, "plexusui");
+    const hasAtSymbol = componentsPath.startsWith("@/");
+
+    const componentsAlias = hasAtSymbol ? componentsPath : `@/${componentsPath}`;
+    const utilsAlias = structure.hasSrc ? "@/lib/utils" : "@/lib/utils";
+    const plexusuiAlias = `${componentsAlias}/plexusui`;
+
+    // Create config object
+    const plexusConfig: PlexusConfig = {
+      $schema: "https://plexus.ui/schema.json",
+      style: config.style,
+      tsx: config.typescript,
+      aliases: {
+        components: componentsAlias,
+        utils: utilsAlias,
+        plexusui: plexusuiAlias,
+      },
+      resolvedPaths: {
+        components: path.join(cwd, componentsPath.replace("@/", "").replace("src/", structure.hasSrc ? "src/" : "")),
+        plexusui: path.join(cwd, plexusuiPath.replace("@/", "").replace("src/", structure.hasSrc ? "src/" : "")),
+      },
+    };
+
+    // Write config file
+    await fs.writeJson(configPath, plexusConfig, { spaces: 2 });
+
+    spinner.succeed(chalk.green("Configuration created!"));
+
+    console.log(chalk.dim("\n📝 Config saved to:"));
+    console.log(chalk.cyan(`   ${configPath}\n`));
+
+    // Ask about installing dependencies
+    const { installDeps } = await prompts({
+      type: "confirm",
+      name: "installDeps",
+      message: "Install required peer dependencies (React, Three.js, R3F, Drei)?",
+      initial: true,
+    });
+
+    if (!installDeps) {
+      console.log(chalk.yellow("\nSkipped dependency installation."));
+      console.log(chalk.dim("You'll need to install these manually:\n"));
+      console.log(
+        "  npm install react react-dom three @react-three/fiber @react-three/drei"
+      );
+      console.log(
+        "  npm install -D @types/react @types/react-dom @types/three\n"
+      );
+      console.log(chalk.green("✅ Configuration complete!"));
+      console.log(chalk.dim("\nAdd components with:"));
+      console.log(chalk.cyan("  npx @plexusui/cli add waveform-monitor"));
+      console.log(chalk.cyan("  npx @plexusui/cli add gantt-chart"));
+      return;
+    }
+
+    const depSpinner = ora("Installing peer dependencies...").start();
+
     // Install runtime dependencies
     execSync(
       "npm install react react-dom three @react-three/fiber @react-three/drei",
       {
         stdio: "pipe",
-        cwd: process.cwd(),
+        cwd,
       }
     );
 
     // Install dev dependencies
     execSync("npm install -D @types/react @types/react-dom @types/three", {
       stdio: "pipe",
-      cwd: process.cwd(),
+      cwd,
     });
 
-    spinner.succeed(chalk.green("Dependencies installed!"));
+    depSpinner.succeed(chalk.green("Dependencies installed!"));
 
     console.log(chalk.green("\n✅ Ready to go!"));
     console.log(chalk.dim("\nAdd components with:"));
-    console.log(chalk.cyan("  npx @plexusui/cli add earth"));
-    console.log(chalk.cyan("  npx @plexusui/cli add mars venus moon"));
+    console.log(chalk.cyan("  npx @plexusui/cli add waveform-monitor"));
+    console.log(chalk.cyan("  npx @plexusui/cli add gantt-chart"));
     console.log(chalk.dim("\nOr interactively:"));
     console.log(chalk.cyan("  npx @plexusui/cli add"));
   } catch (error) {
-    spinner.fail("Failed to install dependencies");
+    spinner.fail("Failed to create configuration");
     console.error(
       chalk.dim(error instanceof Error ? error.message : "Unknown error")
-    );
-    console.log(chalk.yellow("\nPlease install dependencies manually:\n"));
-    console.log(
-      "  npm install react react-dom three @react-three/fiber @react-three/drei"
-    );
-    console.log(
-      "  npm install -D @types/react @types/react-dom @types/three"
     );
     process.exit(1);
   }

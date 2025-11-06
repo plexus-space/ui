@@ -51,6 +51,13 @@ function loadRegistry(data: any): Registry {
 }
 
 /**
+ * Get lib infrastructure component
+ */
+export function getLib(): ComponentConfig | undefined {
+  return registryData.lib as ComponentConfig;
+}
+
+/**
  * Get file URL for downloading (prepends BASE_URL)
  * Use this at download time, not at registry load time
  */
