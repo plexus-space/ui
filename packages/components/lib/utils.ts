@@ -45,10 +45,7 @@ export function isValidNumber(value: number): boolean {
 /**
  * Sanitize a number, replacing invalid values with fallback
  */
-export function sanitizeNumber(
-  value: number,
-  fallback: number = 0
-): number {
+export function sanitizeNumber(value: number, fallback: number = 0): number {
   return isValidNumber(value) ? value : fallback;
 }
 
@@ -123,14 +120,18 @@ export function sanitizeRGBA(color: RGBA): RGBA {
  * Convert RGB [0, 1] to CSS rgb() string
  */
 export function rgbToCSS(color: RGB): string {
-  return `rgb(${Math.round(color[0] * 255)}, ${Math.round(color[1] * 255)}, ${Math.round(color[2] * 255)})`;
+  return `rgb(${Math.round(color[0] * 255)}, ${Math.round(
+    color[1] * 255
+  )}, ${Math.round(color[2] * 255)})`;
 }
 
 /**
  * Convert RGBA [0, 1] to CSS rgba() string
  */
 export function rgbaToCSS(color: RGBA): string {
-  return `rgba(${Math.round(color[0] * 255)}, ${Math.round(color[1] * 255)}, ${Math.round(color[2] * 255)}, ${color[3]})`;
+  return `rgba(${Math.round(color[0] * 255)}, ${Math.round(
+    color[1] * 255
+  )}, ${Math.round(color[2] * 255)}, ${color[3]})`;
 }
 
 /**
@@ -254,10 +255,7 @@ export function range(start: number, end: number, step: number = 1): number[] {
 /**
  * Deep merge two objects
  */
-export function deepMerge<T extends object>(
-  target: T,
-  source: Partial<T>
-): T {
+export function deepMerge<T extends object>(target: T, source: Partial<T>): T {
   const result = { ...target };
 
   for (const key in source) {
@@ -299,22 +297,20 @@ export const DEFAULT_MARGIN: Margin = {
 /**
  * Default background color (dark)
  */
-export const DEFAULT_BACKGROUND_COLOR: RGBA = [
-  0.05, 0.05, 0.08, 1.0,
-] as const;
+export const DEFAULT_BACKGROUND_COLOR: RGBA = [0.05, 0.05, 0.08, 1.0] as const;
 
 /**
  * Default colors for data series
  */
 export const DEFAULT_COLORS: readonly RGB[] = [
-  [0.2, 0.8, 0.3],   // Green
-  [0.3, 0.6, 0.9],   // Blue
-  [0.9, 0.4, 0.4],   // Red
-  [0.8, 0.6, 0.2],   // Orange
-  [0.6, 0.4, 0.8],   // Purple
-  [0.4, 0.8, 0.8],   // Cyan
-  [0.9, 0.7, 0.3],   // Yellow
-  [0.8, 0.4, 0.6],   // Pink
+  [0.2, 0.8, 0.3], // Green
+  [0.3, 0.6, 0.9], // Blue
+  [0.9, 0.4, 0.4], // Red
+  [0.8, 0.6, 0.2], // Orange
+  [0.6, 0.4, 0.8], // Purple
+  [0.4, 0.8, 0.8], // Cyan
+  [0.9, 0.7, 0.3], // Yellow
+  [0.8, 0.4, 0.6], // Pink
 ] as const;
 
 // ============================================================================
