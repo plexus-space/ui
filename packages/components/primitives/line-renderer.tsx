@@ -63,7 +63,9 @@ export interface LineRendererProps {
 
 const DEFAULT_MARGIN = { top: 30, right: 30, bottom: 60, left: 70 };
 const DEFAULT_COLOR: readonly [number, number, number] = [0.4, 0.7, 0.9];
-const DEFAULT_BG_COLOR: readonly [number, number, number, number] = [0, 0, 0, 1];
+const DEFAULT_BG_COLOR: readonly [number, number, number, number] = [
+  0, 0, 0, 1,
+];
 
 // ============================================================================
 // Shader
@@ -135,7 +137,7 @@ function calculateDomain(traces: ReadonlyArray<LineTrace>): {
   x: [number, number];
   y: [number, number];
 } {
-  if (traces.length === 0 || traces.every(t => t.data.length === 0)) {
+  if (traces.length === 0 || traces.every((t) => t.data.length === 0)) {
     return { x: [0, 1], y: [0, 1] };
   }
 
@@ -339,7 +341,13 @@ function render(
   device.queue.writeBuffer(vertexBuffer, 0, vertexData.buffer);
 
   // Create uniform data
-  const uniformData = createUniformData(width, height, margin, xDomain, yDomain);
+  const uniformData = createUniformData(
+    width,
+    height,
+    margin,
+    xDomain,
+    yDomain
+  );
   const uniformBuffer = device.createBuffer({
     size: uniformData.byteLength,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -403,7 +411,7 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
 }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const state = useRenderer(canvasRef.current, width, height, onReady, onError);
-  const frameRef = React.useRef<number>();
+  const frameRef = React.useRef<number | undefined>(undefined);
 
   React.useEffect(() => {
     if (!state || traces.length === 0) return;
@@ -415,7 +423,16 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
 
     // Render loop
     const renderLoop = () => {
-      render(state, traces, width, height, margin, finalXDomain, finalYDomain, backgroundColor);
+      render(
+        state,
+        traces,
+        width,
+        height,
+        margin,
+        finalXDomain,
+        finalYDomain,
+        backgroundColor
+      );
       frameRef.current = requestAnimationFrame(renderLoop);
     };
 
