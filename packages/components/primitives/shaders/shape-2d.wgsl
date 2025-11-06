@@ -119,7 +119,7 @@ fn sdArc(p: vec2f, startAngle: f32, endAngle: f32, radius: f32, thickness: f32) 
     // Distance to ring
     let ringDist = abs(dist - radius) - thickness * 0.5;
 
-    if (isInArc) {
+    if isInArc {
         return ringDist;
     } else {
         // Distance to arc endpoints
@@ -152,9 +152,9 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
     // Quad vertices for triangle strip (covers -1 to 1 in both dimensions)
     var quadPositions = array<vec2f, 4>(
         vec2f(-1.0, -1.0),
-        vec2f( 1.0, -1.0),
-        vec2f(-1.0,  1.0),
-        vec2f( 1.0,  1.0)
+        vec2f(1.0, -1.0),
+        vec2f(-1.0, 1.0),
+        vec2f(1.0, 1.0)
     );
 
     let instance = instances[input.instanceIndex];
@@ -199,27 +199,27 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     var dist: f32;
 
     // Calculate signed distance based on shape type
-    if (input.shapeType == SHAPE_LINE) {
+    if input.shapeType == SHAPE_LINE {
         let thickness = input.params.x;
         let halfSize = input.size * 0.5;
         dist = sdLine(input.localPos, vec2f(-halfSize.x, 0.0), vec2f(halfSize.x, 0.0)) - thickness * 0.5;
-    } else if (input.shapeType == SHAPE_CIRCLE) {
+    } else if input.shapeType == SHAPE_CIRCLE {
         let radius = input.size.x * 0.5;
         dist = sdCircle(input.localPos, radius);
-    } else if (input.shapeType == SHAPE_RECTANGLE) {
+    } else if input.shapeType == SHAPE_RECTANGLE {
         let halfSize = input.size * 0.5;
         dist = sdBox(input.localPos, halfSize);
-    } else if (input.shapeType == SHAPE_ROUNDED_RECT) {
+    } else if input.shapeType == SHAPE_ROUNDED_RECT {
         let halfSize = input.size * 0.5;
         let cornerRadius = input.params.x;
         dist = sdRoundedBox(input.localPos, halfSize, cornerRadius);
-    } else if (input.shapeType == SHAPE_ARC) {
+    } else if input.shapeType == SHAPE_ARC {
         let startAngle = input.params.x;
         let endAngle = input.params.y;
         let radius = input.size.x * 0.5;
         let thickness = input.params.w;
         dist = sdArc(input.localPos, startAngle, endAngle, radius, thickness);
-    } else if (input.shapeType == SHAPE_POLYGON) {
+    } else if input.shapeType == SHAPE_POLYGON {
         let sides = u32(input.params.x);
         let radius = input.size.x * 0.5;
         dist = sdPolygon(input.localPos, sides, radius);
@@ -234,7 +234,7 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
     let alpha = 1.0 - smoothstep(-edgeWidth, edgeWidth, dist);
 
     // Discard fully transparent pixels
-    if (alpha < 0.01) {
+    if alpha < 0.01 {
         discard;
     }
 

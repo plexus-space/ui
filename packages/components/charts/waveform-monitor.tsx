@@ -245,7 +245,7 @@ const WaveformMonitorCanvas = React.forwardRef<
   HTMLCanvasElement,
   WaveformMonitorCanvasProps
 >(({ className, style, ...props }, ref) => {
-  const { width, height, canvasRef, setCanvas } = useWaveformMonitor();
+  const { width, height, canvasRef, canvas, setCanvas } = useWaveformMonitor();
 
   // Combine refs
   const combinedRef = React.useCallback(
@@ -265,10 +265,10 @@ const WaveformMonitorCanvas = React.forwardRef<
 
   // Update canvas when ref changes
   React.useEffect(() => {
-    if (canvasRef.current && !setCanvas) {
+    if (canvasRef.current && !canvas) {
       setCanvas(canvasRef.current);
     }
-  }, [canvasRef, setCanvas]);
+  }, [canvasRef, canvas, setCanvas]);
 
   return (
     <canvas
