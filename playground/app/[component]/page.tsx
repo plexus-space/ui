@@ -8,7 +8,7 @@ import { CopyButton } from "@/components/copy-button";
 import { WaveformMonitorExample } from "@/examples/waveform-monitor";
 
 const componentExamples: Record<string, React.ComponentType> = {
-  "waveform-monitor": WaveformMonitorExample,
+  "waveform-monitor": WaveformMonitorExample, // Full example with streaming
 };
 
 export default function ComponentPage() {

@@ -126,7 +126,7 @@ fn vs_main_animated(in: VertexInput, @builtin(vertex_index) vertexIndex: u32) ->
 // ============================================================================
 
 @fragment
-fn fs_main_animated(in: VertexOutput, @builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
+fn fs_main_animated(in: VertexOutput) -> @location(0) vec4f {
   // Fade in based on time
     let animProgress = clamp(uniforms.time, 0.0, 1.0);
     let alpha = smoothstep(0.0, 1.0, animProgress);

@@ -131,18 +131,6 @@ export const createInstanceData = (
     const params = shape.params ?? DEFAULT_PARAMS;
     const rotation = shape.rotation ?? 0;
 
-    // Debug log first 3 shapes
-    if (i < 3) {
-      console.log(`[2DShape] Shape #${i}:`, {
-        type: ShapeType[shape.type],
-        position: shape.position,
-        size: shape.size,
-        rotation,
-        color,
-        params,
-      });
-    }
-
     // ShapeInstance layout (64 bytes) - must match WGSL struct alignment:
     // position: vec2f (offset 0, 8 bytes)
     // size: vec2f (offset 8, 8 bytes)
@@ -169,8 +157,6 @@ export const createInstanceData = (
     data[idx++] = params[2]; // params.z (offset 56)
     data[idx++] = params[3]; // params.w (offset 60)
   }
-
-  console.log(`[2DShape] Created instance data for ${shapes.length} shapes, ${data.length} floats (${data.byteLength} bytes)`);
 
   return data;
 };
@@ -310,14 +296,13 @@ export const createPipeline = (
 
   // Check for shader compilation errors
   shaderModule.getCompilationInfo().then((info) => {
-    if (info.messages.length > 0) {
-      console.error("[2DShape] Shader compilation messages:");
+    if (info.messages.some((m) => m.type === 'error')) {
+      console.error("[2DShape] Shader compilation errors:");
       info.messages.forEach((msg) => {
-        const severity = msg.type === 'error' ? '❌' : msg.type === 'warning' ? '⚠️' : 'ℹ️';
-        console.log(`${severity} Line ${msg.lineNum}: ${msg.message}`);
+        if (msg.type === 'error') {
+          console.error(`  Line ${msg.lineNum}: ${msg.message}`);
+        }
       });
-    } else {
-      console.log("[2DShape] Shader compiled successfully");
     }
   });
 
@@ -400,10 +385,7 @@ export const updateShapes = (
   state: RendererState,
   shapes: ReadonlyArray<Shape>
 ): RendererState => {
-  console.log("[2DShape] updateShapes called with", shapes.length, "shapes");
-
   if (shapes.length === 0) {
-    console.log("[2DShape] No shapes, clearing bind group");
     return {
       ...state,
       shapeCount: 0,
@@ -413,7 +395,6 @@ export const updateShapes = (
 
   // Create uniform buffer
   const uniformData = createUniformData(state.config);
-  console.log("[2DShape] Uniform data:", uniformData);
 
   const [buffers1, uniformBuffer] = state.buffers.create(
     "uniforms",
@@ -423,7 +404,6 @@ export const updateShapes = (
       label: "2D Shape Uniform Buffer",
     }
   );
-  console.log("[2DShape] Uniform buffer created:", uniformBuffer);
 
   // Create instance data
   const instanceData = createInstanceData(shapes);
@@ -435,7 +415,6 @@ export const updateShapes = (
       label: "2D Shape Instance Buffer",
     }
   );
-  console.log("[2DShape] Instance buffer created:", instanceBuffer);
 
   // Create bind group
   const bindGroup = state.device.createBindGroup({
@@ -446,7 +425,6 @@ export const updateShapes = (
       { binding: 1, resource: { buffer: instanceBuffer } },
     ],
   });
-  console.log("[2DShape] Bind group created");
 
   return {
     ...state,
@@ -460,19 +438,8 @@ export const updateShapes = (
 
 export const render = (state: RendererState): void => {
   if (!state.bindGroup || state.shapeCount === 0) {
-    console.log("[2DShape] Render skipped:", {
-      hasBindGroup: !!state.bindGroup,
-      shapeCount: state.shapeCount,
-    });
     return;
   }
-
-  console.log("[2DShape] Rendering:", {
-    shapeCount: state.shapeCount,
-    hasBindGroup: !!state.bindGroup,
-    hasUniformBuffer: !!state.uniformBuffer,
-    hasInstanceBuffer: !!state.instanceBuffer,
-  });
 
   try {
     const textureView = state.context.getCurrentTexture().createView();
@@ -498,15 +465,16 @@ export const render = (state: RendererState): void => {
     renderPass.end();
 
     state.device.queue.submit([commandEncoder.finish()]);
-    console.log("[2DShape] Frame submitted");
   } catch (error) {
-    console.error("2D Shape render error:", error);
+    console.error("[2DShape] Render error:", error);
     throw error;
   }
 };
 
 export const destroy = (state: RendererState): void => {
   state.buffers.destroyAll();
+  // NOTE: Do NOT destroy device - it's a shared singleton managed by device.ts
+  // Destroying it here would break all other components using the same device
 };
 
 // ============================================================================
@@ -596,7 +564,6 @@ export const WebGPU2DRenderer: React.FC<WebGPU2DRendererProps> = React.memo(
     // Handle ready
     React.useEffect(() => {
       if (isReady) {
-        console.log("WebGPU 2D Renderer initialized");
         onReady?.();
       }
     }, [isReady, onReady]);

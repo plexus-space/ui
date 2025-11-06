@@ -203,7 +203,12 @@ async function initializeDevice(
     });
 
     device.addEventListener("uncapturederror", (event) => {
-      console.error("WebGPU uncaptured error:", event.error);
+      console.error("WebGPU uncaptured error:", {
+        error: event.error,
+        message: event.error?.message,
+        type: event.error?.constructor?.name,
+        fullError: JSON.stringify(event.error, null, 2)
+      });
     });
 
     // Create canvas context if canvas provided

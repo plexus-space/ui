@@ -159,14 +159,29 @@ export const createUniformData = (
 // Pipeline Creation
 // ============================================================================
 
-export const createRenderPipeline = (
+export const createRenderPipeline = async (
   device: GPUDevice,
   format: GPUTextureFormat
-): GPURenderPipeline => {
+): Promise<GPURenderPipeline> => {
   const shaderModule = device.createShaderModule({
     label: "Line Shader",
     code: lineShader,
   });
+
+  // Check for shader compilation errors
+  const compilationInfo = await shaderModule.getCompilationInfo();
+  if (compilationInfo.messages.length > 0) {
+    for (const message of compilationInfo.messages) {
+      if (message.type === "error") {
+        console.error(
+          `[LineRenderer] Shader error (line ${message.lineNum}): ${message.message}`
+        );
+      }
+    }
+    if (compilationInfo.messages.some((m) => m.type === "error")) {
+      throw new Error("Shader compilation failed");
+    }
+  }
 
   const bindGroupLayout = device.createBindGroupLayout({
     label: "Uniforms Bind Group Layout",
@@ -279,7 +294,7 @@ export const createRenderer = async (
 
   // Create pipelines
   const format = navigator.gpu.getPreferredCanvasFormat();
-  const pipeline = createRenderPipeline(device, format);
+  const pipeline = await createRenderPipeline(device, format);
   const decimationPipeline = config.enableDecimation
     ? createDecimationPipeline(device)
     : undefined;
@@ -361,7 +376,7 @@ export const updateData = (
   };
 };
 
-export const render = (state: RendererState, time: number = 1.0): void => {
+export const render = (state: RendererState, _time: number = 1.0): void => {
   if (!state.vertexBuffer || !state.bindGroup) return;
 
   // Get current texture
@@ -397,7 +412,8 @@ export const render = (state: RendererState, time: number = 1.0): void => {
 
 export const destroy = (state: RendererState): void => {
   state.buffers.destroyAll();
-  state.device.destroy();
+  // NOTE: Do NOT destroy device - it's a shared singleton managed by device.ts
+  // Destroying it here would break all other components using the same device
 };
 
 // ============================================================================
@@ -417,15 +433,18 @@ export const useWebGPURenderer = (
     if (!canvas) return;
 
     let mounted = true;
+    let currentState: RendererState | null = null;
 
     const init = async () => {
       try {
         const renderer = await createRenderer(canvas, config);
         if (mounted) {
+          currentState = renderer;
           setState(renderer);
           setIsReady(true);
         }
       } catch (err) {
+        console.error("[LineRenderer] Error:", err);
         if (mounted) {
           setError(err as Error);
         }
@@ -436,8 +455,8 @@ export const useWebGPURenderer = (
 
     return () => {
       mounted = false;
-      if (state) {
-        destroy(state);
+      if (currentState) {
+        destroy(currentState);
       }
     };
   }, [canvas]);
@@ -498,13 +517,17 @@ export const WebGPULineRenderer: React.FC<WebGPULineRendererProps> = React.memo(
     }, [isReady, onReady]);
 
     // Update data when points or settings change
+    // Use ref to avoid including state in deps (causes infinite loop)
+    const stateRef = React.useRef(state);
+    stateRef.current = state;
+
     React.useEffect(() => {
-      if (!state || !isReady) return;
+      if (!stateRef.current || !isReady) return;
 
       const domain = calculateDomain(points, xDomain, yDomain);
-      const newState = updateData(state, points, color, domain);
+      const newState = updateData(stateRef.current, points, color, domain);
       setState(newState);
-    }, [state, isReady, points, color, xDomain, yDomain]);
+    }, [isReady, points, color, xDomain, yDomain]);
 
     // Render loop
     React.useEffect(() => {
