@@ -11,7 +11,6 @@ import { CopyButton } from "@/components/copy-button";
  * Converts component-id to PascalCase + "Examples"
  */
 function loadExampleComponent(componentId: string): React.ComponentType | null {
-  // Convert kebab-case to PascalCase + "Examples"
   const exportName =
     componentId
       .split("-")
