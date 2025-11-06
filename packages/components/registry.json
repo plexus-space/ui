@@ -30,9 +30,6 @@
       "dependencies": [
         "react"
       ],
-      "devDependencies": [
-        "@webgpu/types"
-      ],
       "registryDependencies": [
         "lib"
       ],
@@ -74,9 +71,6 @@
       "dependencies": [
         "react"
       ],
-      "devDependencies": [
-        "@webgpu/types"
-      ],
       "registryDependencies": [
         "lib"
       ],
@@ -97,9 +91,6 @@
       ],
       "dependencies": [
         "react"
-      ],
-      "devDependencies": [
-        "@webgpu/types"
       ],
       "registryDependencies": [
         "lib"
