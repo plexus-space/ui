@@ -1,6 +1,5 @@
 /**
- * Utility function for conditionally joining class names
+ * @deprecated Import from lib/utils instead
+ * This file is kept for backwards compatibility only
  */
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
+export * from "./lib/utils";

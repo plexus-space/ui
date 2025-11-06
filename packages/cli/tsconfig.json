@@ -8,8 +8,9 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     "types": ["node"],
-    "noEmit": false
+    "noEmit": false,
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../components/registry.json"],
   "exclude": ["node_modules", "dist"]
 }

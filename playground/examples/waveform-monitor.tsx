@@ -4,13 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   WaveformMonitor,
   type WaveformTrace,
-} from "@plexusui/components/waveform-monitor";
-import { WaveformMonitorMetrics } from "@plexusui/components/waveform-monitor-metrics";
+} from "@plexusui/components/charts/waveform-monitor";
 import { ComponentPreview } from "@/components/component-preview";
-import {
-  ApiReferenceTable,
-  type ApiProp,
-} from "@/components/api-reference-table";
+import { ApiReferenceTable } from "@/components/api-reference-table";
+import { waveformMonitorApiProps } from "./api/waveform-monitor";
 
 // ============================================================================
 // Simulated Data Generators
@@ -106,7 +103,6 @@ const generateSensorPoint = (
 
 // Example code string for the code tab
 const BASIC_EXAMPLE_CODE = `import { WaveformMonitor } from "@/components/waveform-monitor";
-import { WaveformMonitorMetrics } from "@/components/waveform-monitor-metrics";
 
 function VitalSignsMonitor() {
   const [traces, setTraces] = useState([
@@ -126,15 +122,13 @@ function VitalSignsMonitor() {
   }, []);
 
   return (
-    <div className="relative">
-      <WaveformMonitor
-        width={800}
-        height={400}
-        traces={traces}
-        className="border rounded-lg"
-      />
-      <WaveformMonitorMetrics traces={traces} />
-    </div>
+    <WaveformMonitor.Root width={800} height={400} traces={traces}>
+      <WaveformMonitor.Container className="border rounded-lg">
+        <WaveformMonitor.Canvas />
+        <WaveformMonitor.Traces />
+        <WaveformMonitor.Metrics />
+      </WaveformMonitor.Container>
+    </WaveformMonitor.Root>
   );
 }`;
 
@@ -162,86 +156,7 @@ function SignalAnalysis() {
   );
 }`;
 
-// API Reference Data
-const API_PROPS: ApiProp[] = [
-  {
-    name: "width",
-    type: "number",
-    default: "required",
-    description: "Canvas width in pixels",
-  },
-  {
-    name: "height",
-    type: "number",
-    default: "required",
-    description: "Canvas height in pixels",
-  },
-  {
-    name: "traces",
-    type: "WaveformTrace[]",
-    default: "required",
-    description:
-      "Array of traces: { id: string, data: [x,y][], color?: [r,g,b], label?: string }",
-  },
-  {
-    name: "xDomain",
-    type: "[min, max]",
-    default: "auto",
-    description:
-      "X-axis range. Auto-calculated if omitted",
-  },
-  {
-    name: "yDomain",
-    type: "[min, max]",
-    default: "auto",
-    description:
-      "Y-axis range. Auto-calculated if omitted",
-  },
-  {
-    name: "margin",
-    type: "{ top, right, bottom, left }",
-    default: "{ 40, 40, 60, 70 }",
-    description: "Plot margins in pixels",
-  },
-  {
-    name: "backgroundColor",
-    type: "[r, g, b, a]",
-    default: "[0.05, 0.05, 0.08, 1.0]",
-    description: "Background as RGBA (0-1 range)",
-  },
-  {
-    name: "onReady",
-    type: "() => void",
-    default: "-",
-    description: "Called when renderer ready",
-  },
-  {
-    name: "onError",
-    type: "(error: Error) => void",
-    default: "-",
-    description: "Called on errors",
-  },
-  {
-    name: "className",
-    type: "string",
-    default: "-",
-    description: "CSS class for container",
-  },
-  {
-    name: "style",
-    type: "CSSProperties",
-    default: "-",
-    description: "Inline styles for container",
-  },
-  {
-    name: "...props",
-    type: "HTMLAttributes",
-    default: "-",
-    description: "All standard div props (onClick, onMouseMove, etc.)",
-  },
-];
-
-export const WaveformMonitorExample: React.FC = () => {
+export const WaveformMonitorExamples: React.FC = () => {
   const [traces, setTraces] = useState<WaveformTrace[]>([
     { id: "ecg", data: [], label: "ECG" },
     { id: "spo2", data: [], label: "SpO2" },
@@ -323,13 +238,18 @@ export const WaveformMonitorExample: React.FC = () => {
           <div className="w-full">
             <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4">
               <div className="relative">
-                <WaveformMonitor
+                <WaveformMonitor.Root
                   width={800}
                   height={400}
                   traces={traces}
                   backgroundColor={[0.05, 0.05, 0.08, 1.0]}
-                />
-                <WaveformMonitorMetrics traces={traces} />
+                >
+                  <WaveformMonitor.Container>
+                    <WaveformMonitor.Canvas />
+                    <WaveformMonitor.Traces />
+                    <WaveformMonitor.Metrics />
+                  </WaveformMonitor.Container>
+                </WaveformMonitor.Root>
               </div>
             </div>
           </div>
@@ -341,7 +261,7 @@ export const WaveformMonitorExample: React.FC = () => {
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           WaveformMonitor is a primitive component. Compose with WaveformMonitorMetrics or build your own overlays.
         </p>
-        <ApiReferenceTable props={API_PROPS} />
+        <ApiReferenceTable props={waveformMonitorApiProps} />
       </div>
     </div>
   );

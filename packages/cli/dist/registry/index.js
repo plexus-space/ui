@@ -1,50 +1,68 @@
-const BASE_URL = "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components";
-export const registry = {
-    // ============================================================================
-    // Shared Library (Foundation - no dependencies)
-    // ============================================================================
-    lib: {
-        name: "lib",
-        type: "components:lib",
-        description: "Shared utility functions, constants, helpers, and theme system",
-        files: [`${BASE_URL}/lib/plexusui-utils.ts`, `${BASE_URL}/lib/index.ts`],
-        dependencies: ["react"],
-        category: "lib",
-    },
-    // ============================================================================
-    // Chart Components
-    // ============================================================================
-    "line-chart": {
-        name: "line-chart",
-        type: "components:chart",
-        description: "Multi-series line chart with WebGPU acceleration for large datasets (1M+ points @ 60fps)",
-        files: [
-            `${BASE_URL}/line-chart.tsx`,
-            `${BASE_URL}/chart-legend.tsx`,
-            `${BASE_URL}/chart-tooltip.tsx`,
-        ],
-        dependencies: ["react"],
-        registryDependencies: ["lib"],
-        category: "charts",
-    },
-};
-export function getComponent(name) {
-    const component = registry[name];
-    // CLI only returns free tier components
-    if (component && component.tier === "pro") {
-        return undefined;
+import registryData from "../../../components/registry.json" assert { type: "json" };
+import * as path from "path";
+import { fileURLToPath } from "url";
+/**
+ * Base URL for downloading components from GitHub
+ * Can be overridden with PLEXUSUI_REGISTRY_URL environment variable
+ */
+export const BASE_URL = process.env.PLEXUSUI_REGISTRY_URL ||
+    "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components";
+/**
+ * Check if we're running in the monorepo (for local development)
+ * If so, we can copy files directly from the file system
+ */
+export function isMonorepo() {
+    try {
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const componentsPath = path.resolve(__dirname, "../../../components");
+        const fs = require("fs");
+        return fs.existsSync(componentsPath);
     }
-    return component;
+    catch {
+        return false;
+    }
+}
+/**
+ * Get local components path (only valid in monorepo)
+ */
+export function getLocalComponentsPath() {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    return path.resolve(__dirname, "../../../components");
+}
+/**
+ * Convert registry data to Registry type
+ * Does NOT prepend URLs - that happens at download time
+ */
+function loadRegistry(data) {
+    const registry = {};
+    for (const [key, component] of Object.entries(data.components)) {
+        registry[key] = component;
+    }
+    return registry;
+}
+/**
+ * Get file URL for downloading (prepends BASE_URL)
+ * Use this at download time, not at registry load time
+ */
+export function getFileUrl(filePath) {
+    return `${BASE_URL}/${filePath}`;
+}
+/**
+ * Get local file path (for monorepo development)
+ */
+export function getLocalFilePath(filePath) {
+    return path.join(getLocalComponentsPath(), filePath);
+}
+// Load registry from the single source of truth (registry.json)
+export const registry = loadRegistry(registryData);
+export function getComponent(name) {
+    return registry[name];
 }
 export function getAllComponents() {
-    // CLI only returns free tier components
-    return Object.values(registry).filter((c) => c.tier !== "pro");
+    return Object.values(registry);
 }
 export function getComponentsByCategory(category) {
-    // CLI only returns free tier components
-    return Object.values(registry).filter((c) => c.category === category && c.tier !== "pro");
-}
-// Internal function for playground - returns all components including pro
-export function getAllComponentsInternal() {
-    return Object.values(registry);
+    return Object.values(registry).filter((c) => c.category === category);
 }

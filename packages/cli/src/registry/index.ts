@@ -1,63 +1,81 @@
-import { Registry } from "./schema.js";
+import { Registry, ComponentConfig } from "./schema.js";
+import registryData from "../../../components/registry.json" assert { type: "json" };
+import * as path from "path";
+import { fileURLToPath } from "url";
 
-const BASE_URL =
+/**
+ * Base URL for downloading components from GitHub
+ * Can be overridden with PLEXUSUI_REGISTRY_URL environment variable
+ */
+export const BASE_URL =
+  process.env.PLEXUSUI_REGISTRY_URL ||
   "https://raw.githubusercontent.com/plexus-space/ui/main/packages/components";
 
-export const registry: Registry = {
-  // ============================================================================
-  // Shared Library (Foundation - no dependencies)
-  // ============================================================================
-  lib: {
-    name: "lib",
-    type: "components:lib",
-    description:
-      "Shared utility functions, constants, helpers, and theme system",
-    files: [`${BASE_URL}/lib/plexusui-utils.ts`, `${BASE_URL}/lib/index.ts`],
-    dependencies: ["react"],
-    category: "lib",
-  },
-
-  // ============================================================================
-  // Chart Components
-  // ============================================================================
-  "line-chart": {
-    name: "line-chart",
-    type: "components:chart",
-    description:
-      "Multi-series line chart with WebGPU acceleration for large datasets (1M+ points @ 60fps)",
-    files: [
-      `${BASE_URL}/line-chart.tsx`,
-      `${BASE_URL}/chart-legend.tsx`,
-      `${BASE_URL}/chart-tooltip.tsx`,
-    ],
-    dependencies: ["react"],
-    registryDependencies: ["lib"],
-    category: "charts",
-  },
-};
-
-export function getComponent(name: string) {
-  const component = registry[name];
-  // CLI only returns free tier components
-  if (component && component.tier === "pro") {
-    return undefined;
+/**
+ * Check if we're running in the monorepo (for local development)
+ * If so, we can copy files directly from the file system
+ */
+export function isMonorepo(): boolean {
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const componentsPath = path.resolve(__dirname, "../../../components");
+    const fs = require("fs");
+    return fs.existsSync(componentsPath);
+  } catch {
+    return false;
   }
-  return component;
 }
 
-export function getAllComponents() {
-  // CLI only returns free tier components
-  return Object.values(registry).filter((c) => c.tier !== "pro");
+/**
+ * Get local components path (only valid in monorepo)
+ */
+export function getLocalComponentsPath(): string {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  return path.resolve(__dirname, "../../../components");
 }
 
-export function getComponentsByCategory(category: string) {
-  // CLI only returns free tier components
-  return Object.values(registry).filter(
-    (c) => c.category === category && c.tier !== "pro"
-  );
+/**
+ * Convert registry data to Registry type
+ * Does NOT prepend URLs - that happens at download time
+ */
+function loadRegistry(data: any): Registry {
+  const registry: Registry = {};
+
+  for (const [key, component] of Object.entries(data.components)) {
+    registry[key] = component as ComponentConfig;
+  }
+
+  return registry;
 }
 
-// Internal function for playground - returns all components including pro
-export function getAllComponentsInternal() {
+/**
+ * Get file URL for downloading (prepends BASE_URL)
+ * Use this at download time, not at registry load time
+ */
+export function getFileUrl(filePath: string): string {
+  return `${BASE_URL}/${filePath}`;
+}
+
+/**
+ * Get local file path (for monorepo development)
+ */
+export function getLocalFilePath(filePath: string): string {
+  return path.join(getLocalComponentsPath(), filePath);
+}
+
+// Load registry from the single source of truth (registry.json)
+export const registry: Registry = loadRegistry(registryData);
+
+export function getComponent(name: string): ComponentConfig | undefined {
+  return registry[name];
+}
+
+export function getAllComponents(): ComponentConfig[] {
   return Object.values(registry);
+}
+
+export function getComponentsByCategory(category: string): ComponentConfig[] {
+  return Object.values(registry).filter((c) => c.category === category);
 }

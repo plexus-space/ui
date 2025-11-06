@@ -4,7 +4,11 @@ import ora from "ora";
 import * as fs from "fs-extra";
 import * as path from "path";
 import https from "https";
-import { registry, getComponent } from "../registry/index.js";
+import { execSync } from "child_process";
+import { registry, getComponent, isMonorepo, getLocalFilePath, getFileUrl } from "../registry/index.js";
+/**
+ * Download file from URL
+ */
 async function downloadFile(url) {
     return new Promise((resolve, reject) => {
         https
@@ -35,6 +39,71 @@ async function downloadFile(url) {
         })
             .on("error", reject);
     });
+}
+/**
+ * Get file content - either from local file system (monorepo) or download from URL
+ */
+async function getFileContent(filePath) {
+    if (isMonorepo()) {
+        const localPath = getLocalFilePath(filePath);
+        return await fs.readFile(localPath, "utf-8");
+    }
+    else {
+        const url = getFileUrl(filePath);
+        return await downloadFile(url);
+    }
+}
+/**
+ * Check which dependencies are already installed
+ */
+async function getInstalledDependencies() {
+    const cwd = process.cwd();
+    const packageJsonPath = path.join(cwd, "package.json");
+    if (!(await fs.pathExists(packageJsonPath))) {
+        return new Set();
+    }
+    try {
+        const packageJson = await fs.readJson(packageJsonPath);
+        const installed = new Set();
+        // Check both dependencies and devDependencies
+        if (packageJson.dependencies) {
+            Object.keys(packageJson.dependencies).forEach(dep => installed.add(dep));
+        }
+        if (packageJson.devDependencies) {
+            Object.keys(packageJson.devDependencies).forEach(dep => installed.add(dep));
+        }
+        return installed;
+    }
+    catch {
+        return new Set();
+    }
+}
+/**
+ * Install npm dependencies
+ */
+async function installDependencies(deps, devDeps) {
+    const cwd = process.cwd();
+    try {
+        if (deps.length > 0) {
+            console.log(chalk.dim("\n📦 Installing dependencies..."));
+            execSync(`npm install ${deps.join(" ")}`, {
+                cwd,
+                stdio: "inherit",
+            });
+        }
+        if (devDeps.length > 0) {
+            console.log(chalk.dim("\n📦 Installing dev dependencies..."));
+            execSync(`npm install -D ${devDeps.join(" ")}`, {
+                cwd,
+                stdio: "inherit",
+            });
+        }
+    }
+    catch (error) {
+        throw new Error(`Failed to install dependencies. Please run manually:\n` +
+            (deps.length > 0 ? `  npm install ${deps.join(" ")}\n` : "") +
+            (devDeps.length > 0 ? `  npm install -D ${devDeps.join(" ")}` : ""));
+    }
 }
 async function detectProjectStructure() {
     const cwd = process.cwd();
@@ -136,6 +205,7 @@ export async function add(components) {
         // Download and save each component
         const installedComponents = [];
         const skippedComponents = [];
+        const failedComponents = [];
         for (const component of allComponentsToInstall) {
             const config = getComponent(component);
             if (!config)
@@ -148,24 +218,39 @@ export async function add(components) {
             }
             spinner.text = `Adding ${component}...`;
             try {
-                // Download all files for this component
-                for (const fileUrl of config.files) {
-                    const content = await downloadFile(fileUrl);
-                    // Extract filename from URL
-                    const filename = fileUrl.split("/").pop();
-                    // Determine destination path
+                // Download or copy all files for this component
+                for (const filePath of config.files) {
+                    const content = await getFileContent(filePath);
+                    // Extract filename and directory structure from path
+                    const filename = path.basename(filePath);
+                    const dirname = path.dirname(filePath);
+                    // Determine destination path based on source structure
                     let destPath;
-                    if (fileUrl.includes("/lib/")) {
-                        // Library files - put in lib folder
+                    if (dirname.includes("lib")) {
+                        // Library files - preserve lib folder structure
                         const libDir = path.join(componentsDir, "lib");
                         await fs.ensureDir(libDir);
                         destPath = path.join(libDir, filename);
                     }
-                    else if (fileUrl.includes("/primitives/")) {
-                        // Primitive component - put in primitives folder
+                    else if (dirname.includes("primitives")) {
+                        // Primitive component - preserve primitives folder structure
                         const primitivesDir = path.join(componentsDir, "primitives");
                         await fs.ensureDir(primitivesDir);
-                        destPath = path.join(primitivesDir, filename);
+                        // Handle shaders subdirectory if present
+                        if (dirname.includes("shaders")) {
+                            const shadersDir = path.join(primitivesDir, "shaders");
+                            await fs.ensureDir(shadersDir);
+                            destPath = path.join(shadersDir, filename);
+                        }
+                        else {
+                            destPath = path.join(primitivesDir, filename);
+                        }
+                    }
+                    else if (dirname.includes("charts")) {
+                        // Chart component - preserve charts folder structure
+                        const chartsDir = path.join(componentsDir, "charts");
+                        await fs.ensureDir(chartsDir);
+                        destPath = path.join(chartsDir, filename);
                     }
                     else {
                         // Regular component - put at root
@@ -176,11 +261,20 @@ export async function add(components) {
                 installedComponents.push(component);
             }
             catch (err) {
-                spinner.warn(`Failed to download ${component}`);
-                console.error(chalk.dim(`  Error: ${err instanceof Error ? err.message : "Unknown error"}`));
+                const errorMessage = err instanceof Error ? err.message : "Unknown error";
+                failedComponents.push({ name: component, error: errorMessage });
             }
         }
-        spinner.succeed(chalk.green("Components added!"));
+        // Show completion status
+        if (failedComponents.length === 0) {
+            spinner.succeed(chalk.green("Components added!"));
+        }
+        else if (installedComponents.length > 0) {
+            spinner.warn(chalk.yellow("Some components failed to install"));
+        }
+        else {
+            spinner.fail(chalk.red("All components failed to install"));
+        }
         // Collect all unique dependencies
         const allDeps = new Set();
         const allDevDeps = new Set();
@@ -205,15 +299,58 @@ export async function add(components) {
                 console.log(chalk.yellow(`   • ${c}`));
             });
         }
-        if (allDeps.size > 0) {
-            console.log(chalk.dim("\n📦 Install dependencies:"));
-            console.log(chalk.cyan(`   npm install ${Array.from(allDeps).join(" ")}\n`));
+        if (failedComponents.length > 0) {
+            console.log(chalk.red("\n❌ Failed components:"));
+            failedComponents.forEach(({ name, error }) => {
+                console.log(chalk.red(`   • ${name}: ${error}`));
+            });
+            // Exit with error code if all components failed
+            if (installedComponents.length === 0) {
+                process.exit(1);
+            }
         }
-        if (allDevDeps.size > 0) {
-            console.log(chalk.dim("📦 Install dev dependencies:"));
-            console.log(chalk.cyan(`   npm install -D ${Array.from(allDevDeps).join(" ")}\n`));
+        // Check what's already installed
+        const installedDeps = await getInstalledDependencies();
+        const missingDeps = Array.from(allDeps).filter(dep => !installedDeps.has(dep));
+        const missingDevDeps = Array.from(allDevDeps).filter(dep => !installedDeps.has(dep));
+        // Install missing dependencies
+        if (missingDeps.length > 0 || missingDevDeps.length > 0) {
+            console.log(chalk.dim("\n📦 Required dependencies:"));
+            if (missingDeps.length > 0) {
+                console.log(chalk.yellow(`   ${missingDeps.join(", ")}`));
+            }
+            if (missingDevDeps.length > 0) {
+                console.log(chalk.yellow(`   ${missingDevDeps.join(", ")} (dev)`));
+            }
+            const shouldInstall = await prompts({
+                type: "confirm",
+                name: "value",
+                message: "Install missing dependencies automatically?",
+                initial: true,
+            });
+            if (shouldInstall.value) {
+                try {
+                    await installDependencies(missingDeps, missingDevDeps);
+                    console.log(chalk.green("\n✅ Dependencies installed successfully!"));
+                }
+                catch (error) {
+                    console.log(chalk.yellow("\n⚠️  " + (error instanceof Error ? error.message : "Unknown error")));
+                }
+            }
+            else {
+                console.log(chalk.dim("\n📦 To install dependencies manually, run:"));
+                if (missingDeps.length > 0) {
+                    console.log(chalk.cyan(`   npm install ${missingDeps.join(" ")}`));
+                }
+                if (missingDevDeps.length > 0) {
+                    console.log(chalk.cyan(`   npm install -D ${missingDevDeps.join(" ")}`));
+                }
+            }
         }
-        console.log(chalk.dim("🎨 Import and use:"));
+        else {
+            console.log(chalk.green("\n✅ All dependencies already installed!"));
+        }
+        console.log(chalk.dim("\n🎨 Import and use:"));
         components.forEach((c) => {
             const componentName = c
                 .split("-")

@@ -1,3 +1,11 @@
+/**
+ * Component metadata for playground
+ * Loaded from the single source of truth: packages/components/registry.json
+ */
+
+import registryData from "@plexusui/components/registry.json";
+import { getChartsFromRegistry } from "@plexusui/components/lib/registry-utils";
+
 export type ComponentTier = "free" | "pro";
 
 export interface Component {
@@ -9,14 +17,20 @@ export interface Component {
   tier?: ComponentTier;
 }
 
-export const components: Component[] = [
-  {
-    id: "waveform-monitor",
-    name: "Waveform Monitor",
-    category: "Charts",
-    tier: "free",
-    description:
-      "High-performance multi-trace waveform display for real-time sensor data. Perfect for medical vitals (ECG, SpO2), aerospace telemetry, and defense applications. Renders 10,000+ points per trace at 60fps using WebGPU acceleration.",
-    textures: [],
-  },
-];
+/**
+ * Transform registry components into playground format
+ */
+function transformToPlaygroundFormat(metadata: ReturnType<typeof getChartsFromRegistry>): Component[] {
+  return metadata.map(component => ({
+    id: component.id,
+    name: component.displayName || component.name,
+    category: component.category.charAt(0).toUpperCase() + component.category.slice(1),
+    description: component.description,
+    textures: component.textures || [],
+    tier: component.tier || "free",
+  }));
+}
+
+export const components: Component[] = transformToPlaygroundFormat(
+  getChartsFromRegistry(registryData)
+);

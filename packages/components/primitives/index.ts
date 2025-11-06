@@ -5,7 +5,7 @@
 export {
   WebGPULineRenderer,
   type WebGPULineRendererProps,
-} from "./webgpu/line-renderer";
+} from "./line-renderer";
 
 /**
  * WebGPU Device Manager
@@ -20,7 +20,7 @@ export {
   type WebGPUDeviceInfo,
   type WebGPUDeviceOptions,
   type WebGPUSupportLevel,
-} from "./webgpu/device";
+} from "./device";
 
 /**
  * WebGPU Buffer Manager
@@ -34,7 +34,7 @@ export {
   readBuffer,
   type BufferOptions,
   type BufferMetadata,
-} from "./webgpu/buffer-manager";
+} from "./buffer-manager";
 
 /**
  * WebGPU Point Cloud - TRUE GPU rendering
@@ -45,7 +45,7 @@ export {
   WebGPUPointCloud,
   type WebGPUPointCloudProps,
   type Point,
-} from "./webgpu/point-cloud";
+} from "./point-cloud";
 
 /**
  * MSDF Text Renderer - WORKING GPU-accelerated MSDF text rendering
@@ -60,7 +60,7 @@ export {
   MsdfTextRenderer,
   type MsdfTextRendererProps,
   type TextLabel as MsdfTextLabel,
-} from "./webgpu/msdf-text-renderer";
+} from "./msdf-text-renderer";
 
 /**
  * WebGPU 2D Shape Renderer - TRUE GPU-accelerated 2D shapes with SDF anti-aliasing
@@ -90,7 +90,7 @@ export {
   createPolygon,
   type WebGPU2DRendererProps,
   type Shape,
-} from "./webgpu/shape-2d-renderer";
+} from "./shape-2d-renderer";
 
 /**
  * Validation

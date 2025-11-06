@@ -9,20 +9,17 @@ export default function Home() {
       <div className="mb-16">
         <div className="flex items-center gap-4 mb-4">
           <h1 className="text-5xl text-foreground">
-            The foundation for all future human-computer interaction for
-            physical systems.
+            Simplifying human-computer interaction for hardware.
           </h1>
         </div>
 
         <p className="max-w-3xl text-lg text-zinc-600 dark:text-zinc-400 mb-8">
           A primitive-first, WebGPU-powered component library for medical,
-          aerospace, defense, and autonomous systems. Built for real-time
-          sensor fusion, HUD interfaces, and mission-critical visualization.
+          aerospace, defense, and robotic systems.
         </p>
       </div>
-      {/* TODO amazing demo here */}
 
-      {/* <div className="mb-12 flex flex-col gap-2">
+      <div className="mb-12 flex flex-col gap-2">
         <h1 className="text-4xl mb-4">Documentation</h1>
         <p className="text-zinc-600  dark:text-zinc-400 mb-4">
           Install cli and use it to add components to your project - get all the
@@ -41,10 +38,10 @@ export default function Home() {
             <pre className="text-sm font-geist-mono text-emerald-600 dark:text-emerald-400">
               npx @plexusui/cli add hud
             </pre>
-            <CopyButton hideText copyText={`npx @plexusui/cli hud`} />
+            <CopyButton hideText copyText={`npx @plexusui/cli add hud`} />
           </div>
         </div>
-      </div> */}
+      </div>
 
       <Footer />
     </div>
