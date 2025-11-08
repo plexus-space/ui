@@ -4,14 +4,14 @@ export interface ComponentConfig {
   name: string;
   version?: string;
   displayName?: string;
-  type: "components:ui" | "components:primitive" | "components:chart" | "components:lib" | "infrastructure";
+  type: string;
   description?: string;
   files: string[];
   dependencies?: string[];
   devDependencies?: string[];
   registryDependencies?: string[];
-  category?: "3d" | "charts" | "primitives" | "orbital" | "lib" | "foundation";
-  tier?: ComponentTier; // defaults to "free"
+  category?: string;
+  tier?: ComponentTier;
   textures?: string[];
 }
 

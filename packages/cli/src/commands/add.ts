@@ -3,55 +3,24 @@ import chalk from "chalk";
 import ora from "ora";
 import * as fs from "fs-extra";
 import * as path from "path";
-import https from "https";
-import { execSync } from "child_process";
 import {
   registry,
   getComponent,
   getLib,
   isMonorepo,
   getLocalFilePath,
-  getFileUrl
+  getFileUrl,
 } from "../registry/index.js";
-
-/**
- * Download file from URL
- */
-async function downloadFile(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    https
-      .get(url, (res) => {
-        if (res.statusCode === 302 || res.statusCode === 301) {
-          // Follow redirect
-          https.get(res.headers.location!, (res2) => {
-            if (res2.statusCode !== 200) {
-              reject(
-                new Error(
-                  `Failed to download: ${res2.statusCode} ${res2.statusMessage}`
-                )
-              );
-              return;
-            }
-            let data = "";
-            res2.on("data", (chunk) => (data += chunk));
-            res2.on("end", () => resolve(data));
-            res2.on("error", reject);
-          });
-        } else if (res.statusCode !== 200) {
-          reject(
-            new Error(`Failed to download: ${res.statusCode} ${res.statusMessage}`)
-          );
-          return;
-        } else {
-          let data = "";
-          res.on("data", (chunk) => (data += chunk));
-          res.on("end", () => resolve(data));
-          res.on("error", reject);
-        }
-      })
-      .on("error", reject);
-  });
-}
+import {
+  loadConfig,
+  detectProjectStructure,
+  downloadFile,
+  getComponentDestinationPath,
+  getComponentSubdirectory,
+  getInstalledDependencies,
+  installDependencies,
+  transformImports,
+} from "../utils/index.js";
 
 /**
  * Get file content - either from local file system (monorepo) or download from URL
@@ -64,158 +33,6 @@ async function getFileContent(filePath: string): Promise<string> {
     const url = getFileUrl(filePath);
     return await downloadFile(url);
   }
-}
-
-/**
- * Check which dependencies are already installed
- */
-async function getInstalledDependencies(): Promise<Set<string>> {
-  const cwd = process.cwd();
-  const packageJsonPath = path.join(cwd, "package.json");
-
-  if (!(await fs.pathExists(packageJsonPath))) {
-    return new Set();
-  }
-
-  try {
-    const packageJson = await fs.readJson(packageJsonPath);
-    const installed = new Set<string>();
-
-    // Check both dependencies and devDependencies
-    if (packageJson.dependencies) {
-      Object.keys(packageJson.dependencies).forEach(dep => installed.add(dep));
-    }
-    if (packageJson.devDependencies) {
-      Object.keys(packageJson.devDependencies).forEach(dep => installed.add(dep));
-    }
-
-    return installed;
-  } catch {
-    return new Set();
-  }
-}
-
-/**
- * Install npm dependencies
- */
-async function installDependencies(
-  deps: string[],
-  devDeps: string[]
-): Promise<void> {
-  const cwd = process.cwd();
-
-  try {
-    if (deps.length > 0) {
-      console.log(chalk.dim("\n📦 Installing dependencies..."));
-      execSync(`npm install ${deps.join(" ")}`, {
-        cwd,
-        stdio: "inherit",
-      });
-    }
-
-    if (devDeps.length > 0) {
-      console.log(chalk.dim("\n📦 Installing dev dependencies..."));
-      execSync(`npm install -D ${devDeps.join(" ")}`, {
-        cwd,
-        stdio: "inherit",
-      });
-    }
-  } catch (error) {
-    throw new Error(
-      `Failed to install dependencies. Please run manually:\n` +
-      (deps.length > 0 ? `  npm install ${deps.join(" ")}\n` : "") +
-      (devDeps.length > 0 ? `  npm install -D ${devDeps.join(" ")}` : "")
-    );
-  }
-}
-
-interface PlexusConfig {
-  $schema?: string;
-  style: string;
-  tsx: boolean;
-  aliases: {
-    components: string;
-    utils: string;
-    plexusui: string;
-  };
-  resolvedPaths: {
-    components: string;
-    plexusui: string;
-  };
-}
-
-/**
- * Load plexusui.config.json
- */
-async function loadConfig(): Promise<PlexusConfig | null> {
-  const cwd = process.cwd();
-  const configPath = path.join(cwd, "plexusui.config.json");
-
-  if (await fs.pathExists(configPath)) {
-    try {
-      return await fs.readJson(configPath);
-    } catch (error) {
-      console.log(chalk.yellow("⚠️  Failed to parse plexusui.config.json"));
-      return null;
-    }
-  }
-
-  return null;
-}
-
-async function detectProjectStructure(): Promise<{
-  componentsDir: string;
-  srcDir: string;
-}> {
-  const cwd = process.cwd();
-
-  // First, try to load config
-  const config = await loadConfig();
-  if (config?.resolvedPaths?.plexusui) {
-    return {
-      componentsDir: config.resolvedPaths.plexusui,
-      srcDir: path.dirname(config.resolvedPaths.components),
-    };
-  }
-
-  // Fallback to detection
-  // Check for app/components directory (Next.js app router)
-  if (await fs.pathExists(path.join(cwd, "app"))) {
-    return {
-      componentsDir: path.join(cwd, "components", "plexusui"),
-      srcDir: cwd,
-    };
-  }
-
-  // Check for src/app directory (Next.js app router with src)
-  if (await fs.pathExists(path.join(cwd, "src", "app"))) {
-    return {
-      componentsDir: path.join(cwd, "src", "components", "plexusui"),
-      srcDir: path.join(cwd, "src"),
-    };
-  }
-
-  // Check for src/components directory (Next.js/React app)
-  if (await fs.pathExists(path.join(cwd, "src", "components"))) {
-    return {
-      componentsDir: path.join(cwd, "src", "components", "plexusui"),
-      srcDir: path.join(cwd, "src"),
-    };
-  }
-
-  // Check for components directory (some Next.js setups)
-  if (await fs.pathExists(path.join(cwd, "components"))) {
-    return {
-      componentsDir: path.join(cwd, "components", "plexusui"),
-      srcDir: cwd,
-    };
-  }
-
-  // Default: create components directory (app router style)
-  return {
-    componentsDir: path.join(cwd, "components", "plexusui"),
-    srcDir: cwd,
-  };
 }
 
 export async function add(components: string[]) {
@@ -262,8 +79,9 @@ export async function add(components: string[]) {
   const spinner = ora("Setting up components...").start();
 
   try {
-    // Detect project structure
+    // Detect project structure and load config
     const { componentsDir } = await detectProjectStructure();
+    const plexusConfig = await loadConfig();
 
     // Create components directory
     await fs.ensureDir(componentsDir);
@@ -293,35 +111,13 @@ export async function add(components: string[]) {
 
     spinner.text = "Downloading components...";
 
-    // Check if lib already exists
-    const libUtilsPath = path.join(componentsDir, "lib", "utils.ts");
-    const libExists = await fs.pathExists(libUtilsPath);
-
-    // Always install lib infrastructure if not present
-    if (!libExists) {
-      const libConfig = getLib();
-      if (libConfig) {
-        allComponentsToInstall.add("lib");
-      }
-    }
-
     // Download and save each component
     const installedComponents: string[] = [];
     const skippedComponents: string[] = [];
     const failedComponents: Array<{ name: string; error: string }> = [];
 
     for (const component of allComponentsToInstall) {
-      let config = getComponent(component);
-
-      // Handle lib specially - it's infrastructure, not a component
-      if (component === "lib") {
-        config = getLib();
-        if (libExists) {
-          spinner.text = `Skipping lib (already exists)...`;
-          skippedComponents.push("lib");
-          continue;
-        }
-      }
+      const config = component === "lib" ? getLib() : getComponent(component);
 
       if (!config) continue;
 
@@ -330,48 +126,25 @@ export async function add(components: string[]) {
       try {
         // Download or copy all files for this component
         for (const filePath of config.files) {
-          const content = await getFileContent(filePath);
+          let content = await getFileContent(filePath);
 
-          // Extract filename and directory structure from path
-          const filename = path.basename(filePath);
-          const dirname = path.dirname(filePath);
+          // Transform imports to use configured aliases for better tree-shaking
+          content = transformImports(content, plexusConfig);
 
-          // Determine destination path based on source structure
-          let destPath: string;
+          // Determine destination path and ensure subdirectory exists
+          const destPath = getComponentDestinationPath(filePath, componentsDir);
+          const subdir = getComponentSubdirectory(filePath, componentsDir);
 
-          if (dirname.includes("lib")) {
-            // Library files - preserve lib folder structure
-            const libDir = path.join(componentsDir, "lib");
-            await fs.ensureDir(libDir);
-            destPath = path.join(libDir, filename);
-          } else if (dirname.includes("primitives")) {
-            // Primitive component - preserve primitives folder structure
-            const primitivesDir = path.join(componentsDir, "primitives");
-            await fs.ensureDir(primitivesDir);
-
-            // Handle shaders subdirectory if present
-            if (dirname.includes("shaders")) {
-              const shadersDir = path.join(primitivesDir, "shaders");
-              await fs.ensureDir(shadersDir);
-              destPath = path.join(shadersDir, filename);
-            } else {
-              destPath = path.join(primitivesDir, filename);
-            }
-          } else if (dirname.includes("charts")) {
-            // Chart component - preserve charts folder structure
-            const chartsDir = path.join(componentsDir, "charts");
-            await fs.ensureDir(chartsDir);
-            destPath = path.join(chartsDir, filename);
-          } else {
-            // Regular component - put at root
-            destPath = path.join(componentsDir, filename);
+          if (subdir) {
+            await fs.ensureDir(subdir);
           }
 
           await fs.outputFile(destPath, content);
         }
         installedComponents.push(component);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
         failedComponents.push({ name: component, error: errorMessage });
       }
     }
@@ -404,7 +177,11 @@ export async function add(components: string[]) {
     console.log(chalk.dim("📦 Installed components:"));
     installedComponents.forEach((c) => {
       const config = getComponent(c);
-      console.log(chalk.cyan(`   • ${c}${config?.description ? ` - ${config.description}` : ""}`));
+      console.log(
+        chalk.cyan(
+          `   • ${c}${config?.description ? ` - ${config.description}` : ""}`
+        )
+      );
     });
 
     if (skippedComponents.length > 0) {
@@ -428,8 +205,12 @@ export async function add(components: string[]) {
 
     // Check what's already installed
     const installedDeps = await getInstalledDependencies();
-    const missingDeps = Array.from(allDeps).filter(dep => !installedDeps.has(dep));
-    const missingDevDeps = Array.from(allDevDeps).filter(dep => !installedDeps.has(dep));
+    const missingDeps = Array.from(allDeps).filter(
+      (dep) => !installedDeps.has(dep)
+    );
+    const missingDevDeps = Array.from(allDevDeps).filter(
+      (dep) => !installedDeps.has(dep)
+    );
 
     // Install missing dependencies
     if (missingDeps.length > 0 || missingDevDeps.length > 0) {
@@ -454,7 +235,12 @@ export async function add(components: string[]) {
           await installDependencies(missingDeps, missingDevDeps);
           console.log(chalk.green("\n✅ Dependencies installed successfully!"));
         } catch (error) {
-          console.log(chalk.yellow("\n⚠️  " + (error instanceof Error ? error.message : "Unknown error")));
+          console.log(
+            chalk.yellow(
+              "\n⚠️  " +
+                (error instanceof Error ? error.message : "Unknown error")
+            )
+          );
         }
       } else {
         console.log(chalk.dim("\n📦 To install dependencies manually, run:"));
@@ -462,7 +248,9 @@ export async function add(components: string[]) {
           console.log(chalk.cyan(`   npm install ${missingDeps.join(" ")}`));
         }
         if (missingDevDeps.length > 0) {
-          console.log(chalk.cyan(`   npm install -D ${missingDevDeps.join(" ")}`));
+          console.log(
+            chalk.cyan(`   npm install -D ${missingDevDeps.join(" ")}`)
+          );
         }
       }
     } else {
@@ -470,8 +258,7 @@ export async function add(components: string[]) {
     }
 
     console.log(chalk.dim("\n🎨 Import and use:"));
-    const config = await loadConfig();
-    const importAlias = config?.aliases?.plexusui || "@/components/plexusui";
+    const importAlias = plexusConfig?.aliases?.plexusui || "@/components/plexusui";
 
     components.forEach((c) => {
       const componentName = c
@@ -485,7 +272,9 @@ export async function add(components: string[]) {
   } catch (error) {
     spinner.fail("Failed to add components");
     console.error(chalk.red("\n❌ Error:"));
-    console.error(chalk.dim(error instanceof Error ? error.message : "Unknown error"));
+    console.error(
+      chalk.dim(error instanceof Error ? error.message : "Unknown error")
+    );
     if (error instanceof Error && error.stack) {
       console.error(chalk.dim("\nStack trace:"));
       console.error(chalk.dim(error.stack));

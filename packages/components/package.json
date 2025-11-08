@@ -10,9 +10,6 @@
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18",
-    "three": ">=0.160.0",
-    "@react-three/fiber": ">=8.0.0",
-    "@react-three/drei": ">=9.0.0",
     "date-fns": ">=3.0.0",
     "date-fns-tz": ">=3.0.0"
   },
@@ -20,8 +17,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@webgpu/types": "^0.1.65",
-    "typescript": "^5.4.5",
-    "vite": "^5.0.0",
-    "@vitejs/plugin-react": "^4.0.0"
+    "typescript": "^5.4.5"
   }
 }

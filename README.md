@@ -12,15 +12,6 @@ A primitive-first, WebGPU-powered component library for medical, aerospace, defe
 
 **Primitive-First Architecture:** You get the core WebGPU primitives and control the data pipeline. Maximum performance for deep-tech use cases. No black-box abstractions.
 
-## Features
-
-- **High-Performance Primitives:**
-
-  - `WebGPULineRenderer` - 1M+ points @ 60fps
-  - `WebGPUPointCloud` - 100k+ points @ 60fps (LiDAR, sensor data)
-  - `MsfdTextRender` - GPU-accelerated text rendering (coming soon)
-  - `WebGPUFFT` - Real-time FFT compute shaders (coming soon)
-
 ## Installation
 
 ```bash

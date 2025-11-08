@@ -4,72 +4,7 @@ import ora from "ora";
 import { execSync } from "child_process";
 import * as fs from "fs-extra";
 import * as path from "path";
-
-interface PlexusConfig {
-  $schema: string;
-  style: "default" | "minimal" | "space";
-  tsx: boolean;
-  aliases: {
-    components: string;
-    utils: string;
-    plexusui: string;
-  };
-  resolvedPaths: {
-    components: string;
-    plexusui: string;
-  };
-}
-
-async function detectProjectStructure(): Promise<{
-  componentsDir: string;
-  srcDir: string;
-  hasSrc: boolean;
-}> {
-  const cwd = process.cwd();
-
-  // Check for src/app directory (Next.js app router with src)
-  if (await fs.pathExists(path.join(cwd, "src", "app"))) {
-    return {
-      componentsDir: path.join(cwd, "src", "components"),
-      srcDir: path.join(cwd, "src"),
-      hasSrc: true,
-    };
-  }
-
-  // Check for app directory (Next.js app router)
-  if (await fs.pathExists(path.join(cwd, "app"))) {
-    return {
-      componentsDir: path.join(cwd, "components"),
-      srcDir: cwd,
-      hasSrc: false,
-    };
-  }
-
-  // Check for src/components directory (Next.js/React app)
-  if (await fs.pathExists(path.join(cwd, "src", "components"))) {
-    return {
-      componentsDir: path.join(cwd, "src", "components"),
-      srcDir: path.join(cwd, "src"),
-      hasSrc: true,
-    };
-  }
-
-  // Check for components directory
-  if (await fs.pathExists(path.join(cwd, "components"))) {
-    return {
-      componentsDir: path.join(cwd, "components"),
-      srcDir: cwd,
-      hasSrc: false,
-    };
-  }
-
-  // Default: assume src directory
-  return {
-    componentsDir: path.join(cwd, "src", "components"),
-    srcDir: path.join(cwd, "src"),
-    hasSrc: true,
-  };
-}
+import { detectProjectStructure, type PlexusConfig } from "../utils/index.js";
 
 export async function init() {
   const cwd = process.cwd();
@@ -213,12 +148,7 @@ export async function init() {
     if (!installDeps) {
       console.log(chalk.yellow("\nSkipped dependency installation."));
       console.log(chalk.dim("You'll need to install these manually:\n"));
-      console.log(
-        "  npm install react react-dom three @react-three/fiber @react-three/drei"
-      );
-      console.log(
-        "  npm install -D @types/react @types/react-dom @types/three\n"
-      );
+      console.log("  npm install -D @types/react @types/react-dom\n");
       console.log(chalk.green("✅ Configuration complete!"));
       console.log(chalk.dim("\nAdd components with:"));
       console.log(chalk.cyan("  npx @plexusui/cli add gantt-chart"));
@@ -228,16 +158,13 @@ export async function init() {
     const depSpinner = ora("Installing peer dependencies...").start();
 
     // Install runtime dependencies
-    execSync(
-      "npm install react react-dom three @react-three/fiber @react-three/drei",
-      {
-        stdio: "pipe",
-        cwd,
-      }
-    );
+    execSync("npm install react react-dom", {
+      stdio: "pipe",
+      cwd,
+    });
 
     // Install dev dependencies
-    execSync("npm install -D @types/react @types/react-dom @types/three", {
+    execSync("npm install -D @types/react @types/react-dom", {
       stdio: "pipe",
       cwd,
     });

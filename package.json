@@ -41,9 +41,5 @@
   "devDependencies": {
     "@biomejs/biome": "^2.3.4",
     "typescript": "^5.4.5"
-  },
-  "dependencies": {
-    "@xyflow/react": "^12.8.6",
-    "wgpu-matrix": "^3.4.0"
   }
 }

@@ -7,8 +7,7 @@
     "plexusui": "./dist/index.js"
   },
   "files": [
-    "dist",
-    "../components/registry.json"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",
@@ -18,6 +17,18 @@
   "keywords": [
     "cli",
     "aerospace",
+    "react",
+    "hardware",
+    "webGPU",
+    "robotics",
+    "automation",
+    "industrial",
+    "medical",
+    "defense",
+    "autonomous",
+    "vehicles",
+    "perception",
+    "sensor",
     "ui",
     "components",
     "plexus"

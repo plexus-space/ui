@@ -1,7 +1,7 @@
 import { useColorScheme } from "@/components/color-scheme-provider";
 import { useState } from "react";
 import { ComponentPreview } from "@/components/component-preview";
-import { GanttChart } from "@plexusui/components/charts/gantt-chart";
+import { GanttChart, type Task } from "@plexusui/components/charts/gantt-chart";
 import {
   Select,
   SelectContent,
@@ -173,7 +173,7 @@ export const GanttChartExamples = () => {
               timeWindowHours={timeWindowHours}
               startTime={baseTime}
               interactive={true}
-              onTaskClick={(task) => console.log("Clicked:", task.name)}
+              onTaskClick={(task: Task) => console.log("Clicked:", task.name)}
               variant="compact"
             >
               <div className="flex justify-end p-4 w-full">

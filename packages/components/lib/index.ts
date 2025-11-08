@@ -11,11 +11,5 @@
  * ```
  */
 
-// Export all types
-export type * from "./types";
-
 // Export all utilities
 export * from "./utils";
-
-// Export registry utilities
-export * from "./registry-utils";

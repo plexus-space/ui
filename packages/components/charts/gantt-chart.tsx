@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import { addHours, addMinutes, differenceInMinutes } from "date-fns";
-import { cn, formatInTimeZone, normalizeDate } from "../lib/utils";
-import type { CSSColor } from "../lib/types";
+import { cn, formatInTimeZone, normalizeDate, CSSColor } from "../lib/utils";
 
 // ============================================================================
 // Types

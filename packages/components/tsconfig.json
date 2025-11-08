@@ -1,28 +1,18 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "outDir": "./dist",
     "rootDir": ".",
     "jsx": "react-jsx",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "target": "es2020",
-    "lib": ["es2020", "dom", "dom.iterable"],
-    "skipLibCheck": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": false
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "noEmit": false,
+    "types": ["react", "react-dom"]
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "registry.json"
   ],
   "exclude": [
     "node_modules",
