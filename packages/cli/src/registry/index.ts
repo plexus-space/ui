@@ -1,5 +1,5 @@
 import { Registry, ComponentConfig } from "./schema.js";
-import registryData from "../../../components/registry.json" with { type: "json" };
+import registryData from "./registry.json" with { type: "json" };
 import * as path from "path";
 import { fileURLToPath } from "url";
 

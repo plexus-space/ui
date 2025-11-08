@@ -1,6 +1,6 @@
 {
   "name": "@plexusui/cli",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "CLI for adding Plexus UI aerospace components to your project",
   "type": "module",
   "bin": {
@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "cp ../components/registry.json src/registry/ && tsc",
     "dev": "tsc --watch",
     "prepublishOnly": "npm run build"
   },
