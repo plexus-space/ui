@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
 import { addHours, addMinutes, differenceInMinutes } from "date-fns";
-import { cn, formatInTimeZone, normalizeDate, CSSColor } from "../lib/utils";
+import * as React from "react";
+import { type CSSColor, cn, formatInTimeZone, normalizeDate } from "../lib/utils";
 
 // ============================================================================
 // Types
@@ -142,9 +142,7 @@ interface GanttContext {
   setZoomLevel: (level: number) => void;
   timeWindowHours: number;
   use12HourFormat: boolean;
-  setTimeRangeOffset: React.Dispatch<
-    React.SetStateAction<{ startDays: number; endDays: number }>
-  >;
+  setTimeRangeOffset: React.Dispatch<React.SetStateAction<{ startDays: number; endDays: number }>>;
   scrollToNow: () => void;
 }
 
@@ -160,10 +158,7 @@ function useGantt() {
 // Utilities
 // ============================================================================
 
-function createTimeScale(
-  domain: [Date, Date],
-  range: [number, number]
-): (date: Date) => number {
+function createTimeScale(domain: [Date, Date], range: [number, number]): (date: Date) => number {
   const [d0, d1] = domain;
   const [r0, r1] = range;
   const domainMs = d1.getTime() - d0.getTime();
@@ -193,145 +188,118 @@ interface TimelineHeaderProps {
   leftPanelWidth: number;
 }
 
-const TimelineHeader = React.memo(
-  ({ width, leftPanelWidth }: TimelineHeaderProps) => {
-    const { startTime, endTime, xScale, timezone, use12HourFormat } =
-      useGantt();
+const TimelineHeader = React.memo(({ width, leftPanelWidth }: TimelineHeaderProps) => {
+  const { startTime, endTime, xScale, timezone, use12HourFormat } = useGantt();
 
-    // Calculate pixels per hour to determine label density
-    const timelineWidth = width - leftPanelWidth;
-    const totalHours = differenceInMinutes(endTime, startTime) / 60;
-    const pixelsPerHour = timelineWidth / totalHours;
+  // Calculate pixels per hour to determine label density
+  const timelineWidth = width - leftPanelWidth;
+  const totalHours = differenceInMinutes(endTime, startTime) / 60;
+  const pixelsPerHour = timelineWidth / totalHours;
 
-    // Determine hour interval based on available space
-    // More space = show more labels, less space = show fewer labels
-    const hourInterval = React.useMemo(() => {
-      if (pixelsPerHour >= 80) return 1; // Show all hours
-      if (pixelsPerHour >= 40) return 2; // Show every 2 hours
-      if (pixelsPerHour >= 25) return 3; // Show every 3 hours
-      if (pixelsPerHour >= 20) return 4; // Show every 4 hours
-      if (pixelsPerHour >= 12) return 6; // Show every 6 hours
-      return 12; // Show every 12 hours
-    }, [pixelsPerHour]);
+  // Determine hour interval based on available space
+  // More space = show more labels, less space = show fewer labels
+  const hourInterval = React.useMemo(() => {
+    if (pixelsPerHour >= 80) return 1; // Show all hours
+    if (pixelsPerHour >= 40) return 2; // Show every 2 hours
+    if (pixelsPerHour >= 25) return 3; // Show every 3 hours
+    if (pixelsPerHour >= 20) return 4; // Show every 4 hours
+    if (pixelsPerHour >= 12) return 6; // Show every 6 hours
+    return 12; // Show every 12 hours
+  }, [pixelsPerHour]);
 
-    // Generate hour markers
-    const hours = React.useMemo(() => {
-      const result: Date[] = [];
-      let current = new Date(startTime);
+  // Generate hour markers
+  const hours = React.useMemo(() => {
+    const result: Date[] = [];
+    let current = new Date(startTime);
 
-      while (current <= endTime) {
-        result.push(new Date(current));
-        current = addHours(current, 1);
-      }
+    while (current <= endTime) {
+      result.push(new Date(current));
+      current = addHours(current, 1);
+    }
 
-      return result;
-    }, [startTime, endTime]);
+    return result;
+  }, [startTime, endTime]);
 
-    return (
-      <g>
-        {/* Header background */}
-        <rect
-          x={0}
-          y={0}
-          width={width}
-          height={40}
-          fill="currentColor"
-          opacity={0.03}
-        />
-        <line
-          x1={0}
-          y1={40}
-          x2={width}
-          y2={40}
-          stroke="currentColor"
-          strokeWidth={1}
-          opacity={0.1}
-        />
+  return (
+    <g>
+      {/* Header background */}
+      <rect x={0} y={0} width={width} height={40} fill="currentColor" opacity={0.03} />
+      <line x1={0} y1={40} x2={width} y2={40} stroke="currentColor" strokeWidth={1} opacity={0.1} />
 
-        {/* Left panel header */}
-        <text
-          x={12}
-          y={25}
-          fontSize={11}
-          fontWeight={600}
-          fill="currentColor"
-          opacity={0.5}
-        >
-          CONTACT
-        </text>
+      {/* Left panel header */}
+      <text x={12} y={25} fontSize={11} fontWeight={600} fill="currentColor" opacity={0.5}>
+        CONTACT
+      </text>
 
-        {/* Vertical divider */}
-        <line
-          x1={leftPanelWidth}
-          y1={0}
-          x2={leftPanelWidth}
-          y2={40}
-          stroke="currentColor"
-          strokeWidth={1}
-          opacity={0.1}
-        />
+      {/* Vertical divider */}
+      <line
+        x1={leftPanelWidth}
+        y1={0}
+        x2={leftPanelWidth}
+        y2={40}
+        stroke="currentColor"
+        strokeWidth={1}
+        opacity={0.1}
+      />
 
-        {/* Hour labels */}
-        {hours.map((hour, i) => {
-          const x = xScale(hour);
-          const isMidnight = hour.getHours() === 0;
-          const currentHour = hour.getHours();
+      {/* Hour labels */}
+      {hours.map((hour, i) => {
+        const x = xScale(hour);
+        const isMidnight = hour.getHours() === 0;
+        const currentHour = hour.getHours();
 
-          // Only show labels at the determined interval
-          // Always show midnight, or show if hour matches interval
-          const shouldShowLabel =
-            isMidnight || currentHour % hourInterval === 0;
+        // Only show labels at the determined interval
+        // Always show midnight, or show if hour matches interval
+        const shouldShowLabel = isMidnight || currentHour % hourInterval === 0;
 
-          if (!shouldShowLabel) return null;
+        if (!shouldShowLabel) return null;
 
-          // Format the label
-          const timeLabel = formatInTimeZone(hour, timezone, use12HourFormat);
-          const dateLabel = isMidnight
-            ? new Intl.DateTimeFormat("en-US", {
-                timeZone: timezone,
-                month: "short",
-                day: "numeric",
-              }).format(hour)
-            : null;
+        // Format the label
+        const timeLabel = formatInTimeZone(hour, timezone, use12HourFormat);
+        const dateLabel = isMidnight
+          ? new Intl.DateTimeFormat("en-US", {
+              timeZone: timezone,
+              month: "short",
+              day: "numeric",
+            }).format(hour)
+          : null;
 
-          // Adjust font sizes based on zoom level
-          const timeFontSize =
-            pixelsPerHour >= 40 ? 10 : pixelsPerHour >= 20 ? 9 : 8;
-          const dateFontSize = pixelsPerHour >= 40 ? 9 : 8;
+        // Adjust font sizes based on zoom level
+        const timeFontSize = pixelsPerHour >= 40 ? 10 : pixelsPerHour >= 20 ? 9 : 8;
+        const dateFontSize = pixelsPerHour >= 40 ? 9 : 8;
 
-          return (
-            <g key={i}>
-              {/* Date label for midnight */}
-              {dateLabel && (
-                <text
-                  x={x + 4}
-                  y={14}
-                  fontSize={dateFontSize}
-                  fontWeight={700}
-                  fill="currentColor"
-                  opacity={0.7}
-                >
-                  {dateLabel}
-                </text>
-              )}
-              {/* Time label */}
+        return (
+          <g key={i}>
+            {/* Date label for midnight */}
+            {dateLabel && (
               <text
                 x={x + 4}
-                y={dateLabel ? 32 : 25}
-                fontSize={timeFontSize}
-                fontWeight={isMidnight ? 700 : 600}
+                y={14}
+                fontSize={dateFontSize}
+                fontWeight={700}
                 fill="currentColor"
-                opacity={isMidnight ? 0.8 : 0.6}
+                opacity={0.7}
               >
-                {timeLabel}
+                {dateLabel}
               </text>
-            </g>
-          );
-        })}
-      </g>
-    );
-  }
-);
+            )}
+            {/* Time label */}
+            <text
+              x={x + 4}
+              y={dateLabel ? 32 : 25}
+              fontSize={timeFontSize}
+              fontWeight={isMidnight ? 700 : 600}
+              fill="currentColor"
+              opacity={isMidnight ? 0.8 : 0.6}
+            >
+              {timeLabel}
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
+});
 
 TimelineHeader.displayName = "TimelineHeader";
 
@@ -342,171 +310,145 @@ interface TaskRowProps {
   variant: "default" | "compact" | "detailed";
 }
 
-const TaskRow = React.memo(
-  ({ task, index, leftPanelWidth, variant }: TaskRowProps) => {
-    const {
-      rowHeight,
-      xScale,
-      hoveredTask,
-      setHoveredTask,
-      onTaskClick,
-      timezone,
-      use12HourFormat,
-    } = useGantt();
+const TaskRow = React.memo(({ task, index, leftPanelWidth, variant }: TaskRowProps) => {
+  const { rowHeight, xScale, hoveredTask, setHoveredTask, onTaskClick, timezone, use12HourFormat } =
+    useGantt();
 
-    const y = 40 + index * rowHeight;
-    const start = normalizeDate(task.start);
-    const end = normalizeDate(task.end);
-    const x1 = xScale(start);
-    const x2 = xScale(end);
-    const barWidth = Math.max(x2 - x1, 4);
-    const color = getTaskColor(task);
-    const isHovered = hoveredTask === task.id;
-    const durationMinutes = differenceInMinutes(end, start);
+  const y = 40 + index * rowHeight;
+  const start = normalizeDate(task.start);
+  const end = normalizeDate(task.end);
+  const x1 = xScale(start);
+  const x2 = xScale(end);
+  const barWidth = Math.max(x2 - x1, 4);
+  const color = getTaskColor(task);
+  const isHovered = hoveredTask === task.id;
+  const durationMinutes = differenceInMinutes(end, start);
 
-    return (
-      <g>
-        {/* Row background */}
-        <rect
-          x={0}
-          y={y}
-          width={leftPanelWidth}
-          height={rowHeight}
-          fill="currentColor"
-          opacity={isHovered ? 0.03 : 0}
-        />
-        <line
-          x1={0}
-          y1={y + rowHeight}
-          x2={leftPanelWidth}
-          y2={y + rowHeight}
-          stroke="currentColor"
-          strokeWidth={1}
-          opacity={0.05}
-        />
+  return (
+    <g>
+      {/* Row background */}
+      <rect
+        x={0}
+        y={y}
+        width={leftPanelWidth}
+        height={rowHeight}
+        fill="currentColor"
+        opacity={isHovered ? 0.03 : 0}
+      />
+      <line
+        x1={0}
+        y1={y + rowHeight}
+        x2={leftPanelWidth}
+        y2={y + rowHeight}
+        stroke="currentColor"
+        strokeWidth={1}
+        opacity={0.05}
+      />
 
-        {/* Task name */}
-        <text
-          x={12}
-          y={y + rowHeight / 2 + 4}
-          fontSize={variant === "compact" ? 11 : 12}
-          fontWeight={500}
-          fill="currentColor"
-          opacity={0.9}
-        >
-          {task.name}
+      {/* Task name */}
+      <text
+        x={12}
+        y={y + rowHeight / 2 + 4}
+        fontSize={variant === "compact" ? 11 : 12}
+        fontWeight={500}
+        fill="currentColor"
+        opacity={0.9}
+      >
+        {task.name}
+      </text>
+
+      {variant === "detailed" && task.description && (
+        <text x={12} y={y + rowHeight / 2 + 18} fontSize={10} fill="currentColor" opacity={0.5}>
+          {task.description}
         </text>
+      )}
 
-        {variant === "detailed" && task.description && (
-          <text
-            x={12}
-            y={y + rowHeight / 2 + 18}
-            fontSize={10}
-            fill="currentColor"
-            opacity={0.5}
-          >
-            {task.description}
+      {/* Task bar */}
+      <g
+        role="button"
+        tabIndex={0}
+        onMouseEnter={() => setHoveredTask(task.id)}
+        onMouseLeave={() => setHoveredTask(null)}
+        onClick={() => onTaskClick?.(task)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onTaskClick?.(task);
+          }
+        }}
+        style={{ cursor: onTaskClick ? "pointer" : "default" }}
+      >
+        {/* Bar background */}
+        <rect
+          x={x1}
+          y={y + rowHeight * 0.35}
+          width={barWidth}
+          height={rowHeight * 0.3}
+          rx={3}
+          fill={color}
+          opacity={0.2}
+        />
+
+        {/* Bar fill */}
+        <rect
+          x={x1}
+          y={y + rowHeight * 0.35}
+          width={barWidth}
+          height={rowHeight * 0.3}
+          rx={3}
+          fill={color}
+          opacity={0.8}
+        />
+
+        {/* Bar border */}
+        <rect
+          x={x1}
+          y={y + rowHeight * 0.35}
+          width={barWidth}
+          height={rowHeight * 0.3}
+          rx={3}
+          fill="none"
+          stroke={color}
+          strokeWidth={isHovered ? 2 : 1}
+        />
+
+        {/* Duration label */}
+        {barWidth > 40 && (
+          <text x={x1 + 6} y={y + rowHeight / 2 + 3} fontSize={10} fontWeight={500} fill="white">
+            {durationMinutes}m
           </text>
         )}
 
-        {/* Task bar */}
-        <g
-          onMouseEnter={() => setHoveredTask(task.id)}
-          onMouseLeave={() => setHoveredTask(null)}
-          onClick={() => onTaskClick?.(task)}
-          style={{ cursor: onTaskClick ? "pointer" : "default" }}
-        >
-          {/* Bar background */}
-          <rect
-            x={x1}
-            y={y + rowHeight * 0.35}
-            width={barWidth}
-            height={rowHeight * 0.3}
-            rx={3}
-            fill={color}
-            opacity={0.2}
-          />
-
-          {/* Bar fill */}
-          <rect
-            x={x1}
-            y={y + rowHeight * 0.35}
-            width={barWidth}
-            height={rowHeight * 0.3}
-            rx={3}
-            fill={color}
-            opacity={0.8}
-          />
-
-          {/* Bar border */}
-          <rect
-            x={x1}
-            y={y + rowHeight * 0.35}
-            width={barWidth}
-            height={rowHeight * 0.3}
-            rx={3}
-            fill="none"
-            stroke={color}
-            strokeWidth={isHovered ? 2 : 1}
-          />
-
-          {/* Duration label */}
-          {barWidth > 40 && (
-            <text
-              x={x1 + 6}
-              y={y + rowHeight / 2 + 3}
-              fontSize={10}
-              fontWeight={500}
-              fill="white"
-            >
-              {durationMinutes}m
+        {/* Tooltip on hover */}
+        {isHovered && (
+          <g>
+            {/* Tooltip background with dark fill */}
+            <rect
+              x={x1 - 4}
+              y={y - 40}
+              width={Math.max(barWidth + 8, 200)}
+              height={36}
+              rx={6}
+              fill="#000000"
+              opacity={0.9}
+              stroke="rgba(255, 255, 255, 0.2)"
+              strokeWidth={1}
+            />
+            {/* Task name */}
+            <text x={x1 + 4} y={y - 24} fontSize={11} fontWeight={600} fill="#ffffff">
+              {task.name}
             </text>
-          )}
-
-          {/* Tooltip on hover */}
-          {isHovered && (
-            <g>
-              {/* Tooltip background with dark fill */}
-              <rect
-                x={x1 - 4}
-                y={y - 40}
-                width={Math.max(barWidth + 8, 200)}
-                height={36}
-                rx={6}
-                fill="#000000"
-                opacity={0.9}
-                stroke="rgba(255, 255, 255, 0.2)"
-                strokeWidth={1}
-              />
-              {/* Task name */}
-              <text
-                x={x1 + 4}
-                y={y - 24}
-                fontSize={11}
-                fontWeight={600}
-                fill="#ffffff"
-              >
-                {task.name}
-              </text>
-              {/* Time and duration */}
-              <text
-                x={x1 + 4}
-                y={y - 12}
-                fontSize={10}
-                fill="#ffffff"
-                opacity={0.8}
-              >
-                {formatInTimeZone(start, timezone, use12HourFormat)} →{" "}
-                {formatInTimeZone(end, timezone, use12HourFormat)} (
-                {durationMinutes}m)
-              </text>
-            </g>
-          )}
-        </g>
+            {/* Time and duration */}
+            <text x={x1 + 4} y={y - 12} fontSize={10} fill="#ffffff" opacity={0.8}>
+              {formatInTimeZone(start, timezone, use12HourFormat)} →{" "}
+              {formatInTimeZone(end, timezone, use12HourFormat)} ({durationMinutes}m)
+            </text>
+          </g>
+        )}
       </g>
-    );
-  }
-);
+    </g>
+  );
+});
 
 TaskRow.displayName = "TaskRow";
 
@@ -515,78 +457,75 @@ interface GridLinesProps {
   totalHeight: number;
 }
 
-const GridLines = React.memo(
-  ({ leftPanelWidth, totalHeight }: GridLinesProps) => {
-    const { startTime, endTime, xScale, tasks, rowHeight, extendedWidth } =
-      useGantt();
+const GridLines = React.memo(({ leftPanelWidth, totalHeight }: GridLinesProps) => {
+  const { startTime, endTime, xScale, tasks, rowHeight, extendedWidth } = useGantt();
 
-    // Generate 15-minute intervals
-    const intervals = React.useMemo(() => {
-      const result: { time: Date; isHour: boolean }[] = [];
-      let current = new Date(startTime);
+  // Generate 15-minute intervals
+  const intervals = React.useMemo(() => {
+    const result: { time: Date; isHour: boolean }[] = [];
+    let current = new Date(startTime);
 
-      while (current <= endTime) {
-        result.push({
-          time: new Date(current),
-          isHour: current.getMinutes() === 0,
-        });
-        current = addMinutes(current, 15);
-      }
+    while (current <= endTime) {
+      result.push({
+        time: new Date(current),
+        isHour: current.getMinutes() === 0,
+      });
+      current = addMinutes(current, 15);
+    }
 
-      return result;
-    }, [startTime, endTime]);
+    return result;
+  }, [startTime, endTime]);
 
-    return (
-      <g>
-        {/* Vertical time grid lines */}
-        {intervals.map((interval, i) => {
-          const x = xScale(interval.time);
+  return (
+    <g>
+      {/* Vertical time grid lines */}
+      {intervals.map((interval, i) => {
+        const x = xScale(interval.time);
 
-          return (
-            <line
-              key={`v-${i}`}
-              x1={x}
-              y1={40}
-              x2={x}
-              y2={totalHeight}
-              stroke="currentColor"
-              strokeWidth={interval.isHour ? 1 : 0.5}
-              opacity={interval.isHour ? 0.1 : 0.05}
-            />
-          );
-        })}
+        return (
+          <line
+            key={`v-${i}`}
+            x1={x}
+            y1={40}
+            x2={x}
+            y2={totalHeight}
+            stroke="currentColor"
+            strokeWidth={interval.isHour ? 1 : 0.5}
+            opacity={interval.isHour ? 0.1 : 0.05}
+          />
+        );
+      })}
 
-        {/* Horizontal row divider lines */}
-        {tasks.map((_, i) => {
-          const y = 40 + (i + 1) * rowHeight;
-          return (
-            <line
-              key={`h-${i}`}
-              x1={leftPanelWidth}
-              y1={y}
-              x2={extendedWidth}
-              y2={y}
-              stroke="currentColor"
-              strokeWidth={1}
-              opacity={0.05}
-            />
-          );
-        })}
+      {/* Horizontal row divider lines */}
+      {tasks.map((_, i) => {
+        const y = 40 + (i + 1) * rowHeight;
+        return (
+          <line
+            key={`h-${i}`}
+            x1={leftPanelWidth}
+            y1={y}
+            x2={extendedWidth}
+            y2={y}
+            stroke="currentColor"
+            strokeWidth={1}
+            opacity={0.05}
+          />
+        );
+      })}
 
-        {/* Left panel vertical line */}
-        <line
-          x1={leftPanelWidth}
-          y1={40}
-          x2={leftPanelWidth}
-          y2={totalHeight}
-          stroke="currentColor"
-          strokeWidth={1}
-          opacity={0.1}
-        />
-      </g>
-    );
-  }
-);
+      {/* Left panel vertical line */}
+      <line
+        x1={leftPanelWidth}
+        y1={40}
+        x2={leftPanelWidth}
+        y2={totalHeight}
+        stroke="currentColor"
+        strokeWidth={1}
+        opacity={0.1}
+      />
+    </g>
+  );
+});
 
 GridLines.displayName = "GridLines";
 
@@ -617,9 +556,7 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
   ) => {
     const [hoveredTask, setHoveredTask] = React.useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = React.useState(1);
-    const [containerWidth, setContainerWidth] = React.useState(
-      providedWidth || 1200
-    );
+    const [containerWidth, setContainerWidth] = React.useState(providedWidth || 1200);
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
     const rootRef = React.useRef<HTMLDivElement>(null);
 
@@ -657,41 +594,35 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
     const width = containerWidth;
 
     // Layout
-    const leftPanelWidth =
-      variant === "detailed" ? 240 : variant === "compact" ? 160 : 200;
+    const leftPanelWidth = variant === "detailed" ? 240 : variant === "compact" ? 160 : 200;
     const totalHeight = 40 + tasks.length * rowHeight;
 
     // Apply zoom to time window
     const effectiveTimeWindowHours = timeWindowHours / zoomLevel;
 
     // Calculate time window with infinite scroll support
-    const { startTime, endTime, initialScrollPosition, totalScrollHours } =
-      React.useMemo(() => {
-        const now = new Date();
-        const baseStart = providedStartTime
-          ? normalizeDate(providedStartTime)
-          : now;
+    const { startTime, endTime, initialScrollPosition, totalScrollHours } = React.useMemo(() => {
+      const now = new Date();
+      const baseStart = providedStartTime ? normalizeDate(providedStartTime) : now;
 
-        // Create a scrollable timeline that expands dynamically
-        const start = addHours(baseStart, -timeRangeOffset.startDays * 24);
-        const end = addHours(baseStart, timeRangeOffset.endDays * 24);
-        const totalHours =
-          (timeRangeOffset.startDays + timeRangeOffset.endDays) * 24;
+      // Create a scrollable timeline that expands dynamically
+      const start = addHours(baseStart, -timeRangeOffset.startDays * 24);
+      const end = addHours(baseStart, timeRangeOffset.endDays * 24);
+      const totalHours = (timeRangeOffset.startDays + timeRangeOffset.endDays) * 24;
 
-        return {
-          startTime: start,
-          endTime: end,
-          initialScrollPosition: baseStart,
-          totalScrollHours: totalHours,
-        };
-      }, [providedStartTime, timeRangeOffset]);
+      return {
+        startTime: start,
+        endTime: end,
+        initialScrollPosition: baseStart,
+        totalScrollHours: totalHours,
+      };
+    }, [providedStartTime, timeRangeOffset]);
 
     const pixelsPerHour = (width - leftPanelWidth) / effectiveTimeWindowHours;
     const extendedWidth = leftPanelWidth + totalScrollHours * pixelsPerHour;
 
     const xScale = React.useMemo(
-      () =>
-        createTimeScale([startTime, endTime], [leftPanelWidth, extendedWidth]),
+      () => createTimeScale([startTime, endTime], [leftPanelWidth, extendedWidth]),
       [startTime, endTime, leftPanelWidth, extendedWidth]
     );
 
@@ -757,7 +688,6 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
         zoomLevel,
         effectiveTimeWindowHours,
         use12HourFormat,
-        setTimeRangeOffset,
         scrollToNow,
       ]
     );
@@ -800,28 +730,27 @@ export type GanttChartContainerProps = React.HTMLAttributes<HTMLDivElement>;
 /**
  * Container component - wraps the scrollable SVG content with border and rounded corners
  */
-const GanttChartContainer = React.forwardRef<
-  HTMLDivElement,
-  GanttChartContainerProps
->(({ className, style, children, ...props }, ref) => {
-  return (
-    <div
-      ref={ref}
-      className={cn("gantt-chart-container", className)}
-      style={{
-        position: "relative",
-        width: "100%",
-        borderRadius: "8px",
-        border: "1px solid rgba(0, 0, 0, 0.1)",
-        overflow: "hidden",
-        ...style,
-      }}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-});
+const GanttChartContainer = React.forwardRef<HTMLDivElement, GanttChartContainerProps>(
+  ({ className, style, children, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn("gantt-chart-container", className)}
+        style={{
+          position: "relative",
+          width: "100%",
+          borderRadius: "8px",
+          border: "1px solid rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
+          ...style,
+        }}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
 
 GanttChartContainer.displayName = "GanttChart.Container";
 
@@ -834,167 +763,170 @@ export type GanttChartViewportProps = React.SVGProps<SVGSVGElement>;
 /**
  * Viewport component - handles horizontal scrolling and contains the SVG timeline
  */
-const GanttChartViewport = React.forwardRef<
-  SVGSVGElement,
-  GanttChartViewportProps
->(({ className, children, ...props }, ref) => {
-  const {
-    scrollContainerRef,
-    extendedWidth,
-    totalHeight,
-    xScale,
-    leftPanelWidth,
-    timeWindowHours,
-    setTimeRangeOffset,
-  } = useGantt();
+const GanttChartViewport = React.forwardRef<SVGSVGElement, GanttChartViewportProps>(
+  ({ className, children, ...props }, ref) => {
+    const {
+      scrollContainerRef,
+      extendedWidth,
+      totalHeight,
+      xScale,
+      leftPanelWidth,
+      timeWindowHours,
+      setTimeRangeOffset,
+    } = useGantt();
 
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [startX, setStartX] = React.useState(0);
-  const [scrollLeft, setScrollLeft] = React.useState(0);
-  const hasInitialized = React.useRef(false);
+    const [isDragging, setIsDragging] = React.useState(false);
+    const [startX, setStartX] = React.useState(0);
+    const [scrollLeft, setScrollLeft] = React.useState(0);
+    const hasInitialized = React.useRef(false);
 
-  // Set initial scroll position to show "now" with ~1 hour of history visible
-  React.useEffect(() => {
-    if (!scrollContainerRef.current || hasInitialized.current) return;
+    // Set initial scroll position to show "now" with ~1 hour of history visible
+    React.useEffect(() => {
+      if (!scrollContainerRef.current || hasInitialized.current) return;
 
-    const container = scrollContainerRef.current;
-    const viewportWidth = container.clientWidth - leftPanelWidth;
+      const container = scrollContainerRef.current;
+      const viewportWidth = container.clientWidth - leftPanelWidth;
 
-    // Calculate the pixel width for 1 hour of time
-    const oneHourInPixels = viewportWidth / timeWindowHours;
+      // Calculate the pixel width for 1 hour of time
+      const oneHourInPixels = viewportWidth / timeWindowHours;
 
-    // Always scroll to the actual current time, not initialScrollPosition
-    const actualNow = new Date();
-    const nowPosition = xScale(actualNow);
-    const scrollPosition = nowPosition - leftPanelWidth - oneHourInPixels;
+      // Always scroll to the actual current time, not initialScrollPosition
+      const actualNow = new Date();
+      const nowPosition = xScale(actualNow);
+      const scrollPosition = nowPosition - leftPanelWidth - oneHourInPixels;
 
-    container.scrollTo({
-      left: Math.max(0, scrollPosition),
-      behavior: "auto",
-    });
+      container.scrollTo({
+        left: Math.max(0, scrollPosition),
+        behavior: "auto",
+      });
 
-    hasInitialized.current = true;
-  }, [xScale, leftPanelWidth, timeWindowHours]);
+      hasInitialized.current = true;
+    }, [xScale, leftPanelWidth, timeWindowHours, scrollContainerRef.current]);
 
-  // Infinite scroll detection
-  React.useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+    // Infinite scroll detection
+    React.useEffect(() => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
 
-    let isExpanding = false;
+      let isExpanding = false;
 
-    const handleScroll = () => {
-      if (isExpanding) return;
+      const handleScroll = () => {
+        if (isExpanding) return;
 
-      const scrollPosition = container.scrollLeft;
-      const maxScroll = container.scrollWidth - container.clientWidth;
-      const threshold = container.clientWidth; // Expand when within 1 viewport width of edge
+        const scrollPosition = container.scrollLeft;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        const threshold = container.clientWidth; // Expand when within 1 viewport width of edge
 
-      // Expand left (past)
-      if (scrollPosition < threshold) {
-        isExpanding = true;
-        const oldScrollWidth = container.scrollWidth;
+        // Expand left (past)
+        if (scrollPosition < threshold) {
+          isExpanding = true;
+          const oldScrollWidth = container.scrollWidth;
 
-        setTimeRangeOffset((prev) => {
-          // Calculate scroll adjustment before updating
-          setTimeout(() => {
-            if (container) {
-              const newScrollWidth = container.scrollWidth;
-              const addedWidth = newScrollWidth - oldScrollWidth;
-              container.scrollLeft = scrollPosition + addedWidth;
+          setTimeRangeOffset((prev) => {
+            // Calculate scroll adjustment before updating
+            setTimeout(() => {
+              if (container) {
+                const newScrollWidth = container.scrollWidth;
+                const addedWidth = newScrollWidth - oldScrollWidth;
+                container.scrollLeft = scrollPosition + addedWidth;
+                isExpanding = false;
+              }
+            }, 10);
+
+            return {
+              startDays: prev.startDays + 7, // Add 7 days to the past
+              endDays: prev.endDays,
+            };
+          });
+        }
+
+        // Expand right (future)
+        if (maxScroll - scrollPosition < threshold) {
+          isExpanding = true;
+          setTimeRangeOffset((prev) => {
+            setTimeout(() => {
               isExpanding = false;
-            }
-          }, 10);
+            }, 10);
 
-          return {
-            startDays: prev.startDays + 7, // Add 7 days to the past
-            endDays: prev.endDays,
-          };
-        });
-      }
+            return {
+              startDays: prev.startDays,
+              endDays: prev.endDays + 7, // Add 7 days to the future
+            };
+          });
+        }
+      };
 
-      // Expand right (future)
-      if (maxScroll - scrollPosition < threshold) {
-        isExpanding = true;
-        setTimeRangeOffset((prev) => {
-          setTimeout(() => {
-            isExpanding = false;
-          }, 10);
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }, [scrollContainerRef, setTimeRangeOffset]);
 
-          return {
-            startDays: prev.startDays,
-            endDays: prev.endDays + 7, // Add 7 days to the future
-          };
-        });
-      }
+    // Drag to scroll handlers
+    const handleMouseDown = (e: React.MouseEvent) => {
+      if (!scrollContainerRef.current) return;
+      setIsDragging(true);
+      setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+      setScrollLeft(scrollContainerRef.current.scrollLeft);
     };
 
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [scrollContainerRef, setTimeRangeOffset]);
+    const handleMouseLeave = () => {
+      setIsDragging(false);
+    };
 
-  // Drag to scroll handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!scrollContainerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
-  };
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
 
-  const handleMouseLeave = () => {
-    setIsDragging(false);
-  };
+    const handleMouseMove = (e: React.MouseEvent) => {
+      if (!isDragging || !scrollContainerRef.current) return;
+      e.preventDefault();
+      const x = e.pageX - scrollContainerRef.current.offsetLeft;
+      const walk = (x - startX) * 1.5; // Scroll speed multiplier
+      scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+    };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // Scroll speed multiplier
-    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  return (
-    <>
-      <style>{`
+    return (
+      <>
+        <style>{`
         .gantt-chart-viewport::-webkit-scrollbar {
           display: none;
         }
       `}</style>
-      <div
-        ref={scrollContainerRef}
-        className="gantt-chart-viewport"
-        style={{
-          overflowX: "auto",
-          overflowY: "hidden",
-          width: "100%",
-          cursor: isDragging ? "grabbing" : "grab",
-          userSelect: "none",
-          scrollbarWidth: "none" as const,
-          msOverflowStyle: "none",
-        }}
-        onMouseDown={handleMouseDown}
-        onMouseLeave={handleMouseLeave}
-        onMouseUp={handleMouseUp}
-        onMouseMove={handleMouseMove}
-      >
-        <svg
-          ref={ref}
-          width={extendedWidth}
-          height={totalHeight}
-          className={cn("gantt-chart-svg", className)}
-          style={{ display: "block" }}
-          {...props}
+        <div
+          ref={scrollContainerRef}
+          className="gantt-chart-viewport"
+          role="application"
+          aria-label="Gantt chart timeline"
+          style={{
+            overflowX: "auto",
+            overflowY: "hidden",
+            width: "100%",
+            cursor: isDragging ? "grabbing" : "grab",
+            userSelect: "none",
+            scrollbarWidth: "none" as const,
+            msOverflowStyle: "none",
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
         >
-          {children}
-        </svg>
-      </div>
-    </>
-  );
-});
+          <svg
+            ref={ref}
+            width={extendedWidth}
+            height={totalHeight}
+            className={cn("gantt-chart-svg", className)}
+            style={{ display: "block" }}
+            role="img"
+            aria-label="Gantt chart"
+            {...props}
+          >
+            {children}
+          </svg>
+        </div>
+      </>
+    );
+  }
+);
 
 GanttChartViewport.displayName = "GanttChart.Viewport";
 
@@ -1088,57 +1020,52 @@ export type GanttChartCurrentTimeProps = React.SVGProps<SVGGElement>;
  * Current time indicator component - displays a red vertical line and dot showing current time position
  * Updates every second to track real-time progress
  */
-const GanttChartCurrentTime = React.forwardRef<
-  SVGGElement,
-  GanttChartCurrentTimeProps
->(({ className, children, ...props }, ref) => {
-  const [currentTime, setCurrentTime] = React.useState<Date | null>(null);
-  const [isMounted, setIsMounted] = React.useState(false);
-  const { startTime, endTime, xScale, totalHeight } = useGantt();
+const GanttChartCurrentTime = React.forwardRef<SVGGElement, GanttChartCurrentTimeProps>(
+  ({ className, children, ...props }, ref) => {
+    const [currentTime, setCurrentTime] = React.useState<Date | null>(null);
+    const [isMounted, setIsMounted] = React.useState(false);
+    const { startTime, endTime, xScale, totalHeight } = useGantt();
 
-  // Set initial time and mounted state on client only
-  React.useEffect(() => {
-    setIsMounted(true);
-    setCurrentTime(new Date());
-
-    const interval = setInterval(() => {
+    // Set initial time and mounted state on client only
+    React.useEffect(() => {
+      setIsMounted(true);
       setCurrentTime(new Date());
-    }, 1000);
 
-    return () => clearInterval(interval);
-  }, []);
+      const interval = setInterval(() => {
+        setCurrentTime(new Date());
+      }, 1000);
 
-  // Don't render until mounted on client to avoid hydration mismatch
-  if (!isMounted || !currentTime) return null;
+      return () => clearInterval(interval);
+    }, []);
 
-  // Use raw Date object - no timezone conversion needed
-  // The xScale already handles the positioning correctly
-  const now = currentTime;
-  if (now < startTime || now > endTime) return null;
+    // Don't render until mounted on client to avoid hydration mismatch
+    if (!isMounted || !currentTime) return null;
 
-  const x = xScale(now);
+    // Use raw Date object - no timezone conversion needed
+    // The xScale already handles the positioning correctly
+    const now = currentTime;
+    if (now < startTime || now > endTime) return null;
 
-  return (
-    <g
-      ref={ref}
-      className={cn("gantt-chart-current-time", className)}
-      {...props}
-    >
-      <line
-        x1={x}
-        y1={40}
-        x2={x}
-        y2={totalHeight}
-        stroke="rgb(239, 68, 68)"
-        strokeWidth={2}
-        strokeDasharray="4,4"
-        opacity={0.7}
-      />
-      <circle cx={x} cy={25} r={4} fill="rgb(239, 68, 68)" />
-      {children}
-    </g>
-  );
-});
+    const x = xScale(now);
+
+    return (
+      <g ref={ref} className={cn("gantt-chart-current-time", className)} {...props}>
+        <line
+          x1={x}
+          y1={40}
+          x2={x}
+          y2={totalHeight}
+          stroke="rgb(239, 68, 68)"
+          strokeWidth={2}
+          strokeDasharray="4,4"
+          opacity={0.7}
+        />
+        <circle cx={x} cy={25} r={4} fill="rgb(239, 68, 68)" />
+        {children}
+      </g>
+    );
+  }
+);
 
 GanttChartCurrentTime.displayName = "GanttChart.CurrentTime";
 
@@ -1151,123 +1078,115 @@ export type GanttChartLeftPanelProps = React.HTMLAttributes<HTMLDivElement>;
 /**
  * Left panel component - sticky task names panel that remains visible during horizontal scrolling
  */
-const GanttChartLeftPanel = React.forwardRef<
-  HTMLDivElement,
-  GanttChartLeftPanelProps
->(({ className, style, children, ...props }, ref) => {
-  const { leftPanelWidth, totalHeight, tasks, rowHeight, variant } = useGantt();
+const GanttChartLeftPanel = React.forwardRef<HTMLDivElement, GanttChartLeftPanelProps>(
+  ({ className, style, children, ...props }, ref) => {
+    const { leftPanelWidth, totalHeight, tasks, rowHeight, variant } = useGantt();
 
-  return (
-    <div
-      ref={ref}
-      className={cn("gantt-chart-left-panel", className)}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: `${leftPanelWidth}px`,
-        height: `${totalHeight}px`,
-        pointerEvents: "none",
-        zIndex: 10,
-        ...style,
-      }}
-      {...props}
-    >
-      <svg width={leftPanelWidth} height={totalHeight}>
-        {/* Header background */}
-        <rect
-          x={0}
-          y={0}
-          width={leftPanelWidth}
-          height={40}
-          fill="var(--background)"
-          opacity={0.98}
-        />
-        <line
-          x1={0}
-          y1={40}
-          x2={leftPanelWidth}
-          y2={40}
-          stroke="currentColor"
-          strokeWidth={1}
-          opacity={0.1}
-        />
+    return (
+      <div
+        ref={ref}
+        className={cn("gantt-chart-left-panel", className)}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: `${leftPanelWidth}px`,
+          height: `${totalHeight}px`,
+          pointerEvents: "none",
+          zIndex: 10,
+          ...style,
+        }}
+        {...props}
+      >
+        <svg width={leftPanelWidth} height={totalHeight} role="img" aria-label="Task names panel">
+          {/* Header background */}
+          <rect
+            x={0}
+            y={0}
+            width={leftPanelWidth}
+            height={40}
+            fill="var(--background)"
+            opacity={0.98}
+          />
+          <line
+            x1={0}
+            y1={40}
+            x2={leftPanelWidth}
+            y2={40}
+            stroke="currentColor"
+            strokeWidth={1}
+            opacity={0.1}
+          />
 
-        {/* Header text */}
-        <text
-          x={12}
-          y={25}
-          fontSize={11}
-          fontWeight={600}
-          fill="currentColor"
-          opacity={0.5}
-        >
-          CONTACT
-        </text>
+          {/* Header text */}
+          <text x={12} y={25} fontSize={11} fontWeight={600} fill="currentColor" opacity={0.5}>
+            CONTACT
+          </text>
 
-        {/* Task names */}
-        {tasks.map((task, i) => {
-          const y = 40 + i * rowHeight;
-          return (
-            <g key={task.id}>
-              <rect
-                x={0}
-                y={y}
-                width={leftPanelWidth}
-                height={rowHeight}
-                fill="var(--background)"
-                opacity={0.98}
-              />
-              <line
-                x1={0}
-                y1={y + rowHeight}
-                x2={leftPanelWidth}
-                y2={y + rowHeight}
-                stroke="currentColor"
-                strokeWidth={1}
-                opacity={0.05}
-              />
-              <text
-                x={12}
-                y={y + rowHeight / 2 + 4}
-                fontSize={variant === "compact" ? 11 : 12}
-                fontWeight={500}
-                fill="currentColor"
-                opacity={0.9}
-              >
-                {task.name}
-              </text>
-
-              {variant === "detailed" && task.description && (
+          {/* Task names */}
+          {tasks.map((task, i) => {
+            const y = 40 + i * rowHeight;
+            return (
+              <g key={task.id}>
+                <rect
+                  x={0}
+                  y={y}
+                  width={leftPanelWidth}
+                  height={rowHeight}
+                  fill="var(--background)"
+                  opacity={0.98}
+                />
+                <line
+                  x1={0}
+                  y1={y + rowHeight}
+                  x2={leftPanelWidth}
+                  y2={y + rowHeight}
+                  stroke="currentColor"
+                  strokeWidth={1}
+                  opacity={0.05}
+                />
                 <text
                   x={12}
-                  y={y + rowHeight / 2 + 18}
-                  fontSize={10}
+                  y={y + rowHeight / 2 + 4}
+                  fontSize={variant === "compact" ? 11 : 12}
+                  fontWeight={500}
                   fill="currentColor"
-                  opacity={0.5}
+                  opacity={0.9}
                 >
-                  {task.description}
+                  {task.name}
                 </text>
-              )}
-            </g>
-          );
-        })}
 
-        {/* Vertical divider */}
-        <line
-          x1={leftPanelWidth}
-          y1={0}
-          x2={leftPanelWidth}
-          y2={totalHeight}
-          stroke="currentColor"
-          strokeWidth={1}
-          opacity={0.1}
-        />
-      </svg>
-      {children}
-    </div>
-  );
-});
+                {variant === "detailed" && task.description && (
+                  <text
+                    x={12}
+                    y={y + rowHeight / 2 + 18}
+                    fontSize={10}
+                    fill="currentColor"
+                    opacity={0.5}
+                  >
+                    {task.description}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {/* Vertical divider */}
+          <line
+            x1={leftPanelWidth}
+            y1={0}
+            x2={leftPanelWidth}
+            y2={totalHeight}
+            stroke="currentColor"
+            strokeWidth={1}
+            opacity={0.1}
+          />
+        </svg>
+        {children}
+      </div>
+    );
+  }
+);
 
 GanttChartLeftPanel.displayName = "GanttChart.LeftPanel";
 
@@ -1280,90 +1199,98 @@ export type GanttChartControlsProps = React.HTMLAttributes<HTMLDivElement>;
 /**
  * Controls component - provides zoom in/out buttons for adjusting the timeline view
  */
-const GanttChartControls = React.forwardRef<
-  HTMLDivElement,
-  GanttChartControlsProps
->(({ className, style, children, ...props }, ref) => {
-  const { zoomLevel, setZoomLevel, scrollToNow } = useGantt();
+const GanttChartControls = React.forwardRef<HTMLDivElement, GanttChartControlsProps>(
+  ({ className, style, children, ...props }, ref) => {
+    const { zoomLevel, setZoomLevel, scrollToNow } = useGantt();
 
-  return (
-    <div
-      ref={ref}
-      className={cn("gantt-chart-controls flex items-center gap-2", className)}
-      style={style}
-      {...props}
-    >
-      <button
-        onClick={scrollToNow}
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-800 transition-colors gap-1.5"
+    return (
+      <div
+        ref={ref}
+        className={cn("gantt-chart-controls flex items-center gap-2", className)}
+        style={style}
+        {...props}
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <button
+          type="button"
+          onClick={scrollToNow}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-800 transition-colors gap-1.5"
         >
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-        <span className="text-xs">Live</span>
-      </button>
-      <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700" />
-      <button
-        onClick={() => setZoomLevel(Math.max(0.25, zoomLevel - 0.25))}
-        disabled={zoomLevel <= 0.25}
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            role="img"
+            aria-label="Clock icon"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span className="text-xs">Live</span>
+        </button>
+        <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700" />
+        <button
+          type="button"
+          onClick={() => setZoomLevel(Math.max(0.25, zoomLevel - 0.25))}
+          disabled={zoomLevel <= 0.25}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
         >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-          <line x1="8" y1="11" x2="14" y2="11" />
-        </svg>
-      </button>
-      <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400 min-w-12 text-center">
-        {zoomLevel}x
-      </span>
-      <button
-        onClick={() => setZoomLevel(Math.min(4, zoomLevel + 0.25))}
-        disabled={zoomLevel >= 4}
-        className="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            role="img"
+            aria-label="Zoom out icon"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
+        </button>
+        <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400 min-w-12 text-center">
+          {zoomLevel}x
+        </span>
+        <button
+          type="button"
+          onClick={() => setZoomLevel(Math.min(4, zoomLevel + 0.25))}
+          disabled={zoomLevel >= 4}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
         >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-          <line x1="11" y1="8" x2="11" y2="14" />
-          <line x1="8" y1="11" x2="14" y2="11" />
-        </svg>
-      </button>
-      {children}
-    </div>
-  );
-});
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            role="img"
+            aria-label="Zoom in icon"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+            <line x1="11" y1="8" x2="11" y2="14" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
+        </button>
+        {children}
+      </div>
+    );
+  }
+);
 
 GanttChartControls.displayName = "GanttChart.Controls";
 
@@ -1375,27 +1302,26 @@ GanttChartControls.displayName = "GanttChart.Controls";
  * All-in-one Gantt chart component with default composition
  * This is the simplest way to use the component - just pass tasks!
  */
-export const GanttChart = React.forwardRef<
-  HTMLDivElement,
-  Omit<GanttChartRootProps, "children">
->((props, ref) => {
-  return (
-    <GanttChartRoot ref={ref} {...props}>
-      <div className="flex justify-end p-4 w-full">
-        <GanttChartControls />
-      </div>
-      <GanttChartContainer>
-        <GanttChartViewport>
-          <GanttChartGrid />
-          <GanttChartHeader />
-          <GanttChartTasks />
-          <GanttChartCurrentTime />
-        </GanttChartViewport>
-        <GanttChartLeftPanel />
-      </GanttChartContainer>
-    </GanttChartRoot>
-  );
-}) as typeof GanttChartRoot & {
+export const GanttChart = React.forwardRef<HTMLDivElement, Omit<GanttChartRootProps, "children">>(
+  (props, ref) => {
+    return (
+      <GanttChartRoot ref={ref} {...props}>
+        <div className="flex justify-end p-4 w-full">
+          <GanttChartControls />
+        </div>
+        <GanttChartContainer>
+          <GanttChartViewport>
+            <GanttChartGrid />
+            <GanttChartHeader />
+            <GanttChartTasks />
+            <GanttChartCurrentTime />
+          </GanttChartViewport>
+          <GanttChartLeftPanel />
+        </GanttChartContainer>
+      </GanttChartRoot>
+    );
+  }
+) as typeof GanttChartRoot & {
   Root: typeof GanttChartRoot;
   Container: typeof GanttChartContainer;
   Viewport: typeof GanttChartViewport;
@@ -1406,6 +1332,8 @@ export const GanttChart = React.forwardRef<
   LeftPanel: typeof GanttChartLeftPanel;
   Controls: typeof GanttChartControls;
 };
+
+GanttChart.displayName = "GanttChart";
 
 // Attach primitives for composition API
 GanttChart.Root = GanttChartRoot;

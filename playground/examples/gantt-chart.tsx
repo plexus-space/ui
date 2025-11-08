@@ -27,7 +27,6 @@ export const GanttChartExamples = () => {
     0
   );
 
-  // Ground station pass schedule
   const groundStationPasses = [
     {
       id: "p1",
@@ -162,8 +161,8 @@ export const GanttChartExamples = () => {
       </div>
 
       <ComponentPreview
-        title="Ground Station Pass Schedule"
-        description="Satellite contact windows with precise timing for ground station operations. Shows pass duration in minutes with 15-minute grid intervals. Use the controls above to change timezone and time window."
+        title={""}
+        description="Simple Gantt Chart with tasks and a current time indicator."
         preview={
           <div className="space-y-4">
             <GanttChart

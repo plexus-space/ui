@@ -3,7 +3,6 @@ import * as path from "path";
 
 export interface PlexusConfig {
   $schema?: string;
-  style: "default" | "minimal" | "space";
   tsx: boolean;
   aliases: {
     components: string;

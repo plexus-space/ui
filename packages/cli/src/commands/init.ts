@@ -47,29 +47,6 @@ export async function init() {
   // Prompt for configuration
   const config = await prompts([
     {
-      type: "select",
-      name: "style",
-      message: "Which style would you like to use?",
-      choices: [
-        {
-          title: "Default",
-          value: "default",
-          description: "Standard aerospace style",
-        },
-        {
-          title: "Minimal",
-          value: "minimal",
-          description: "Clean, minimal interface",
-        },
-        {
-          title: "Space",
-          value: "space",
-          description: "Space-themed dark mode",
-        },
-      ],
-      initial: 0,
-    },
-    {
       type: "confirm",
       name: "typescript",
       message: "Use TypeScript?",
@@ -83,7 +60,7 @@ export async function init() {
     },
   ]);
 
-  if (!config.style || config.componentsPath === undefined) {
+  if (config.componentsPath === undefined) {
     console.log(chalk.red("\n❌ Configuration cancelled."));
     return;
   }
@@ -105,7 +82,6 @@ export async function init() {
     // Create config object
     const plexusConfig: PlexusConfig = {
       $schema: "https://plexus.ui/schema.json",
-      style: config.style,
       tsx: config.typescript,
       aliases: {
         components: componentsAlias,

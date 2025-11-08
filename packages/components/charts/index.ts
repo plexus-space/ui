@@ -13,15 +13,15 @@
  */
 export {
   GanttChart,
-  type TaskStatus,
-  type Task,
-  type GanttChartRootProps,
   type GanttChartContainerProps,
-  type GanttChartViewportProps,
+  type GanttChartControlsProps,
+  type GanttChartCurrentTimeProps,
   type GanttChartGridProps,
   type GanttChartHeaderProps,
-  type GanttChartTasksProps,
-  type GanttChartCurrentTimeProps,
   type GanttChartLeftPanelProps,
-  type GanttChartControlsProps,
+  type GanttChartRootProps,
+  type GanttChartTasksProps,
+  type GanttChartViewportProps,
+  type Task,
+  type TaskStatus,
 } from "./gantt-chart";
