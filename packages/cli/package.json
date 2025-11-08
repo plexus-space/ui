@@ -1,6 +1,6 @@
 {
   "name": "@plexusui/cli",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "CLI for adding Plexus UI aerospace components to your project",
   "type": "module",
   "bin": {
@@ -33,11 +33,11 @@
     "components",
     "plexus"
   ],
-  "author": "",
+  "author": "Ann Schulte",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/ui-aerospace.git",
+    "url": "https://github.com/plexus-space/ui.git",
     "directory": "packages/cli"
   },
   "dependencies": {
