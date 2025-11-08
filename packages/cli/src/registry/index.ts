@@ -2,6 +2,7 @@ import { Registry, ComponentConfig } from "./schema.js";
 import registryData from "./registry.json" with { type: "json" };
 import * as path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs-extra";
 
 /**
  * Base URL for downloading components from GitHub
@@ -20,7 +21,6 @@ export function isMonorepo(): boolean {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const componentsPath = path.resolve(__dirname, "../../../components");
-    const fs = require("fs");
     return fs.existsSync(componentsPath);
   } catch {
     return false;

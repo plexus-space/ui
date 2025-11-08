@@ -1,7 +1,7 @@
 import prompts from "prompts";
 import chalk from "chalk";
 import ora from "ora";
-import * as fs from "fs-extra";
+import fs from "fs-extra";
 import { registry, getComponent, getLib, isMonorepo, getLocalFilePath, getFileUrl, } from "../registry/index.js";
 import { loadConfig, detectProjectStructure, downloadFile, getComponentDestinationPath, getComponentSubdirectory, getInstalledDependencies, installDependencies, transformImports, } from "../utils/index.js";
 /**

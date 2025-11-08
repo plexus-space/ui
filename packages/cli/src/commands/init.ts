@@ -2,7 +2,7 @@ import chalk from "chalk";
 import prompts from "prompts";
 import ora from "ora";
 import { execSync } from "child_process";
-import * as fs from "fs-extra";
+import fs from "fs-extra";
 import * as path from "path";
 import { detectProjectStructure, type PlexusConfig } from "../utils/index.js";
 

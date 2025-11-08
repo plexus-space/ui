@@ -1,7 +1,7 @@
 import prompts from "prompts";
 import chalk from "chalk";
 import ora from "ora";
-import * as fs from "fs-extra";
+import fs from "fs-extra";
 import * as path from "path";
 import {
   registry,
