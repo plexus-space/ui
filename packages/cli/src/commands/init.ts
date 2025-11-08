@@ -140,8 +140,7 @@ export async function init() {
     const { installDeps } = await prompts({
       type: "confirm",
       name: "installDeps",
-      message:
-        "Install required peer dependencies (React, Three.js, R3F, Drei)?",
+      message: "Install required peer dependencies (react and react-dom)?",
       initial: true,
     });
 

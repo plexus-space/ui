@@ -7,9 +7,7 @@
     "type": "infrastructure",
     "description": "Shared utility functions, constants, and type definitions (automatically installed)",
     "files": [
-      "lib/types.ts",
       "lib/utils.ts",
-      "lib/registry-utils.ts",
       "lib/index.ts"
     ],
     "dependencies": [],
