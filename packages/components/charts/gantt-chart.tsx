@@ -795,8 +795,7 @@ GanttChartRoot.displayName = "GanttChart.Root";
  * Props for GanttChart.Container component
  * Wraps the scrollable SVG content with proper styling
  */
-export interface GanttChartContainerProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
+export type GanttChartContainerProps = React.HTMLAttributes<HTMLDivElement>;
 
 /**
  * Container component - wraps the scrollable SVG content with border and rounded corners
@@ -830,8 +829,7 @@ GanttChartContainer.displayName = "GanttChart.Container";
  * Props for GanttChart.Viewport component
  * Handles horizontal scrolling for the timeline
  */
-export interface GanttChartViewportProps
-  extends React.SVGProps<SVGSVGElement> {}
+export type GanttChartViewportProps = React.SVGProps<SVGSVGElement>;
 
 /**
  * Viewport component - handles horizontal scrolling and contains the SVG timeline
@@ -1004,7 +1002,7 @@ GanttChartViewport.displayName = "GanttChart.Viewport";
  * Props for GanttChart.Grid component
  * Renders vertical time grid lines and horizontal row dividers
  */
-export interface GanttChartGridProps extends React.SVGProps<SVGGElement> {}
+export type GanttChartGridProps = React.SVGProps<SVGGElement>;
 
 /**
  * Grid component - renders the timeline grid with vertical time intervals and horizontal row dividers
@@ -1028,7 +1026,7 @@ GanttChartGrid.displayName = "GanttChart.Grid";
  * Props for GanttChart.Header component
  * Renders the timeline header with time labels
  */
-export interface GanttChartHeaderProps extends React.SVGProps<SVGGElement> {}
+export type GanttChartHeaderProps = React.SVGProps<SVGGElement>;
 
 /**
  * Header component - renders the timeline header with hour markers and date labels
@@ -1052,7 +1050,7 @@ GanttChartHeader.displayName = "GanttChart.Header";
  * Props for GanttChart.Tasks component
  * Renders all task bars on the timeline
  */
-export interface GanttChartTasksProps extends React.SVGProps<SVGGElement> {}
+export type GanttChartTasksProps = React.SVGProps<SVGGElement>;
 
 /**
  * Tasks component - renders all task bars with interactive hover effects and tooltips
@@ -1084,8 +1082,7 @@ GanttChartTasks.displayName = "GanttChart.Tasks";
  * Props for GanttChart.CurrentTime component
  * Displays a vertical line indicating the current time
  */
-export interface GanttChartCurrentTimeProps
-  extends React.SVGProps<SVGGElement> {}
+export type GanttChartCurrentTimeProps = React.SVGProps<SVGGElement>;
 
 /**
  * Current time indicator component - displays a red vertical line and dot showing current time position
@@ -1149,8 +1146,7 @@ GanttChartCurrentTime.displayName = "GanttChart.CurrentTime";
  * Props for GanttChart.LeftPanel component
  * Sticky panel displaying task names that doesn't scroll horizontally
  */
-export interface GanttChartLeftPanelProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
+export type GanttChartLeftPanelProps = React.HTMLAttributes<HTMLDivElement>;
 
 /**
  * Left panel component - sticky task names panel that remains visible during horizontal scrolling
@@ -1279,8 +1275,7 @@ GanttChartLeftPanel.displayName = "GanttChart.LeftPanel";
  * Props for GanttChart.Controls component
  * Displays zoom controls for adjusting the timeline view
  */
-export interface GanttChartControlsProps
-  extends React.HTMLAttributes<HTMLDivElement> {}
+export type GanttChartControlsProps = React.HTMLAttributes<HTMLDivElement>;
 
 /**
  * Controls component - provides zoom in/out buttons for adjusting the timeline view

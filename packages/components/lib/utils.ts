@@ -435,50 +435,6 @@ export const DEFAULT_COLORS: readonly RGB[] = [
 // ============================================================================
 
 /**
- * Debounce function calls
- */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-
-  return function (this: any, ...args: Parameters<T>) {
-    const context = this;
-
-    if (timeout !== null) {
-      clearTimeout(timeout);
-    }
-
-    timeout = setTimeout(() => {
-      func.apply(context, args);
-    }, wait);
-  };
-}
-
-/**
- * Throttle function calls
- */
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle: boolean = false;
-
-  return function (this: any, ...args: Parameters<T>) {
-    const context = this;
-
-    if (!inThrottle) {
-      func.apply(context, args);
-      inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    }
-  };
-}
-
-/**
  * Shared TypeScript types for Plexus UI components
  *
  * This file contains all shared type definitions to ensure consistency
@@ -796,30 +752,6 @@ export interface ComponentMetadata {
   registryDependencies?: string[];
   tier?: "free" | "pro";
   textures?: string[];
-}
-
-/**
- * Extract chart components from registry
- * Filters to only include components in the "charts" category
- */
-export function getChartsFromRegistry(registry: any): ComponentMetadata[] {
-  return Object.entries(registry.components)
-    .filter(([_, component]: [string, any]) => {
-      return component.category === "charts";
-    })
-    .map(([id, component]: [string, any]) => ({
-      id,
-      name: component.name,
-      displayName: component.displayName || component.name,
-      category: component.category,
-      description: component.description,
-      files: component.files || [],
-      dependencies: component.dependencies,
-      devDependencies: component.devDependencies,
-      registryDependencies: component.registryDependencies,
-      tier: component.tier || "free",
-      textures: component.textures || [],
-    }));
 }
 
 /**
