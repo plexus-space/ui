@@ -143,7 +143,9 @@ interface GanttContext {
   setZoomLevel: (level: number) => void;
   timeWindowHours: number;
   use12HourFormat: boolean;
-  setTimeRangeOffset: React.Dispatch<React.SetStateAction<{ startDays: number; endDays: number }>>;
+  setTimeRangeOffset: React.Dispatch<
+    React.SetStateAction<{ startDays: number; endDays: number }>
+  >;
   scrollToNow: () => void;
 }
 
@@ -284,11 +286,7 @@ const TimelineHeader = React.memo(
           if (!shouldShowLabel) return null;
 
           // Format the label
-          const timeLabel = formatInTimeZone(
-            hour,
-            timezone,
-            use12HourFormat
-          );
+          const timeLabel = formatInTimeZone(hour, timezone, use12HourFormat);
           const dateLabel = isMidnight
             ? new Intl.DateTimeFormat("en-US", {
                 timeZone: timezone,
@@ -629,7 +627,7 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
     // Infinite scroll state - track time range expansion
     const [timeRangeOffset, setTimeRangeOffset] = React.useState({
       startDays: 15, // Days before base time
-      endDays: 15    // Days after base time
+      endDays: 15, // Days after base time
     });
 
     // Observe container width for responsiveness
@@ -668,24 +666,26 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
     const effectiveTimeWindowHours = timeWindowHours / zoomLevel;
 
     // Calculate time window with infinite scroll support
-    const { startTime, endTime, initialScrollPosition, totalScrollHours } = React.useMemo(() => {
-      const now = new Date();
-      const baseStart = providedStartTime
-        ? normalizeDate(providedStartTime)
-        : now;
+    const { startTime, endTime, initialScrollPosition, totalScrollHours } =
+      React.useMemo(() => {
+        const now = new Date();
+        const baseStart = providedStartTime
+          ? normalizeDate(providedStartTime)
+          : now;
 
-      // Create a scrollable timeline that expands dynamically
-      const start = addHours(baseStart, -timeRangeOffset.startDays * 24);
-      const end = addHours(baseStart, timeRangeOffset.endDays * 24);
-      const totalHours = (timeRangeOffset.startDays + timeRangeOffset.endDays) * 24;
+        // Create a scrollable timeline that expands dynamically
+        const start = addHours(baseStart, -timeRangeOffset.startDays * 24);
+        const end = addHours(baseStart, timeRangeOffset.endDays * 24);
+        const totalHours =
+          (timeRangeOffset.startDays + timeRangeOffset.endDays) * 24;
 
-      return {
-        startTime: start,
-        endTime: end,
-        initialScrollPosition: baseStart,
-        totalScrollHours: totalHours,
-      };
-    }, [providedStartTime, timeRangeOffset]);
+        return {
+          startTime: start,
+          endTime: end,
+          initialScrollPosition: baseStart,
+          totalScrollHours: totalHours,
+        };
+      }, [providedStartTime, timeRangeOffset]);
 
     const pixelsPerHour = (width - leftPanelWidth) / effectiveTimeWindowHours;
     const extendedWidth = leftPanelWidth + totalScrollHours * pixelsPerHour;

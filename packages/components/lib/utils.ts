@@ -177,9 +177,43 @@ export function getNiceDomain(min: number, max: number): Domain2D {
 }
 
 /**
- * Calculate data domain from array of values
+ * Options for domain calculation
  */
-export function calculateDomain(values: readonly number[]): Domain2D {
+export interface DomainOptions {
+  /** Padding as a fraction of the range (default: 0.05 = 5%) */
+  padding?: number;
+  /** Minimum padding value (useful for small ranges) */
+  minPadding?: number;
+  /** Apply nice rounding to domain bounds */
+  nice?: boolean;
+}
+
+/**
+ * Calculate data domain from array of values with optional padding
+ *
+ * @param values - Array of numbers to calculate domain from
+ * @param options - Optional configuration for padding and nice bounds
+ * @returns Domain as [min, max] tuple
+ *
+ * @example
+ * ```typescript
+ * // Simple domain with 5% padding (default)
+ * const domain = calculateDomain([1, 2, 3, 4, 5]); // [0.8, 5.2]
+ *
+ * // With custom padding
+ * const domain = calculateDomain([1, 2, 3, 4, 5], { padding: 0.1 }); // [0.6, 5.4]
+ *
+ * // With minimum padding (useful for small ranges)
+ * const domain = calculateDomain([1, 1.1], { minPadding: 0.5 }); // [0.5, 1.6]
+ *
+ * // With nice rounding
+ * const domain = calculateDomain([1.3, 4.7], { nice: true }); // [1, 5]
+ * ```
+ */
+export function calculateDomain(
+  values: readonly number[],
+  options?: DomainOptions
+): Domain2D {
   if (values.length === 0) return [0, 1];
 
   const validValues = values.filter(isValidNumber);
@@ -188,9 +222,84 @@ export function calculateDomain(values: readonly number[]): Domain2D {
   const min = Math.min(...validValues);
   const max = Math.max(...validValues);
 
-  // Add 5% padding
-  const padding = (max - min) * 0.05;
-  return [min - padding, max + padding] as const;
+  // Calculate padding
+  const range = max - min;
+  const paddingFraction = options?.padding ?? 0.05;
+  const padding = Math.max(range * paddingFraction, options?.minPadding ?? 0);
+
+  const paddedMin = min - padding;
+  const paddedMax = max + padding;
+
+  // Apply nice rounding if requested
+  if (options?.nice) {
+    return getNiceDomain(paddedMin, paddedMax);
+  }
+
+  return [paddedMin, paddedMax] as const;
+}
+
+/**
+ * Calculate domain from array of 2D points
+ *
+ * @param points - Array of [x, y] points
+ * @param xDomain - Optional override for x domain
+ * @param yDomain - Optional override for y domain
+ * @param options - Optional configuration for padding
+ * @returns Object with x and y domains
+ *
+ * @example
+ * ```typescript
+ * const points = [[1, 2], [3, 4], [5, 6]];
+ * const { x, y } = calculate2DDomain(points);
+ * // x: [1, 5], y: [2, 6]
+ * ```
+ */
+export function calculate2DDomain(
+  points: ReadonlyArray<readonly [number, number]>,
+  xDomain?: readonly [number, number],
+  yDomain?: readonly [number, number],
+  options?: DomainOptions
+): { x: Domain2D; y: Domain2D } {
+  return {
+    x: xDomain || calculateDomain(points.map(p => p[0]), options),
+    y: yDomain || calculateDomain(points.map(p => p[1]), options),
+  };
+}
+
+/**
+ * Calculate domain across multiple data series
+ * Useful for multi-trace charts where you need a global domain
+ *
+ * @param dataSets - Array of data arrays
+ * @param axis - Which axis to calculate domain for (0 = x, 1 = y)
+ * @param options - Optional configuration for padding
+ * @returns Domain for the specified axis
+ *
+ * @example
+ * ```typescript
+ * const traces = [
+ *   [[1, 2], [3, 4]],
+ *   [[5, 6], [7, 8]]
+ * ];
+ * const yDomain = calculateMultiSeriesDomain(traces, 1);
+ * // [2, 8] (with padding)
+ * ```
+ */
+export function calculateMultiSeriesDomain(
+  dataSets: ReadonlyArray<ReadonlyArray<readonly [number, number]>>,
+  axis: 0 | 1,
+  options?: DomainOptions
+): Domain2D {
+  if (dataSets.length === 0) return [0, 1];
+
+  const allValues: number[] = [];
+  for (const dataSet of dataSets) {
+    for (const point of dataSet) {
+      allValues.push(point[axis]);
+    }
+  }
+
+  return calculateDomain(allValues, options);
 }
 
 // ============================================================================

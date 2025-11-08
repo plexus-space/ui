@@ -4,7 +4,7 @@
  */
 
 import registryData from "@plexusui/components/registry.json";
-import { getChartsFromRegistry } from "@plexusui/components/lib/registry-utils";
+import { getAllComponentsFromRegistry } from "@plexusui/components/lib/registry-utils";
 
 export type ComponentTier = "free" | "pro";
 
@@ -20,11 +20,14 @@ export interface Component {
 /**
  * Transform registry components into playground format
  */
-function transformToPlaygroundFormat(metadata: ReturnType<typeof getChartsFromRegistry>): Component[] {
-  return metadata.map(component => ({
+function transformToPlaygroundFormat(
+  metadata: ReturnType<typeof getAllComponentsFromRegistry>
+): Component[] {
+  return metadata.map((component) => ({
     id: component.id,
     name: component.displayName || component.name,
-    category: component.category.charAt(0).toUpperCase() + component.category.slice(1),
+    category:
+      component.category.charAt(0).toUpperCase() + component.category.slice(1),
     description: component.description,
     textures: component.textures || [],
     tier: component.tier || "free",
@@ -32,5 +35,5 @@ function transformToPlaygroundFormat(metadata: ReturnType<typeof getChartsFromRe
 }
 
 export const components: Component[] = transformToPlaygroundFormat(
-  getChartsFromRegistry(registryData)
+  getAllComponentsFromRegistry(registryData)
 );

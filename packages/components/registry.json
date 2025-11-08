@@ -9,12 +9,47 @@
     "files": [
       "lib/types.ts",
       "lib/utils.ts",
+      "lib/hooks.ts",
       "lib/index.ts"
     ],
     "dependencies": [],
     "registryDependencies": []
   },
   "components": {
+    "waveform-monitor": {
+      "name": "waveform-monitor",
+      "version": "1.0.0",
+      "displayName": "Waveform Monitor",
+      "category": "charts",
+      "type": "components:chart",
+      "description": "High-performance multi-trace waveform display for real-time sensor data with WebGPU acceleration. Renders 10,000+ points per trace at 60fps. Perfect for medical vitals (ECG, SpO2), aerospace telemetry, and defense applications.",
+      "files": [
+        "charts/waveform-monitor.tsx",
+        "primitives/unified-waveform-renderer.tsx",
+        "primitives/line-renderer.tsx",
+        "primitives/device.ts",
+        "primitives/buffer-manager.ts",
+        "primitives/webgpu-context.ts",
+        "primitives/use-webgpu-renderer.ts",
+        "primitives/use-render-loop.ts",
+        "primitives/use-lifecycle-callbacks.ts",
+        "primitives/uniform-utils.ts",
+        "primitives/wgsl.d.ts",
+        "primitives/shaders/line.wgsl",
+        "primitives/shaders/decimation.wgsl"
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [
+        "lib"
+      ],
+      "tier": "free",
+      "textures": []
+    },
     "gantt-chart": {
       "name": "gantt-chart",
       "version": "1.0.0",
@@ -28,48 +63,6 @@
       "dependencies": [
         "react",
         "date-fns"
-      ],
-      "registryDependencies": [
-        "lib"
-      ],
-      "tier": "free",
-      "textures": []
-    },
-    "msdf-text-renderer": {
-      "name": "msdf-text-renderer",
-      "version": "1.0.0",
-      "displayName": "MSDF Text Renderer",
-      "category": "primitives",
-      "type": "components:primitive",
-      "description": "Multi-channel Signed Distance Field text rendering for crisp text at any scale. WebGPU-accelerated with perfect anti-aliasing. Ideal for HUD displays, tactical interfaces, and high-resolution text rendering. Requires pre-generated MSDF font atlas.",
-      "files": [
-        "primitives/msdf-text-renderer.tsx",
-        "primitives/device.ts",
-        "primitives/shaders/msdf-text.wgsl"
-      ],
-      "dependencies": [
-        "react"
-      ],
-      "registryDependencies": [
-        "lib"
-      ],
-      "tier": "free",
-      "textures": []
-    },
-    "shape-2d-renderer": {
-      "name": "shape-2d-renderer",
-      "version": "2.0.0",
-      "displayName": "2D Shape Renderer",
-      "category": "primitives",
-      "type": "components:primitive",
-      "description": "WebGPU-accelerated 2D shape renderer with SDF-based anti-aliasing. Renders 10,000+ shapes at 60fps including lines, circles, rectangles, rounded rectangles, arcs, and polygons. Perfect for HUD interfaces, tactical displays, instrument panels, and diagramming.",
-      "files": [
-        "primitives/shape-2d-renderer.tsx",
-        "primitives/device.ts",
-        "primitives/shaders/shape-2d.wgsl"
-      ],
-      "dependencies": [
-        "react"
       ],
       "registryDependencies": [
         "lib"
