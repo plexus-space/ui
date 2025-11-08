@@ -8,30 +8,11 @@
     "description": "Shared utility functions, constants, and type definitions (automatically installed)",
     "files": [
       "lib/utils.ts",
+      "lib/timezone.ts",
       "lib/index.ts"
     ],
     "dependencies": [],
     "registryDependencies": []
   },
-  "components": {
-    "gantt-chart": {
-      "name": "gantt-chart",
-      "version": "1.0.0",
-      "displayName": "Gantt Chart",
-      "category": "charts",
-      "type": "components:chart",
-      "description": "Mission timeline and task scheduling visualization with resource allocation, priority levels, and interactive timeline views. Perfect for satellite pass planning, mission control, and operations scheduling.",
-      "files": [
-        "charts/gantt-chart.tsx"
-      ],
-      "dependencies": [
-        "react",
-        "date-fns"
-      ],
-      "registryDependencies": [
-        "lib"
-      ],
-      "tier": "free"
-    }
-  }
+  "components": {}
 }

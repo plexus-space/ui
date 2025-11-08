@@ -16,7 +16,7 @@ A primitive-first, WebGPU-powered component library for medical, aerospace, defe
 
 ```bash
 npx @plexusui/cli init
-npx @plexusui/cli add gantt-chart
+npx @plexusui/cli add chart
 ```
 
 ## Use Cases
@@ -48,16 +48,10 @@ npm test
 Plexus UI follows a **primitive-first** architecture:
 
 1. **Core WebGPU Primitives** - Low-level rendering primitives (text, shapes, particles)
-2. **Composable Components** - Built on primitives, domain-specific (HUD, sensor fusion)
+2. **Composable Components** - Built on primitives
 3. **Your Application** - Control data pipeline and rendering loop
 
 This gives you maximum performance and control for mission-critical applications.
-
-## Browser Support
-
-- **Chrome/Edge:** 113+ (WebGPU stable)
-- **Safari:** 18+ (WebGPU stable)
-- **Firefox:** Experimental (behind flag)
 
 ## License
 
@@ -65,7 +59,7 @@ MIT License - see [LICENSE](./LICENSE) for details.
 
 ## Acknowledgments
 
-Built with care for the deep-tech community. Inspired by UI design and real-time systems engineering.
+Built with care. Inspired by UI design and real-time systems engineering.
 
 ---
 

@@ -9,13 +9,6 @@
     "noEmit": false,
     "types": ["react", "react-dom"]
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "registry.json"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "registry.json"],
+  "exclude": ["node_modules", "dist"]
 }
