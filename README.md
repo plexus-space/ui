@@ -2,7 +2,7 @@
 
 > The foundation for all future human-computer interaction for physical systems.
 
-A primitive-first, WebGPU-powered component library for medical, aerospace, defense, and autonomous systems. Built for real-time sensor fusion, HUD interfaces, and mission-critical visualization.
+A primitive-first, WebGPU-powered component library for medical, aerospace, defense, and autonomous systems.
 
 ## Why Plexus UI?
 

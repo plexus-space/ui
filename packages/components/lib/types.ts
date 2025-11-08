@@ -193,7 +193,10 @@ export type OnClickCallback<T> = (item: T, event: React.MouseEvent) => void;
 /**
  * Generic hover callback with item data
  */
-export type OnHoverCallback<T> = (item: T | null, event: React.MouseEvent) => void;
+export type OnHoverCallback<T> = (
+  item: T | null,
+  event: React.MouseEvent
+) => void;
 
 // ============================================================================
 // Rendering Options
@@ -226,7 +229,12 @@ export type StyleVariant = "default" | "compact" | "detailed" | "minimal";
 /**
  * Generic status type for tasks, items, etc.
  */
-export type Status = "pending" | "in-progress" | "completed" | "blocked" | "cancelled";
+export type Status =
+  | "pending"
+  | "in-progress"
+  | "completed"
+  | "blocked"
+  | "cancelled";
 
 /**
  * Loading state
@@ -253,9 +261,9 @@ export interface ValidationResult {
  * WebGPU support level
  */
 export type WebGPUSupportLevel =
-  | "full"        // Full WebGPU support
-  | "limited"     // WebGPU available but limited
-  | "none";       // No WebGPU support
+  | "full" // Full WebGPU support
+  | "limited" // WebGPU available but limited
+  | "none"; // No WebGPU support
 
 /**
  * GPU buffer usage flags

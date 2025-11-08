@@ -10,46 +10,51 @@
       "lib/types.ts",
       "lib/utils.ts",
       "lib/hooks.ts",
+      "lib/device.ts",
+      "lib/webgpu-context.tsx",
+      "lib/webgpu-error-boundary.tsx",
+      "lib/wgsl.d.ts",
+      "lib/registry-utils.ts",
       "lib/index.ts"
     ],
     "dependencies": [],
     "registryDependencies": []
   },
-  "components": {
-    "waveform-monitor": {
-      "name": "waveform-monitor",
-      "version": "1.0.0",
-      "displayName": "Waveform Monitor",
-      "category": "charts",
-      "type": "components:chart",
-      "description": "High-performance multi-trace waveform display for real-time sensor data with WebGPU acceleration. Renders 10,000+ points per trace at 60fps. Perfect for medical vitals (ECG, SpO2), aerospace telemetry, and defense applications.",
+  "primitives": {
+    "chart": {
+      "name": "chart",
+      "version": "2.0.0",
+      "displayName": "Chart",
+      "category": "primitives",
+      "type": "primitives:chart",
+      "description": "Complete WebGPU chart system with timezone support, axes, grid, tooltip, zoom/pan. Includes LineSeries, ScatterSeries, AreaSeries components.",
       "files": [
-        "charts/waveform-monitor.tsx",
-        "primitives/unified-waveform-renderer.tsx",
-        "primitives/line-renderer.tsx",
-        "primitives/device.ts",
         "primitives/buffer-manager.ts",
-        "primitives/webgpu-context.ts",
-        "primitives/use-webgpu-renderer.ts",
-        "primitives/use-render-loop.ts",
-        "primitives/use-lifecycle-callbacks.ts",
-        "primitives/uniform-utils.ts",
-        "primitives/wgsl.d.ts",
+        "primitives/render-pipeline.ts",
+        "primitives/uniform-manager.ts",
+        "primitives/chart-container.tsx",
+        "primitives/chart-series.tsx",
+        "primitives/chart-axes.tsx",
+        "primitives/chart-grid.tsx",
+        "primitives/chart-tooltip.tsx",
+        "primitives/index.ts",
         "primitives/shaders/line.wgsl",
-        "primitives/shaders/decimation.wgsl"
+        "primitives/shaders/point.wgsl",
+        "primitives/shaders/quad.wgsl",
+        "primitives/shaders/grid.wgsl"
       ],
       "dependencies": [
-        "react"
-      ],
-      "devDependencies": [
-        "@webgpu/types"
+        "react",
+        "date-fns",
+        "date-fns-tz"
       ],
       "registryDependencies": [
         "lib"
       ],
-      "tier": "free",
-      "textures": []
-    },
+      "tier": "free"
+    }
+  },
+  "components": {
     "gantt-chart": {
       "name": "gantt-chart",
       "version": "1.0.0",
@@ -58,7 +63,8 @@
       "type": "components:chart",
       "description": "Mission timeline and task scheduling visualization with resource allocation, priority levels, and interactive timeline views. Perfect for satellite pass planning, mission control, and operations scheduling.",
       "files": [
-        "charts/gantt-chart.tsx"
+        "charts/gantt-chart.tsx",
+        "charts/index.ts"
       ],
       "dependencies": [
         "react",
@@ -67,8 +73,49 @@
       "registryDependencies": [
         "lib"
       ],
-      "tier": "free",
-      "textures": []
+      "tier": "free"
+    },
+    "time-series-chart": {
+      "name": "time-series-chart",
+      "version": "1.0.0",
+      "displayName": "Time Series Chart",
+      "category": "charts",
+      "type": "components:chart",
+      "description": "High-performance time-series chart with timezone support. Built on WebGPU for smooth rendering of thousands of data points. Perfect for telemetry, sensor data, and real-time system metrics.",
+      "files": [
+        "charts/time-series-chart.tsx",
+        "charts/index.ts"
+      ],
+      "dependencies": [
+        "react",
+        "date-fns",
+        "date-fns-tz"
+      ],
+      "registryDependencies": [
+        "lib",
+        "chart"
+      ],
+      "tier": "free"
+    },
+    "line-chart": {
+      "name": "line-chart",
+      "version": "1.0.0",
+      "displayName": "Line Chart",
+      "category": "charts",
+      "type": "components:chart",
+      "description": "Versatile chart component supporting lines, scatter points, and filled areas. Auto-scaling, interactive zoom/pan, and multi-series support. Built on WebGPU for maximum performance.",
+      "files": [
+        "charts/line-chart.tsx",
+        "charts/index.ts"
+      ],
+      "dependencies": [
+        "react"
+      ],
+      "registryDependencies": [
+        "lib",
+        "chart"
+      ],
+      "tier": "free"
     }
   }
 }
