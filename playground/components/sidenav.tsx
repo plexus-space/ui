@@ -1,17 +1,16 @@
 "use client";
-import Link from "next/link";
+
 import { components } from "@/constants/components";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Logo, SimpleLogo } from "./logo";
 import { Button } from "./ui/button";
-import { Sparkles } from "lucide-react";
 
 export const Sidenav = () => {
   const params = useParams();
   const componentId = params.component as string;
 
   const freeComponents = components.filter((comp) => comp.tier !== "pro");
-  const proComponents = components.filter((comp) => comp.tier === "pro");
+  // const proComponents = components.filter((comp) => comp.tier === "pro");
 
   return (
     <aside className="w-52 flex-shrink-0  bg-background overflow-y-auto">

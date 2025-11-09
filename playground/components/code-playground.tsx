@@ -2,17 +2,9 @@
 
 import { CopyButton } from "@/components/copy-button";
 
-interface CodePlaygroundProps {
+type CodePlaygroundProps = {
   initialCode: string;
-  language?: string;
-  title?: string;
-}
-
-import React from "react";
-
-interface CodePlaygroundProps {
-  initialCode: string;
-}
+};
 
 export default function CodePlayground({
   initialCode = ``,

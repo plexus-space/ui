@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { Lock } from "lucide-react";
 
 interface ComponentPreviewProProps {
@@ -29,6 +29,7 @@ export function ComponentPreviewPro({
       {/* Tabs */}
       <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800">
         <button
+          type="button"
           onClick={() => setActiveTab("preview")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "preview"
@@ -39,6 +40,7 @@ export function ComponentPreviewPro({
           Preview
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab("code")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "code"

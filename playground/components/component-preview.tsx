@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import CodePlayground from "./code-playground";
+import { useState } from "react";
+import CodePlayground from "@/components/code-playground";
 
 interface ComponentPreviewProps {
   preview: React.ReactNode;
@@ -30,6 +30,7 @@ export function ComponentPreview({
       {/* Tabs */}
       <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800">
         <button
+          type="button"
           onClick={() => setActiveTab("preview")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "preview"
@@ -40,6 +41,7 @@ export function ComponentPreview({
           Preview
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab("code")}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "code"
@@ -60,7 +62,7 @@ export function ComponentPreview({
         )}
         {activeTab === "code" && (
           <div className="rounded-lg overflow-hidden">
-            <CodePlayground initialCode={code} language="tsx" />
+            <CodePlayground initialCode={code} />
           </div>
         )}
       </div>

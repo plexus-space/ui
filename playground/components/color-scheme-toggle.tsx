@@ -4,7 +4,7 @@ import {
   useColorScheme,
   colorSchemes,
   ColorSchemeName,
-} from "./color-scheme-provider";
+} from "@/components/color-scheme-provider";
 import {
   Select,
   SelectContent,

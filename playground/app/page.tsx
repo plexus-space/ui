@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CopyButton } from "@/components/copy-button";
 import { Footer } from "@/components/footer";
 
@@ -41,6 +42,42 @@ export default function Home() {
             <CopyButton hideText copyText={`npx @plexusui/cli add chart`} />
           </div>
         </div>
+      </div>
+
+      <div className="mb-12 flex flex-col gap-2">
+        <h1 className="text-4xl mb-4">Live Demos</h1>
+        <p className="text-zinc-600  dark:text-zinc-400 mb-4">
+          Explore interactive examples of WebGPU-powered components
+        </p>
+        <Link
+          href="/chart-demo"
+          className="group bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md p-4 hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                WebGPU Chart System
+              </h3>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                High-performance real-time telemetry visualization with automatic downsampling
+              </p>
+            </div>
+            <svg
+              className="w-6 h-6 text-zinc-400 group-hover:text-emerald-500 transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </div>
+        </Link>
       </div>
 
       <Footer />

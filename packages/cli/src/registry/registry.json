@@ -8,6 +8,7 @@
     "description": "Shared utility functions, constants, and type definitions (automatically installed)",
     "files": [
       "lib/utils.ts",
+      "lib/timezone.ts",
       "lib/index.ts"
     ],
     "dependencies": [],

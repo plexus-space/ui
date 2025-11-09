@@ -1,7 +1,8 @@
+/** biome-ignore-all lint/a11y/noSvgWithoutTitle: <explanation> */
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export const CopyButton = ({
   copyText,
@@ -26,6 +27,7 @@ export const CopyButton = ({
       {copied ? (
         <>
           <svg
+            aria-label="Copied"
             className="w-4 h-4 text-green-400"
             fill="none"
             stroke="currentColor"
@@ -43,6 +45,7 @@ export const CopyButton = ({
       ) : (
         <>
           <svg
+            aria-label="Copy icon"
             className="w-4 h-4"
             fill="none"
             stroke="currentColor"

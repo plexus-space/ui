@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/a11y/noSvgWithoutTitle: <explanation> */
 "use client";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
