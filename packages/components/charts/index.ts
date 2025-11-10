@@ -64,9 +64,67 @@
  * ```
  */
 
-// Core container and primitives
-export { Chart, Grid, XAxis, YAxis, useChart } from "./chart-container";
-export type { ChartBounds, DataPoint, DataPoint3D } from "./chart-container";
+// Chart components
+export { LineChart } from "./line-chart";
+export type {
+  DataPoint as LineDataPoint,
+  Series as LineSeries,
+  LineChartProps,
+} from "./line-chart";
+
+export { ScatterChart } from "./scatter-chart";
+export type {
+  DataPoint as ScatterDataPoint,
+  Series as ScatterSeries,
+  ScatterChartProps,
+} from "./scatter-chart";
+
+export { BarChart } from "./bar-chart";
+export type {
+  DataPoint as BarDataPoint,
+  Series as BarSeries,
+  BarChartProps,
+} from "./bar-chart";
+
+export { AreaChart } from "./area-chart";
+export type {
+  DataPoint as AreaDataPoint,
+  Series as AreaSeries,
+  AreaChartProps,
+} from "./area-chart";
+
+export { HeatmapChart } from "./heatmap-chart";
+export type {
+  DataPoint as HeatmapDataPoint,
+  HeatmapChartProps,
+} from "./heatmap-chart";
+
+// Base chart infrastructure (reusable for all chart types)
+export {
+  ChartRoot,
+  ChartAxes,
+  ChartTooltip,
+  ChartLegend,
+  TimeSeriesControls,
+  useBaseChart,
+  BaseWebGLRenderer,
+  BaseWebGPURenderer,
+  getDomain,
+  getTicks,
+  formatValue,
+  hexToRgb,
+} from "./base-chart";
+export type {
+  Point,
+  Axis,
+  Margin,
+  HoveredPoint,
+  TooltipData,
+  TimeSeriesState,
+  BaseChartContext,
+  BaseChartRootProps,
+  RendererProps,
+} from "./base-chart";
 
 // Data utilities
 export {

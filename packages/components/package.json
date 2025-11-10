@@ -8,15 +8,19 @@
     "./*": "./*.tsx"
   },
   "peerDependencies": {
-    "react": ">=18",
-    "react-dom": ">=18",
     "date-fns": ">=3.0.0",
-    "date-fns-tz": ">=3.0.0"
+    "date-fns-tz": ">=3.0.0",
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "devDependencies": {
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@webgpu/types": "^0.1.65",
     "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^9.4.0"
   }
 }

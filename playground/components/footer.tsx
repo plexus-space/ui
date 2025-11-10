@@ -8,8 +8,7 @@ export const Footer = () => {
         <Link href="https://annschulte.me" className="underline">
           Ann
         </Link>{" "}
-        . Open source <span className="font-mono text-xs">(mostly)</span> and
-        customizable.
+        . Open source and customizable.
       </p>
     </footer>
   );

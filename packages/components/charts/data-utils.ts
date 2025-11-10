@@ -7,7 +7,20 @@
 
 /// <reference types="@webgpu/types" />
 
-import type { DataPoint, DataPoint3D } from "./chart-container";
+// Types
+export interface DataPoint {
+  x: number;
+  y: number;
+}
+
+// Alias for compatibility
+export type Point = DataPoint;
+
+export interface DataPoint3D {
+  x: number;
+  y: number;
+  z: number;
+}
 
 // ============================================================================
 // Data Transformation
@@ -425,4 +438,114 @@ export function generateCategoricalData(
     category,
     value: Math.random() * (maxValue - minValue) + minValue,
   }));
+}
+
+// ============================================================================
+// Chart Utilities (for axes and scales)
+// ============================================================================
+
+/**
+ * Get domain (min, max) from data points
+ */
+export function getDomain(
+  points: Point[],
+  accessor: (p: Point) => number,
+  addPadding = false
+): [number, number] {
+  if (points.length === 0) {
+    return [0, 1];
+  }
+
+  let min = accessor(points[0]);
+  let max = accessor(points[0]);
+
+  for (const point of points) {
+    const value = accessor(point);
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
+
+  if (addPadding) {
+    const padding = (max - min) * 0.1 || 0.1;
+    min -= padding;
+    max += padding;
+  }
+
+  return [min, max];
+}
+
+/**
+ * Create a linear scale function
+ */
+export function createScale(
+  domain: [number, number],
+  range: [number, number]
+): (value: number) => number {
+  const [d0, d1] = domain;
+  const [r0, r1] = range;
+  const scale = (r1 - r0) / (d1 - d0);
+
+  return (value: number) => {
+    return r0 + (value - d0) * scale;
+  };
+}
+
+/**
+ * Format a numeric value for display
+ */
+export function formatValue(value: number): string {
+  if (Math.abs(value) >= 1000000) {
+    return `${(value / 1000000).toFixed(2)}M`;
+  }
+  if (Math.abs(value) >= 1000) {
+    return `${(value / 1000).toFixed(2)}k`;
+  }
+  if (Math.abs(value) < 0.01 && value !== 0) {
+    return value.toExponential(2);
+  }
+  return value.toFixed(2);
+}
+
+/**
+ * Format a timestamp value for display
+ */
+export function formatTime(value: number, timezone = "UTC"): string {
+  const date = new Date(value);
+  return date.toLocaleString("en-US", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+/**
+ * Generate nice tick values for an axis
+ */
+export function getTicks(domain: [number, number], count: number): number[] {
+  const [min, max] = domain;
+  const range = max - min;
+  const roughStep = range / (count - 1);
+
+  // Find a nice step value
+  const exponent = Math.floor(Math.log10(roughStep));
+  const fraction = roughStep / Math.pow(10, exponent);
+
+  let niceStep: number;
+  if (fraction <= 1) niceStep = 1;
+  else if (fraction <= 2) niceStep = 2;
+  else if (fraction <= 5) niceStep = 5;
+  else niceStep = 10;
+
+  niceStep *= Math.pow(10, exponent);
+
+  const niceMin = Math.floor(min / niceStep) * niceStep;
+  const niceMax = Math.ceil(max / niceStep) * niceStep;
+
+  const ticks: number[] = [];
+  for (let i = niceMin; i <= niceMax; i += niceStep) {
+    ticks.push(i);
+  }
+
+  return ticks;
 }

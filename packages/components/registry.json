@@ -14,5 +14,96 @@
     "dependencies": [],
     "registryDependencies": []
   },
-  "components": {}
+  "components": {
+    "line-chart": {
+      "name": "line-chart",
+      "version": "0.2.0",
+      "displayName": "Line Chart",
+      "category": "charts",
+      "description": "GPU-accelerated line chart with WebGPU/WebGL rendering for 100k+ points at 60fps. Primitive architecture with composable components (Root, Canvas, Axes, Tooltip, Legend).",
+      "files": [
+        "charts/line-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "scatter-chart": {
+      "name": "scatter-chart",
+      "version": "0.1.0",
+      "displayName": "Scatter Chart",
+      "category": "charts",
+      "description": "GPU-accelerated scatter plot with WebGPU/WebGL rendering. Supports variable point sizes, colors, and opacity. Perfect for correlation analysis and cluster visualization.",
+      "files": [
+        "charts/scatter-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "bar-chart": {
+      "name": "bar-chart",
+      "version": "0.1.0",
+      "displayName": "Bar Chart",
+      "category": "charts",
+      "description": "GPU-accelerated bar chart with vertical/horizontal orientation. Supports grouped and stacked layouts. Optimized for categorical data visualization.",
+      "files": [
+        "charts/bar-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "area-chart": {
+      "name": "area-chart",
+      "version": "0.1.0",
+      "displayName": "Area Chart",
+      "category": "charts",
+      "description": "GPU-accelerated area chart with filled regions. Supports stacked areas and real-time streaming data. Ideal for time series and cumulative data.",
+      "files": [
+        "charts/area-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "heatmap-chart": {
+      "name": "heatmap-chart",
+      "version": "0.1.0",
+      "displayName": "Heatmap Chart",
+      "category": "charts",
+      "description": "GPU-accelerated heatmap for 2D grid data. Custom color scales, correlation matrices, and high-density visualizations. Handles thousands of cells with ease.",
+      "files": [
+        "charts/heatmap-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "tier": "free"
+    }
+  }
 }

@@ -123,23 +123,24 @@ export async function init() {
     if (!installDeps) {
       console.log(chalk.yellow("\nSkipped dependency installation."));
       console.log(chalk.dim("You'll need to install these manually:\n"));
-      console.log("  npm install -D @types/react @types/react-dom\n");
+      console.log("  npm install react react-dom three @react-three/fiber @react-three/drei");
+      console.log("  npm install -D @types/react @types/react-dom @types/three\n");
       console.log(chalk.green("✅ Configuration complete!"));
       console.log(chalk.dim("\nAdd components with:"));
-      console.log(chalk.cyan("  npx @plexusui/cli add chart"));
+      console.log(chalk.cyan("  npx @plexusui/cli add line-chart"));
       return;
     }
 
     const depSpinner = ora("Installing peer dependencies...").start();
 
-    // Install runtime dependencies
-    execSync("npm install react react-dom", {
+    // Install runtime dependencies (React + Three.js ecosystem)
+    execSync("npm install react react-dom three @react-three/fiber @react-three/drei", {
       stdio: "pipe",
       cwd,
     });
 
     // Install dev dependencies
-    execSync("npm install -D @types/react @types/react-dom", {
+    execSync("npm install -D @types/react @types/react-dom @types/three", {
       stdio: "pipe",
       cwd,
     });
@@ -148,7 +149,7 @@ export async function init() {
 
     console.log(chalk.green("\n✅ Ready to go!"));
     console.log(chalk.dim("\nAdd components with:"));
-    console.log(chalk.cyan("  npx @plexusui/cli add chart"));
+    console.log(chalk.cyan("  npx @plexusui/cli add line-chart"));
     console.log(chalk.dim("\nOr interactively:"));
     console.log(chalk.cyan("  npx @plexusui/cli add"));
   } catch (error) {
