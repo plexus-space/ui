@@ -39,7 +39,6 @@ export interface HeatmapChartProps {
   height?: number;
   showGrid?: boolean;
   showAxes?: boolean;
-  showLegend?: boolean;
   showTooltip?: boolean;
   className?: string;
   preferWebGPU?: boolean;
@@ -943,69 +942,6 @@ function Tooltip() {
   return <ChartTooltip onHover={handleHover} />;
 }
 
-function ColorLegend() {
-  const ctx = useHeatmapChart();
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
-
-  React.useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const dpr = ctx.devicePixelRatio;
-    const width = 200;
-    const height = 30;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    context.scale(dpr, dpr);
-
-    // Draw gradient
-    const gradient = context.createLinearGradient(0, 0, width - 40, 0);
-    const steps = 20;
-    for (let i = 0; i <= steps; i++) {
-      const value = i / steps;
-      const color = ctx.colorScale(value);
-      gradient.addColorStop(value, color);
-    }
-
-    context.fillStyle = gradient;
-    context.fillRect(10, 5, width - 50, 15);
-
-    // Draw border
-    context.strokeStyle = "#666";
-    context.lineWidth = 1;
-    context.strokeRect(10, 5, width - 50, 15);
-
-    // Labels
-    const isDark = document.documentElement.classList.contains("dark");
-    const textColor = isDark ? "#e4e4e7" : "#18181b";
-
-    context.fillStyle = textColor;
-    context.font = "10px -apple-system, BlinkMacSystemFont, sans-serif";
-    context.textAlign = "left";
-    context.fillText(ctx.minValue.toFixed(1), 10, 27);
-
-    context.textAlign = "right";
-    context.fillText(ctx.maxValue.toFixed(1), width - 40, 27);
-  }, [ctx]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute pointer-events-none"
-      style={{
-        width: 200,
-        height: 30,
-        top: ctx.margin.top,
-        right: ctx.margin.right,
-      }}
-    />
-  );
-}
-
 // ============================================================================
 // Composed Component
 // ============================================================================
@@ -1018,7 +954,6 @@ export function HeatmapChart({
   height = 400,
   showGrid = false,
   showAxes = true,
-  showLegend = true,
   showTooltip = false,
   preferWebGPU = true,
   colorScale = defaultColorScale,
@@ -1044,7 +979,6 @@ export function HeatmapChart({
       <Canvas showGrid={showGrid} />
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
-      {showLegend && <ColorLegend />}
     </Root>
   );
 }
@@ -1053,6 +987,5 @@ HeatmapChart.Root = Root;
 HeatmapChart.Canvas = Canvas;
 HeatmapChart.Axes = ChartAxes;
 HeatmapChart.Tooltip = Tooltip;
-HeatmapChart.Legend = ColorLegend;
 
 export default HeatmapChart;

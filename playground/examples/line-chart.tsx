@@ -4,92 +4,10 @@ import { LineChart } from "@plexusui/components/charts/line-chart";
 import type { DataPoint } from "@plexusui/components/charts/line-chart";
 import { ComponentPreview } from "@/components/component-preview";
 import { useState, useEffect } from "react";
-
-// ============================================================================
-// Example Data
-// ============================================================================
-
-const telemetryData: DataPoint[] = Array.from({ length: 200 }, (_, i) => ({
-  x: i,
-  y: Math.sin(i / 20) * 50 + Math.random() * 10 + 50,
-}));
-// ============================================================================
-// Example Components
-// ============================================================================
-
-export function TelemetryChart() {
-  // Use explicit domain for telemetry data (edge-to-edge)
-  const xMin = telemetryData[0].x;
-  const xMax = telemetryData[telemetryData.length - 1].x;
-
-  return (
-    <ComponentPreview
-      title="Telemetry Data"
-      description="High-frequency sensor data visualization"
-      code={`const telemetryData = Array.from({ length: 200 }, (_, i) => ({
-  x: i,
-  y: Math.sin(i / 20) * 50 + Math.random() * 10 + 50,
-}));
-
-<LineChart
-  series={[{
-    name: "Sensor",
-    data: telemetryData,
-    color: "#f59e0b",
-  }]}
-  xAxis={{ domain: [telemetryData[0].x, telemetryData[telemetryData.length - 1].x] }}
-  showGrid={true}
-  width={800}
-  height={400}
-/>`}
-      preview={
-        <div className="w-full">
-          <div className="h-[400px]">
-            <LineChart.Root
-              series={[
-                {
-                  name: "Sensor",
-                  data: telemetryData,
-                  color: "#f59e0b",
-                },
-              ]}
-              xAxis={{ domain: [xMin, xMax] }}
-              width={800}
-              height={400}
-            >
-              <LineChart.Canvas showGrid={true} />
-              <LineChart.Axes />
-              <LineChart.Tooltip />
-            </LineChart.Root>
-          </div>
-
-          {/* Legend positioned below the chart */}
-          <div className="flex justify-center mt-2">
-            <div className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-0.5 bg-[#f59e0b]" />
-                  <span className="text-zinc-700 dark:text-zinc-300">
-                    Sensor
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      }
-    />
-  );
-}
-
-// ============================================================================
-// Main Export
-// ============================================================================
-
-// ============================================================================
-// EEG Wave Generator
-// ============================================================================
-
+import {
+  useColorScheme,
+  useMultiColors,
+} from "@/components/color-scheme-provider";
 /**
  * Generates realistic EEG-like waveforms by combining multiple frequency bands:
  * - Delta (0.5-4 Hz): Deep sleep waves
@@ -113,6 +31,8 @@ function generateEEGSample(time: number, channelOffset: number = 0): number {
 }
 
 function StreamingChart() {
+  const colors = useMultiColors(3);
+
   // EEG sampling parameters
   const SAMPLING_RATE = 256; // Hz (typical EEG sampling rate for data collection)
   const WINDOW_DURATION = 4; // seconds of data to display
@@ -154,11 +74,12 @@ function StreamingChart() {
       // Add multiple samples per frame to maintain 256Hz sampling while displaying at 30fps
       setChannel1((prev) => {
         const newPoints: DataPoint[] = [];
+        let lastTime = prev.length > 0 ? prev[prev.length - 1].x : 0;
         for (let i = 0; i < SAMPLES_PER_UPDATE; i++) {
-          const lastTime = prev.length > 0 ? prev[prev.length - 1].x : 0;
           const newTime = lastTime + 1 / SAMPLING_RATE;
           const timeRadians = newTime * Math.PI * 2;
           newPoints.push({ x: newTime, y: generateEEGSample(timeRadians, 0) });
+          lastTime = newTime; // Update for next iteration
         }
         return [
           ...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)),
@@ -168,14 +89,15 @@ function StreamingChart() {
 
       setChannel2((prev) => {
         const newPoints: DataPoint[] = [];
+        let lastTime = prev.length > 0 ? prev[prev.length - 1].x : 0;
         for (let i = 0; i < SAMPLES_PER_UPDATE; i++) {
-          const lastTime = prev.length > 0 ? prev[prev.length - 1].x : 0;
           const newTime = lastTime + 1 / SAMPLING_RATE;
           const timeRadians = newTime * Math.PI * 2;
           newPoints.push({
             x: newTime,
             y: generateEEGSample(timeRadians, Math.PI / 3),
           });
+          lastTime = newTime; // Update for next iteration
         }
         return [
           ...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)),
@@ -185,14 +107,15 @@ function StreamingChart() {
 
       setChannel3((prev) => {
         const newPoints: DataPoint[] = [];
+        let lastTime = prev.length > 0 ? prev[prev.length - 1].x : 0;
         for (let i = 0; i < SAMPLES_PER_UPDATE; i++) {
-          const lastTime = prev.length > 0 ? prev[prev.length - 1].x : 0;
           const newTime = lastTime + 1 / SAMPLING_RATE;
           const timeRadians = newTime * Math.PI * 2;
           newPoints.push({
             x: newTime,
             y: generateEEGSample(timeRadians, Math.PI / 1.5),
           });
+          lastTime = newTime; // Update for next iteration
         }
         return [
           ...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)),
@@ -242,27 +165,7 @@ function generateEEGSample(time: number, channelOffset: number = 0): number {
 const SAMPLING_RATE = 256; // Hz
 const WINDOW_SIZE = SAMPLING_RATE * 4; // 4 seconds of data
 
-const [isPaused, setIsPaused] = useState(false);
 const [data, setData] = useState<DataPoint[]>(/* initial EEG data */);
-
-useEffect(() => {
-  if (isPaused) return;
-
-  const interval = setInterval(() => {
-    setData(prev => {
-      const lastTime = prev[prev.length - 1].x;
-      const newTime = lastTime + 1 / SAMPLING_RATE;
-      const newSample = generateEEGSample(newTime * Math.PI * 2, 0);
-      return [...prev.slice(-(WINDOW_SIZE - 1)), { x: newTime, y: newSample }];
-    });
-  }, 1000 / SAMPLING_RATE); // ~4ms updates
-
-  return () => clearInterval(interval);
-}, [isPaused]);
-
-<button onClick={() => setIsPaused(!isPaused)}>
-  {isPaused ? "▶ Resume" : "⏸ Pause"}
-</button>
 
 <LineChart
   series={[
@@ -305,82 +208,45 @@ useEffect(() => {
             </button>
           </div>
 
-          <LineChart.Root
-            series={[
-              {
-                name: "Fp1 (Frontal)",
-                data: channel1,
-                color: "#06b6d4",
-                strokeWidth: 1.5,
-              },
-              {
-                name: "C3 (Central)",
-                data: channel2,
-                color: "#f59e0b",
-                strokeWidth: 1.5,
-              },
-              {
-                name: "O1 (Occipital)",
-                data: channel3,
-                color: "#ec4899",
-                strokeWidth: 1.5,
-              },
-            ]}
-            xAxis={{
-              label: "Time (MM:SS.ms)",
-              domain: [xMin, xMax],
-              formatter: formatTimestamp,
-            }}
-            yAxis={{
-              label: "Amplitude (μV)",
-              domain: [yMin, yMax],
-              formatter: (value: number) => `${value.toFixed(0)}`,
-            }}
-            width={800}
-            height={500}
-          >
-            <LineChart.Canvas showGrid={true} />
-            <LineChart.Axes />
-            <LineChart.Tooltip />
-          </LineChart.Root>
-
-          {/* Legend positioned below the chart */}
-          <div className="flex justify-center mt-2 mb-4">
-            <div className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-0.5 bg-[#06b6d4]" />
-                  <span className="text-zinc-700 dark:text-zinc-300">
-                    Fp1 (Frontal)
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-0.5 bg-[#f59e0b]" />
-                  <span className="text-zinc-700 dark:text-zinc-300">
-                    C3 (Central)
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-0.5 bg-[#ec4899]" />
-                  <span className="text-zinc-700 dark:text-zinc-300">
-                    O1 (Occipital)
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-xs text-zinc-500 space-y-1">
-            <div>
-              <span className="font-semibold">Brain Wave Bands:</span> Delta
-              (0.5-4Hz, deep sleep), Theta (4-8Hz, meditation), Alpha (8-13Hz,
-              relaxed), Beta (13-30Hz, active), Gamma (30-100Hz, cognition)
-            </div>
-            <div>
-              <span className="font-semibold">Clinical Applications:</span>{" "}
-              Epilepsy diagnosis, sleep studies, brain-computer interfaces,
-              cognitive research, anesthesia monitoring
-            </div>
+          <div style={{ height: 400 }}>
+            <LineChart.Root
+              series={[
+                {
+                  name: "Fp1 (Frontal)",
+                  data: channel1,
+                  color: colors[0],
+                  strokeWidth: 2,
+                },
+                {
+                  name: "C3 (Central)",
+                  data: channel2,
+                  color: colors[1],
+                  strokeWidth: 2,
+                },
+                {
+                  name: "O1 (Occipital)",
+                  data: channel3,
+                  color: colors[2],
+                  strokeWidth: 2,
+                },
+              ]}
+              xAxis={{
+                label: "Time (MM:SS.ms)",
+                domain: [xMin, xMax],
+                formatter: formatTimestamp,
+              }}
+              yAxis={{
+                label: "Amplitude (μV)",
+                domain: [yMin, yMax],
+                formatter: (value: number) => `${value.toFixed(0)}`,
+              }}
+              width={800}
+              height={400}
+            >
+              <LineChart.Canvas showGrid={true} />
+              <LineChart.Axes />
+              <LineChart.Tooltip />
+            </LineChart.Root>
           </div>
         </div>
       }
@@ -389,6 +255,8 @@ useEffect(() => {
 }
 
 function PrimitiveExample() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Primitive Components"
@@ -409,7 +277,6 @@ const data = Array.from({ length: 100 }, (_, i) => ({
   <LineChart.Canvas showGrid />
   <LineChart.Axes />
   <LineChart.Tooltip />
-  <LineChart.Legend />
 </LineChart.Root>`}
       preview={
         <div className="w-full">
@@ -422,7 +289,7 @@ const data = Array.from({ length: 100 }, (_, i) => ({
                     x: i,
                     y: Math.sin(i / 10) * 50 + 50,
                   })),
-                  color: "#8b5cf6",
+                  color: color,
                 },
               ]}
               width={800}
@@ -434,20 +301,6 @@ const data = Array.from({ length: 100 }, (_, i) => ({
               <LineChart.Tooltip />
             </LineChart.Root>
           </div>
-
-          {/* Legend positioned below the chart */}
-          <div className="flex justify-center mt-2">
-            <div className="bg-white/90 dark:bg-zinc-950/90 backdrop-blur-sm px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-0.5 bg-[#8b5cf6]" />
-                  <span className="text-zinc-700 dark:text-zinc-300">
-                    Custom Signal
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       }
     />
@@ -457,7 +310,6 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 export function LineChartExamples() {
   return (
     <div className="space-y-8">
-      <TelemetryChart />
       <StreamingChart />
       <PrimitiveExample />
     </div>

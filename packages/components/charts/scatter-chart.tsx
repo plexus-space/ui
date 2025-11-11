@@ -5,7 +5,6 @@ import {
   BaseWebGLRenderer,
   BaseWebGPURenderer,
   ChartAxes,
-  ChartLegend,
   ChartRoot,
   ChartTooltip,
   getDomain,
@@ -48,7 +47,6 @@ export interface ScatterChartProps {
   height?: number;
   showGrid?: boolean;
   showAxes?: boolean;
-  showLegend?: boolean;
   showTooltip?: boolean;
   className?: string;
   preferWebGPU?: boolean;
@@ -909,16 +907,6 @@ function Tooltip() {
   );
 }
 
-function Legend() {
-  const ctx = useScatterChart();
-  const items = ctx.series.map((s) => ({
-    name: s.name,
-    color: s.color || "#3b82f6",
-  }));
-
-  return <ChartLegend items={items} />;
-}
-
 // ============================================================================
 // Composed Component
 // ============================================================================
@@ -931,7 +919,6 @@ export function ScatterChart({
   height = 400,
   showGrid = true,
   showAxes = true,
-  showLegend = true,
   showTooltip = false,
   preferWebGPU = true,
   className,
@@ -949,7 +936,6 @@ export function ScatterChart({
       <Canvas showGrid={showGrid} />
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
-      {showLegend && <Legend />}
     </Root>
   );
 }
@@ -958,6 +944,5 @@ ScatterChart.Root = Root;
 ScatterChart.Canvas = Canvas;
 ScatterChart.Axes = ChartAxes;
 ScatterChart.Tooltip = Tooltip;
-ScatterChart.Legend = Legend;
 
 export default ScatterChart;

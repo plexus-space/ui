@@ -104,8 +104,6 @@ export {
   ChartRoot,
   ChartAxes,
   ChartTooltip,
-  ChartLegend,
-  TimeSeriesControls,
   useBaseChart,
   BaseWebGLRenderer,
   BaseWebGPURenderer,

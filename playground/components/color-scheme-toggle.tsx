@@ -3,7 +3,7 @@
 import {
   useColorScheme,
   colorSchemes,
-  ColorSchemeName,
+  type ColorSchemeName,
 } from "@/components/color-scheme-provider";
 import {
   Select,

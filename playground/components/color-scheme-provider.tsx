@@ -59,3 +59,25 @@ export function useColorScheme() {
   }
   return context;
 }
+
+/**
+ * Get multiple colors for multi-series charts
+ * Returns an array of colors starting from the current color scheme
+ * and cycling through the rest of the palette
+ */
+export function useMultiColors(count: number = 3): string[] {
+  const { colorScheme } = useColorScheme();
+  const colorKeys = Object.keys(colorSchemes) as ColorSchemeName[];
+
+  // Find the index of the current color scheme
+  const startIndex = colorKeys.indexOf(colorScheme);
+
+  // Create an array starting from current color and cycling through others
+  const colors: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const colorKey = colorKeys[(startIndex + i) % colorKeys.length];
+    colors.push(colorSchemes[colorKey]);
+  }
+
+  return colors;
+}

@@ -5,7 +5,6 @@ import {
   BaseWebGLRenderer,
   BaseWebGPURenderer,
   ChartAxes,
-  ChartLegend,
   ChartRoot,
   ChartTooltip,
   getDomain,
@@ -47,7 +46,6 @@ export interface BarChartProps {
   height?: number;
   showGrid?: boolean;
   showAxes?: boolean;
-  showLegend?: boolean;
   showTooltip?: boolean;
   className?: string;
   preferWebGPU?: boolean;
@@ -1058,16 +1056,6 @@ function Tooltip() {
   return <ChartTooltip onHover={handleHover} />;
 }
 
-function Legend() {
-  const ctx = useBarChart();
-  const items = ctx.series.map((s) => ({
-    name: s.name,
-    color: s.color || "#3b82f6",
-  }));
-
-  return <ChartLegend items={items} />;
-}
-
 // ============================================================================
 // Composed Component
 // ============================================================================
@@ -1080,7 +1068,6 @@ export function BarChart({
   height = 400,
   showGrid = true,
   showAxes = true,
-  showLegend = true,
   showTooltip = false,
   preferWebGPU = true,
   orientation = "vertical",
@@ -1106,7 +1093,6 @@ export function BarChart({
       <Canvas showGrid={showGrid} />
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
-      {showLegend && <Legend />}
     </Root>
   );
 }
@@ -1115,6 +1101,5 @@ BarChart.Root = Root;
 BarChart.Canvas = Canvas;
 BarChart.Axes = ChartAxes;
 BarChart.Tooltip = Tooltip;
-BarChart.Legend = Legend;
 
 export default BarChart;

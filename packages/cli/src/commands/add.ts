@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/useIterableCallbackReturn: <explanation> */
 import prompts from "prompts";
 import chalk from "chalk";
 import ora from "ora";
@@ -258,7 +259,8 @@ export async function add(components: string[]) {
     }
 
     console.log(chalk.dim("\n🎨 Import and use:"));
-    const importAlias = plexusConfig?.aliases?.plexusui || "@/components/plexusui";
+    const importAlias =
+      plexusConfig?.aliases?.plexusui || "@/components/plexusui";
 
     components.forEach((c) => {
       const componentName = c

@@ -5,7 +5,6 @@ import {
   BaseWebGLRenderer,
   BaseWebGPURenderer,
   ChartAxes,
-  ChartLegend,
   ChartRoot,
   ChartTooltip,
   getDomain,
@@ -46,7 +45,6 @@ export interface AreaChartProps {
   height?: number;
   showGrid?: boolean;
   showAxes?: boolean;
-  showLegend?: boolean;
   showTooltip?: boolean;
   className?: string;
   preferWebGPU?: boolean;
@@ -1154,17 +1152,6 @@ function Tooltip() {
   );
 }
 
-function Legend() {
-  const ctx = useAreaChart();
-  const items = ctx.series.map((s) => ({
-    name: s.name,
-    color: s.color || "#3b82f6",
-    strokeWidth: s.strokeWidth,
-  }));
-
-  return <ChartLegend items={items} />;
-}
-
 // ============================================================================
 // Composed Component
 // ============================================================================
@@ -1177,7 +1164,6 @@ export function AreaChart({
   height = 400,
   showGrid = true,
   showAxes = true,
-  showLegend = true,
   showTooltip = false,
   preferWebGPU = true,
   stacked = false,
@@ -1197,7 +1183,6 @@ export function AreaChart({
       <Canvas showGrid={showGrid} />
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
-      {showLegend && <Legend />}
     </Root>
   );
 }
@@ -1206,6 +1191,5 @@ AreaChart.Root = Root;
 AreaChart.Canvas = Canvas;
 AreaChart.Axes = ChartAxes;
 AreaChart.Tooltip = Tooltip;
-AreaChart.Legend = Legend;
 
 export default AreaChart;

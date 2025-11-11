@@ -3,6 +3,7 @@
 import { BarChart } from "@plexusui/components/charts/bar-chart";
 import type { DataPoint } from "@plexusui/components/charts/bar-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { useColorScheme, useMultiColors } from "@/components/color-scheme-provider";
 
 // ============================================================================
 // Example Data
@@ -37,6 +38,8 @@ const departmentData: DataPoint[] = [
 // ============================================================================
 
 function BasicBarChart() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Basic Bar Chart"
@@ -62,7 +65,7 @@ const data = [
         <div className="w-full h-[400px]">
           <BarChart
             series={[
-              { name: "Revenue ($K)", data: monthlyData, color: "#3b82f6" },
+              { name: "Revenue ($K)", data: monthlyData, color: color },
             ]}
             yAxis={{ label: "Revenue ($K)" }}
             width={800}
@@ -77,6 +80,8 @@ const data = [
 }
 
 function GroupedBarChart() {
+  const colors = useMultiColors(2);
+
   return (
     <ComponentPreview
       title="Grouped Bar Chart"
@@ -107,7 +112,7 @@ const targetData = [
         <div className="w-full h-[400px]">
           <BarChart
             series={[
-              { name: "Actual", data: quarterlyData, color: "#10b981" },
+              { name: "Actual", data: quarterlyData, color: colors[0] },
               {
                 name: "Target",
                 data: [
@@ -116,7 +121,7 @@ const targetData = [
                   { x: "Q3", y: 190 },
                   { x: "Q4", y: 180 },
                 ],
-                color: "#6366f1",
+                color: colors[1],
               },
             ]}
             yAxis={{ label: "Sales ($K)" }}
@@ -133,6 +138,8 @@ const targetData = [
 }
 
 function HorizontalBarChart() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Horizontal Bar Chart"
@@ -155,7 +162,7 @@ function HorizontalBarChart() {
         <div className="w-full h-[400px]">
           <BarChart
             series={[
-              { name: "Team Size", data: departmentData, color: "#f59e0b" },
+              { name: "Team Size", data: departmentData, color: color },
             ]}
             orientation="horizontal"
             xAxis={{ label: "Number of Employees" }}
@@ -171,6 +178,8 @@ function HorizontalBarChart() {
 }
 
 function StackedBarChart() {
+  const colors = useMultiColors(3);
+
   return (
     <ComponentPreview
       title="Multi-Category Comparison"
@@ -196,7 +205,7 @@ function StackedBarChart() {
                   { x: "Mar", y: 28 },
                   { x: "Apr", y: 40 },
                 ],
-                color: "#ef4444",
+                color: colors[0],
               },
               {
                 name: "Product B",
@@ -206,7 +215,7 @@ function StackedBarChart() {
                   { x: "Mar", y: 48 },
                   { x: "Apr", y: 55 },
                 ],
-                color: "#3b82f6",
+                color: colors[1],
               },
               {
                 name: "Product C",
@@ -216,7 +225,7 @@ function StackedBarChart() {
                   { x: "Mar", y: 35 },
                   { x: "Apr", y: 32 },
                 ],
-                color: "#10b981",
+                color: colors[2],
               },
             ]}
             yAxis={{ label: "Sales (Units)" }}
@@ -233,6 +242,8 @@ function StackedBarChart() {
 }
 
 function PrimitiveBarChart() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Primitive Components"
@@ -247,13 +258,12 @@ function PrimitiveBarChart() {
   <BarChart.Canvas showGrid />
   <BarChart.Axes />
   <BarChart.Tooltip />
-  <BarChart.Legend />
 </BarChart.Root>`}
       preview={
         <div className="w-full h-[400px]">
           <BarChart.Root
             series={[
-              { name: "Custom Metrics", data: monthlyData, color: "#8b5cf6" },
+              { name: "Custom Metrics", data: monthlyData, color: color },
             ]}
             width={800}
             height={400}
@@ -262,7 +272,6 @@ function PrimitiveBarChart() {
             <BarChart.Canvas showGrid />
             <BarChart.Axes />
             <BarChart.Tooltip />
-            <BarChart.Legend />
           </BarChart.Root>
         </div>
       }

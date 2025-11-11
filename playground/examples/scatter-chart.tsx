@@ -3,6 +3,7 @@
 import { ScatterChart } from "@plexusui/components/charts/scatter-chart";
 import type { DataPoint } from "@plexusui/components/charts/scatter-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { useColorScheme, useMultiColors } from "@/components/color-scheme-provider";
 
 // ============================================================================
 // Example Data
@@ -47,6 +48,8 @@ const correlationData: DataPoint[] = Array.from({ length: 50 }, (_, i) => ({
 // ============================================================================
 
 function BasicScatterChart() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Basic Scatter Plot"
@@ -72,7 +75,7 @@ const data = Array.from({ length: 100 }, (_, i) => ({
               {
                 name: "Performance",
                 data: performanceData,
-                color: "#06b6d4",
+                color: color,
                 size: 8,
               },
             ]}
@@ -87,6 +90,8 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 }
 
 function MultiSeriesScatterChart() {
+  const colors = useMultiColors(3);
+
   return (
     <ComponentPreview
       title="Multi-Series Scatter Plot"
@@ -113,21 +118,21 @@ function MultiSeriesScatterChart() {
               {
                 name: "High Performance",
                 data: clusterData.slice(0, 30),
-                color: "#ef4444",
+                color: colors[0],
                 size: 10,
                 opacity: 0.7,
               },
               {
                 name: "Medium Performance",
                 data: clusterData.slice(30, 60),
-                color: "#3b82f6",
+                color: colors[1],
                 size: 8,
                 opacity: 0.7,
               },
               {
                 name: "Standard",
                 data: clusterData.slice(60),
-                color: "#10b981",
+                color: colors[2],
                 size: 6,
                 opacity: 0.7,
               },
@@ -146,6 +151,8 @@ function MultiSeriesScatterChart() {
 }
 
 function CorrelationScatterChart() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Correlation Analysis"
@@ -173,7 +180,7 @@ function CorrelationScatterChart() {
               {
                 name: "Temperature vs Pressure",
                 data: correlationData,
-                color: "#f59e0b",
+                color: color,
                 size: 7,
               },
             ]}
@@ -191,6 +198,8 @@ function CorrelationScatterChart() {
 }
 
 function PrimitiveScatterChart() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Primitive Components"
@@ -205,7 +214,6 @@ function PrimitiveScatterChart() {
   <ScatterChart.Canvas showGrid />
   <ScatterChart.Axes />
   <ScatterChart.Tooltip />
-  <ScatterChart.Legend />
 </ScatterChart.Root>`}
       preview={
         <div className="w-full h-[400px]">
@@ -214,7 +222,7 @@ function PrimitiveScatterChart() {
               {
                 name: "Custom Data",
                 data: performanceData,
-                color: "#8b5cf6",
+                color: color,
                 size: 9,
               },
             ]}
@@ -225,7 +233,6 @@ function PrimitiveScatterChart() {
             <ScatterChart.Canvas showGrid />
             <ScatterChart.Axes />
             <ScatterChart.Tooltip />
-            <ScatterChart.Legend />
           </ScatterChart.Root>
         </div>
       }

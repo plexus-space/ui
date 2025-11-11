@@ -169,7 +169,6 @@ export function LineChartStreamingDemo() {
           height={500}
           showGrid
           showAxes
-          showLegend
           showTooltip
           className="border border-zinc-300 dark:border-zinc-800 rounded-lg"
         />
@@ -285,7 +284,6 @@ function HighFrequencyStream() {
         height={400}
         showGrid
         showAxes
-        showLegend={false}
         className="border border-zinc-300 dark:border-zinc-800 rounded-lg"
       />
     </div>

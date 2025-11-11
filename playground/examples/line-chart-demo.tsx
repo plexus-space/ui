@@ -69,7 +69,6 @@ export function LineChartDemo() {
           height={500}
           showGrid
           showAxes
-          showLegend
           showTooltip
           className="border border-zinc-300 dark:border-zinc-800 rounded-lg"
         />
@@ -102,7 +101,6 @@ export function LineChartDemo() {
           height={400}
           showGrid
           showAxes
-          showLegend={false}
           className="border border-zinc-300 dark:border-zinc-800 rounded-lg"
         />
         <div className="mt-2 text-sm text-zinc-500">
@@ -128,7 +126,6 @@ export function LineChartDemo() {
           height={300}
           showGrid={false}
           showAxes
-          showLegend={false}
           className="rounded-lg shadow-sm"
         />
       </div>
@@ -169,7 +166,6 @@ export function LineChartDemo() {
           height={350}
           showGrid
           showAxes
-          showLegend
           showTooltip
           className="border border-zinc-300 dark:border-zinc-800 rounded-lg"
         />

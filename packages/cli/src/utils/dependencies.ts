@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/useIterableCallbackReturn: <explanation> */
 import { execSync } from "child_process";
 import chalk from "chalk";
 import fs from "fs-extra";
@@ -61,7 +62,7 @@ export async function installDependencies(
         stdio: "inherit",
       });
     }
-  } catch (error) {
+  } catch (_error) {
     throw new Error(
       `Failed to install dependencies. Please run manually:\n` +
         (deps.length > 0 ? `  npm install ${deps.join(" ")}\n` : "") +

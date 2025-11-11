@@ -5,7 +5,6 @@ import {
   BaseWebGLRenderer,
   BaseWebGPURenderer,
   ChartAxes,
-  ChartLegend,
   ChartRoot,
   ChartTooltip,
   getDomain,
@@ -44,7 +43,6 @@ export interface LineChartProps {
   height?: number;
   showGrid?: boolean;
   showAxes?: boolean;
-  showLegend?: boolean;
   showTooltip?: boolean;
   className?: string;
   preferWebGPU?: boolean;
@@ -368,10 +366,12 @@ class WebGLLineRenderer extends BaseWebGLRenderer {
     }
 
     for (const s of series) {
-      if (s.data.length < 2) continue;
+      if (s.data.length < 2) {
+        continue;
+      }
 
       const color = hexToRgb(s.color || "#3b82f6");
-      const lineWidth = s.strokeWidth || 3;
+      const lineWidth = (s.strokeWidth || 3) * 2; // Increase line width for quad rendering
       const geometry = this.createLineGeometry(
         s.data,
         xScale,
@@ -384,7 +384,7 @@ class WebGLLineRenderer extends BaseWebGLRenderer {
       gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array(geometry.positions),
-        gl.STATIC_DRAW
+        gl.DYNAMIC_DRAW // Use DYNAMIC_DRAW for streaming data
       );
       const positionLoc = gl.getAttribLocation(program, "a_position");
       gl.enableVertexAttribArray(positionLoc);
@@ -394,7 +394,7 @@ class WebGLLineRenderer extends BaseWebGLRenderer {
       gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array(geometry.colors),
-        gl.STATIC_DRAW
+        gl.DYNAMIC_DRAW
       );
       const colorLoc = gl.getAttribLocation(program, "a_color");
       gl.enableVertexAttribArray(colorLoc);
@@ -404,7 +404,7 @@ class WebGLLineRenderer extends BaseWebGLRenderer {
       gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array(geometry.normals),
-        gl.STATIC_DRAW
+        gl.DYNAMIC_DRAW
       );
       const normalLoc = gl.getAttribLocation(program, "a_normal");
       gl.enableVertexAttribArray(normalLoc);
@@ -414,7 +414,7 @@ class WebGLLineRenderer extends BaseWebGLRenderer {
       gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array(geometry.widths),
-        gl.STATIC_DRAW
+        gl.DYNAMIC_DRAW
       );
       const widthLoc = gl.getAttribLocation(program, "a_width");
       gl.enableVertexAttribArray(widthLoc);
@@ -744,7 +744,9 @@ class WebGPULineRenderer extends BaseWebGPURenderer {
     }
 
     for (const s of series) {
-      if (s.data.length < 2) continue;
+      if (s.data.length < 2) {
+        continue;
+      }
 
       const color = hexToRgb(s.color || "#3b82f6");
       const lineWidth = s.strokeWidth || 3;
@@ -879,6 +881,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
     WebGLLineRenderer | WebGPULineRenderer | null
   >(null);
 
+  // Initialize renderer once
   React.useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
@@ -908,24 +911,6 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
 
             rendererRef.current = renderer;
             ctx.setRenderMode("webgpu");
-
-            await renderer.render({
-              canvas,
-              series: ctx.series,
-              xDomain: ctx.xDomain,
-              yDomain: ctx.yDomain,
-              xTicks: ctx.xTicks,
-              yTicks: ctx.yTicks,
-              width: ctx.width * dpr,
-              height: ctx.height * dpr,
-              margin: {
-                top: ctx.margin.top * dpr,
-                right: ctx.margin.right * dpr,
-                bottom: ctx.margin.bottom * dpr,
-                left: ctx.margin.left * dpr,
-              },
-              showGrid,
-            });
             return;
           }
         }
@@ -943,24 +928,6 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
 
         rendererRef.current = renderer;
         ctx.setRenderMode("webgl");
-
-        renderer.render({
-          canvas,
-          series: ctx.series,
-          xDomain: ctx.xDomain,
-          yDomain: ctx.yDomain,
-          xTicks: ctx.xTicks,
-          yTicks: ctx.yTicks,
-          width: ctx.width * dpr,
-          height: ctx.height * dpr,
-          margin: {
-            top: ctx.margin.top * dpr,
-            right: ctx.margin.right * dpr,
-            bottom: ctx.margin.bottom * dpr,
-            left: ctx.margin.left * dpr,
-          },
-          showGrid,
-        });
       } catch (error) {
         console.error("WebGL failed:", error);
       }
@@ -975,7 +942,77 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
         rendererRef.current = null;
       }
     };
-  }, [ctx, showGrid]);
+  }, [ctx.preferWebGPU, ctx.width, ctx.height, ctx.devicePixelRatio]);
+
+  // Render when data changes
+  React.useEffect(() => {
+    const canvas = ctx.canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer || !ctx.renderMode) return;
+
+    const dpr = ctx.devicePixelRatio;
+    let rafId: number | null = null;
+    let rendering = false;
+
+    async function render() {
+      if (rendering) return;
+      rendering = true;
+
+      const currentRenderer = rendererRef.current;
+      const currentCanvas = ctx.canvasRef.current;
+      if (!currentRenderer || !currentCanvas) {
+        rendering = false;
+        return;
+      }
+
+      const renderProps = {
+        canvas: currentCanvas,
+        series: ctx.series,
+        xDomain: ctx.xDomain,
+        yDomain: ctx.yDomain,
+        xTicks: ctx.xTicks,
+        yTicks: ctx.yTicks,
+        width: ctx.width * dpr,
+        height: ctx.height * dpr,
+        margin: {
+          top: ctx.margin.top * dpr,
+          right: ctx.margin.right * dpr,
+          bottom: ctx.margin.bottom * dpr,
+          left: ctx.margin.left * dpr,
+        },
+        showGrid,
+      };
+
+      if (ctx.renderMode === "webgpu") {
+        await (currentRenderer as WebGPULineRenderer).render(renderProps);
+      } else {
+        (currentRenderer as WebGLLineRenderer).render(renderProps);
+      }
+
+      rendering = false;
+    }
+
+    // Use RAF to sync with browser repaint
+    rafId = requestAnimationFrame(() => render());
+
+    return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, [
+    ctx.series,
+    ctx.xDomain,
+    ctx.yDomain,
+    ctx.xTicks,
+    ctx.yTicks,
+    ctx.width,
+    ctx.height,
+    ctx.margin,
+    ctx.devicePixelRatio,
+    ctx.renderMode,
+    showGrid,
+  ]);
 
   return (
     <canvas
@@ -1318,17 +1355,6 @@ function Tooltip() {
   );
 }
 
-function Legend() {
-  const ctx = useLineChart();
-  const items = ctx.series.map((s) => ({
-    name: s.name,
-    color: s.color || "#3b82f6",
-    strokeWidth: s.strokeWidth,
-  }));
-
-  return <ChartLegend items={items} />;
-}
-
 // ============================================================================
 // Composed Component
 // ============================================================================
@@ -1341,7 +1367,6 @@ export function LineChart({
   height = 400,
   showGrid = true,
   showAxes = true,
-  showLegend = true,
   showTooltip = false,
   preferWebGPU = true,
   className,
@@ -1359,7 +1384,6 @@ export function LineChart({
       <Canvas showGrid={showGrid} />
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
-      {showLegend && <Legend />}
     </Root>
   );
 }
@@ -1368,6 +1392,5 @@ LineChart.Root = Root;
 LineChart.Canvas = Canvas;
 LineChart.Axes = ChartAxes;
 LineChart.Tooltip = Tooltip;
-LineChart.Legend = Legend;
 
 export default LineChart;

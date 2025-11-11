@@ -4,6 +4,7 @@ import { AreaChart } from "@plexusui/components/charts/area-chart";
 import type { DataPoint } from "@plexusui/components/charts/area-chart";
 import { ComponentPreview } from "@/components/component-preview";
 import { useState, useEffect } from "react";
+import { useColorScheme, useMultiColors } from "@/components/color-scheme-provider";
 
 // ============================================================================
 // Example Data
@@ -24,6 +25,8 @@ const temperatureData: DataPoint[] = Array.from({ length: 50 }, (_, i) => ({
 // ============================================================================
 
 function BasicAreaChart() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Basic Area Chart"
@@ -53,7 +56,7 @@ const data = Array.from({ length: 60 }, (_, i) => ({
               {
                 name: "Stock Price",
                 data: stockPriceData,
-                color: "#3b82f6",
+                color: color,
                 fillOpacity: 0.3,
                 strokeWidth: 2,
               },
@@ -72,6 +75,8 @@ const data = Array.from({ length: 60 }, (_, i) => ({
 }
 
 function MultiSeriesAreaChart() {
+  const colors = useMultiColors(2);
+
   return (
     <ComponentPreview
       title="Multi-Series Area Chart"
@@ -96,7 +101,7 @@ const series2 = [...];
                   x: i,
                   y: 60 + Math.sin(i / 6) * 15 + Math.random() * 8,
                 })),
-                color: "#10b981",
+                color: colors[0],
                 fillOpacity: 0.25,
                 strokeWidth: 2,
               },
@@ -106,7 +111,7 @@ const series2 = [...];
                   x: i,
                   y: 50 + Math.cos(i / 5) * 12 + Math.random() * 8,
                 })),
-                color: "#f59e0b",
+                color: colors[1],
                 fillOpacity: 0.25,
                 strokeWidth: 2,
               },
@@ -125,6 +130,7 @@ const series2 = [...];
 }
 
 function StreamingAreaChart() {
+  const { color } = useColorScheme();
   const [data, setData] = useState<DataPoint[]>(() =>
     Array.from({ length: 50 }, (_, i) => ({
       x: i,
@@ -184,7 +190,7 @@ useEffect(() => {
               {
                 name: "Live Signal",
                 data,
-                color: "#8b5cf6",
+                color: color,
                 fillOpacity: 0.4,
                 strokeWidth: 2,
               },
@@ -203,6 +209,8 @@ useEffect(() => {
 }
 
 function PrimitiveAreaChart() {
+  const { color } = useColorScheme();
+
   return (
     <ComponentPreview
       title="Primitive Components"
@@ -217,7 +225,6 @@ function PrimitiveAreaChart() {
   <AreaChart.Canvas showGrid />
   <AreaChart.Axes />
   <AreaChart.Tooltip />
-  <AreaChart.Legend />
 </AreaChart.Root>`}
       preview={
         <div className="w-full h-[400px]">
@@ -226,7 +233,7 @@ function PrimitiveAreaChart() {
               {
                 name: "Temperature",
                 data: temperatureData,
-                color: "#06b6d4",
+                color: color,
                 fillOpacity: 0.3,
               },
             ]}
@@ -237,7 +244,6 @@ function PrimitiveAreaChart() {
             <AreaChart.Canvas showGrid />
             <AreaChart.Axes />
             <AreaChart.Tooltip />
-            <AreaChart.Legend />
           </AreaChart.Root>
         </div>
       }

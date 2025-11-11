@@ -26,7 +26,9 @@ export async function diff(componentName: string) {
     const localPath = getComponentDestinationPath(mainFile, componentsDir);
 
     if (!(await fs.pathExists(localPath))) {
-      spinner.info(chalk.yellow(`Component "${componentName}" is not installed locally`));
+      spinner.info(
+        chalk.yellow(`Component "${componentName}" is not installed locally`)
+      );
       console.log(chalk.dim("\nTo install it, run:"));
       console.log(chalk.cyan(`  npx @plexusui/cli add ${componentName}\n`));
       return;
@@ -59,7 +61,7 @@ export async function diff(componentName: string) {
         if (remoteContent !== localContent) {
           filesWithDiff.push(file);
         }
-      } catch (error) {
+      } catch (_error) {
         // If download fails, skip this file
         console.log(chalk.dim(`\n⚠️  Could not download ${file}`));
       }
@@ -78,9 +80,19 @@ export async function diff(componentName: string) {
       filesWithDiff.forEach((file) => {
         console.log(chalk.yellow(`   • ${file}`));
       });
-      console.log(chalk.dim(`\n✓ ${totalFiles - filesWithDiff.length}/${totalFiles} files up to date`));
+      console.log(
+        chalk.dim(
+          `\n✓ ${
+            totalFiles - filesWithDiff.length
+          }/${totalFiles} files up to date`
+        )
+      );
     } else {
-      spinner.succeed(chalk.green(`${componentName} is up to date! (${totalFiles}/${totalFiles} files)`));
+      spinner.succeed(
+        chalk.green(
+          `${componentName} is up to date! (${totalFiles}/${totalFiles} files)`
+        )
+      );
     }
 
     if (missingFiles.length > 0 || filesWithDiff.length > 0) {

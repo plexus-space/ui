@@ -5,7 +5,10 @@ import {
   getAllComponents,
   getComponentsByCategory,
 } from "../registry/index.js";
-import { detectProjectStructure, getComponentDestinationPath } from "../utils/index.js";
+import {
+  detectProjectStructure,
+  getComponentDestinationPath,
+} from "../utils/index.js";
 
 async function isComponentInstalled(
   componentName: string,

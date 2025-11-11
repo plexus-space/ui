@@ -300,7 +300,6 @@ function PrimitiveHeatmapChart() {
   <HeatmapChart.Canvas />
   <HeatmapChart.Axes />
   <HeatmapChart.Tooltip />
-  <HeatmapChart.Legend />
 </HeatmapChart.Root>`}
       preview={
         <div className="w-full h-[500px]">
@@ -313,7 +312,6 @@ function PrimitiveHeatmapChart() {
             <HeatmapChart.Canvas />
             <HeatmapChart.Axes />
             <HeatmapChart.Tooltip />
-            <HeatmapChart.Legend />
           </HeatmapChart.Root>
         </div>
       }
