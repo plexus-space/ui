@@ -1,9 +1,8 @@
 "use client";
 
-import * as React from "react";
 import {
-  BaseWebGLRenderer,
-  BaseWebGPURenderer,
+  createWebGLRenderer,
+  createWebGPURenderer,
   ChartAxes,
   ChartRoot,
   ChartTooltip,
@@ -11,8 +10,11 @@ import {
   hexToRgb,
   type Point,
   type RendererProps,
+  type WebGLRenderer,
+  type WebGPURenderer,
   useBaseChart,
 } from "./base-chart";
+import { createContext, useContext, useRef, useEffect, useMemo } from "react";
 
 // ============================================================================
 // Scatter Chart Types
@@ -57,12 +59,10 @@ interface ScatterChartContextType {
   series: Series[];
 }
 
-const ScatterChartContext = React.createContext<ScatterChartContextType | null>(
-  null
-);
+const ScatterChartContext = createContext<ScatterChartContextType | null>(null);
 
 function useScatterChartData() {
-  const ctx = React.useContext(ScatterChartContext);
+  const ctx = useContext(ScatterChartContext);
   if (!ctx) {
     throw new Error(
       "ScatterChart components must be used within ScatterChart.Root"
@@ -177,452 +177,469 @@ interface ScatterRendererProps extends RendererProps {
   series: Series[];
 }
 
-class WebGLScatterRenderer extends BaseWebGLRenderer {
-  private positionBuffer: WebGLBuffer | null = null;
-  private colorBuffer: WebGLBuffer | null = null;
-  private sizeBuffer: WebGLBuffer | null = null;
+// Helper function to create point geometry
+function createPointGeometry(
+  points: DataPoint[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  color: [number, number, number],
+  defaultSize: number,
+  opacity: number
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const sizes: number[] = [];
 
-  constructor(canvas: HTMLCanvasElement) {
-    super(canvas);
-    this.program = this.createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
-    this.positionBuffer = this.gl.createBuffer();
-    this.colorBuffer = this.gl.createBuffer();
-    this.sizeBuffer = this.gl.createBuffer();
+  for (const point of points) {
+    const x = xScale(point.x);
+    const y = yScale(point.y);
+    const size = (point.size || 1) * defaultSize;
+
+    positions.push(x, y);
+    colors.push(...color, opacity);
+    sizes.push(size);
   }
 
-  private createPointGeometry(
-    points: DataPoint[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    defaultSize: number,
-    opacity: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const sizes: number[] = [];
-
-    for (const point of points) {
-      const x = xScale(point.x);
-      const y = yScale(point.y);
-      const size = (point.size || 1) * defaultSize;
-
-      positions.push(x, y);
-      colors.push(...color, opacity);
-      sizes.push(size);
-    }
-
-    return { positions, colors, sizes };
-  }
-
-  protected drawGrid(
-    xTicks: number[],
-    yTicks: number[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    width: number,
-    height: number
-  ) {
-    const { gl, program } = this;
-    if (!program) return;
-
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const sizes: number[] = [];
-
-    const isDark = document.documentElement.classList.contains("dark");
-    const gridColor: [number, number, number] = isDark
-      ? [0.4, 0.4, 0.4]
-      : [0.6, 0.6, 0.6];
-
-    // We'll draw grid as points along lines - not ideal but works with point rendering
-    for (const tick of xTicks) {
-      const x = xScale(tick);
-      for (let y = 0; y <= height; y += 5) {
-        positions.push(x, y);
-        colors.push(...gridColor, 0.1);
-        sizes.push(1);
-      }
-    }
-
-    for (const tick of yTicks) {
-      const y = yScale(tick);
-      for (let x = 0; x <= width; x += 5) {
-        positions.push(x, y);
-        colors.push(...gridColor, 0.1);
-        sizes.push(1);
-      }
-    }
-
-    if (positions.length === 0) return;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-    const positionLoc = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(positionLoc);
-    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    const colorLoc = gl.getAttribLocation(program, "a_color");
-    gl.enableVertexAttribArray(colorLoc);
-    gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.sizeBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes), gl.STATIC_DRAW);
-    const sizeLoc = gl.getAttribLocation(program, "a_size");
-    gl.enableVertexAttribArray(sizeLoc);
-    gl.vertexAttribPointer(sizeLoc, 1, gl.FLOAT, false, 0, 0);
-
-    gl.drawArrays(gl.POINTS, 0, positions.length / 2);
-  }
-
-  render(props: ScatterRendererProps) {
-    const { gl, program } = this;
-    const {
-      series,
-      xDomain,
-      yDomain,
-      width,
-      height,
-      margin,
-      showGrid,
-      xTicks,
-      yTicks,
-    } = props;
-
-    if (!program) return;
-
-    this.clear(width, height);
-    this.setupBlending();
-
-    // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
-    gl.useProgram(program);
-
-    const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
-    gl.uniform2f(resolutionLoc, width, height);
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-    const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
-    const matrixLoc = gl.getUniformLocation(program, "u_matrix");
-    gl.uniformMatrix3fv(matrixLoc, false, matrix);
-
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
-
-    if (showGrid) {
-      this.drawGrid(
-        xTicks,
-        yTicks,
-        xScale,
-        yScaleFlipped,
-        innerWidth,
-        innerHeight
-      );
-    }
-
-    for (const s of series) {
-      if (s.data.length === 0) continue;
-
-      const color = hexToRgb(s.color || "#3b82f6");
-      const defaultSize = s.size || 8;
-      const opacity = s.opacity ?? 0.8;
-      const geometry = this.createPointGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        defaultSize,
-        opacity
-      );
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.positions),
-        gl.STATIC_DRAW
-      );
-      const positionLoc = gl.getAttribLocation(program, "a_position");
-      gl.enableVertexAttribArray(positionLoc);
-      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.colors),
-        gl.STATIC_DRAW
-      );
-      const colorLoc = gl.getAttribLocation(program, "a_color");
-      gl.enableVertexAttribArray(colorLoc);
-      gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.sizeBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.sizes),
-        gl.STATIC_DRAW
-      );
-      const sizeLoc = gl.getAttribLocation(program, "a_size");
-      gl.enableVertexAttribArray(sizeLoc);
-      gl.vertexAttribPointer(sizeLoc, 1, gl.FLOAT, false, 0, 0);
-
-      gl.drawArrays(gl.POINTS, 0, geometry.positions.length / 2);
-    }
-  }
-
-  destroy() {
-    const { gl } = this;
-    if (this.program) gl.deleteProgram(this.program);
-    if (this.positionBuffer) gl.deleteBuffer(this.positionBuffer);
-    if (this.colorBuffer) gl.deleteBuffer(this.colorBuffer);
-    if (this.sizeBuffer) gl.deleteBuffer(this.sizeBuffer);
-  }
+  return { positions, colors, sizes };
 }
 
-class WebGPUScatterRenderer extends BaseWebGPURenderer {
-  private uniformBuffer: GPUBuffer | null = null;
-  private bindGroup: GPUBindGroup | null = null;
+// Helper function to create point geometry for WebGPU (quads)
+function createPointGeometryQuads(
+  points: DataPoint[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  color: [number, number, number],
+  defaultSize: number,
+  opacity: number
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const pointCoords: number[] = [];
 
-  constructor(canvas: HTMLCanvasElement, device: GPUDevice) {
-    super(canvas, device);
-    this.initPipeline();
+  for (const point of points) {
+    const x = xScale(point.x);
+    const y = yScale(point.y);
+    const size = (point.size || 1) * defaultSize;
+    const halfSize = size / 2;
+
+    // Create two triangles for a quad
+    // Triangle 1
+    positions.push(x - halfSize, y - halfSize);
+    pointCoords.push(0, 0);
+    colors.push(...color, opacity);
+
+    positions.push(x + halfSize, y - halfSize);
+    pointCoords.push(1, 0);
+    colors.push(...color, opacity);
+
+    positions.push(x - halfSize, y + halfSize);
+    pointCoords.push(0, 1);
+    colors.push(...color, opacity);
+
+    // Triangle 2
+    positions.push(x + halfSize, y - halfSize);
+    pointCoords.push(1, 0);
+    colors.push(...color, opacity);
+
+    positions.push(x + halfSize, y + halfSize);
+    pointCoords.push(1, 1);
+    colors.push(...color, opacity);
+
+    positions.push(x - halfSize, y + halfSize);
+    pointCoords.push(0, 1);
+    colors.push(...color, opacity);
   }
 
-  private initPipeline() {
-    const { device } = this;
-    const shaderModule = this.createShaderModule(WGSL_SHADER);
+  return { positions, colors, pointCoords };
+}
 
-    this.uniformBuffer = device.createBuffer({
-      size: 64,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
+// Helper function to draw grid
+function drawGrid(
+  gl: WebGL2RenderingContext,
+  program: WebGLProgram,
+  xTicks: number[],
+  yTicks: number[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  width: number,
+  height: number,
+  positionBuffer: WebGLBuffer | null,
+  colorBuffer: WebGLBuffer | null,
+  sizeBuffer: WebGLBuffer | null
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const sizes: number[] = [];
 
-    const bindGroupLayout = device.createBindGroupLayout({
-      entries: [
-        {
-          binding: 0,
-          visibility: GPUShaderStage.VERTEX,
-          buffer: { type: "uniform" },
-        },
-      ],
-    });
+  const isDark = document.documentElement.classList.contains("dark");
+  const gridColor: [number, number, number] = isDark
+    ? [0.4, 0.4, 0.4]
+    : [0.6, 0.6, 0.6];
 
-    this.bindGroup = device.createBindGroup({
-      layout: bindGroupLayout,
-      entries: [{ binding: 0, resource: { buffer: this.uniformBuffer } }],
-    });
+  // We'll draw grid as points along lines - not ideal but works with point rendering
+  for (const tick of xTicks) {
+    const x = xScale(tick);
+    for (let y = 0; y <= height; y += 5) {
+      positions.push(x, y);
+      colors.push(...gridColor, 0.1);
+      sizes.push(1);
+    }
+  }
 
-    this.pipeline = device.createRenderPipeline({
-      layout: device.createPipelineLayout({
-        bindGroupLayouts: [bindGroupLayout],
-      }),
-      vertex: {
-        module: shaderModule,
-        entryPoint: "vertexMain",
-        buffers: [
-          {
-            arrayStride: 8,
-            attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
-          },
-          {
-            arrayStride: 16,
-            attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
-          },
-          {
-            arrayStride: 8,
-            attributes: [{ shaderLocation: 2, offset: 0, format: "float32x2" }],
-          },
-        ],
+  for (const tick of yTicks) {
+    const y = yScale(tick);
+    for (let x = 0; x <= width; x += 5) {
+      positions.push(x, y);
+      colors.push(...gridColor, 0.1);
+      sizes.push(1);
+    }
+  }
+
+  if (positions.length === 0) return;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+  const positionLoc = gl.getAttribLocation(program, "a_position");
+  gl.enableVertexAttribArray(positionLoc);
+  gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  const colorLoc = gl.getAttribLocation(program, "a_color");
+  gl.enableVertexAttribArray(colorLoc);
+  gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes), gl.STATIC_DRAW);
+  const sizeLoc = gl.getAttribLocation(program, "a_size");
+  gl.enableVertexAttribArray(sizeLoc);
+  gl.vertexAttribPointer(sizeLoc, 1, gl.FLOAT, false, 0, 0);
+
+  gl.drawArrays(gl.POINTS, 0, positions.length / 2);
+}
+
+// Factory function to create WebGL scatter renderer
+function createWebGLScatterRenderer(
+  canvas: HTMLCanvasElement
+): WebGLRenderer<ScatterRendererProps> {
+  const buffers = {
+    position: null as WebGLBuffer | null,
+    color: null as WebGLBuffer | null,
+    size: null as WebGLBuffer | null,
+  };
+
+  const renderer = createWebGLRenderer<ScatterRendererProps>({
+    canvas,
+    createShaders: () => ({
+      vertexSource: VERTEX_SHADER,
+      fragmentSource: FRAGMENT_SHADER,
+    }),
+    onRender: (gl, program, props) => {
+      const {
+        series,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        showGrid,
+        xTicks,
+        yTicks,
+      } = props;
+
+      // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
+      gl.useProgram(program);
+
+      const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
+      gl.uniform2f(resolutionLoc, width, height);
+
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+      const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
+      const matrixLoc = gl.getUniformLocation(program, "u_matrix");
+      gl.uniformMatrix3fv(matrixLoc, false, matrix);
+
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
+
+      if (showGrid) {
+        if (!buffers.position) buffers.position = gl.createBuffer();
+        if (!buffers.color) buffers.color = gl.createBuffer();
+        if (!buffers.size) buffers.size = gl.createBuffer();
+
+        drawGrid(
+          gl,
+          program,
+          xTicks,
+          yTicks,
+          xScale,
+          yScaleFlipped,
+          innerWidth,
+          innerHeight,
+          buffers.position,
+          buffers.color,
+          buffers.size
+        );
+      }
+
+      for (const s of series) {
+        if (s.data.length === 0) continue;
+
+        const color = hexToRgb(s.color || "#3b82f6");
+        const defaultSize = s.size || 8;
+        const opacity = s.opacity ?? 0.8;
+        const geometry = createPointGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          defaultSize,
+          opacity
+        );
+
+        if (!buffers.position) buffers.position = gl.createBuffer();
+        if (!buffers.color) buffers.color = gl.createBuffer();
+        if (!buffers.size) buffers.size = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.positions),
+          gl.STATIC_DRAW
+        );
+        const positionLoc = gl.getAttribLocation(program, "a_position");
+        gl.enableVertexAttribArray(positionLoc);
+        gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.colors),
+          gl.STATIC_DRAW
+        );
+        const colorLoc = gl.getAttribLocation(program, "a_color");
+        gl.enableVertexAttribArray(colorLoc);
+        gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.size);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.sizes),
+          gl.STATIC_DRAW
+        );
+        const sizeLoc = gl.getAttribLocation(program, "a_size");
+        gl.enableVertexAttribArray(sizeLoc);
+        gl.vertexAttribPointer(sizeLoc, 1, gl.FLOAT, false, 0, 0);
+
+        gl.drawArrays(gl.POINTS, 0, geometry.positions.length / 2);
+      }
+    },
+    onDestroy: (gl) => {
+      if (buffers.position) gl.deleteBuffer(buffers.position);
+      if (buffers.color) gl.deleteBuffer(buffers.color);
+      if (buffers.size) gl.deleteBuffer(buffers.size);
+    },
+  });
+
+  return renderer;
+}
+
+// Factory function to create WebGPU scatter renderer
+function createWebGPUScatterRenderer(
+  canvas: HTMLCanvasElement,
+  device: GPUDevice
+): WebGPURenderer<ScatterRendererProps> {
+  const shaderModule = device.createShaderModule({ code: WGSL_SHADER });
+
+  const uniformBuffer = device.createBuffer({
+    size: 64,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const bindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "uniform" as GPUBufferBindingType },
       },
-      fragment: {
-        module: shaderModule,
-        entryPoint: "fragmentMain",
-        targets: [
-          {
-            format: this.format,
-            blend: {
-              color: {
-                srcFactor: "src-alpha",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
-              },
-              alpha: {
-                srcFactor: "one",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
+    ],
+  });
+
+  const bindGroup = device.createBindGroup({
+    layout: bindGroupLayout,
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+  });
+
+  const renderer = createWebGPURenderer<ScatterRendererProps>({
+    canvas,
+    device,
+    createPipeline: (device, format) => {
+      return device.createRenderPipeline({
+        layout: device.createPipelineLayout({
+          bindGroupLayouts: [bindGroupLayout],
+        }),
+        vertex: {
+          module: shaderModule,
+          entryPoint: "vertexMain",
+          buffers: [
+            {
+              arrayStride: 8,
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x2" },
+              ],
+            },
+            {
+              arrayStride: 16,
+              attributes: [
+                { shaderLocation: 1, offset: 0, format: "float32x4" },
+              ],
+            },
+            {
+              arrayStride: 8,
+              attributes: [
+                { shaderLocation: 2, offset: 0, format: "float32x2" },
+              ],
+            },
+          ],
+        },
+        fragment: {
+          module: shaderModule,
+          entryPoint: "fragmentMain",
+          targets: [
+            {
+              format,
+              blend: {
+                color: {
+                  srcFactor: "src-alpha",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
+                alpha: {
+                  srcFactor: "one",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
               },
             },
+          ],
+        },
+        primitive: { topology: "triangle-list" },
+      });
+    },
+    onRender: async (device, context, pipeline, props) => {
+      const { series, xDomain, yDomain, width, height, margin } = props;
+
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+
+      const uniformData = new Float32Array([
+        width,
+        height,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        margin.left,
+        margin.top,
+        1,
+        0,
+      ]);
+      device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
+
+      const commandEncoder = device.createCommandEncoder();
+      const textureView = context.getCurrentTexture().createView();
+
+      const passEncoder = commandEncoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view: textureView,
+            clearValue: { r: 0, g: 0, b: 0, a: 0 },
+            loadOp: "clear",
+            storeOp: "store",
           },
         ],
-      },
-      primitive: { topology: "triangle-list" },
-    });
-  }
-
-  private createPointGeometry(
-    points: DataPoint[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    defaultSize: number,
-    opacity: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const pointCoords: number[] = [];
-
-    for (const point of points) {
-      const x = xScale(point.x);
-      const y = yScale(point.y);
-      const size = (point.size || 1) * defaultSize;
-      const halfSize = size / 2;
-
-      // Create two triangles for a quad
-      // Triangle 1
-      positions.push(x - halfSize, y - halfSize);
-      pointCoords.push(0, 0);
-      colors.push(...color, opacity);
-
-      positions.push(x + halfSize, y - halfSize);
-      pointCoords.push(1, 0);
-      colors.push(...color, opacity);
-
-      positions.push(x - halfSize, y + halfSize);
-      pointCoords.push(0, 1);
-      colors.push(...color, opacity);
-
-      // Triangle 2
-      positions.push(x + halfSize, y - halfSize);
-      pointCoords.push(1, 0);
-      colors.push(...color, opacity);
-
-      positions.push(x + halfSize, y + halfSize);
-      pointCoords.push(1, 1);
-      colors.push(...color, opacity);
-
-      positions.push(x - halfSize, y + halfSize);
-      pointCoords.push(0, 1);
-      colors.push(...color, opacity);
-    }
-
-    return { positions, colors, pointCoords };
-  }
-
-  async render(props: ScatterRendererProps) {
-    const { device, pipeline, uniformBuffer, bindGroup } = this;
-    const { series, xDomain, yDomain, width, height, margin } = props;
-
-    if (!pipeline || !uniformBuffer || !bindGroup) return;
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    const uniformData = new Float32Array([
-      width,
-      height,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      margin.left,
-      margin.top,
-      1,
-      0,
-    ]);
-    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
-
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
-
-    const commandEncoder = device.createCommandEncoder();
-    const textureView = this.context.getCurrentTexture().createView();
-
-    const passEncoder = commandEncoder.beginRenderPass({
-      colorAttachments: [
-        {
-          view: textureView,
-          clearValue: { r: 0, g: 0, b: 0, a: 0 },
-          loadOp: "clear",
-          storeOp: "store",
-        },
-      ],
-    });
-
-    passEncoder.setPipeline(pipeline);
-    passEncoder.setBindGroup(0, bindGroup);
-
-    for (const s of series) {
-      if (s.data.length === 0) continue;
-
-      const color = hexToRgb(s.color || "#3b82f6");
-      const defaultSize = s.size || 8;
-      const opacity = s.opacity ?? 0.8;
-      const geometry = this.createPointGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        defaultSize,
-        opacity
-      );
-
-      const positionBuffer = device.createBuffer({
-        size: geometry.positions.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
       });
-      device.queue.writeBuffer(
-        positionBuffer,
-        0,
-        new Float32Array(geometry.positions)
-      );
 
-      const colorBuffer = device.createBuffer({
-        size: geometry.colors.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      });
-      device.queue.writeBuffer(
-        colorBuffer,
-        0,
-        new Float32Array(geometry.colors)
-      );
+      passEncoder.setPipeline(pipeline);
+      passEncoder.setBindGroup(0, bindGroup);
 
-      const pointCoordBuffer = device.createBuffer({
-        size: geometry.pointCoords.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      });
-      device.queue.writeBuffer(
-        pointCoordBuffer,
-        0,
-        new Float32Array(geometry.pointCoords)
-      );
+      for (const s of series) {
+        if (s.data.length === 0) continue;
 
-      passEncoder.setVertexBuffer(0, positionBuffer);
-      passEncoder.setVertexBuffer(1, colorBuffer);
-      passEncoder.setVertexBuffer(2, pointCoordBuffer);
+        const color = hexToRgb(s.color || "#3b82f6");
+        const defaultSize = s.size || 8;
+        const opacity = s.opacity ?? 0.8;
+        const geometry = createPointGeometryQuads(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          defaultSize,
+          opacity
+        );
 
-      passEncoder.draw(geometry.positions.length / 2);
-    }
+        const positionBuffer = device.createBuffer({
+          size: geometry.positions.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          positionBuffer,
+          0,
+          new Float32Array(geometry.positions)
+        );
 
-    passEncoder.end();
-    device.queue.submit([commandEncoder.finish()]);
-  }
+        const colorBuffer = device.createBuffer({
+          size: geometry.colors.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          colorBuffer,
+          0,
+          new Float32Array(geometry.colors)
+        );
 
-  destroy() {
-    if (this.uniformBuffer) this.uniformBuffer.destroy();
-  }
+        const pointCoordBuffer = device.createBuffer({
+          size: geometry.pointCoords.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          pointCoordBuffer,
+          0,
+          new Float32Array(geometry.pointCoords)
+        );
+
+        passEncoder.setVertexBuffer(0, positionBuffer);
+        passEncoder.setVertexBuffer(1, colorBuffer);
+        passEncoder.setVertexBuffer(2, pointCoordBuffer);
+
+        passEncoder.draw(geometry.positions.length / 2);
+      }
+
+      passEncoder.end();
+      device.queue.submit([commandEncoder.finish()]);
+    },
+    onDestroy: () => {
+      uniformBuffer.destroy();
+    },
+  });
+
+  return renderer;
 }
 
 // ============================================================================
@@ -687,11 +704,13 @@ function Root({
 
 function Canvas({ showGrid = true }: { showGrid?: boolean }) {
   const ctx = useScatterChart();
-  const rendererRef = React.useRef<
-    WebGLScatterRenderer | WebGPUScatterRenderer | null
+  const rendererRef = useRef<
+    | WebGLRenderer<ScatterRendererProps>
+    | WebGPURenderer<ScatterRendererProps>
+    | null
   >(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
 
@@ -711,7 +730,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
           const adapter = await navigator.gpu?.requestAdapter();
           if (adapter) {
             const device = await adapter.requestDevice();
-            const renderer = new WebGPUScatterRenderer(canvas, device);
+            const renderer = createWebGPUScatterRenderer(canvas, device);
 
             if (!mounted) {
               renderer.destroy();
@@ -746,7 +765,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
       }
 
       try {
-        const renderer = new WebGLScatterRenderer(canvas);
+        const renderer = createWebGLScatterRenderer(canvas);
 
         if (!mounted) {
           renderer.destroy();

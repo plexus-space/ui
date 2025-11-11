@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import React from "react";
 import {
-  BaseWebGLRenderer,
-  BaseWebGPURenderer,
+  createWebGLRenderer,
+  createWebGPURenderer,
   ChartAxes,
   ChartRoot,
   ChartTooltip,
@@ -11,8 +11,11 @@ import {
   hexToRgb,
   type Point,
   type RendererProps,
+  type WebGLRenderer,
+  type WebGPURenderer,
   useBaseChart,
 } from "./base-chart";
+import { createContext, useContext, useMemo } from "react";
 
 // ============================================================================
 // Bar Chart Types
@@ -65,10 +68,10 @@ interface BarChartContextType {
   categoryMap: Map<string | number, number>; // Map categories to numeric positions
 }
 
-const BarChartContext = React.createContext<BarChartContextType | null>(null);
+const BarChartContext = createContext<BarChartContextType | null>(null);
 
 function useBarChartData() {
-  const ctx = React.useContext(BarChartContext);
+  const ctx = useContext(BarChartContext);
   if (!ctx) {
     throw new Error("BarChart components must be used within BarChart.Root");
   }
@@ -163,471 +166,389 @@ interface BarRendererProps extends RendererProps {
   categoryMap: Map<string | number, number>;
 }
 
-class WebGLBarRenderer extends BaseWebGLRenderer {
-  private positionBuffer: WebGLBuffer | null = null;
-  private colorBuffer: WebGLBuffer | null = null;
+// Helper function to create bar geometry
+function createBarGeometry(
+  points: DataPoint[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  color: [number, number, number],
+  barWidth: number,
+  orientation: "vertical" | "horizontal",
+  categoryMap: Map<string | number, number>,
+  seriesIndex: number,
+  totalSeries: number,
+  grouped: boolean,
+  baseValue: number
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
 
-  constructor(canvas: HTMLCanvasElement) {
-    super(canvas);
-    this.program = this.createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
-    this.positionBuffer = this.gl.createBuffer();
-    this.colorBuffer = this.gl.createBuffer();
-  }
+  const effectiveBarWidth = grouped ? barWidth / totalSeries : barWidth;
+  const barOffset = grouped ? seriesIndex * effectiveBarWidth : 0;
 
-  private createBarGeometry(
-    points: DataPoint[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    barWidth: number,
-    orientation: "vertical" | "horizontal",
-    categoryMap: Map<string | number, number>,
-    seriesIndex: number,
-    totalSeries: number,
-    grouped: boolean,
-    baseValue: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
+  for (const point of points) {
+    const categoryValue = categoryMap.get(point.x) ?? 0;
 
-    const effectiveBarWidth = grouped ? barWidth / totalSeries : barWidth;
-    const barOffset = grouped ? seriesIndex * effectiveBarWidth : 0;
+    if (orientation === "vertical") {
+      const centerX = xScale(categoryValue);
+      const x =
+        centerX -
+        (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 +
+        barOffset;
+      const y0 = yScale(baseValue);
+      const y1 = yScale(point.y);
+      const width = effectiveBarWidth;
 
-    for (const point of points) {
-      const categoryValue = categoryMap.get(point.x) ?? 0;
+      // Two triangles for rectangle
+      positions.push(
+        x,
+        y0,
+        x + width,
+        y0,
+        x,
+        y1,
+        x + width,
+        y0,
+        x + width,
+        y1,
+        x,
+        y1
+      );
+    } else {
+      const centerY = yScale(categoryValue);
+      const y =
+        centerY -
+        (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 +
+        barOffset;
+      const x0 = xScale(baseValue);
+      const x1 = xScale(point.y);
+      const height = effectiveBarWidth;
 
-      if (orientation === "vertical") {
-        const centerX = xScale(categoryValue);
-        const x =
-          centerX -
-          (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 +
-          barOffset;
-        const y0 = yScale(baseValue);
-        const y1 = yScale(point.y);
-        const width = effectiveBarWidth;
-
-        // Two triangles for rectangle
-        positions.push(
-          x,
-          y0,
-          x + width,
-          y0,
-          x,
-          y1,
-          x + width,
-          y0,
-          x + width,
-          y1,
-          x,
-          y1
-        );
-      } else {
-        const centerY = yScale(categoryValue);
-        const y =
-          centerY -
-          (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 +
-          barOffset;
-        const x0 = xScale(baseValue);
-        const x1 = xScale(point.y);
-        const height = effectiveBarWidth;
-
-        positions.push(
-          x0,
-          y,
-          x1,
-          y,
-          x0,
-          y + height,
-          x1,
-          y,
-          x1,
-          y + height,
-          x0,
-          y + height
-        );
-      }
-
-      // Colors for 6 vertices
-      for (let i = 0; i < 6; i++) {
-        colors.push(...color, 0.85);
-      }
+      positions.push(
+        x0,
+        y,
+        x1,
+        y,
+        x0,
+        y + height,
+        x1,
+        y,
+        x1,
+        y + height,
+        x0,
+        y + height
+      );
     }
 
-    return { positions, colors };
+    // Colors for 6 vertices
+    for (let i = 0; i < 6; i++) {
+      colors.push(...color, 0.85);
+    }
   }
 
-  render(props: BarRendererProps) {
-    const { gl, program } = this;
-    const {
-      series,
-      xDomain,
-      yDomain,
-      width,
-      height,
-      margin,
-      orientation,
-      barWidth,
-      grouped,
-      categoryMap,
-    } = props;
-
-    if (!program) return;
-
-    this.clear(width, height);
-    this.setupBlending();
-
-    // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
-    gl.useProgram(program);
-
-    const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
-    gl.uniform2f(resolutionLoc, width, height);
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-    const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
-    const matrixLoc = gl.getUniformLocation(program, "u_matrix");
-    gl.uniformMatrix3fv(matrixLoc, false, matrix);
-
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
-
-    // For vertical bars, base is on Y-axis (value axis)
-    // For horizontal bars, base is on X-axis (value axis)
-    const baseValue =
-      orientation === "vertical"
-        ? Math.max(yDomain[0], 0)
-        : Math.max(xDomain[0], 0);
-
-    series.forEach((s, seriesIndex) => {
-      if (s.data.length === 0) return;
-
-      const color = hexToRgb(s.color || "#3b82f6");
-      const geometry = this.createBarGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        barWidth,
-        orientation,
-        categoryMap,
-        seriesIndex,
-        series.length,
-        grouped,
-        baseValue
-      );
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.positions),
-        gl.STATIC_DRAW
-      );
-      const positionLoc = gl.getAttribLocation(program, "a_position");
-      gl.enableVertexAttribArray(positionLoc);
-      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.colors),
-        gl.STATIC_DRAW
-      );
-      const colorLoc = gl.getAttribLocation(program, "a_color");
-      gl.enableVertexAttribArray(colorLoc);
-      gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-      gl.drawArrays(gl.TRIANGLES, 0, geometry.positions.length / 2);
-    });
-  }
-
-  destroy() {
-    const { gl } = this;
-    if (this.program) gl.deleteProgram(this.program);
-    if (this.positionBuffer) gl.deleteBuffer(this.positionBuffer);
-    if (this.colorBuffer) gl.deleteBuffer(this.colorBuffer);
-  }
+  return { positions, colors };
 }
 
-class WebGPUBarRenderer extends BaseWebGPURenderer {
-  private uniformBuffer: GPUBuffer | null = null;
-  private bindGroup: GPUBindGroup | null = null;
+// Factory function to create WebGL bar renderer
+function createWebGLBarRenderer(
+  canvas: HTMLCanvasElement
+): WebGLRenderer<BarRendererProps> {
+  const buffers = {
+    position: null as WebGLBuffer | null,
+    color: null as WebGLBuffer | null,
+  };
 
-  constructor(canvas: HTMLCanvasElement, device: GPUDevice) {
-    super(canvas, device);
-    this.initPipeline();
-  }
+  const renderer = createWebGLRenderer<BarRendererProps>({
+    canvas,
+    createShaders: () => ({
+      vertexSource: VERTEX_SHADER,
+      fragmentSource: FRAGMENT_SHADER,
+    }),
+    onRender: (gl, program, props) => {
+      const {
+        series,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        orientation,
+        barWidth,
+        grouped,
+        categoryMap,
+      } = props;
 
-  private initPipeline() {
-    const { device } = this;
-    const shaderModule = this.createShaderModule(WGSL_SHADER);
+      // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
+      gl.useProgram(program);
 
-    this.uniformBuffer = device.createBuffer({
-      size: 64,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
+      const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
+      gl.uniform2f(resolutionLoc, width, height);
 
-    const bindGroupLayout = device.createBindGroupLayout({
-      entries: [
-        {
-          binding: 0,
-          visibility: GPUShaderStage.VERTEX,
-          buffer: { type: "uniform" },
-        },
-      ],
-    });
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+      const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
+      const matrixLoc = gl.getUniformLocation(program, "u_matrix");
+      gl.uniformMatrix3fv(matrixLoc, false, matrix);
 
-    this.bindGroup = device.createBindGroup({
-      layout: bindGroupLayout,
-      entries: [{ binding: 0, resource: { buffer: this.uniformBuffer } }],
-    });
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
-    this.pipeline = device.createRenderPipeline({
-      layout: device.createPipelineLayout({
-        bindGroupLayouts: [bindGroupLayout],
-      }),
-      vertex: {
-        module: shaderModule,
-        entryPoint: "vertexMain",
-        buffers: [
-          {
-            arrayStride: 8,
-            attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
-          },
-          {
-            arrayStride: 16,
-            attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
-          },
-        ],
+      const baseValue =
+        orientation === "vertical"
+          ? Math.max(yDomain[0], 0)
+          : Math.max(xDomain[0], 0);
+
+      series.forEach((s, seriesIndex) => {
+        if (s.data.length === 0) return;
+
+        const color = hexToRgb(s.color || "#3b82f6");
+        const geometry = createBarGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          barWidth,
+          orientation,
+          categoryMap,
+          seriesIndex,
+          series.length,
+          grouped,
+          baseValue
+        );
+
+        if (!buffers.position) buffers.position = gl.createBuffer();
+        if (!buffers.color) buffers.color = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.positions),
+          gl.STATIC_DRAW
+        );
+        const positionLoc = gl.getAttribLocation(program, "a_position");
+        gl.enableVertexAttribArray(positionLoc);
+        gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.colors),
+          gl.STATIC_DRAW
+        );
+        const colorLoc = gl.getAttribLocation(program, "a_color");
+        gl.enableVertexAttribArray(colorLoc);
+        gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+        gl.drawArrays(gl.TRIANGLES, 0, geometry.positions.length / 2);
+      });
+    },
+    onDestroy: (gl) => {
+      if (buffers.position) gl.deleteBuffer(buffers.position);
+      if (buffers.color) gl.deleteBuffer(buffers.color);
+    },
+  });
+
+  return renderer;
+}
+
+// Factory function to create WebGPU bar renderer
+function createWebGPUBarRenderer(
+  canvas: HTMLCanvasElement,
+  device: GPUDevice
+): WebGPURenderer<BarRendererProps> {
+  const shaderModule = device.createShaderModule({ code: WGSL_SHADER });
+
+  const uniformBuffer = device.createBuffer({
+    size: 64,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const bindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "uniform" },
       },
-      fragment: {
-        module: shaderModule,
-        entryPoint: "fragmentMain",
-        targets: [
-          {
-            format: this.format,
-            blend: {
-              color: {
-                srcFactor: "src-alpha",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
-              },
-              alpha: {
-                srcFactor: "one",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
+    ],
+  });
+
+  const bindGroup = device.createBindGroup({
+    layout: bindGroupLayout,
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+  });
+
+  const renderer = createWebGPURenderer<BarRendererProps>({
+    canvas,
+    device,
+    createPipeline: (device, format) => {
+      return device.createRenderPipeline({
+        layout: device.createPipelineLayout({
+          bindGroupLayouts: [bindGroupLayout],
+        }),
+        vertex: {
+          module: shaderModule,
+          entryPoint: "vertexMain",
+          buffers: [
+            {
+              arrayStride: 8,
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x2" },
+              ],
+            },
+            {
+              arrayStride: 16,
+              attributes: [
+                { shaderLocation: 1, offset: 0, format: "float32x4" },
+              ],
+            },
+          ],
+        },
+        fragment: {
+          module: shaderModule,
+          entryPoint: "fragmentMain",
+          targets: [
+            {
+              format,
+              blend: {
+                color: {
+                  srcFactor: "src-alpha",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
+                alpha: {
+                  srcFactor: "one",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
               },
             },
+          ],
+        },
+        primitive: { topology: "triangle-list" },
+      });
+    },
+    onRender: async (device, context, pipeline, props) => {
+      const {
+        series,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        orientation,
+        barWidth,
+        grouped,
+        categoryMap,
+      } = props;
+
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+
+      const uniformData = new Float32Array([
+        width,
+        height,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        margin.left,
+        margin.top,
+        1,
+        0,
+      ]);
+      device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
+
+      const commandEncoder = device.createCommandEncoder();
+      const textureView = context.getCurrentTexture().createView();
+
+      const passEncoder = commandEncoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view: textureView,
+            clearValue: { r: 0, g: 0, b: 0, a: 0 },
+            loadOp: "clear",
+            storeOp: "store",
           },
         ],
-      },
-      primitive: { topology: "triangle-list" },
-    });
-  }
+      });
 
-  private createBarGeometry(
-    points: DataPoint[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    barWidth: number,
-    orientation: "vertical" | "horizontal",
-    categoryMap: Map<string | number, number>,
-    seriesIndex: number,
-    totalSeries: number,
-    grouped: boolean,
-    baseValue: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
+      passEncoder.setPipeline(pipeline);
+      passEncoder.setBindGroup(0, bindGroup);
 
-    const effectiveBarWidth = grouped ? barWidth / totalSeries : barWidth;
-    const barOffset = grouped ? seriesIndex * effectiveBarWidth : 0;
+      const baseValue =
+        orientation === "vertical"
+          ? Math.max(yDomain[0], 0)
+          : Math.max(xDomain[0], 0);
 
-    for (const point of points) {
-      const categoryValue = categoryMap.get(point.x) ?? 0;
+      for (const [seriesIndex, s] of series.entries()) {
+        if (s.data.length === 0) continue;
 
-      if (orientation === "vertical") {
-        const centerX = xScale(categoryValue);
-        const x =
-          centerX -
-          (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 +
-          barOffset;
-        const y0 = yScale(baseValue);
-        const y1 = yScale(point.y);
-        const width = effectiveBarWidth;
-
-        positions.push(
-          x,
-          y0,
-          x + width,
-          y0,
-          x,
-          y1,
-          x + width,
-          y0,
-          x + width,
-          y1,
-          x,
-          y1
+        const color = hexToRgb(s.color || "#3b82f6");
+        const geometry = createBarGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          barWidth,
+          orientation,
+          categoryMap,
+          seriesIndex,
+          series.length,
+          grouped,
+          baseValue
         );
-      } else {
-        const centerY = yScale(categoryValue);
-        const y =
-          centerY -
-          (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 +
-          barOffset;
-        const x0 = xScale(baseValue);
-        const x1 = xScale(point.y);
-        const height = effectiveBarWidth;
 
-        positions.push(
-          x0,
-          y,
-          x1,
-          y,
-          x0,
-          y + height,
-          x1,
-          y,
-          x1,
-          y + height,
-          x0,
-          y + height
+        const positionBuffer = device.createBuffer({
+          size: geometry.positions.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          positionBuffer,
+          0,
+          new Float32Array(geometry.positions)
         );
+
+        const colorBuffer = device.createBuffer({
+          size: geometry.colors.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          colorBuffer,
+          0,
+          new Float32Array(geometry.colors)
+        );
+
+        passEncoder.setVertexBuffer(0, positionBuffer);
+        passEncoder.setVertexBuffer(1, colorBuffer);
+
+        passEncoder.draw(geometry.positions.length / 2);
       }
 
-      for (let i = 0; i < 6; i++) {
-        colors.push(...color, 0.85);
-      }
-    }
+      passEncoder.end();
+      device.queue.submit([commandEncoder.finish()]);
+    },
+    onDestroy: () => {
+      uniformBuffer.destroy();
+    },
+  });
 
-    return { positions, colors };
-  }
-
-  async render(props: BarRendererProps) {
-    const { device, pipeline, uniformBuffer, bindGroup } = this;
-    const {
-      series,
-      xDomain,
-      yDomain,
-      width,
-      height,
-      margin,
-      orientation,
-      barWidth,
-      grouped,
-      categoryMap,
-    } = props;
-
-    if (!pipeline || !uniformBuffer || !bindGroup) return;
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    const uniformData = new Float32Array([
-      width,
-      height,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      margin.left,
-      margin.top,
-      1,
-      0,
-    ]);
-    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
-
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
-
-    const commandEncoder = device.createCommandEncoder();
-    const textureView = this.context.getCurrentTexture().createView();
-
-    const passEncoder = commandEncoder.beginRenderPass({
-      colorAttachments: [
-        {
-          view: textureView,
-          clearValue: { r: 0, g: 0, b: 0, a: 0 },
-          loadOp: "clear",
-          storeOp: "store",
-        },
-      ],
-    });
-
-    passEncoder.setPipeline(pipeline);
-    passEncoder.setBindGroup(0, bindGroup);
-
-    // For vertical bars, base is on Y-axis (value axis)
-    // For horizontal bars, base is on X-axis (value axis)
-    const baseValue =
-      orientation === "vertical"
-        ? Math.max(yDomain[0], 0)
-        : Math.max(xDomain[0], 0);
-
-    for (const [seriesIndex, s] of series.entries()) {
-      if (s.data.length === 0) continue;
-
-      const color = hexToRgb(s.color || "#3b82f6");
-      const geometry = this.createBarGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        barWidth,
-        orientation,
-        categoryMap,
-        seriesIndex,
-        series.length,
-        grouped,
-        baseValue
-      );
-
-      const positionBuffer = device.createBuffer({
-        size: geometry.positions.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      });
-      device.queue.writeBuffer(
-        positionBuffer,
-        0,
-        new Float32Array(geometry.positions)
-      );
-
-      const colorBuffer = device.createBuffer({
-        size: geometry.colors.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      });
-      device.queue.writeBuffer(
-        colorBuffer,
-        0,
-        new Float32Array(geometry.colors)
-      );
-
-      passEncoder.setVertexBuffer(0, positionBuffer);
-      passEncoder.setVertexBuffer(1, colorBuffer);
-
-      passEncoder.draw(geometry.positions.length / 2);
-    }
-
-    passEncoder.end();
-    device.queue.submit([commandEncoder.finish()]);
-  }
-
-  destroy() {
-    if (this.uniformBuffer) this.uniformBuffer.destroy();
-  }
+  return renderer;
 }
 
 // ============================================================================
@@ -670,12 +591,12 @@ function Root({
   children?: React.ReactNode;
 }) {
   // Create category mapping
-  const { categoryMap, categoryLabels } = React.useMemo(() => {
+  const { categoryMap, categoryLabels } = useMemo(() => {
     const map = new Map<string | number, number>();
     const allCategories = new Set<string | number>();
 
-    series.forEach((s) => {
-      s.data.forEach((point) => {
+    series.forEach((s: Series) => {
+      s.data.forEach((point: DataPoint) => {
         allCategories.add(point.x);
       });
     });
@@ -685,7 +606,7 @@ function Root({
       return String(a).localeCompare(String(b));
     });
 
-    sortedCategories.forEach((cat, idx) => {
+    sortedCategories.forEach((cat: string | number, idx: number) => {
       map.set(cat, idx);
     });
 
@@ -699,7 +620,7 @@ function Root({
   }, [series]);
 
   // Calculate responsive bar width based on available space
-  const barWidth = React.useMemo(() => {
+  const barWidth = useMemo(() => {
     if (barWidthProp !== undefined) {
       // If explicitly provided, use it (but it won't be responsive)
       return barWidthProp;
@@ -804,9 +725,9 @@ function Root({
 
 function Canvas({ showGrid = true }: { showGrid?: boolean }) {
   const ctx = useBarChart();
-  const rendererRef = React.useRef<WebGLBarRenderer | WebGPUBarRenderer | null>(
-    null
-  );
+  const rendererRef = React.useRef<
+    WebGLRenderer<BarRendererProps> | WebGPURenderer<BarRendererProps> | null
+  >(null);
 
   React.useEffect(() => {
     const canvas = ctx.canvasRef.current;
@@ -828,7 +749,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
           const adapter = await navigator.gpu?.requestAdapter();
           if (adapter) {
             const device = await adapter.requestDevice();
-            const renderer = new WebGPUBarRenderer(canvas, device);
+            const renderer = createWebGPUBarRenderer(canvas, device);
 
             if (!mounted) {
               renderer.destroy();
@@ -868,7 +789,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
       }
 
       try {
-        const renderer = new WebGLBarRenderer(canvas);
+        const renderer = createWebGLBarRenderer(canvas);
 
         if (!mounted) {
           renderer.destroy();

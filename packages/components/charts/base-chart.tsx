@@ -176,7 +176,7 @@ export function hexToRgb(color: string): [number, number, number] {
 }
 
 // ============================================================================
-// Base Renderer Classes
+// Base Renderer Types & Factory Functions
 // ============================================================================
 
 export interface RendererProps {
@@ -191,26 +191,43 @@ export interface RendererProps {
   showGrid: boolean;
 }
 
-export abstract class BaseWebGLRenderer {
-  protected gl: WebGLRenderingContext;
-  protected program: WebGLProgram | null = null;
+export interface WebGLRenderer<TProps extends RendererProps = RendererProps> {
+  render: (props: TProps) => void;
+  destroy: () => void;
+  getGL: () => WebGL2RenderingContext;
+  getProgram: () => WebGLProgram | null;
+}
 
-  constructor(canvas: HTMLCanvasElement) {
-    const gl = canvas.getContext("webgl", {
-      alpha: true,
-      antialias: true,
-      premultipliedAlpha: false,
-    });
+export interface WebGLRendererConfig<
+  TProps extends RendererProps = RendererProps
+> {
+  canvas: HTMLCanvasElement;
+  createShaders: (gl: WebGL2RenderingContext) => {
+    vertexSource: string;
+    fragmentSource: string;
+  };
+  onRender: (
+    gl: WebGL2RenderingContext,
+    program: WebGLProgram,
+    props: TProps
+  ) => void;
+  onDestroy?: (gl: WebGL2RenderingContext, program: WebGLProgram | null) => void;
+}
 
-    if (!gl) {
-      throw new Error("WebGL not supported");
-    }
+export function createWebGLRenderer<
+  TProps extends RendererProps = RendererProps
+>(config: WebGLRendererConfig<TProps>): WebGLRenderer<TProps> {
+  const gl = config.canvas.getContext("webgl2", {
+    alpha: true,
+    antialias: true,
+    premultipliedAlpha: false,
+  });
 
-    this.gl = gl;
+  if (!gl) {
+    throw new Error("WebGL2 not supported");
   }
 
-  protected createShader(type: number, source: string): WebGLShader | null {
-    const { gl } = this;
+  const createShader = (type: number, source: string): WebGLShader | null => {
     const shader = gl.createShader(type);
     if (!shader) return null;
 
@@ -224,19 +241,14 @@ export abstract class BaseWebGLRenderer {
     }
 
     return shader;
-  }
+  };
 
-  protected createProgram(
+  const createProgram = (
     vertexSource: string,
     fragmentSource: string
-  ): WebGLProgram {
-    const { gl } = this;
-
-    const vertexShader = this.createShader(gl.VERTEX_SHADER, vertexSource);
-    const fragmentShader = this.createShader(
-      gl.FRAGMENT_SHADER,
-      fragmentSource
-    );
+  ): WebGLProgram => {
+    const vertexShader = createShader(gl.VERTEX_SHADER, vertexSource);
+    const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentSource);
 
     if (!vertexShader || !fragmentShader) {
       throw new Error("Failed to create shaders");
@@ -255,66 +267,103 @@ export abstract class BaseWebGLRenderer {
     }
 
     return program;
-  }
+  };
 
-  protected setupBlending() {
-    const { gl } = this;
+  const setupBlending = () => {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-  }
+  };
 
-  protected clear(width: number, height: number) {
-    const { gl } = this;
+  const clear = (width: number, height: number) => {
     gl.viewport(0, 0, width, height);
     gl.clearColor(0, 0, 0, 0); // Transparent
     gl.clear(gl.COLOR_BUFFER_BIT);
-  }
+  };
 
-  protected drawGrid(
-    xTicks: number[],
-    yTicks: number[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    width: number,
-    height: number
-  ) {
-    // Base implementation - subclasses can override
-  }
+  // Initialize program
+  const { vertexSource, fragmentSource } = config.createShaders(gl);
+  const program = createProgram(vertexSource, fragmentSource);
+  setupBlending();
 
-  abstract render(props: RendererProps & any): void;
-
-  abstract destroy(): void;
+  return {
+    render: (props: TProps) => {
+      clear(props.width, props.height);
+      config.onRender(gl, program, props);
+    },
+    destroy: () => {
+      if (config.onDestroy) {
+        config.onDestroy(gl, program);
+      }
+      if (program) {
+        gl.deleteProgram(program);
+      }
+    },
+    getGL: () => gl,
+    getProgram: () => program,
+  };
 }
 
-export abstract class BaseWebGPURenderer {
-  protected device: GPUDevice;
-  protected context: GPUCanvasContext;
-  protected pipeline: GPURenderPipeline | null = null;
-  protected format: GPUTextureFormat = "bgra8unorm";
+export interface WebGPURenderer<TProps extends RendererProps = RendererProps> {
+  render: (props: TProps) => Promise<void>;
+  destroy: () => void;
+  getDevice: () => GPUDevice;
+  getContext: () => GPUCanvasContext;
+  getPipeline: () => GPURenderPipeline | null;
+}
 
-  constructor(canvas: HTMLCanvasElement, device: GPUDevice) {
-    this.device = device;
+export interface WebGPURendererConfig<
+  TProps extends RendererProps = RendererProps
+> {
+  canvas: HTMLCanvasElement;
+  device: GPUDevice;
+  format?: GPUTextureFormat;
+  createPipeline: (
+    device: GPUDevice,
+    format: GPUTextureFormat
+  ) => GPURenderPipeline;
+  onRender: (
+    device: GPUDevice,
+    context: GPUCanvasContext,
+    pipeline: GPURenderPipeline,
+    props: TProps
+  ) => Promise<void>;
+  onDestroy?: (device: GPUDevice, pipeline: GPURenderPipeline | null) => void;
+}
 
-    const context = canvas.getContext("webgpu");
-    if (!context) {
-      throw new Error("WebGPU context not available");
-    }
+export function createWebGPURenderer<
+  TProps extends RendererProps = RendererProps
+>(config: WebGPURendererConfig<TProps>): WebGPURenderer<TProps> {
+  const device = config.device;
+  const format = config.format ?? "bgra8unorm";
 
-    this.context = context as GPUCanvasContext;
-    this.context.configure({
-      device,
-      format: this.format,
-      alphaMode: "premultiplied",
-    });
+  const context = config.canvas.getContext("webgpu");
+  if (!context) {
+    throw new Error("WebGPU context not available");
   }
 
-  protected createShaderModule(code: string): GPUShaderModule {
-    return this.device.createShaderModule({ code });
-  }
+  const gpuContext = context as GPUCanvasContext;
+  gpuContext.configure({
+    device,
+    format,
+    alphaMode: "premultiplied",
+  });
 
-  abstract render(props: RendererProps & any): Promise<void>;
+  // Initialize pipeline
+  const pipeline = config.createPipeline(device, format);
 
-  abstract destroy(): void;
+  return {
+    render: async (props: TProps) => {
+      await config.onRender(device, gpuContext, pipeline, props);
+    },
+    destroy: () => {
+      if (config.onDestroy) {
+        config.onDestroy(device, pipeline);
+      }
+    },
+    getDevice: () => device,
+    getContext: () => gpuContext,
+    getPipeline: () => pipeline,
+  };
 }
 
 // ============================================================================

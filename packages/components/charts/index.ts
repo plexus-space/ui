@@ -105,13 +105,12 @@ export {
   ChartAxes,
   ChartTooltip,
   useBaseChart,
-  BaseWebGLRenderer,
-  BaseWebGPURenderer,
   getDomain,
   getTicks,
   formatValue,
   hexToRgb,
 } from "./base-chart";
+
 export type {
   Point,
   Axis,
@@ -122,6 +121,8 @@ export type {
   BaseChartContext,
   BaseChartRootProps,
   RendererProps,
+  WebGLRenderer,
+  WebGPURenderer,
 } from "./base-chart";
 
 // Data utilities
@@ -138,4 +139,4 @@ export {
   generateTelemetryData,
   normalizeData,
   StreamingBuffer,
-} from "./data-utils";
+} from "../lib/data-utils";

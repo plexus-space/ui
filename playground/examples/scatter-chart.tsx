@@ -3,7 +3,10 @@
 import { ScatterChart } from "@plexusui/components/charts/scatter-chart";
 import type { DataPoint } from "@plexusui/components/charts/scatter-chart";
 import { ComponentPreview } from "@/components/component-preview";
-import { useColorScheme, useMultiColors } from "@/components/color-scheme-provider";
+import {
+  useColorScheme,
+  useMultiColors,
+} from "@/components/color-scheme-provider";
 
 // ============================================================================
 // Example Data
@@ -35,13 +38,6 @@ const clusterData: DataPoint[] = [
     size: 0.8,
   })),
 ];
-
-const correlationData: DataPoint[] = Array.from({ length: 50 }, (_, i) => ({
-  x: i * 2,
-  y: i * 2 + (Math.random() - 0.5) * 20,
-  size: 1,
-  label: `Point ${i}`,
-}));
 
 // ============================================================================
 // Example Components
@@ -141,54 +137,7 @@ function MultiSeriesScatterChart() {
             yAxis={{ label: "Throughput (req/s)" }}
             width={800}
             height={400}
-            showGrid
-            showTooltip
-          />
-        </div>
-      }
-    />
-  );
-}
-
-function CorrelationScatterChart() {
-  const { color } = useColorScheme();
-
-  return (
-    <ComponentPreview
-      title="Correlation Analysis"
-      description="Scatter plot showing correlation between two variables"
-      code={`const correlationData = Array.from({ length: 50 }, (_, i) => ({
-  x: i * 2,
-  y: i * 2 + (Math.random() - 0.5) * 20,
-  label: \`Point \${i}\`,
-}));
-
-<ScatterChart
-  series={[{
-    name: "Temperature vs Pressure",
-    data: correlationData,
-    color: "#f59e0b",
-  }]}
-  xAxis={{ label: "Temperature (°C)" }}
-  yAxis={{ label: "Pressure (PSI)" }}
-  showTooltip
-/>`}
-      preview={
-        <div className="w-full h-[400px]">
-          <ScatterChart
-            series={[
-              {
-                name: "Temperature vs Pressure",
-                data: correlationData,
-                color: color,
-                size: 7,
-              },
-            ]}
-            xAxis={{ label: "Temperature (°C)" }}
-            yAxis={{ label: "Pressure (PSI)" }}
-            width={800}
-            height={400}
-            showGrid
+            showGrid={true}
             showTooltip
           />
         </div>
@@ -249,7 +198,6 @@ export function ScatterChartExamples() {
     <div className="space-y-8">
       <BasicScatterChart />
       <MultiSeriesScatterChart />
-      <CorrelationScatterChart />
       <PrimitiveScatterChart />
     </div>
   );

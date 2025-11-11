@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import { createContext, useContext, useRef, useEffect, useMemo } from "react";
 import {
-  BaseWebGLRenderer,
-  BaseWebGPURenderer,
+  createWebGLRenderer,
+  createWebGPURenderer,
   ChartAxes,
   ChartRoot,
   ChartTooltip,
@@ -11,6 +11,8 @@ import {
   hexToRgb,
   type Point,
   type RendererProps,
+  type WebGLRenderer,
+  type WebGPURenderer,
   useBaseChart,
 } from "./base-chart";
 
@@ -53,10 +55,10 @@ interface LineChartContextType {
   series: Series[];
 }
 
-const LineChartContext = React.createContext<LineChartContextType | null>(null);
+const LineChartContext = createContext<LineChartContextType | null>(null);
 
 function useLineChartData() {
-  const ctx = React.useContext(LineChartContext);
+  const ctx = useContext(LineChartContext);
   if (!ctx) {
     throw new Error("LineChart components must be used within LineChart.Root");
   }
@@ -152,667 +154,644 @@ interface LineRendererProps extends RendererProps {
   series: Series[];
 }
 
-class WebGLLineRenderer extends BaseWebGLRenderer {
-  private positionBuffer: WebGLBuffer | null = null;
-  private colorBuffer: WebGLBuffer | null = null;
-  private normalBuffer: WebGLBuffer | null = null;
-  private widthBuffer: WebGLBuffer | null = null;
+// Helper function to create line geometry
+function createLineGeometry(
+  points: Point[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  color: [number, number, number],
+  lineWidth: number
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
+  const normals: number[] = [];
+  const widths: number[] = [];
 
-  constructor(canvas: HTMLCanvasElement) {
-    super(canvas);
-    this.program = this.createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
-    this.positionBuffer = this.gl.createBuffer();
-    this.colorBuffer = this.gl.createBuffer();
-    this.normalBuffer = this.gl.createBuffer();
-    this.widthBuffer = this.gl.createBuffer();
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+
+    const x1 = xScale(p1.x);
+    const y1 = yScale(p1.y);
+    const x2 = xScale(p2.x);
+    const y2 = yScale(p2.y);
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    positions.push(x1, y1, x2, y2, x1, y1);
+    normals.push(-nx, -ny, -nx, -ny, nx, ny);
+    widths.push(lineWidth, lineWidth, lineWidth);
+    colors.push(...color, 1, ...color, 1, ...color, 1);
+
+    positions.push(x2, y2, x1, y1, x2, y2);
+    normals.push(-nx, -ny, nx, ny, nx, ny);
+    widths.push(lineWidth, lineWidth, lineWidth);
+    colors.push(...color, 1, ...color, 1, ...color, 1);
   }
 
-  private createLineGeometry(
-    points: Point[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    lineWidth: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const normals: number[] = [];
-    const widths: number[] = [];
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const p1 = points[i];
-      const p2 = points[i + 1];
-
-      const x1 = xScale(p1.x);
-      const y1 = yScale(p1.y);
-      const x2 = xScale(p2.x);
-      const y2 = yScale(p2.y);
-
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      const nx = -dy / len;
-      const ny = dx / len;
-
-      positions.push(x1, y1, x2, y2, x1, y1);
-      normals.push(-nx, -ny, -nx, -ny, nx, ny);
-      widths.push(lineWidth, lineWidth, lineWidth);
-      colors.push(...color, 1, ...color, 1, ...color, 1);
-
-      positions.push(x2, y2, x1, y1, x2, y2);
-      normals.push(-nx, -ny, nx, ny, nx, ny);
-      widths.push(lineWidth, lineWidth, lineWidth);
-      colors.push(...color, 1, ...color, 1, ...color, 1);
-    }
-
-    return { positions, colors, normals, widths };
-  }
-
-  protected drawGrid(
-    xTicks: number[],
-    yTicks: number[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    width: number,
-    height: number
-  ) {
-    const { gl, program } = this;
-    if (!program) return;
-
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const normals: number[] = [];
-    const widths: number[] = [];
-
-    const isDark = document.documentElement.classList.contains("dark");
-    const gridColor: [number, number, number] = isDark
-      ? [0.4, 0.4, 0.4]
-      : [0.6, 0.6, 0.6];
-    const gridWidth = 1;
-
-    for (const tick of xTicks) {
-      const x = xScale(tick);
-      positions.push(x, 0, x, height, x, 0);
-      positions.push(x, height, x, 0, x, height);
-      normals.push(1, 0, 1, 0, -1, 0, 1, 0, -1, 0, -1, 0);
-      widths.push(
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth
-      );
-      colors.push(
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2
-      );
-    }
-
-    for (const tick of yTicks) {
-      const y = yScale(tick);
-      positions.push(0, y, width, y, 0, y);
-      positions.push(width, y, 0, y, width, y);
-      normals.push(0, 1, 0, 1, 0, -1, 0, 1, 0, -1, 0, -1);
-      widths.push(
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth
-      );
-      colors.push(
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2
-      );
-    }
-
-    if (positions.length === 0) return;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-    const positionLoc = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(positionLoc);
-    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    const colorLoc = gl.getAttribLocation(program, "a_color");
-    gl.enableVertexAttribArray(colorLoc);
-    gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-    const normalLoc = gl.getAttribLocation(program, "a_normal");
-    gl.enableVertexAttribArray(normalLoc);
-    gl.vertexAttribPointer(normalLoc, 2, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.widthBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(widths), gl.STATIC_DRAW);
-    const widthLoc = gl.getAttribLocation(program, "a_width");
-    gl.enableVertexAttribArray(widthLoc);
-    gl.vertexAttribPointer(widthLoc, 1, gl.FLOAT, false, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2);
-  }
-
-  render(props: LineRendererProps) {
-    const { gl, program } = this;
-    const {
-      series,
-      xDomain,
-      yDomain,
-      width,
-      height,
-      margin,
-      showGrid,
-      xTicks,
-      yTicks,
-    } = props;
-
-    if (!program) return;
-
-    this.clear(width, height);
-    this.setupBlending();
-
-    // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
-    gl.useProgram(program);
-
-    const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
-    gl.uniform2f(resolutionLoc, width, height);
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-    const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
-    const matrixLoc = gl.getUniformLocation(program, "u_matrix");
-    gl.uniformMatrix3fv(matrixLoc, false, matrix);
-
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
-
-    if (showGrid) {
-      this.drawGrid(
-        xTicks,
-        yTicks,
-        xScale,
-        yScaleFlipped,
-        innerWidth,
-        innerHeight
-      );
-    }
-
-    for (const s of series) {
-      if (s.data.length < 2) {
-        continue;
-      }
-
-      const color = hexToRgb(s.color || "#3b82f6");
-      const lineWidth = (s.strokeWidth || 3) * 2; // Increase line width for quad rendering
-      const geometry = this.createLineGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        lineWidth
-      );
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.positions),
-        gl.DYNAMIC_DRAW // Use DYNAMIC_DRAW for streaming data
-      );
-      const positionLoc = gl.getAttribLocation(program, "a_position");
-      gl.enableVertexAttribArray(positionLoc);
-      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.colors),
-        gl.DYNAMIC_DRAW
-      );
-      const colorLoc = gl.getAttribLocation(program, "a_color");
-      gl.enableVertexAttribArray(colorLoc);
-      gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.normals),
-        gl.DYNAMIC_DRAW
-      );
-      const normalLoc = gl.getAttribLocation(program, "a_normal");
-      gl.enableVertexAttribArray(normalLoc);
-      gl.vertexAttribPointer(normalLoc, 2, gl.FLOAT, false, 0, 0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.widthBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.widths),
-        gl.DYNAMIC_DRAW
-      );
-      const widthLoc = gl.getAttribLocation(program, "a_width");
-      gl.enableVertexAttribArray(widthLoc);
-      gl.vertexAttribPointer(widthLoc, 1, gl.FLOAT, false, 0, 0);
-
-      gl.drawArrays(gl.TRIANGLES, 0, geometry.positions.length / 2);
-    }
-  }
-
-  destroy() {
-    const { gl } = this;
-    if (this.program) gl.deleteProgram(this.program);
-    if (this.positionBuffer) gl.deleteBuffer(this.positionBuffer);
-    if (this.colorBuffer) gl.deleteBuffer(this.colorBuffer);
-    if (this.normalBuffer) gl.deleteBuffer(this.normalBuffer);
-    if (this.widthBuffer) gl.deleteBuffer(this.widthBuffer);
-  }
+  return { positions, colors, normals, widths };
 }
 
-class WebGPULineRenderer extends BaseWebGPURenderer {
-  private uniformBuffer: GPUBuffer | null = null;
-  private bindGroup: GPUBindGroup | null = null;
+// Factory function to create WebGL line renderer
+function createWebGLLineRenderer(
+  canvas: HTMLCanvasElement
+): WebGLRenderer<LineRendererProps> {
+  const buffers = {
+    position: null as WebGLBuffer | null,
+    color: null as WebGLBuffer | null,
+    normal: null as WebGLBuffer | null,
+    width: null as WebGLBuffer | null,
+  };
 
-  constructor(canvas: HTMLCanvasElement, device: GPUDevice) {
-    super(canvas, device);
-    this.initPipeline();
-  }
-
-  private initPipeline() {
-    const { device } = this;
-    const shaderModule = this.createShaderModule(WGSL_SHADER);
-
-    this.uniformBuffer = device.createBuffer({
-      size: 64,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
-
-    const bindGroupLayout = device.createBindGroupLayout({
-      entries: [
-        {
-          binding: 0,
-          visibility: GPUShaderStage.VERTEX,
-          buffer: { type: "uniform" },
-        },
-      ],
-    });
-
-    this.bindGroup = device.createBindGroup({
-      layout: bindGroupLayout,
-      entries: [{ binding: 0, resource: { buffer: this.uniformBuffer } }],
-    });
-
-    this.pipeline = device.createRenderPipeline({
-      layout: device.createPipelineLayout({
-        bindGroupLayouts: [bindGroupLayout],
-      }),
-      vertex: {
-        module: shaderModule,
-        entryPoint: "vertexMain",
-        buffers: [
-          {
-            arrayStride: 8,
-            attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
-          },
-          {
-            arrayStride: 16,
-            attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
-          },
-          {
-            arrayStride: 8,
-            attributes: [{ shaderLocation: 2, offset: 0, format: "float32x2" }],
-          },
-          {
-            arrayStride: 4,
-            attributes: [{ shaderLocation: 3, offset: 0, format: "float32" }],
-          },
-        ],
-      },
-      fragment: {
-        module: shaderModule,
-        entryPoint: "fragmentMain",
-        targets: [
-          {
-            format: this.format,
-            blend: {
-              color: {
-                srcFactor: "src-alpha",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
-              },
-              alpha: {
-                srcFactor: "one",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
-              },
-            },
-          },
-        ],
-      },
-      primitive: { topology: "triangle-list" },
-    });
-  }
-
-  private createLineGeometry(
-    points: Point[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    lineWidth: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const normals: number[] = [];
-    const widths: number[] = [];
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const p1 = points[i];
-      const p2 = points[i + 1];
-      const x1 = xScale(p1.x);
-      const y1 = yScale(p1.y);
-      const x2 = xScale(p2.x);
-      const y2 = yScale(p2.y);
-
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      const nx = -dy / len;
-      const ny = dx / len;
-
-      positions.push(x1, y1, x2, y2, x1, y1);
-      normals.push(-nx, -ny, -nx, -ny, nx, ny);
-      widths.push(lineWidth, lineWidth, lineWidth);
-      colors.push(...color, 1, ...color, 1, ...color, 1);
-
-      positions.push(x2, y2, x1, y1, x2, y2);
-      normals.push(-nx, -ny, nx, ny, nx, ny);
-      widths.push(lineWidth, lineWidth, lineWidth);
-      colors.push(...color, 1, ...color, 1, ...color, 1);
-    }
-
-    return { positions, colors, normals, widths };
-  }
-
-  private drawGrid(
-    passEncoder: GPURenderPassEncoder,
-    xTicks: number[],
-    yTicks: number[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    width: number,
-    height: number
-  ) {
-    const { device } = this;
-    const positions: number[] = [];
-    const colors: number[] = [];
-    const normals: number[] = [];
-    const widths: number[] = [];
-
-    const isDark = document.documentElement.classList.contains("dark");
-    const gridColor: [number, number, number] = isDark
-      ? [0.4, 0.4, 0.4]
-      : [0.6, 0.6, 0.6];
-    const gridWidth = 1;
-
-    for (const tick of xTicks) {
-      const x = xScale(tick);
-      positions.push(x, 0, x, height, x, 0, x, height, x, 0, x, height);
-      normals.push(1, 0, 1, 0, -1, 0, 1, 0, -1, 0, -1, 0);
-      widths.push(
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth
-      );
-      colors.push(
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2
-      );
-    }
-
-    for (const tick of yTicks) {
-      const y = yScale(tick);
-      positions.push(0, y, width, y, 0, y, width, y, 0, y, width, y);
-      normals.push(0, 1, 0, 1, 0, -1, 0, 1, 0, -1, 0, -1);
-      widths.push(
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth,
-        gridWidth
-      );
-      colors.push(
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2,
-        ...gridColor,
-        0.2
-      );
-    }
-
-    if (positions.length === 0) return;
-
-    const positionBuffer = device.createBuffer({
-      size: positions.length * 4,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    device.queue.writeBuffer(positionBuffer, 0, new Float32Array(positions));
-
-    const colorBuffer = device.createBuffer({
-      size: colors.length * 4,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    device.queue.writeBuffer(colorBuffer, 0, new Float32Array(colors));
-
-    const normalBuffer = device.createBuffer({
-      size: normals.length * 4,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    device.queue.writeBuffer(normalBuffer, 0, new Float32Array(normals));
-
-    const widthBuffer = device.createBuffer({
-      size: widths.length * 4,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    device.queue.writeBuffer(widthBuffer, 0, new Float32Array(widths));
-
-    passEncoder.setVertexBuffer(0, positionBuffer);
-    passEncoder.setVertexBuffer(1, colorBuffer);
-    passEncoder.setVertexBuffer(2, normalBuffer);
-    passEncoder.setVertexBuffer(3, widthBuffer);
-
-    passEncoder.draw(positions.length / 2);
-  }
-
-  async render(props: LineRendererProps) {
-    const { device, pipeline, uniformBuffer, bindGroup } = this;
-    const {
-      series,
-      xDomain,
-      yDomain,
-      width,
-      height,
-      margin,
-      showGrid,
-      xTicks,
-      yTicks,
-    } = props;
-
-    if (!pipeline || !uniformBuffer || !bindGroup) return;
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    const uniformData = new Float32Array([
-      width,
-      height,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      margin.left,
-      margin.top,
-      1,
-      0,
-    ]);
-    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
-
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
-
-    const commandEncoder = device.createCommandEncoder();
-    const textureView = this.context.getCurrentTexture().createView();
-
-    const passEncoder = commandEncoder.beginRenderPass({
-      colorAttachments: [
-        {
-          view: textureView,
-          clearValue: { r: 0, g: 0, b: 0, a: 0 },
-          loadOp: "clear",
-          storeOp: "store",
-        },
-      ],
-    });
-
-    passEncoder.setPipeline(pipeline);
-    passEncoder.setBindGroup(0, bindGroup);
-
-    if (showGrid) {
-      this.drawGrid(
-        passEncoder,
+  const renderer = createWebGLRenderer<LineRendererProps>({
+    canvas,
+    createShaders: () => ({
+      vertexSource: VERTEX_SHADER,
+      fragmentSource: FRAGMENT_SHADER,
+    }),
+    onRender: (gl, program, props) => {
+      const {
+        series,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        showGrid,
         xTicks,
         yTicks,
-        xScale,
-        yScaleFlipped,
-        innerWidth,
-        innerHeight
-      );
-    }
+      } = props;
 
-    for (const s of series) {
-      if (s.data.length < 2) {
-        continue;
+      // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
+      gl.useProgram(program);
+
+      const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
+      gl.uniform2f(resolutionLoc, width, height);
+
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+      const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
+      const matrixLoc = gl.getUniformLocation(program, "u_matrix");
+      gl.uniformMatrix3fv(matrixLoc, false, matrix);
+
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
+
+      // Draw grid if enabled
+      if (showGrid) {
+        const positions: number[] = [];
+        const colors: number[] = [];
+        const normals: number[] = [];
+        const widths: number[] = [];
+
+        const isDark = document.documentElement.classList.contains("dark");
+        const gridColor: [number, number, number] = isDark
+          ? [0.4, 0.4, 0.4]
+          : [0.6, 0.6, 0.6];
+        const gridWidth = 1;
+
+        for (const tick of xTicks) {
+          const x = xScale(tick);
+          positions.push(x, 0, x, height, x, 0);
+          positions.push(x, height, x, 0, x, height);
+          normals.push(1, 0, 1, 0, -1, 0, 1, 0, -1, 0, -1, 0);
+          widths.push(
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth
+          );
+          colors.push(
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2
+          );
+        }
+
+        for (const tick of yTicks) {
+          const y = yScaleFlipped(tick);
+          positions.push(0, y, innerWidth, y, 0, y);
+          positions.push(innerWidth, y, 0, y, innerWidth, y);
+          normals.push(0, 1, 0, 1, 0, -1, 0, 1, 0, -1, 0, -1);
+          widths.push(
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth
+          );
+          colors.push(
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2
+          );
+        }
+
+        if (positions.length > 0) {
+          if (!buffers.position) buffers.position = gl.createBuffer();
+          if (!buffers.color) buffers.color = gl.createBuffer();
+          if (!buffers.normal) buffers.normal = gl.createBuffer();
+          if (!buffers.width) buffers.width = gl.createBuffer();
+
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(positions),
+            gl.STATIC_DRAW
+          );
+          const positionLoc = gl.getAttribLocation(program, "a_position");
+          gl.enableVertexAttribArray(positionLoc);
+          gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(colors),
+            gl.STATIC_DRAW
+          );
+          const colorLoc = gl.getAttribLocation(program, "a_color");
+          gl.enableVertexAttribArray(colorLoc);
+          gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normal);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(normals),
+            gl.STATIC_DRAW
+          );
+          const normalLoc = gl.getAttribLocation(program, "a_normal");
+          gl.enableVertexAttribArray(normalLoc);
+          gl.vertexAttribPointer(normalLoc, 2, gl.FLOAT, false, 0, 0);
+
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.width);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(widths),
+            gl.STATIC_DRAW
+          );
+          const widthLoc = gl.getAttribLocation(program, "a_width");
+          gl.enableVertexAttribArray(widthLoc);
+          gl.vertexAttribPointer(widthLoc, 1, gl.FLOAT, false, 0, 0);
+
+          gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2);
+        }
       }
 
-      const color = hexToRgb(s.color || "#3b82f6");
-      const lineWidth = s.strokeWidth || 3;
-      const geometry = this.createLineGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        lineWidth
-      );
+      // Draw lines
+      for (const s of series) {
+        if (s.data.length < 2) {
+          continue;
+        }
 
-      const positionBuffer = device.createBuffer({
-        size: geometry.positions.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        const color = hexToRgb(s.color || "#3b82f6");
+        const lineWidth = (s.strokeWidth || 3) * 2;
+        const geometry = createLineGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          lineWidth
+        );
+
+        if (!buffers.position) buffers.position = gl.createBuffer();
+        if (!buffers.color) buffers.color = gl.createBuffer();
+        if (!buffers.normal) buffers.normal = gl.createBuffer();
+        if (!buffers.width) buffers.width = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.positions),
+          gl.DYNAMIC_DRAW
+        );
+        const positionLoc = gl.getAttribLocation(program, "a_position");
+        gl.enableVertexAttribArray(positionLoc);
+        gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.colors),
+          gl.DYNAMIC_DRAW
+        );
+        const colorLoc = gl.getAttribLocation(program, "a_color");
+        gl.enableVertexAttribArray(colorLoc);
+        gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normal);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.normals),
+          gl.DYNAMIC_DRAW
+        );
+        const normalLoc = gl.getAttribLocation(program, "a_normal");
+        gl.enableVertexAttribArray(normalLoc);
+        gl.vertexAttribPointer(normalLoc, 2, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.width);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array(geometry.widths),
+          gl.DYNAMIC_DRAW
+        );
+        const widthLoc = gl.getAttribLocation(program, "a_width");
+        gl.enableVertexAttribArray(widthLoc);
+        gl.vertexAttribPointer(widthLoc, 1, gl.FLOAT, false, 0, 0);
+
+        gl.drawArrays(gl.TRIANGLES, 0, geometry.positions.length / 2);
+      }
+    },
+    onDestroy: (gl) => {
+      if (buffers.position) gl.deleteBuffer(buffers.position);
+      if (buffers.color) gl.deleteBuffer(buffers.color);
+      if (buffers.normal) gl.deleteBuffer(buffers.normal);
+      if (buffers.width) gl.deleteBuffer(buffers.width);
+    },
+  });
+
+  return renderer;
+}
+
+// Factory function to create WebGPU line renderer
+function createWebGPULineRenderer(
+  canvas: HTMLCanvasElement,
+  device: GPUDevice
+): WebGPURenderer<LineRendererProps> {
+  const shaderModule = device.createShaderModule({ code: WGSL_SHADER });
+
+  const uniformBuffer = device.createBuffer({
+    size: 64,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const bindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "uniform" },
+      },
+    ],
+  });
+
+  const bindGroup = device.createBindGroup({
+    layout: bindGroupLayout,
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+  });
+
+  const renderer = createWebGPURenderer<LineRendererProps>({
+    canvas,
+    device,
+    createPipeline: (device, format) => {
+      return device.createRenderPipeline({
+        layout: device.createPipelineLayout({
+          bindGroupLayouts: [bindGroupLayout],
+        }),
+        vertex: {
+          module: shaderModule,
+          entryPoint: "vertexMain",
+          buffers: [
+            {
+              arrayStride: 8,
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x2" },
+              ],
+            },
+            {
+              arrayStride: 16,
+              attributes: [
+                { shaderLocation: 1, offset: 0, format: "float32x4" },
+              ],
+            },
+            {
+              arrayStride: 8,
+              attributes: [
+                { shaderLocation: 2, offset: 0, format: "float32x2" },
+              ],
+            },
+            {
+              arrayStride: 4,
+              attributes: [{ shaderLocation: 3, offset: 0, format: "float32" }],
+            },
+          ],
+        },
+        fragment: {
+          module: shaderModule,
+          entryPoint: "fragmentMain",
+          targets: [
+            {
+              format,
+              blend: {
+                color: {
+                  srcFactor: "src-alpha",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
+                alpha: {
+                  srcFactor: "one",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
+              },
+            },
+          ],
+        },
+        primitive: { topology: "triangle-list" },
       });
-      device.queue.writeBuffer(
-        positionBuffer,
-        0,
-        new Float32Array(geometry.positions)
-      );
+    },
+    onRender: async (device, context, pipeline, props) => {
+      const {
+        series,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        showGrid,
+        xTicks,
+        yTicks,
+      } = props;
 
-      const colorBuffer = device.createBuffer({
-        size: geometry.colors.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+
+      const uniformData = new Float32Array([
+        width,
+        height,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        margin.left,
+        margin.top,
+        1,
+        0,
+      ]);
+      device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
+
+      const commandEncoder = device.createCommandEncoder();
+      const textureView = context.getCurrentTexture().createView();
+
+      const passEncoder = commandEncoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view: textureView,
+            clearValue: { r: 0, g: 0, b: 0, a: 0 },
+            loadOp: "clear",
+            storeOp: "store",
+          },
+        ],
       });
-      device.queue.writeBuffer(
-        colorBuffer,
-        0,
-        new Float32Array(geometry.colors)
-      );
 
-      const normalBuffer = device.createBuffer({
-        size: geometry.normals.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      });
-      device.queue.writeBuffer(
-        normalBuffer,
-        0,
-        new Float32Array(geometry.normals)
-      );
+      passEncoder.setPipeline(pipeline);
+      passEncoder.setBindGroup(0, bindGroup);
 
-      const widthBuffer = device.createBuffer({
-        size: geometry.widths.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      });
-      device.queue.writeBuffer(
-        widthBuffer,
-        0,
-        new Float32Array(geometry.widths)
-      );
+      // Draw grid if enabled
+      if (showGrid) {
+        const positions: number[] = [];
+        const colors: number[] = [];
+        const normals: number[] = [];
+        const widths: number[] = [];
 
-      passEncoder.setVertexBuffer(0, positionBuffer);
-      passEncoder.setVertexBuffer(1, colorBuffer);
-      passEncoder.setVertexBuffer(2, normalBuffer);
-      passEncoder.setVertexBuffer(3, widthBuffer);
+        const isDark = document.documentElement.classList.contains("dark");
+        const gridColor: [number, number, number] = isDark
+          ? [0.4, 0.4, 0.4]
+          : [0.6, 0.6, 0.6];
+        const gridWidth = 1;
 
-      passEncoder.draw(geometry.positions.length / 2);
-    }
+        for (const tick of xTicks) {
+          const x = xScale(tick);
+          positions.push(
+            x,
+            0,
+            x,
+            innerHeight,
+            x,
+            0,
+            x,
+            innerHeight,
+            x,
+            0,
+            x,
+            innerHeight
+          );
+          normals.push(1, 0, 1, 0, -1, 0, 1, 0, -1, 0, -1, 0);
+          widths.push(
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth
+          );
+          colors.push(
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2
+          );
+        }
 
-    passEncoder.end();
-    device.queue.submit([commandEncoder.finish()]);
-  }
+        for (const tick of yTicks) {
+          const y = yScaleFlipped(tick);
+          positions.push(
+            0,
+            y,
+            innerWidth,
+            y,
+            0,
+            y,
+            innerWidth,
+            y,
+            0,
+            y,
+            innerWidth,
+            y
+          );
+          normals.push(0, 1, 0, 1, 0, -1, 0, 1, 0, -1, 0, -1);
+          widths.push(
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth,
+            gridWidth
+          );
+          colors.push(
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2,
+            ...gridColor,
+            0.2
+          );
+        }
 
-  destroy() {
-    if (this.uniformBuffer) this.uniformBuffer.destroy();
-  }
+        if (positions.length > 0) {
+          const positionBuffer = device.createBuffer({
+            size: positions.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(
+            positionBuffer,
+            0,
+            new Float32Array(positions)
+          );
+
+          const colorBuffer = device.createBuffer({
+            size: colors.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(colorBuffer, 0, new Float32Array(colors));
+
+          const normalBuffer = device.createBuffer({
+            size: normals.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(normalBuffer, 0, new Float32Array(normals));
+
+          const widthBuffer = device.createBuffer({
+            size: widths.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(widthBuffer, 0, new Float32Array(widths));
+
+          passEncoder.setVertexBuffer(0, positionBuffer);
+          passEncoder.setVertexBuffer(1, colorBuffer);
+          passEncoder.setVertexBuffer(2, normalBuffer);
+          passEncoder.setVertexBuffer(3, widthBuffer);
+
+          passEncoder.draw(positions.length / 2);
+        }
+      }
+
+      // Draw lines
+      for (const s of series) {
+        if (s.data.length < 2) {
+          continue;
+        }
+
+        const color = hexToRgb(s.color || "#3b82f6");
+        const lineWidth = s.strokeWidth || 3;
+        const geometry = createLineGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          lineWidth
+        );
+
+        const positionBuffer = device.createBuffer({
+          size: geometry.positions.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          positionBuffer,
+          0,
+          new Float32Array(geometry.positions)
+        );
+
+        const colorBuffer = device.createBuffer({
+          size: geometry.colors.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          colorBuffer,
+          0,
+          new Float32Array(geometry.colors)
+        );
+
+        const normalBuffer = device.createBuffer({
+          size: geometry.normals.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          normalBuffer,
+          0,
+          new Float32Array(geometry.normals)
+        );
+
+        const widthBuffer = device.createBuffer({
+          size: geometry.widths.length * 4,
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        device.queue.writeBuffer(
+          widthBuffer,
+          0,
+          new Float32Array(geometry.widths)
+        );
+
+        passEncoder.setVertexBuffer(0, positionBuffer);
+        passEncoder.setVertexBuffer(1, colorBuffer);
+        passEncoder.setVertexBuffer(2, normalBuffer);
+        passEncoder.setVertexBuffer(3, widthBuffer);
+
+        passEncoder.draw(geometry.positions.length / 2);
+      }
+
+      passEncoder.end();
+      device.queue.submit([commandEncoder.finish()]);
+    },
+    onDestroy: () => {
+      uniformBuffer.destroy();
+    },
+  });
+
+  return renderer;
 }
 
 // ============================================================================
@@ -877,12 +856,12 @@ function Root({
 
 function Canvas({ showGrid = true }: { showGrid?: boolean }) {
   const ctx = useLineChart();
-  const rendererRef = React.useRef<
-    WebGLLineRenderer | WebGPULineRenderer | null
+  const rendererRef = useRef<
+    WebGLRenderer<LineRendererProps> | WebGPURenderer<LineRendererProps> | null
   >(null);
 
   // Initialize renderer once
-  React.useEffect(() => {
+  useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
 
@@ -902,7 +881,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
           const adapter = await navigator.gpu?.requestAdapter();
           if (adapter) {
             const device = await adapter.requestDevice();
-            const renderer = new WebGPULineRenderer(canvas, device);
+            const renderer = createWebGPULineRenderer(canvas, device);
 
             if (!mounted) {
               renderer.destroy();
@@ -919,7 +898,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
       }
 
       try {
-        const renderer = new WebGLLineRenderer(canvas);
+        const renderer = createWebGLLineRenderer(canvas);
 
         if (!mounted) {
           renderer.destroy();
@@ -942,10 +921,17 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
         rendererRef.current = null;
       }
     };
-  }, [ctx.preferWebGPU, ctx.width, ctx.height, ctx.devicePixelRatio]);
+  }, [
+    ctx.preferWebGPU,
+    ctx.width,
+    ctx.height,
+    ctx.devicePixelRatio,
+    ctx.canvasRef,
+    ctx.setRenderMode,
+  ]);
 
   // Render when data changes
-  React.useEffect(() => {
+  useEffect(() => {
     const canvas = ctx.canvasRef.current;
     const renderer = rendererRef.current;
     if (!canvas || !renderer || !ctx.renderMode) return;
@@ -983,11 +969,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
         showGrid,
       };
 
-      if (ctx.renderMode === "webgpu") {
-        await (currentRenderer as WebGPULineRenderer).render(renderProps);
-      } else {
-        (currentRenderer as WebGLLineRenderer).render(renderProps);
-      }
+      await currentRenderer.render(renderProps);
 
       rendering = false;
     }
@@ -1011,6 +993,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
     ctx.margin,
     ctx.devicePixelRatio,
     ctx.renderMode,
+    ctx.canvasRef,
     showGrid,
   ]);
 
@@ -1294,7 +1277,7 @@ function Tooltip() {
   };
 
   // Recalculate dot positions based on current data for streaming scenarios
-  const dots = React.useMemo(() => {
+  const dots = useMemo(() => {
     if (!ctx.hoveredPoint?.data?.seriesPoints) return null;
 
     const seriesPoints = ctx.hoveredPoint.data.seriesPoints as Array<{

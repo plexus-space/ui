@@ -1,16 +1,18 @@
 "use client";
 
-import * as React from "react";
 import {
-  BaseWebGLRenderer,
-  BaseWebGPURenderer,
+  createWebGLRenderer,
+  createWebGPURenderer,
   ChartAxes,
   ChartRoot,
   ChartTooltip,
   hexToRgb,
   type RendererProps,
+  type WebGLRenderer,
+  type WebGPURenderer,
   useBaseChart,
 } from "./base-chart";
+import { createContext, useContext, useEffect, useMemo, useRef } from "react";
 
 // ============================================================================
 // Heatmap Chart Types
@@ -61,12 +63,10 @@ interface HeatmapChartContextType {
   cellGap: number;
 }
 
-const HeatmapChartContext = React.createContext<HeatmapChartContextType | null>(
-  null
-);
+const HeatmapChartContext = createContext<HeatmapChartContextType | null>(null);
 
 function useHeatmapChartData() {
-  const ctx = React.useContext(HeatmapChartContext);
+  const ctx = useContext(HeatmapChartContext);
   if (!ctx) {
     throw new Error(
       "HeatmapChart components must be used within HeatmapChart.Root"
@@ -197,406 +197,345 @@ interface HeatmapRendererProps extends RendererProps {
   cellGap: number;
 }
 
-class WebGLHeatmapRenderer extends BaseWebGLRenderer {
-  private positionBuffer: WebGLBuffer | null = null;
-  private colorBuffer: WebGLBuffer | null = null;
+// Helper function to create heatmap geometry
+function createHeatmapGeometry(
+  data: DataPoint[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  xCategoryMap: Map<string | number, number>,
+  yCategoryMap: Map<string | number, number>,
+  colorScale: (value: number) => string,
+  minValue: number,
+  maxValue: number,
+  cellWidth: number,
+  cellHeight: number,
+  cellGap: number
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
 
-  constructor(canvas: HTMLCanvasElement) {
-    super(canvas);
-    this.program = this.createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
-    this.positionBuffer = this.gl.createBuffer();
-    this.colorBuffer = this.gl.createBuffer();
-  }
+  for (const point of data) {
+    const xIdx = xCategoryMap.get(point.x);
+    const yIdx = yCategoryMap.get(point.y);
 
-  private createHeatmapGeometry(
-    data: DataPoint[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    xCategoryMap: Map<string | number, number>,
-    yCategoryMap: Map<string | number, number>,
-    colorScale: (value: number) => string,
-    minValue: number,
-    maxValue: number,
-    cellWidth: number,
-    cellHeight: number,
-    cellGap: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
+    if (xIdx === undefined || yIdx === undefined) continue;
 
-    for (const point of data) {
-      const xIdx = xCategoryMap.get(point.x);
-      const yIdx = yCategoryMap.get(point.y);
+    const x = xScale(xIdx);
+    const y = yScale(yIdx);
+    const w = cellWidth - cellGap;
+    const h = cellHeight - cellGap;
 
-      if (xIdx === undefined || yIdx === undefined) continue;
+    // Normalize value to [0, 1]
+    const normalizedValue = (point.value - minValue) / (maxValue - minValue);
+    const colorStr = colorScale(normalizedValue);
+    const rgb = hexToRgb(colorStr);
 
-      const x = xScale(xIdx);
-      const y = yScale(yIdx);
-      const w = cellWidth - cellGap;
-      const h = cellHeight - cellGap;
+    // Two triangles for rectangle
+    positions.push(x, y, x + w, y, x, y + h, x + w, y, x + w, y + h, x, y + h);
 
-      // Normalize value to [0, 1]
-      const normalizedValue = (point.value - minValue) / (maxValue - minValue);
-      const colorStr = colorScale(normalizedValue);
-      const rgb = hexToRgb(colorStr);
-
-      // Two triangles for rectangle
-      positions.push(
-        x,
-        y,
-        x + w,
-        y,
-        x,
-        y + h,
-        x + w,
-        y,
-        x + w,
-        y + h,
-        x,
-        y + h
-      );
-
-      // Same color for all 6 vertices
-      for (let i = 0; i < 6; i++) {
-        colors.push(...rgb, 1.0);
-      }
+    // Same color for all 6 vertices
+    for (let i = 0; i < 6; i++) {
+      colors.push(...rgb, 1.0);
     }
-
-    return { positions, colors };
   }
 
-  render(props: HeatmapRendererProps) {
-    const { gl, program } = this;
-    const {
-      data,
-      xDomain,
-      yDomain,
-      width,
-      height,
-      margin,
-      xCategoryMap,
-      yCategoryMap,
-      colorScale,
-      minValue,
-      maxValue,
-      cellGap,
-    } = props;
-
-    if (!program) return;
-
-    this.clear(width, height);
-    this.setupBlending();
-
-    // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
-    gl.useProgram(program);
-
-    const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
-    gl.uniform2f(resolutionLoc, width, height);
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-    const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
-    const matrixLoc = gl.getUniformLocation(program, "u_matrix");
-    gl.uniformMatrix3fv(matrixLoc, false, matrix);
-
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
-
-    const cellWidth = innerWidth / xCategoryMap.size;
-    const cellHeight = innerHeight / yCategoryMap.size;
-
-    const geometry = this.createHeatmapGeometry(
-      data,
-      xScale,
-      yScaleFlipped,
-      xCategoryMap,
-      yCategoryMap,
-      colorScale,
-      minValue,
-      maxValue,
-      cellWidth,
-      cellHeight,
-      cellGap
-    );
-
-    if (geometry.positions.length === 0) return;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(geometry.positions),
-      gl.STATIC_DRAW
-    );
-    const positionLoc = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(positionLoc);
-    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(geometry.colors),
-      gl.STATIC_DRAW
-    );
-    const colorLoc = gl.getAttribLocation(program, "a_color");
-    gl.enableVertexAttribArray(colorLoc);
-    gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLES, 0, geometry.positions.length / 2);
-  }
-
-  destroy() {
-    const { gl } = this;
-    if (this.program) gl.deleteProgram(this.program);
-    if (this.positionBuffer) gl.deleteBuffer(this.positionBuffer);
-    if (this.colorBuffer) gl.deleteBuffer(this.colorBuffer);
-  }
+  return { positions, colors };
 }
 
-class WebGPUHeatmapRenderer extends BaseWebGPURenderer {
-  private uniformBuffer: GPUBuffer | null = null;
-  private bindGroup: GPUBindGroup | null = null;
+// Factory function to create WebGL heatmap renderer
+function createWebGLHeatmapRenderer(
+  canvas: HTMLCanvasElement
+): WebGLRenderer<HeatmapRendererProps> {
+  const buffers = {
+    position: null as WebGLBuffer | null,
+    color: null as WebGLBuffer | null,
+  };
 
-  constructor(canvas: HTMLCanvasElement, device: GPUDevice) {
-    super(canvas, device);
-    this.initPipeline();
-  }
+  const renderer = createWebGLRenderer<HeatmapRendererProps>({
+    canvas,
+    createShaders: () => ({
+      vertexSource: VERTEX_SHADER,
+      fragmentSource: FRAGMENT_SHADER,
+    }),
+    onRender: (gl, program, props) => {
+      const {
+        data,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        xCategoryMap,
+        yCategoryMap,
+        colorScale,
+        minValue,
+        maxValue,
+        cellGap,
+      } = props;
 
-  private initPipeline() {
-    const { device } = this;
-    const shaderModule = this.createShaderModule(WGSL_SHADER);
+      // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
+      gl.useProgram(program);
 
-    this.uniformBuffer = device.createBuffer({
-      size: 64,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
+      const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
+      gl.uniform2f(resolutionLoc, width, height);
 
-    const bindGroupLayout = device.createBindGroupLayout({
-      entries: [
-        {
-          binding: 0,
-          visibility: GPUShaderStage.VERTEX,
-          buffer: { type: "uniform" },
-        },
-      ],
-    });
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+      const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
+      const matrixLoc = gl.getUniformLocation(program, "u_matrix");
+      gl.uniformMatrix3fv(matrixLoc, false, matrix);
 
-    this.bindGroup = device.createBindGroup({
-      layout: bindGroupLayout,
-      entries: [{ binding: 0, resource: { buffer: this.uniformBuffer } }],
-    });
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
-    this.pipeline = device.createRenderPipeline({
-      layout: device.createPipelineLayout({
-        bindGroupLayouts: [bindGroupLayout],
-      }),
-      vertex: {
-        module: shaderModule,
-        entryPoint: "vertexMain",
-        buffers: [
-          {
-            arrayStride: 8,
-            attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
-          },
-          {
-            arrayStride: 16,
-            attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
-          },
-        ],
-      },
-      fragment: {
-        module: shaderModule,
-        entryPoint: "fragmentMain",
-        targets: [
-          {
-            format: this.format,
-            blend: {
-              color: {
-                srcFactor: "src-alpha",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
-              },
-              alpha: {
-                srcFactor: "one",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
-              },
-            },
-          },
-        ],
-      },
-      primitive: { topology: "triangle-list" },
-    });
-  }
+      const cellWidth = innerWidth / xCategoryMap.size;
+      const cellHeight = innerHeight / yCategoryMap.size;
 
-  private createHeatmapGeometry(
-    data: DataPoint[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    xCategoryMap: Map<string | number, number>,
-    yCategoryMap: Map<string | number, number>,
-    colorScale: (value: number) => string,
-    minValue: number,
-    maxValue: number,
-    cellWidth: number,
-    cellHeight: number,
-    cellGap: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
-
-    for (const point of data) {
-      const xIdx = xCategoryMap.get(point.x);
-      const yIdx = yCategoryMap.get(point.y);
-
-      if (xIdx === undefined || yIdx === undefined) continue;
-
-      const x = xScale(xIdx);
-      const y = yScale(yIdx);
-      const w = cellWidth - cellGap;
-      const h = cellHeight - cellGap;
-
-      const normalizedValue = (point.value - minValue) / (maxValue - minValue);
-      const colorStr = colorScale(normalizedValue);
-      const rgb = hexToRgb(colorStr);
-
-      positions.push(
-        x,
-        y,
-        x + w,
-        y,
-        x,
-        y + h,
-        x + w,
-        y,
-        x + w,
-        y + h,
-        x,
-        y + h
+      const geometry = createHeatmapGeometry(
+        data,
+        xScale,
+        yScaleFlipped,
+        xCategoryMap,
+        yCategoryMap,
+        colorScale,
+        minValue,
+        maxValue,
+        cellWidth,
+        cellHeight,
+        cellGap
       );
 
-      for (let i = 0; i < 6; i++) {
-        colors.push(...rgb, 1.0);
-      }
-    }
+      if (geometry.positions.length === 0) return;
 
-    return { positions, colors };
-  }
+      if (!buffers.position) buffers.position = gl.createBuffer();
+      if (!buffers.color) buffers.color = gl.createBuffer();
 
-  async render(props: HeatmapRendererProps) {
-    const { device, pipeline, uniformBuffer, bindGroup } = this;
-    const {
-      data,
-      xDomain,
-      yDomain,
-      width,
-      height,
-      margin,
-      xCategoryMap,
-      yCategoryMap,
-      colorScale,
-      minValue,
-      maxValue,
-      cellGap,
-    } = props;
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(geometry.positions),
+        gl.STATIC_DRAW
+      );
+      const positionLoc = gl.getAttribLocation(program, "a_position");
+      gl.enableVertexAttribArray(positionLoc);
+      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
-    if (!pipeline || !uniformBuffer || !bindGroup) return;
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(geometry.colors),
+        gl.STATIC_DRAW
+      );
+      const colorLoc = gl.getAttribLocation(program, "a_color");
+      gl.enableVertexAttribArray(colorLoc);
+      gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
 
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
+      gl.drawArrays(gl.TRIANGLES, 0, geometry.positions.length / 2);
+    },
+    onDestroy: (gl) => {
+      if (buffers.position) gl.deleteBuffer(buffers.position);
+      if (buffers.color) gl.deleteBuffer(buffers.color);
+    },
+  });
 
-    const uniformData = new Float32Array([
-      width,
-      height,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      margin.left,
-      margin.top,
-      1,
-      0,
-    ]);
-    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+  return renderer;
+}
 
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
+// Factory function to create WebGPU heatmap renderer
+function createWebGPUHeatmapRenderer(
+  canvas: HTMLCanvasElement,
+  device: GPUDevice
+): WebGPURenderer<HeatmapRendererProps> {
+  const shaderModule = device.createShaderModule({ code: WGSL_SHADER });
 
-    const cellWidth = innerWidth / xCategoryMap.size;
-    const cellHeight = innerHeight / yCategoryMap.size;
+  const uniformBuffer = device.createBuffer({
+    size: 64,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
 
-    const geometry = this.createHeatmapGeometry(
-      data,
-      xScale,
-      yScaleFlipped,
-      xCategoryMap,
-      yCategoryMap,
-      colorScale,
-      minValue,
-      maxValue,
-      cellWidth,
-      cellHeight,
-      cellGap
-    );
+  const bindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "uniform" },
+      },
+    ],
+  });
 
-    if (geometry.positions.length === 0) return;
+  const bindGroup = device.createBindGroup({
+    layout: bindGroupLayout,
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+  });
 
-    const commandEncoder = device.createCommandEncoder();
-    const textureView = this.context.getCurrentTexture().createView();
-
-    const passEncoder = commandEncoder.beginRenderPass({
-      colorAttachments: [
-        {
-          view: textureView,
-          clearValue: { r: 0, g: 0, b: 0, a: 0 },
-          loadOp: "clear",
-          storeOp: "store",
+  const renderer = createWebGPURenderer<HeatmapRendererProps>({
+    canvas,
+    device,
+    createPipeline: (device, format) => {
+      return device.createRenderPipeline({
+        layout: device.createPipelineLayout({
+          bindGroupLayouts: [bindGroupLayout],
+        }),
+        vertex: {
+          module: shaderModule,
+          entryPoint: "vertexMain",
+          buffers: [
+            {
+              arrayStride: 8,
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x2" },
+              ],
+            },
+            {
+              arrayStride: 16,
+              attributes: [
+                { shaderLocation: 1, offset: 0, format: "float32x4" },
+              ],
+            },
+          ],
         },
-      ],
-    });
+        fragment: {
+          module: shaderModule,
+          entryPoint: "fragmentMain",
+          targets: [
+            {
+              format,
+              blend: {
+                color: {
+                  srcFactor: "src-alpha",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
+                alpha: {
+                  srcFactor: "one",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
+              },
+            },
+          ],
+        },
+        primitive: { topology: "triangle-list" },
+      });
+    },
+    onRender: async (device, context, pipeline, props) => {
+      const {
+        data,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        xCategoryMap,
+        yCategoryMap,
+        colorScale,
+        minValue,
+        maxValue,
+        cellGap,
+      } = props;
 
-    passEncoder.setPipeline(pipeline);
-    passEncoder.setBindGroup(0, bindGroup);
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
 
-    const positionBuffer = device.createBuffer({
-      size: geometry.positions.length * 4,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    device.queue.writeBuffer(
-      positionBuffer,
-      0,
-      new Float32Array(geometry.positions)
-    );
+      const uniformData = new Float32Array([
+        width,
+        height,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        margin.left,
+        margin.top,
+        1,
+        0,
+      ]);
+      device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
-    const colorBuffer = device.createBuffer({
-      size: geometry.colors.length * 4,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    device.queue.writeBuffer(colorBuffer, 0, new Float32Array(geometry.colors));
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
-    passEncoder.setVertexBuffer(0, positionBuffer);
-    passEncoder.setVertexBuffer(1, colorBuffer);
+      const cellWidth = innerWidth / xCategoryMap.size;
+      const cellHeight = innerHeight / yCategoryMap.size;
 
-    passEncoder.draw(geometry.positions.length / 2);
+      const geometry = createHeatmapGeometry(
+        data,
+        xScale,
+        yScaleFlipped,
+        xCategoryMap,
+        yCategoryMap,
+        colorScale,
+        minValue,
+        maxValue,
+        cellWidth,
+        cellHeight,
+        cellGap
+      );
 
-    passEncoder.end();
-    device.queue.submit([commandEncoder.finish()]);
-  }
+      if (geometry.positions.length === 0) return;
 
-  destroy() {
-    if (this.uniformBuffer) this.uniformBuffer.destroy();
-  }
+      const commandEncoder = device.createCommandEncoder();
+      const textureView = context.getCurrentTexture().createView();
+
+      const passEncoder = commandEncoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view: textureView,
+            clearValue: { r: 0, g: 0, b: 0, a: 0 },
+            loadOp: "clear",
+            storeOp: "store",
+          },
+        ],
+      });
+
+      passEncoder.setPipeline(pipeline);
+      passEncoder.setBindGroup(0, bindGroup);
+
+      const positionBuffer = device.createBuffer({
+        size: geometry.positions.length * 4,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+      });
+      device.queue.writeBuffer(
+        positionBuffer,
+        0,
+        new Float32Array(geometry.positions)
+      );
+
+      const colorBuffer = device.createBuffer({
+        size: geometry.colors.length * 4,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+      });
+      device.queue.writeBuffer(
+        colorBuffer,
+        0,
+        new Float32Array(geometry.colors)
+      );
+
+      passEncoder.setVertexBuffer(0, positionBuffer);
+      passEncoder.setVertexBuffer(1, colorBuffer);
+
+      passEncoder.draw(geometry.positions.length / 2);
+
+      passEncoder.end();
+      device.queue.submit([commandEncoder.finish()]);
+    },
+    onDestroy: () => {
+      uniformBuffer.destroy();
+    },
+  });
+
+  return renderer;
 }
 
 // ============================================================================
@@ -639,10 +578,10 @@ function Root({
   children?: React.ReactNode;
 }) {
   // Extract categories
-  const xCategories = React.useMemo(() => {
+  const xCategories = useMemo(() => {
     if (xAxis.categories) return xAxis.categories;
     const cats = new Set<string | number>();
-    data.forEach((d) => {
+    data.forEach((d: DataPoint) => {
       cats.add(d.x);
     });
     return Array.from(cats).sort((a, b) => {
@@ -651,7 +590,7 @@ function Root({
     });
   }, [data, xAxis.categories]);
 
-  const yCategories = React.useMemo(() => {
+  const yCategories = useMemo(() => {
     if (yAxis.categories) return yAxis.categories;
     const cats = new Set<string | number>();
     data.forEach((d) => {
@@ -664,7 +603,7 @@ function Root({
   }, [data, yAxis.categories]);
 
   // Create category mappings
-  const xCategoryMap = React.useMemo(() => {
+  const xCategoryMap = useMemo(() => {
     const map = new Map<string | number, number>();
     xCategories.forEach((cat, idx) => {
       map.set(cat, idx);
@@ -672,7 +611,7 @@ function Root({
     return map;
   }, [xCategories]);
 
-  const yCategoryMap = React.useMemo(() => {
+  const yCategoryMap = useMemo(() => {
     const map = new Map<string | number, number>();
     yCategories.forEach((cat, idx) => {
       map.set(cat, idx);
@@ -681,12 +620,12 @@ function Root({
   }, [yCategories]);
 
   // Calculate value range
-  const calculatedMinValue = React.useMemo(() => {
+  const calculatedMinValue = useMemo(() => {
     if (minValue !== undefined) return minValue;
     return Math.min(...data.map((d) => d.value));
   }, [data, minValue]);
 
-  const calculatedMaxValue = React.useMemo(() => {
+  const calculatedMaxValue = useMemo(() => {
     if (maxValue !== undefined) return maxValue;
     return Math.max(...data.map((d) => d.value));
   }, [data, maxValue]);
@@ -727,11 +666,13 @@ function Root({
 
 function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   const ctx = useHeatmapChart();
-  const rendererRef = React.useRef<
-    WebGLHeatmapRenderer | WebGPUHeatmapRenderer | null
+  const rendererRef = useRef<
+    | WebGLRenderer<HeatmapRendererProps>
+    | WebGPURenderer<HeatmapRendererProps>
+    | null
   >(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
 
@@ -751,7 +692,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
           const adapter = await navigator.gpu?.requestAdapter();
           if (adapter) {
             const device = await adapter.requestDevice();
-            const renderer = new WebGPUHeatmapRenderer(canvas, device);
+            const renderer = createWebGPUHeatmapRenderer(canvas, device);
 
             if (!mounted) {
               renderer.destroy();
@@ -792,7 +733,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
       }
 
       try {
-        const renderer = new WebGLHeatmapRenderer(canvas);
+        const renderer = createWebGLHeatmapRenderer(canvas);
 
         if (!mounted) {
           renderer.destroy();

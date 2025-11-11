@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useMemo, useRef, createContext, useContext } from "react";
 import {
-  BaseWebGLRenderer,
-  BaseWebGPURenderer,
+  createWebGLRenderer,
+  createWebGPURenderer,
   ChartAxes,
   ChartRoot,
   ChartTooltip,
@@ -11,6 +11,8 @@ import {
   hexToRgb,
   type Point,
   type RendererProps,
+  type WebGLRenderer,
+  type WebGPURenderer,
   useBaseChart,
 } from "./base-chart";
 
@@ -57,10 +59,10 @@ interface AreaChartContextType {
   stacked: boolean;
 }
 
-const AreaChartContext = React.createContext<AreaChartContextType | null>(null);
+const AreaChartContext = createContext<AreaChartContextType | null>(null);
 
 function useAreaChartData() {
-  const ctx = React.useContext(AreaChartContext);
+  const ctx = useContext(AreaChartContext);
   if (!ctx) {
     throw new Error("AreaChart components must be used within AreaChart.Root");
   }
@@ -151,684 +153,584 @@ interface AreaRendererProps extends RendererProps {
   stacked: boolean;
 }
 
-class WebGLAreaRenderer extends BaseWebGLRenderer {
-  private positionBuffer: WebGLBuffer | null = null;
-  private colorBuffer: WebGLBuffer | null = null;
+// Helper function to create area geometry
+function createAreaGeometry(
+  points: Point[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  color: [number, number, number],
+  fillOpacity: number,
+  baseline: number,
+  previousY?: (x: number) => number
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
 
-  constructor(canvas: HTMLCanvasElement) {
-    super(canvas);
-    this.program = this.createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
-    this.positionBuffer = this.gl.createBuffer();
-    this.colorBuffer = this.gl.createBuffer();
-  }
+  if (points.length < 2) return { positions, colors };
 
-  private createAreaGeometry(
-    points: Point[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    fillOpacity: number,
-    baseline: number,
-    previousY?: (x: number) => number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
+  // Create filled area using triangle strip
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
 
-    if (points.length < 2) return { positions, colors };
+    const x1 = xScale(p1.x);
+    const y1 = yScale(p1.y);
+    const x2 = xScale(p2.x);
+    const y2 = yScale(p2.y);
 
-    // Create filled area using triangle strip
-    for (let i = 0; i < points.length - 1; i++) {
-      const p1 = points[i];
-      const p2 = points[i + 1];
+    const baseY1 = previousY ? yScale(previousY(p1.x)) : yScale(baseline);
+    const baseY2 = previousY ? yScale(previousY(p2.x)) : yScale(baseline);
 
-      const x1 = xScale(p1.x);
-      const y1 = yScale(p1.y);
-      const x2 = xScale(p2.x);
-      const y2 = yScale(p2.y);
+    // Two triangles per segment
+    positions.push(x1, y1, x2, y2, x1, baseY1, x2, y2, x2, baseY2, x1, baseY1);
 
-      const baseY1 = previousY ? yScale(previousY(p1.x)) : yScale(baseline);
-      const baseY2 = previousY ? yScale(previousY(p2.x)) : yScale(baseline);
-
-      // Two triangles per segment
-      positions.push(
-        x1,
-        y1,
-        x2,
-        y2,
-        x1,
-        baseY1,
-        x2,
-        y2,
-        x2,
-        baseY2,
-        x1,
-        baseY1
-      );
-
-      // Semi-transparent fill
-      for (let j = 0; j < 6; j++) {
-        colors.push(...color, fillOpacity);
-      }
-    }
-
-    return { positions, colors };
-  }
-
-  private createLineGeometry(
-    points: Point[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    lineWidth: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const p1 = points[i];
-      const p2 = points[i + 1];
-
-      const x1 = xScale(p1.x);
-      const y1 = yScale(p1.y);
-      const x2 = xScale(p2.x);
-      const y2 = yScale(p2.y);
-
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      const nx = -dy / len;
-      const ny = dx / len;
-
-      positions.push(x1, y1, x2, y2, x1, y1);
-      positions.push(x2, y2, x1, y1, x2, y2);
-
-      const normals = [-nx, -ny, -nx, -ny, nx, ny, -nx, -ny, nx, ny, nx, ny];
-
-      // Create offset vertices for line width
-      for (let j = 0; j < 6; j++) {
-        const idx = j * 2;
-        const vx = positions[positions.length - 12 + idx];
-        const vy = positions[positions.length - 11 + idx];
-        positions[positions.length - 12 + idx] =
-          vx + normals[idx] * lineWidth * 0.5;
-        positions[positions.length - 11 + idx] =
-          vy + normals[idx + 1] * lineWidth * 0.5;
-        colors.push(...color, 1.0);
-      }
-    }
-
-    return { positions, colors };
-  }
-
-  protected drawGrid(
-    xTicks: number[],
-    yTicks: number[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    width: number,
-    height: number
-  ) {
-    const { gl, program } = this;
-    if (!program) return;
-
-    const positions: number[] = [];
-    const colors: number[] = [];
-
-    const isDark = document.documentElement.classList.contains("dark");
-    const gridColor: [number, number, number] = isDark
-      ? [0.4, 0.4, 0.4]
-      : [0.6, 0.6, 0.6];
-
-    // Vertical grid lines
-    for (const tick of xTicks) {
-      const x = xScale(tick);
-      positions.push(
-        x,
-        0,
-        x + 1,
-        0,
-        x,
-        height,
-        x + 1,
-        0,
-        x + 1,
-        height,
-        x,
-        height
-      );
-      for (let i = 0; i < 6; i++) {
-        colors.push(...gridColor, 0.2);
-      }
-    }
-
-    // Horizontal grid lines
-    for (const tick of yTicks) {
-      const y = yScale(tick);
-      positions.push(
-        0,
-        y,
-        width,
-        y,
-        0,
-        y + 1,
-        width,
-        y,
-        width,
-        y + 1,
-        0,
-        y + 1
-      );
-      for (let i = 0; i < 6; i++) {
-        colors.push(...gridColor, 0.2);
-      }
-    }
-
-    if (positions.length === 0) return;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-    const positionLoc = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(positionLoc);
-    gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    const colorLoc = gl.getAttribLocation(program, "a_color");
-    gl.enableVertexAttribArray(colorLoc);
-    gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-    gl.drawArrays(gl.TRIANGLES, 0, positions.length / 2);
-  }
-
-  render(props: AreaRendererProps) {
-    const { gl, program } = this;
-    const {
-      series,
-      xDomain,
-      yDomain,
-      width,
-      height,
-      margin,
-      showGrid,
-      xTicks,
-      yTicks,
-      stacked,
-    } = props;
-
-    if (!program) return;
-
-    this.clear(width, height);
-    this.setupBlending();
-
-    // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
-    gl.useProgram(program);
-
-    const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
-    gl.uniform2f(resolutionLoc, width, height);
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-    const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
-    const matrixLoc = gl.getUniformLocation(program, "u_matrix");
-    gl.uniformMatrix3fv(matrixLoc, false, matrix);
-
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
-
-    if (showGrid) {
-      this.drawGrid(
-        xTicks,
-        yTicks,
-        xScale,
-        yScaleFlipped,
-        innerWidth,
-        innerHeight
-      );
-    }
-
-    // Track cumulative Y values for stacking
-    const cumulativeY = new Map<number, number>();
-
-    for (const s of series) {
-      if (s.data.length < 2) continue;
-
-      const color = hexToRgb(s.color || "#3b82f6");
-      const fillOpacity = s.fillOpacity ?? 0.3;
-      const baseline = Math.max(yDomain[0], s.baseline ?? yDomain[0]);
-
-      // Get previous Y function for stacking
-      const previousY = stacked
-        ? (x: number) => {
-            const prev = cumulativeY.get(x) ?? baseline;
-            return prev;
-          }
-        : undefined;
-
-      // Draw filled area
-      const areaGeometry = this.createAreaGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        fillOpacity,
-        baseline,
-        previousY
-      );
-
-      if (areaGeometry.positions.length > 0) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(areaGeometry.positions),
-          gl.STATIC_DRAW
-        );
-        const positionLoc = gl.getAttribLocation(program, "a_position");
-        gl.enableVertexAttribArray(positionLoc);
-        gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(areaGeometry.colors),
-          gl.STATIC_DRAW
-        );
-        const colorLoc = gl.getAttribLocation(program, "a_color");
-        gl.enableVertexAttribArray(colorLoc);
-        gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-        gl.drawArrays(gl.TRIANGLES, 0, areaGeometry.positions.length / 2);
-      }
-
-      // Update cumulative Y for stacking
-      if (stacked) {
-        for (const point of s.data) {
-          const current = cumulativeY.get(point.x) ?? baseline;
-          cumulativeY.set(point.x, current + point.y - baseline);
-        }
-      }
-    }
-
-    // Draw lines on top of areas
-    for (const s of series) {
-      if (s.data.length < 2) continue;
-
-      const color = hexToRgb(s.color || "#3b82f6");
-      const strokeWidth = s.strokeWidth || 2;
-
-      const lineGeometry = this.createLineGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        strokeWidth
-      );
-
-      if (lineGeometry.positions.length > 0) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(lineGeometry.positions),
-          gl.STATIC_DRAW
-        );
-        const positionLoc = gl.getAttribLocation(program, "a_position");
-        gl.enableVertexAttribArray(positionLoc);
-        gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(lineGeometry.colors),
-          gl.STATIC_DRAW
-        );
-        const colorLoc = gl.getAttribLocation(program, "a_color");
-        gl.enableVertexAttribArray(colorLoc);
-        gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
-
-        gl.drawArrays(gl.TRIANGLES, 0, lineGeometry.positions.length / 2);
-      }
+    // Semi-transparent fill
+    for (let j = 0; j < 6; j++) {
+      colors.push(...color, fillOpacity);
     }
   }
 
-  destroy() {
-    const { gl } = this;
-    if (this.program) gl.deleteProgram(this.program);
-    if (this.positionBuffer) gl.deleteBuffer(this.positionBuffer);
-    if (this.colorBuffer) gl.deleteBuffer(this.colorBuffer);
-  }
+  return { positions, colors };
 }
 
-class WebGPUAreaRenderer extends BaseWebGPURenderer {
-  private uniformBuffer: GPUBuffer | null = null;
-  private bindGroup: GPUBindGroup | null = null;
+// Helper function to create line geometry
+function createLineGeometry(
+  points: Point[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  color: [number, number, number],
+  lineWidth: number
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
 
-  constructor(canvas: HTMLCanvasElement, device: GPUDevice) {
-    super(canvas, device);
-    this.initPipeline();
-  }
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
 
-  private initPipeline() {
-    const { device } = this;
-    const shaderModule = this.createShaderModule(WGSL_SHADER);
+    const x1 = xScale(p1.x);
+    const y1 = yScale(p1.y);
+    const x2 = xScale(p2.x);
+    const y2 = yScale(p2.y);
 
-    this.uniformBuffer = device.createBuffer({
-      size: 64,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    const nx = -dy / len;
+    const ny = dx / len;
 
-    const bindGroupLayout = device.createBindGroupLayout({
-      entries: [
-        {
-          binding: 0,
-          visibility: GPUShaderStage.VERTEX,
-          buffer: { type: "uniform" },
-        },
-      ],
-    });
+    positions.push(x1, y1, x2, y2, x1, y1);
+    positions.push(x2, y2, x1, y1, x2, y2);
 
-    this.bindGroup = device.createBindGroup({
-      layout: bindGroupLayout,
-      entries: [{ binding: 0, resource: { buffer: this.uniformBuffer } }],
-    });
+    const normals = [-nx, -ny, -nx, -ny, nx, ny, -nx, -ny, nx, ny, nx, ny];
 
-    this.pipeline = device.createRenderPipeline({
-      layout: device.createPipelineLayout({
-        bindGroupLayouts: [bindGroupLayout],
-      }),
-      vertex: {
-        module: shaderModule,
-        entryPoint: "vertexMain",
-        buffers: [
-          {
-            arrayStride: 8,
-            attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
-          },
-          {
-            arrayStride: 16,
-            attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
-          },
-        ],
-      },
-      fragment: {
-        module: shaderModule,
-        entryPoint: "fragmentMain",
-        targets: [
-          {
-            format: this.format,
-            blend: {
-              color: {
-                srcFactor: "src-alpha",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
-              },
-              alpha: {
-                srcFactor: "one",
-                dstFactor: "one-minus-src-alpha",
-                operation: "add",
-              },
-            },
-          },
-        ],
-      },
-      primitive: { topology: "triangle-list" },
-    });
-  }
-
-  private createAreaGeometry(
-    points: Point[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    fillOpacity: number,
-    baseline: number,
-    previousY?: (x: number) => number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
-
-    if (points.length < 2) return { positions, colors };
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const p1 = points[i];
-      const p2 = points[i + 1];
-
-      const x1 = xScale(p1.x);
-      const y1 = yScale(p1.y);
-      const x2 = xScale(p2.x);
-      const y2 = yScale(p2.y);
-
-      const baseY1 = previousY ? yScale(previousY(p1.x)) : yScale(baseline);
-      const baseY2 = previousY ? yScale(previousY(p2.x)) : yScale(baseline);
-
-      positions.push(
-        x1,
-        y1,
-        x2,
-        y2,
-        x1,
-        baseY1,
-        x2,
-        y2,
-        x2,
-        baseY2,
-        x1,
-        baseY1
-      );
-
-      for (let j = 0; j < 6; j++) {
-        colors.push(...color, fillOpacity);
-      }
+    // Create offset vertices for line width
+    for (let j = 0; j < 6; j++) {
+      const idx = j * 2;
+      const vx = positions[positions.length - 12 + idx];
+      const vy = positions[positions.length - 11 + idx];
+      positions[positions.length - 12 + idx] =
+        vx + normals[idx] * lineWidth * 0.5;
+      positions[positions.length - 11 + idx] =
+        vy + normals[idx + 1] * lineWidth * 0.5;
+      colors.push(...color, 1.0);
     }
-
-    return { positions, colors };
   }
 
-  private createLineGeometry(
-    points: Point[],
-    xScale: (x: number) => number,
-    yScale: (y: number) => number,
-    color: [number, number, number],
-    lineWidth: number
-  ) {
-    const positions: number[] = [];
-    const colors: number[] = [];
+  return { positions, colors };
+}
 
-    for (let i = 0; i < points.length - 1; i++) {
-      const p1 = points[i];
-      const p2 = points[i + 1];
+// Helper function to create grid geometry
+function createGridGeometry(
+  xTicks: number[],
+  yTicks: number[],
+  xScale: (x: number) => number,
+  yScale: (y: number) => number,
+  width: number,
+  height: number
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
 
-      const x1 = xScale(p1.x);
-      const y1 = yScale(p1.y);
-      const x2 = xScale(p2.x);
-      const y2 = yScale(p2.y);
+  const isDark = document.documentElement.classList.contains("dark");
+  const gridColor: [number, number, number] = isDark
+    ? [0.4, 0.4, 0.4]
+    : [0.6, 0.6, 0.6];
 
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      const nx = -dy / len;
-      const ny = dx / len;
-
-      positions.push(x1, y1, x2, y2, x1, y1);
-      positions.push(x2, y2, x1, y1, x2, y2);
-
-      const normals = [-nx, -ny, -nx, -ny, nx, ny, -nx, -ny, nx, ny, nx, ny];
-
-      for (let j = 0; j < 6; j++) {
-        const idx = j * 2;
-        const vx = positions[positions.length - 12 + idx];
-        const vy = positions[positions.length - 11 + idx];
-        positions[positions.length - 12 + idx] =
-          vx + normals[idx] * lineWidth * 0.5;
-        positions[positions.length - 11 + idx] =
-          vy + normals[idx + 1] * lineWidth * 0.5;
-        colors.push(...color, 1.0);
-      }
-    }
-
-    return { positions, colors };
-  }
-
-  async render(props: AreaRendererProps) {
-    const { device, pipeline, uniformBuffer, bindGroup } = this;
-    const { series, xDomain, yDomain, width, height, margin, stacked } = props;
-
-    if (!pipeline || !uniformBuffer || !bindGroup) return;
-
-    const innerWidth = width - margin.left - margin.right;
-    const innerHeight = height - margin.top - margin.bottom;
-
-    const uniformData = new Float32Array([
-      width,
+  // Vertical grid lines
+  for (const tick of xTicks) {
+    const x = xScale(tick);
+    positions.push(
+      x,
+      0,
+      x + 1,
+      0,
+      x,
       height,
+      x + 1,
       0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
-      margin.left,
-      margin.top,
-      1,
-      0,
-    ]);
-    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+      x + 1,
+      height,
+      x,
+      height
+    );
+    for (let i = 0; i < 6; i++) {
+      colors.push(...gridColor, 0.2);
+    }
+  }
 
-    const xScale = (x: number) =>
-      ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-    const yScale = (y: number) =>
-      ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
-    const yScaleFlipped = (y: number) => innerHeight - yScale(y);
+  // Horizontal grid lines
+  for (const tick of yTicks) {
+    const y = yScale(tick);
+    positions.push(0, y, width, y, 0, y + 1, width, y, width, y + 1, 0, y + 1);
+    for (let i = 0; i < 6; i++) {
+      colors.push(...gridColor, 0.2);
+    }
+  }
 
-    const commandEncoder = device.createCommandEncoder();
-    const textureView = this.context.getCurrentTexture().createView();
+  return { positions, colors };
+}
 
-    const passEncoder = commandEncoder.beginRenderPass({
-      colorAttachments: [
-        {
-          view: textureView,
-          clearValue: { r: 0, g: 0, b: 0, a: 0 },
-          loadOp: "clear",
-          storeOp: "store",
-        },
-      ],
-    });
+// Factory function to create WebGL area renderer
+function createWebGLAreaRenderer(
+  canvas: HTMLCanvasElement
+): WebGLRenderer<AreaRendererProps> {
+  const buffers = {
+    position: null as WebGLBuffer | null,
+    color: null as WebGLBuffer | null,
+  };
 
-    passEncoder.setPipeline(pipeline);
-    passEncoder.setBindGroup(0, bindGroup);
+  const renderer = createWebGLRenderer<AreaRendererProps>({
+    canvas,
+    createShaders: () => ({
+      vertexSource: VERTEX_SHADER,
+      fragmentSource: FRAGMENT_SHADER,
+    }),
+    onRender: (gl, program, props) => {
+      const {
+        series,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        showGrid,
+        xTicks,
+        yTicks,
+        stacked,
+      } = props;
 
-    const cumulativeY = new Map<number, number>();
+      // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
+      gl.useProgram(program);
 
-    // Draw areas
-    for (const s of series) {
-      if (s.data.length < 2) continue;
+      const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
+      gl.uniform2f(resolutionLoc, width, height);
 
-      const color = hexToRgb(s.color || "#3b82f6");
-      const fillOpacity = s.fillOpacity ?? 0.3;
-      const baseline = Math.max(yDomain[0], s.baseline ?? yDomain[0]);
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+      const matrix = [1, 0, 0, 0, 1, 0, margin.left, margin.top, 1];
+      const matrixLoc = gl.getUniformLocation(program, "u_matrix");
+      gl.uniformMatrix3fv(matrixLoc, false, matrix);
 
-      const previousY = stacked
-        ? (x: number) => cumulativeY.get(x) ?? baseline
-        : undefined;
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
-      const areaGeometry = this.createAreaGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        fillOpacity,
-        baseline,
-        previousY
-      );
-
-      if (areaGeometry.positions.length > 0) {
-        const positionBuffer = device.createBuffer({
-          size: areaGeometry.positions.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
-        device.queue.writeBuffer(
-          positionBuffer,
-          0,
-          new Float32Array(areaGeometry.positions)
+      // Draw grid if enabled
+      if (showGrid) {
+        const gridGeometry = createGridGeometry(
+          xTicks,
+          yTicks,
+          xScale,
+          yScaleFlipped,
+          innerWidth,
+          innerHeight
         );
 
-        const colorBuffer = device.createBuffer({
-          size: areaGeometry.colors.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
-        device.queue.writeBuffer(
-          colorBuffer,
-          0,
-          new Float32Array(areaGeometry.colors)
-        );
+        if (gridGeometry.positions.length > 0) {
+          if (!buffers.position) buffers.position = gl.createBuffer();
+          if (!buffers.color) buffers.color = gl.createBuffer();
 
-        passEncoder.setVertexBuffer(0, positionBuffer);
-        passEncoder.setVertexBuffer(1, colorBuffer);
-        passEncoder.draw(areaGeometry.positions.length / 2);
-      }
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(gridGeometry.positions),
+            gl.STATIC_DRAW
+          );
+          const positionLoc = gl.getAttribLocation(program, "a_position");
+          gl.enableVertexAttribArray(positionLoc);
+          gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
-      if (stacked) {
-        for (const point of s.data) {
-          const current = cumulativeY.get(point.x) ?? baseline;
-          cumulativeY.set(point.x, current + point.y - baseline);
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(gridGeometry.colors),
+            gl.STATIC_DRAW
+          );
+          const colorLoc = gl.getAttribLocation(program, "a_color");
+          gl.enableVertexAttribArray(colorLoc);
+          gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+          gl.drawArrays(gl.TRIANGLES, 0, gridGeometry.positions.length / 2);
         }
       }
-    }
 
-    // Draw lines
-    for (const s of series) {
-      if (s.data.length < 2) continue;
+      // Track cumulative Y values for stacking
+      const cumulativeY = new Map<number, number>();
 
-      const color = hexToRgb(s.color || "#3b82f6");
-      const strokeWidth = s.strokeWidth || 2;
+      // Draw filled areas
+      for (const s of series) {
+        if (s.data.length < 2) continue;
 
-      const lineGeometry = this.createLineGeometry(
-        s.data,
-        xScale,
-        yScaleFlipped,
-        color,
-        strokeWidth
-      );
+        const color = hexToRgb(s.color || "#3b82f6");
+        const fillOpacity = s.fillOpacity ?? 0.3;
+        const baseline = Math.max(yDomain[0], s.baseline ?? yDomain[0]);
 
-      if (lineGeometry.positions.length > 0) {
-        const positionBuffer = device.createBuffer({
-          size: lineGeometry.positions.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
-        device.queue.writeBuffer(
-          positionBuffer,
-          0,
-          new Float32Array(lineGeometry.positions)
+        // Get previous Y function for stacking
+        const previousY = stacked
+          ? (x: number) => {
+              const prev = cumulativeY.get(x) ?? baseline;
+              return prev;
+            }
+          : undefined;
+
+        // Draw filled area
+        const areaGeometry = createAreaGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          fillOpacity,
+          baseline,
+          previousY
         );
 
-        const colorBuffer = device.createBuffer({
-          size: lineGeometry.colors.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
-        device.queue.writeBuffer(
-          colorBuffer,
-          0,
-          new Float32Array(lineGeometry.colors)
-        );
+        if (areaGeometry.positions.length > 0) {
+          if (!buffers.position) buffers.position = gl.createBuffer();
+          if (!buffers.color) buffers.color = gl.createBuffer();
 
-        passEncoder.setVertexBuffer(0, positionBuffer);
-        passEncoder.setVertexBuffer(1, colorBuffer);
-        passEncoder.draw(lineGeometry.positions.length / 2);
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(areaGeometry.positions),
+            gl.STATIC_DRAW
+          );
+          const positionLoc = gl.getAttribLocation(program, "a_position");
+          gl.enableVertexAttribArray(positionLoc);
+          gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(areaGeometry.colors),
+            gl.STATIC_DRAW
+          );
+          const colorLoc = gl.getAttribLocation(program, "a_color");
+          gl.enableVertexAttribArray(colorLoc);
+          gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+          gl.drawArrays(gl.TRIANGLES, 0, areaGeometry.positions.length / 2);
+        }
+
+        // Update cumulative Y for stacking
+        if (stacked) {
+          for (const point of s.data) {
+            const current = cumulativeY.get(point.x) ?? baseline;
+            cumulativeY.set(point.x, current + point.y - baseline);
+          }
+        }
       }
-    }
 
-    passEncoder.end();
-    device.queue.submit([commandEncoder.finish()]);
-  }
+      // Draw lines on top of areas
+      for (const s of series) {
+        if (s.data.length < 2) continue;
 
-  destroy() {
-    if (this.uniformBuffer) this.uniformBuffer.destroy();
-  }
+        const color = hexToRgb(s.color || "#3b82f6");
+        const strokeWidth = s.strokeWidth || 2;
+
+        const lineGeometry = createLineGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          strokeWidth
+        );
+
+        if (lineGeometry.positions.length > 0) {
+          if (!buffers.position) buffers.position = gl.createBuffer();
+          if (!buffers.color) buffers.color = gl.createBuffer();
+
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(lineGeometry.positions),
+            gl.STATIC_DRAW
+          );
+          const positionLoc = gl.getAttribLocation(program, "a_position");
+          gl.enableVertexAttribArray(positionLoc);
+          gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(lineGeometry.colors),
+            gl.STATIC_DRAW
+          );
+          const colorLoc = gl.getAttribLocation(program, "a_color");
+          gl.enableVertexAttribArray(colorLoc);
+          gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
+
+          gl.drawArrays(gl.TRIANGLES, 0, lineGeometry.positions.length / 2);
+        }
+      }
+    },
+    onDestroy: (gl) => {
+      if (buffers.position) gl.deleteBuffer(buffers.position);
+      if (buffers.color) gl.deleteBuffer(buffers.color);
+    },
+  });
+
+  return renderer;
+}
+
+// Factory function to create WebGPU area renderer
+function createWebGPUAreaRenderer(
+  canvas: HTMLCanvasElement,
+  device: GPUDevice
+): WebGPURenderer<AreaRendererProps> {
+  const shaderModule = device.createShaderModule({ code: WGSL_SHADER });
+
+  const uniformBuffer = device.createBuffer({
+    size: 64,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const bindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "uniform" as GPUBufferBindingType },
+      },
+    ],
+  });
+
+  const bindGroup = device.createBindGroup({
+    layout: bindGroupLayout,
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+  });
+
+  const renderer = createWebGPURenderer<AreaRendererProps>({
+    canvas,
+    device,
+    createPipeline: (device, format) => {
+      return device.createRenderPipeline({
+        layout: device.createPipelineLayout({
+          bindGroupLayouts: [bindGroupLayout],
+        }),
+        vertex: {
+          module: shaderModule,
+          entryPoint: "vertexMain",
+          buffers: [
+            {
+              arrayStride: 8,
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x2" },
+              ],
+            },
+            {
+              arrayStride: 16,
+              attributes: [
+                { shaderLocation: 1, offset: 0, format: "float32x4" },
+              ],
+            },
+          ],
+        },
+        fragment: {
+          module: shaderModule,
+          entryPoint: "fragmentMain",
+          targets: [
+            {
+              format,
+              blend: {
+                color: {
+                  srcFactor: "src-alpha",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
+                alpha: {
+                  srcFactor: "one",
+                  dstFactor: "one-minus-src-alpha",
+                  operation: "add",
+                },
+              },
+            },
+          ],
+        },
+        primitive: { topology: "triangle-list" },
+      });
+    },
+    onRender: async (device, context, pipeline, props) => {
+      const { series, xDomain, yDomain, width, height, margin, stacked } =
+        props;
+
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+
+      const uniformData = new Float32Array([
+        width,
+        height,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        margin.left,
+        margin.top,
+        1,
+        0,
+      ]);
+      device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const yScaleFlipped = (y: number) => innerHeight - yScale(y);
+
+      const commandEncoder = device.createCommandEncoder();
+      const textureView = context.getCurrentTexture().createView();
+
+      const passEncoder = commandEncoder.beginRenderPass({
+        colorAttachments: [
+          {
+            view: textureView,
+            clearValue: { r: 0, g: 0, b: 0, a: 0 },
+            loadOp: "clear",
+            storeOp: "store",
+          },
+        ],
+      });
+
+      passEncoder.setPipeline(pipeline);
+      passEncoder.setBindGroup(0, bindGroup);
+
+      const cumulativeY = new Map<number, number>();
+
+      // Draw areas
+      for (const s of series) {
+        if (s.data.length < 2) continue;
+
+        const color = hexToRgb(s.color || "#3b82f6");
+        const fillOpacity = s.fillOpacity ?? 0.3;
+        const baseline = Math.max(yDomain[0], s.baseline ?? yDomain[0]);
+
+        const previousY = stacked
+          ? (x: number) => cumulativeY.get(x) ?? baseline
+          : undefined;
+
+        const areaGeometry = createAreaGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          fillOpacity,
+          baseline,
+          previousY
+        );
+
+        if (areaGeometry.positions.length > 0) {
+          const positionBuffer = device.createBuffer({
+            size: areaGeometry.positions.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(
+            positionBuffer,
+            0,
+            new Float32Array(areaGeometry.positions)
+          );
+
+          const colorBuffer = device.createBuffer({
+            size: areaGeometry.colors.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(
+            colorBuffer,
+            0,
+            new Float32Array(areaGeometry.colors)
+          );
+
+          passEncoder.setVertexBuffer(0, positionBuffer);
+          passEncoder.setVertexBuffer(1, colorBuffer);
+          passEncoder.draw(areaGeometry.positions.length / 2);
+        }
+
+        if (stacked) {
+          for (const point of s.data) {
+            const current = cumulativeY.get(point.x) ?? baseline;
+            cumulativeY.set(point.x, current + point.y - baseline);
+          }
+        }
+      }
+
+      // Draw lines
+      for (const s of series) {
+        if (s.data.length < 2) continue;
+
+        const color = hexToRgb(s.color || "#3b82f6");
+        const strokeWidth = s.strokeWidth || 2;
+
+        const lineGeometry = createLineGeometry(
+          s.data,
+          xScale,
+          yScaleFlipped,
+          color,
+          strokeWidth
+        );
+
+        if (lineGeometry.positions.length > 0) {
+          const positionBuffer = device.createBuffer({
+            size: lineGeometry.positions.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(
+            positionBuffer,
+            0,
+            new Float32Array(lineGeometry.positions)
+          );
+
+          const colorBuffer = device.createBuffer({
+            size: lineGeometry.colors.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(
+            colorBuffer,
+            0,
+            new Float32Array(lineGeometry.colors)
+          );
+
+          passEncoder.setVertexBuffer(0, positionBuffer);
+          passEncoder.setVertexBuffer(1, colorBuffer);
+          passEncoder.draw(lineGeometry.positions.length / 2);
+        }
+      }
+
+      passEncoder.end();
+      device.queue.submit([commandEncoder.finish()]);
+    },
+    onDestroy: () => {
+      uniformBuffer.destroy();
+    },
+  });
+
+  return renderer;
 }
 
 // ============================================================================
@@ -895,11 +797,11 @@ function Root({
 
 function Canvas({ showGrid = true }: { showGrid?: boolean }) {
   const ctx = useAreaChart();
-  const rendererRef = React.useRef<
-    WebGLAreaRenderer | WebGPUAreaRenderer | null
+  const rendererRef = useRef<
+    WebGLRenderer<AreaRendererProps> | WebGPURenderer<AreaRendererProps> | null
   >(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
 
@@ -919,7 +821,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
           const adapter = await navigator.gpu?.requestAdapter();
           if (adapter) {
             const device = await adapter.requestDevice();
-            const renderer = new WebGPUAreaRenderer(canvas, device);
+            const renderer = createWebGPUAreaRenderer(canvas, device);
 
             if (!mounted) {
               renderer.destroy();
@@ -955,7 +857,7 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
       }
 
       try {
-        const renderer = new WebGLAreaRenderer(canvas);
+        const renderer = createWebGLAreaRenderer(canvas);
 
         if (!mounted) {
           renderer.destroy();
@@ -1036,8 +938,8 @@ function Tooltip() {
     let closestScreenX = 0;
     let closestScreenY = 0;
 
-    ctx.series.forEach((s, seriesIdx) => {
-      s.data.forEach((point) => {
+    ctx.series.forEach((s: Series, seriesIdx: number) => {
+      s.data.forEach((point: Point) => {
         const px = ctx.xScale(point.x);
         const py = ctx.yScale(point.y);
         const dist = Math.sqrt((px - x) ** 2 + (py - y) ** 2);
@@ -1087,15 +989,11 @@ function Tooltip() {
           items: [
             {
               label: "X",
-              value: xFormatter
-                ? xFormatter(point.x)
-                : point.x.toFixed(2),
+              value: xFormatter ? xFormatter(point.x) : point.x.toFixed(2),
             },
             {
               label: "Y",
-              value: yFormatter
-                ? yFormatter(point.y)
-                : point.y.toFixed(2),
+              value: yFormatter ? yFormatter(point.y) : point.y.toFixed(2),
               color: series.color,
             },
           ],
@@ -1109,8 +1007,7 @@ function Tooltip() {
     }
   };
 
-  // Recalculate dot position based on current data for streaming scenarios
-  const dot = React.useMemo(() => {
+  const dot = useMemo(() => {
     if (!ctx.hoveredPoint?.data?.point) return null;
 
     const point = ctx.hoveredPoint.data.point as Point;
@@ -1118,7 +1015,7 @@ function Tooltip() {
 
     // Find current position of this point (in case data shifted)
     const currentPoint = series.data.find(
-      (p) => Math.abs(p.x - point.x) < 0.0001
+      (p: Point) => Math.abs(p.x - point.x) < 0.0001
     );
 
     if (currentPoint) {
@@ -1191,5 +1088,7 @@ AreaChart.Root = Root;
 AreaChart.Canvas = Canvas;
 AreaChart.Axes = ChartAxes;
 AreaChart.Tooltip = Tooltip;
+
+AreaChart.displayName = "AreaChart";
 
 export default AreaChart;

@@ -20,7 +20,7 @@
       "version": "0.2.0",
       "displayName": "Line Chart",
       "category": "charts",
-      "description": "GPU-accelerated line chart with WebGPU/WebGL rendering for 100k+ points at 60fps. Primitive architecture with composable components (Root, Canvas, Axes, Tooltip, Legend).",
+      "description": "GPU-accelerated line chart with WebGPU/WebGL rendering for 100k+ points at 60fps. Primitive architecture with composable components (Root, Canvas, Axes, Tooltip).",
       "files": [
         "charts/line-chart.tsx",
         "charts/base-chart.tsx",
