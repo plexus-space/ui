@@ -20,7 +20,7 @@
       "version": "0.2.0",
       "displayName": "Line Chart",
       "category": "charts",
-      "description": "GPU-accelerated line chart with WebGPU/WebGL rendering for 100k+ points at 60fps. Primitive architecture with composable components (Root, Canvas, Axes, Tooltip).",
+      "description": "GPU-accelerated line chart for 100k+ points at 60fps. Primitive architecture with composable components (Root, Canvas, Axes, Tooltip).",
       "files": [
         "charts/line-chart.tsx",
         "charts/base-chart.tsx",
@@ -38,7 +38,7 @@
       "version": "0.1.0",
       "displayName": "Scatter Chart",
       "category": "charts",
-      "description": "GPU-accelerated scatter plot with WebGPU/WebGL rendering. Supports variable point sizes, colors, and opacity. Perfect for correlation analysis and cluster visualization.",
+      "description": "GPU-accelerated scatter plot. Supports variable point sizes, colors, and opacity. Perfect for correlation analysis and cluster visualization.",
       "files": [
         "charts/scatter-chart.tsx",
         "charts/base-chart.tsx",

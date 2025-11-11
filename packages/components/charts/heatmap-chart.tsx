@@ -220,8 +220,12 @@ function createHeatmapGeometry(
 
     if (xIdx === undefined || yIdx === undefined) continue;
 
-    const x = xScale(xIdx);
-    const y = yScale(yIdx);
+    // xScale/yScale return the center position, so offset by half cell size
+    // to position the cell correctly
+    const centerX = xScale(xIdx);
+    const centerY = yScale(yIdx);
+    const x = centerX - cellWidth / 2;
+    const y = centerY - cellHeight / 2;
     const w = cellWidth - cellGap;
     const h = cellHeight - cellGap;
 
@@ -273,7 +277,6 @@ function createWebGLHeatmapRenderer(
         cellGap,
       } = props;
 
-      // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
       gl.useProgram(program);
 
       const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
@@ -577,17 +580,20 @@ function Root({
   className?: string;
   children?: React.ReactNode;
 }) {
-  // Extract categories
+  // Extract categories - preserve insertion order for strings, sort numbers
   const xCategories = useMemo(() => {
     if (xAxis.categories) return xAxis.categories;
     const cats = new Set<string | number>();
     data.forEach((d: DataPoint) => {
       cats.add(d.x);
     });
-    return Array.from(cats).sort((a, b) => {
-      if (typeof a === "number" && typeof b === "number") return a - b;
-      return String(a).localeCompare(String(b));
-    });
+    const arr = Array.from(cats);
+    // Only sort if all categories are numbers
+    if (arr.length > 0 && arr.every(c => typeof c === "number")) {
+      return arr.sort((a, b) => (a as number) - (b as number));
+    }
+    // For strings or mixed types, preserve insertion order
+    return arr;
   }, [data, xAxis.categories]);
 
   const yCategories = useMemo(() => {
@@ -596,10 +602,13 @@ function Root({
     data.forEach((d) => {
       cats.add(d.y);
     });
-    return Array.from(cats).sort((a, b) => {
-      if (typeof a === "number" && typeof b === "number") return a - b;
-      return String(a).localeCompare(String(b));
-    });
+    const arr = Array.from(cats);
+    // Only sort if all categories are numbers
+    if (arr.length > 0 && arr.every(c => typeof c === "number")) {
+      return arr.sort((a, b) => (a as number) - (b as number));
+    }
+    // For strings or mixed types, preserve insertion order
+    return arr;
   }, [data, yAxis.categories]);
 
   // Create category mappings
@@ -634,14 +643,53 @@ function Root({
   const xDomain: [number, number] = [-0.5, xCategories.length - 0.5];
   const yDomain: [number, number] = [-0.5, yCategories.length - 0.5];
 
+  // Generate ticks at integer positions for categorical data
+  const xTicksArray = useMemo(() => {
+    // Show all X category ticks (usually not too many)
+    return Array.from({ length: xCategories.length }, (_, i) => i);
+  }, [xCategories.length]);
+
+  const yTicksArray = useMemo(() => {
+    // For Y axis, if there are many categories (>10), show a subset for readability
+    if (yCategories.length > 10) {
+      const step = Math.ceil(yCategories.length / 8);
+      return Array.from(
+        { length: Math.ceil(yCategories.length / step) },
+        (_, i) => i * step
+      ).filter(i => i < yCategories.length);
+    }
+    return Array.from({ length: yCategories.length }, (_, i) => i);
+  }, [yCategories.length]);
+
+  // Formatters to map indices to category labels
+  const xFormatter = useMemo(() => {
+    return xAxis.formatter || ((value: number) => {
+      const idx = Math.round(value);
+      return idx >= 0 && idx < xCategories.length
+        ? String(xCategories[idx])
+        : "";
+    });
+  }, [xCategories, xAxis.formatter]);
+
+  const yFormatter = useMemo(() => {
+    return yAxis.formatter || ((value: number) => {
+      const idx = Math.round(value);
+      return idx >= 0 && idx < yCategories.length
+        ? String(yCategories[idx])
+        : "";
+    });
+  }, [yCategories, yAxis.formatter]);
+
   return (
     <ChartRoot
       width={width}
       height={height}
-      xAxis={xAxis}
-      yAxis={yAxis}
+      xAxis={{ ...xAxis, formatter: xFormatter }}
+      yAxis={{ ...yAxis, formatter: yFormatter }}
       xDomain={xDomain}
       yDomain={yDomain}
+      xTicks={xTicksArray}
+      yTicks={yTicksArray}
       preferWebGPU={preferWebGPU}
       className={className}
     >
@@ -671,7 +719,9 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     | WebGPURenderer<HeatmapRendererProps>
     | null
   >(null);
+  const mountedRef = useRef(true);
 
+  // Initialize renderer once
   useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
@@ -682,7 +732,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     canvas.style.width = `${ctx.width}px`;
     canvas.style.height = `${ctx.height}px`;
 
-    let mounted = true;
+    mountedRef.current = true;
 
     async function initRenderer() {
       if (!canvas) return;
@@ -694,37 +744,13 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
             const device = await adapter.requestDevice();
             const renderer = createWebGPUHeatmapRenderer(canvas, device);
 
-            if (!mounted) {
+            if (!mountedRef.current) {
               renderer.destroy();
               return;
             }
 
             rendererRef.current = renderer;
             ctx.setRenderMode("webgpu");
-
-            await renderer.render({
-              canvas,
-              data: ctx.data,
-              xDomain: ctx.xDomain,
-              yDomain: ctx.yDomain,
-              xTicks: ctx.xTicks,
-              yTicks: ctx.yTicks,
-              width: ctx.width * dpr,
-              height: ctx.height * dpr,
-              margin: {
-                top: ctx.margin.top * dpr,
-                right: ctx.margin.right * dpr,
-                bottom: ctx.margin.bottom * dpr,
-                left: ctx.margin.left * dpr,
-              },
-              showGrid,
-              xCategoryMap: ctx.xCategoryMap,
-              yCategoryMap: ctx.yCategoryMap,
-              colorScale: ctx.colorScale,
-              minValue: ctx.minValue,
-              maxValue: ctx.maxValue,
-              cellGap: ctx.cellGap * dpr,
-            });
             return;
           }
         }
@@ -735,37 +761,13 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
       try {
         const renderer = createWebGLHeatmapRenderer(canvas);
 
-        if (!mounted) {
+        if (!mountedRef.current) {
           renderer.destroy();
           return;
         }
 
         rendererRef.current = renderer;
         ctx.setRenderMode("webgl");
-
-        renderer.render({
-          canvas,
-          data: ctx.data,
-          xDomain: ctx.xDomain,
-          yDomain: ctx.yDomain,
-          xTicks: ctx.xTicks,
-          yTicks: ctx.yTicks,
-          width: ctx.width * dpr,
-          height: ctx.height * dpr,
-          margin: {
-            top: ctx.margin.top * dpr,
-            right: ctx.margin.right * dpr,
-            bottom: ctx.margin.bottom * dpr,
-            left: ctx.margin.left * dpr,
-          },
-          showGrid,
-          xCategoryMap: ctx.xCategoryMap,
-          yCategoryMap: ctx.yCategoryMap,
-          colorScale: ctx.colorScale,
-          minValue: ctx.minValue,
-          maxValue: ctx.maxValue,
-          cellGap: ctx.cellGap * dpr,
-        });
       } catch (error) {
         console.error("WebGL failed:", error);
       }
@@ -774,13 +776,70 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     initRenderer();
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       if (rendererRef.current) {
         rendererRef.current.destroy();
         rendererRef.current = null;
       }
     };
-  }, [ctx, showGrid]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only initialize once
+
+  // Update render when data changes
+  useEffect(() => {
+    const canvas = ctx.canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer) return;
+
+    const dpr = ctx.devicePixelRatio;
+
+    const renderProps = {
+      canvas,
+      data: ctx.data,
+      xDomain: ctx.xDomain,
+      yDomain: ctx.yDomain,
+      xTicks: ctx.xTicks,
+      yTicks: ctx.yTicks,
+      width: ctx.width * dpr,
+      height: ctx.height * dpr,
+      margin: {
+        top: ctx.margin.top * dpr,
+        right: ctx.margin.right * dpr,
+        bottom: ctx.margin.bottom * dpr,
+        left: ctx.margin.left * dpr,
+      },
+      showGrid,
+      xCategoryMap: ctx.xCategoryMap,
+      yCategoryMap: ctx.yCategoryMap,
+      colorScale: ctx.colorScale,
+      minValue: ctx.minValue,
+      maxValue: ctx.maxValue,
+      cellGap: ctx.cellGap * dpr,
+    };
+
+    renderer.render(renderProps);
+  }, [
+    ctx.canvasRef,
+    ctx.data,
+    ctx.xDomain,
+    ctx.yDomain,
+    ctx.xTicks,
+    ctx.yTicks,
+    ctx.width,
+    ctx.height,
+    ctx.devicePixelRatio,
+    ctx.margin.top,
+    ctx.margin.right,
+    ctx.margin.bottom,
+    ctx.margin.left,
+    ctx.xCategoryMap,
+    ctx.yCategoryMap,
+    ctx.colorScale,
+    ctx.minValue,
+    ctx.maxValue,
+    ctx.cellGap,
+    showGrid,
+  ]);
 
   return (
     <canvas

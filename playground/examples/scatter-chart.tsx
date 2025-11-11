@@ -1,12 +1,13 @@
 "use client";
 
-import { ScatterChart } from "@plexusui/components/charts/scatter-chart";
+import { useState, useEffect } from "react";
 import type { DataPoint } from "@plexusui/components/charts/scatter-chart";
 import { ComponentPreview } from "@/components/component-preview";
 import {
   useColorScheme,
   useMultiColors,
 } from "@/components/color-scheme-provider";
+import { ScatterChart } from "@plexusui/components/charts/scatter-chart";
 
 // ============================================================================
 // Example Data
@@ -42,48 +43,6 @@ const clusterData: DataPoint[] = [
 // ============================================================================
 // Example Components
 // ============================================================================
-
-function BasicScatterChart() {
-  const { color } = useColorScheme();
-
-  return (
-    <ComponentPreview
-      title="Basic Scatter Plot"
-      description="Simple scatter plot showing random performance data"
-      code={`import { ScatterChart } from "@/components/plexusui/charts/scatter-chart";
-
-const data = Array.from({ length: 100 }, (_, i) => ({
-  x: Math.random() * 100,
-  y: Math.random() * 100,
-  size: Math.random() * 2 + 0.5,
-}));
-
-<ScatterChart
-  series={[{ name: "Performance", data, color: "#06b6d4" }]}
-  width={800}
-  height={400}
-  showTooltip
-/>`}
-      preview={
-        <div className="w-full h-[400px]">
-          <ScatterChart
-            series={[
-              {
-                name: "Performance",
-                data: performanceData,
-                color: color,
-                size: 8,
-              },
-            ]}
-            width={800}
-            height={400}
-            showTooltip
-          />
-        </div>
-      }
-    />
-  );
-}
 
 function MultiSeriesScatterChart() {
   const colors = useMultiColors(3);
@@ -189,6 +148,186 @@ function PrimitiveScatterChart() {
   );
 }
 
+function RealtimeStreamingScatterChart() {
+  const { color } = useColorScheme();
+  const [isStreaming, setIsStreaming] = useState(true);
+
+  // Start with 10K services for smooth 60fps streaming
+  const [data, setData] = useState<DataPoint[]>(() => {
+    const points: DataPoint[] = [];
+    for (let i = 0; i < 10000; i++) {
+      const cluster = Math.random();
+      let cpu: number;
+      let memory: number;
+
+      if (cluster < 0.65) {
+        cpu = Math.min(
+          40,
+          Math.max(5, 15 + (Math.random() + Math.random() + Math.random()) * 5)
+        );
+        memory = Math.min(
+          60,
+          Math.max(15, 35 + (Math.random() + Math.random() + Math.random()) * 8)
+        );
+      } else if (cluster < 0.85) {
+        cpu = Math.min(
+          95,
+          Math.max(60, 75 + (Math.random() + Math.random()) * 8)
+        );
+        memory = Math.min(
+          95,
+          Math.max(60, 75 + (Math.random() + Math.random()) * 8)
+        );
+      } else if (cluster < 0.95) {
+        cpu = Math.min(30, Math.max(5, 15 + Math.random() * 10));
+        memory = Math.min(95, Math.max(70, 80 + Math.random() * 10));
+      } else {
+        cpu = Math.min(98, Math.max(75, 85 + Math.random() * 10));
+        memory = Math.min(50, Math.max(15, 25 + Math.random() * 15));
+      }
+
+      points.push({ x: cpu, y: memory, size: 0.8 });
+    }
+    return points;
+  });
+
+  useEffect(() => {
+    if (!isStreaming) return;
+
+    let animationFrame: number;
+
+    const animate = () => {
+      // Stream data: randomly update 1% of services each frame to simulate real-time changes
+      setData((prevData) => {
+        const newData = [...prevData];
+        const updateCount = Math.floor(prevData.length * 0.01); // Update 1% per frame for better FPS
+
+        for (let i = 0; i < updateCount; i++) {
+          const idx = Math.floor(Math.random() * newData.length);
+          const point = newData[idx];
+
+          // Simulate realistic metric drift
+          let newCpu = point.x + (Math.random() - 0.5) * 3;
+          let newMemory = point.y + (Math.random() - 0.5) * 2;
+
+          // Occasional spike (simulates load burst)
+          if (Math.random() < 0.01) {
+            newCpu += Math.random() * 20;
+            newMemory += Math.random() * 15;
+          }
+
+          // Clamp values
+          newCpu = Math.max(0, Math.min(100, newCpu));
+          newMemory = Math.max(0, Math.min(100, newMemory));
+
+          newData[idx] = { ...point, x: newCpu, y: newMemory };
+        }
+
+        return newData;
+      });
+
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [isStreaming]);
+
+  return (
+    <ComponentPreview
+      title="Real-Time Streaming - 10K Services @ 60fps"
+      description="Live simulation of streaming metrics from 10,000 services with real-time updates at 60fps"
+      code={`import { ScatterChart } from "@/components/plexusui/charts/scatter-chart";
+import { useState, useEffect } from "react";
+
+// Initialize 10K services
+const [data, setData] = useState(() => generateServices(10000));
+
+// Stream updates at 60fps
+useEffect(() => {
+  const animate = () => {
+    setData(prevData => {
+      const newData = [...prevData];
+      const updateCount = Math.floor(prevData.length * 0.02);
+
+      for (let i = 0; i < updateCount; i++) {
+        const idx = Math.floor(Math.random() * newData.length);
+        const point = newData[idx];
+
+        // Simulate metric drift
+        let newCpu = point.x + (Math.random() - 0.5) * 3;
+        let newMemory = point.y + (Math.random() - 0.5) * 2;
+
+        // Occasional spike
+        if (Math.random() < 0.01) {
+          newCpu += Math.random() * 20;
+          newMemory += Math.random() * 15;
+        }
+
+        newData[idx] = {
+          ...point,
+          x: Math.max(0, Math.min(100, newCpu)),
+          y: Math.max(0, Math.min(100, newMemory))
+        };
+      }
+
+      return newData;
+    });
+
+    requestAnimationFrame(animate);
+  };
+
+  const frame = requestAnimationFrame(animate);
+  return () => cancelAnimationFrame(frame);
+}, []);
+
+<ScatterChart
+  series={[{ name: "Services", data, color: "#06b6d4", size: 3 }]}
+  xAxis={{ label: "CPU Usage (%)", domain: [0, 100] }}
+  yAxis={{ label: "Memory Usage (%)", domain: [0, 100] }}
+  preferWebGPU={true}
+/>`}
+      preview={
+        <div className="w-full h-[400px] relative">
+          <div className="absolute top-2 right-2 z-10 flex gap-2">
+            <div className="bg-black/80 text-white px-3 py-1.5 rounded-md text-sm font-mono">
+              {data.length.toLocaleString()} services
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsStreaming(!isStreaming)}
+              className="bg-black/80 text-white px-3 py-1.5 rounded-md text-sm font-mono hover:bg-black/90 transition-colors"
+            >
+              {isStreaming ? "Pause" : "Stream"}
+            </button>
+          </div>
+          <ScatterChart
+            series={[
+              {
+                name: "Streaming Services",
+                data: data,
+                color: color,
+                size: 3,
+                opacity: 0.6,
+              },
+            ]}
+            xAxis={{ label: "CPU Usage (%)", domain: [0, 100] }}
+            yAxis={{ label: "Memory Usage (%)", domain: [0, 100] }}
+            width={800}
+            height={400}
+            showGrid
+            showTooltip
+            preferWebGPU={true}
+          />
+        </div>
+      }
+    />
+  );
+}
+
 // ============================================================================
 // Main Export
 // ============================================================================
@@ -196,9 +335,9 @@ function PrimitiveScatterChart() {
 export function ScatterChartExamples() {
   return (
     <div className="space-y-8">
-      <BasicScatterChart />
       <MultiSeriesScatterChart />
       <PrimitiveScatterChart />
+      <RealtimeStreamingScatterChart />
     </div>
   );
 }

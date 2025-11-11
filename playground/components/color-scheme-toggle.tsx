@@ -24,7 +24,7 @@ export function ColorSchemeToggle() {
       <SelectTrigger className="border-none shadow-none hover:bg-foreground/5 cursor-pointer bg-transparent">
         <SelectValue />
       </SelectTrigger>
-      <SelectContent className="bg-transparent w-[50px]">
+      <SelectContent className="w-[50px]">
         {Object.entries(colorSchemes).map(([scheme, color]) => (
           <SelectItem
             key={scheme}

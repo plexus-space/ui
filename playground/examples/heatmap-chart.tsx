@@ -3,6 +3,7 @@
 import { HeatmapChart } from "@plexusui/components/charts/heatmap-chart";
 import type { DataPoint } from "@plexusui/components/charts/heatmap-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { useState, useEffect } from "react";
 
 // ============================================================================
 // Example Data
@@ -58,56 +59,221 @@ for (let x = 0; x < 10; x++) {
 }
 
 // ============================================================================
-// Color Scales
-// ============================================================================
-
-function blueRedColorScale(value: number): string {
-  // Blue (cold) to Red (hot)
-  const colors = [
-    [59, 76, 192], // Blue
-    [144, 178, 254], // Light Blue
-    [220, 220, 220], // White
-    [254, 178, 144], // Light Red
-    [180, 4, 38], // Red
-  ];
-
-  const clamped = Math.max(0, Math.min(1, value));
-  const scaled = clamped * (colors.length - 1);
-  const i = Math.floor(scaled);
-  const f = scaled - i;
-
-  if (i >= colors.length - 1) {
-    const c = colors[colors.length - 1];
-    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
-  }
-
-  const c1 = colors[i];
-  const c2 = colors[i + 1];
-  const r = Math.round(c1[0] + f * (c2[0] - c1[0]));
-  const g = Math.round(c1[1] + f * (c2[1] - c1[1]));
-  const b = Math.round(c1[2] + f * (c2[2] - c1[2]));
-
-  return `rgb(${r}, ${g}, ${b})`;
-}
-
-function greenYellowRedScale(value: number): string {
-  // Green (good) to Yellow to Red (bad)
-  if (value < 0.5) {
-    const f = value * 2;
-    const r = Math.round(255 * f);
-    const g = 255;
-    return `rgb(${r}, ${g}, 0)`;
-  } else {
-    const f = (value - 0.5) * 2;
-    const r = 255;
-    const g = Math.round(255 * (1 - f));
-    return `rgb(${r}, ${g}, 0)`;
-  }
-}
-
-// ============================================================================
 // Example Components
 // ============================================================================
+
+function RealTimeSystemMonitor() {
+  const [isPaused, setIsPaused] = useState(false);
+
+  // System monitoring parameters
+  const CPU_CORES = 16; // Number of CPU cores to monitor
+  const HISTORY_SECONDS = 30; // 30 seconds of history
+  const UPDATE_RATE = 10; // Hz - update 10 times per second
+  const WINDOW_SIZE = HISTORY_SECONDS * UPDATE_RATE; // 300 time slices
+
+  // Initialize with baseline CPU usage data
+  const [cpuData, setCpuData] = useState<DataPoint[]>(() => {
+    const data: DataPoint[] = [];
+    for (let t = 0; t < WINDOW_SIZE; t++) {
+      for (let core = 0; core < CPU_CORES; core++) {
+        // Start with idle CPUs (10-20% usage)
+        const baseUsage = 10 + Math.random() * 10;
+        data.push({
+          x: t / UPDATE_RATE,
+          y: core,
+          value: baseUsage,
+        });
+      }
+    }
+    return data;
+  });
+
+  useEffect(() => {
+    if (isPaused) return;
+
+    const interval = setInterval(() => {
+      setCpuData((prev) => {
+        const newTimeSlice: DataPoint[] = [];
+        const lastTime =
+          prev.length > 0 ? (prev[prev.length - 1].x as number) : HISTORY_SECONDS;
+        const newTime = lastTime + 1 / UPDATE_RATE;
+
+        for (let core = 0; core < CPU_CORES; core++) {
+          // Get previous value for this core
+          const prevCoreData = prev.filter((p) => p.y === core);
+          const prevValue =
+            prevCoreData.length > 0
+              ? prevCoreData[prevCoreData.length - 1].value
+              : 20;
+
+          // Simulate realistic CPU usage patterns
+          let newValue = prevValue;
+
+          // Gradual drift
+          newValue += (Math.random() - 0.5) * 15;
+
+          // Occasional workload spike (simulating task execution)
+          if (Math.random() < 0.05) {
+            newValue += Math.random() * 50;
+          }
+
+          // Pull towards baseline idle (20%)
+          newValue += (20 - prevValue) * 0.1;
+
+          // Some cores are busier than others (asymmetric workload)
+          if (core < 4) {
+            // First 4 cores handle more work
+            newValue += 10;
+          }
+
+          // Clamp to 0-100% range
+          newValue = Math.max(0, Math.min(100, newValue));
+
+          newTimeSlice.push({
+            x: newTime,
+            y: core,
+            value: newValue,
+          });
+        }
+
+        // Remove old data outside the time window
+        const filtered = prev.filter(
+          (p) => (p.x as number) > newTime - HISTORY_SECONDS
+        );
+
+        return [...filtered, ...newTimeSlice];
+      });
+    }, 1000 / UPDATE_RATE);
+
+    return () => clearInterval(interval);
+  }, [isPaused]);
+
+  return (
+    <ComponentPreview
+      title="Real-Time System Monitor"
+      description={`Live CPU core usage tracking at ${UPDATE_RATE} Hz - ${HISTORY_SECONDS}s rolling window across ${CPU_CORES} cores`}
+      code={`import { HeatmapChart } from "@/components/plexusui/charts/heatmap-chart";
+import { useState, useEffect } from "react";
+
+const CPU_CORES = 16;
+const HISTORY_SECONDS = 30;
+const UPDATE_RATE = 10; // Hz
+
+const [cpuData, setCpuData] = useState<DataPoint[]>([]);
+
+// Update CPU usage data in real-time
+useEffect(() => {
+  const interval = setInterval(() => {
+    setCpuData(prev => {
+      const newTimeSlice: DataPoint[] = [];
+      const newTime = lastTime + 1 / UPDATE_RATE;
+
+      for (let core = 0; core < CPU_CORES; core++) {
+        const prevValue = getPrevCoreValue(prev, core);
+        let newValue = prevValue;
+
+        // Simulate realistic CPU usage
+        newValue += (Math.random() - 0.5) * 15;
+        if (Math.random() < 0.05) newValue += Math.random() * 50;
+        newValue += (20 - prevValue) * 0.1;
+        newValue = Math.max(0, Math.min(100, newValue));
+
+        newTimeSlice.push({ x: newTime, y: core, value: newValue });
+      }
+
+      return [...prev.filter(p => p.x > newTime - HISTORY_SECONDS), ...newTimeSlice];
+    });
+  }, 1000 / UPDATE_RATE);
+
+  return () => clearInterval(interval);
+}, []);
+
+<HeatmapChart
+  data={cpuData}
+  xAxis={{ label: "Time (seconds)" }}
+  yAxis={{ label: "CPU Core" }}
+  colorScale={{
+    min: 0,
+    max: 100,
+    colors: ["#10b981", "#fbbf24", "#ef4444"]
+  }}
+  width={800}
+  height={400}
+  preferWebGPU={true}
+/>`}
+      preview={
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="text-sm font-medium">
+                CPU Core Usage Monitor - {CPU_CORES} Cores
+              </div>
+              <div className="text-xs text-zinc-500">
+                Update Rate: {UPDATE_RATE} Hz | Window: {HISTORY_SECONDS}s |
+                Data Points: {cpuData.length}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPaused(!isPaused)}
+              className="px-4 py-2 rounded-md font-medium transition-colors bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              {isPaused ? "▶ Resume" : "⏸ Pause"}
+            </button>
+          </div>
+
+          <div className="w-full h-[500px]">
+            <HeatmapChart
+              data={cpuData}
+              xAxis={{
+                label: "Time (seconds)",
+                formatter: (v: number | string) => {
+                  const num = typeof v === "number" ? v : parseFloat(String(v));
+                  return `${num.toFixed(1)}s`;
+                },
+              }}
+              yAxis={{
+                label: "CPU Core",
+                formatter: (v: number | string) => {
+                  const num = typeof v === "number" ? v : parseFloat(String(v));
+                  return `Core ${Math.round(num)}`;
+                },
+              }}
+              colorScale={(value: number) => {
+                // Green -> Yellow -> Red color scale based on CPU usage
+                if (value < 0.3) {
+                  // Green to yellow-green
+                  const r = Math.round(16 + (value / 0.3) * 220);
+                  return `rgb(${r}, 185, 129)`;
+                } else if (value < 0.7) {
+                  // Yellow-green to yellow
+                  const factor = (value - 0.3) / 0.4;
+                  const r = Math.round(236 + factor * 15);
+                  const g = Math.round(185 - factor * 100);
+                  return `rgb(${r}, ${g}, 36)`;
+                } else {
+                  // Yellow to red
+                  const factor = (value - 0.7) / 0.3;
+                  const r = 239;
+                  const g = Math.round(135 - factor * 67);
+                  const b = Math.round(36 + factor * 32);
+                  return `rgb(${r}, ${g}, ${b})`;
+                }
+              }}
+              minValue={0}
+              maxValue={100}
+              width={800}
+              height={500}
+              preferWebGPU={true}
+              cellGap={1}
+              showTooltip
+            />
+          </div>
+        </div>
+      }
+    />
+  );
+}
 
 function BasicHeatmapChart() {
   return (
@@ -138,99 +304,6 @@ const data = [
             yAxis={{ label: "Hour of Day" }}
             width={800}
             height={500}
-            showTooltip
-            cellGap={1}
-          />
-        </div>
-      }
-    />
-  );
-}
-
-function CorrelationMatrix() {
-  return (
-    <ComponentPreview
-      title="Correlation Matrix"
-      description="Heatmap showing correlations between variables"
-      code={`const variables = ["Temp", "Pressure", "Humidity", "Wind", "Visibility"];
-const correlationData = [];
-
-for (let i = 0; i < variables.length; i++) {
-  for (let j = 0; j < variables.length; j++) {
-    const value = i === j ? 1 : Math.random() * 0.8 + 0.1;
-    correlationData.push({
-      x: variables[i],
-      y: variables[j],
-      value,
-    });
-  }
-}
-
-<HeatmapChart
-  data={correlationData}
-  colorScale={blueRedColorScale}
-  minValue={0}
-  maxValue={1}
-  showTooltip
-/>`}
-      preview={
-        <div className="w-full h-[500px]">
-          <HeatmapChart
-            data={correlationData}
-            xAxis={{ label: "Variable" }}
-            yAxis={{ label: "Variable" }}
-            width={800}
-            height={500}
-            colorScale={blueRedColorScale}
-            minValue={0}
-            maxValue={1}
-            showTooltip
-            cellGap={2}
-          />
-        </div>
-      }
-    />
-  );
-}
-
-function GridPerformanceHeatmap() {
-  return (
-    <ComponentPreview
-      title="Grid Performance Heatmap"
-      description="Numeric grid showing performance metrics with custom color scale"
-      code={`const gridData = [];
-for (let x = 0; x < 10; x++) {
-  for (let y = 0; y < 10; y++) {
-    const value = calculatePerformance(x, y);
-    gridData.push({ x, y, value });
-  }
-}
-
-function greenYellowRedScale(value: number): string {
-  // Custom color scale: green (good) -> yellow -> red (bad)
-  if (value < 0.5) {
-    const f = value * 2;
-    return \`rgb(\${Math.round(255 * f)}, 255, 0)\`;
-  } else {
-    const f = (value - 0.5) * 2;
-    return \`rgb(255, \${Math.round(255 * (1 - f))}, 0)\`;
-  }
-}
-
-<HeatmapChart
-  data={gridData}
-  colorScale={greenYellowRedScale}
-  showTooltip
-/>`}
-      preview={
-        <div className="w-full h-[500px]">
-          <HeatmapChart
-            data={gridPerformanceData}
-            xAxis={{ label: "Grid X" }}
-            yAxis={{ label: "Grid Y" }}
-            width={800}
-            height={500}
-            colorScale={greenYellowRedScale}
             showTooltip
             cellGap={1}
           />
@@ -285,6 +358,198 @@ for (let x = 0; x < 50; x++) {
   );
 }
 
+function WebGPUMemoryMonitor() {
+  const [isPaused, setIsPaused] = useState(false);
+
+  // GPU memory parameters
+  const MEMORY_REGIONS = 32; // Memory regions to track
+  const MEMORY_BLOCKS = 64; // Blocks per region
+  const BLOCK_SIZE_MB = 8; // Each block is 8MB
+
+  // Initialize with baseline memory usage
+  const [memoryData, setMemoryData] = useState<DataPoint[]>(() => {
+    const data: DataPoint[] = [];
+    for (let region = 0; region < MEMORY_REGIONS; region++) {
+      for (let block = 0; block < MEMORY_BLOCKS; block++) {
+        // Start with low memory usage (10-30%)
+        const baseUsage = 10 + Math.random() * 20;
+        data.push({
+          x: block,
+          y: region,
+          value: baseUsage,
+        });
+      }
+    }
+    return data;
+  });
+
+  useEffect(() => {
+    if (isPaused) return;
+
+    let animationFrame: number;
+
+    const animate = () => {
+      setMemoryData((prev) => {
+        return prev.map((point) => {
+          const region = point.y as number;
+          const block = point.x as number;
+          let newValue = point.value;
+
+          // Gradual memory usage changes
+          newValue += (Math.random() - 0.5) * 10;
+
+          // Simulate memory allocation patterns
+          // Lower regions (0-7) are system memory - more stable
+          if (region < 8) {
+            newValue += (40 - newValue) * 0.15; // Pull towards 40%
+            newValue += (Math.random() - 0.5) * 5; // Less variance
+          }
+          // Middle regions (8-23) are texture/buffer memory - more dynamic
+          else if (region < 24) {
+            // Occasional large allocations (loading textures)
+            if (Math.random() < 0.02) {
+              newValue += Math.random() * 40;
+            }
+            // Occasional deallocations
+            if (Math.random() < 0.01 && newValue > 50) {
+              newValue -= Math.random() * 30;
+            }
+          }
+          // Upper regions (24-31) are compute shader memory
+          else {
+            // Bursty patterns for compute workloads
+            if (Math.random() < 0.03) {
+              newValue = 80 + Math.random() * 20; // Sudden spike
+            } else {
+              newValue += (20 - newValue) * 0.2; // Pull towards low baseline
+            }
+          }
+
+          // Memory pressure simulation - some blocks fill up
+          if (block % 8 === 0 && Math.random() < 0.01) {
+            newValue = 90 + Math.random() * 10; // Nearly full
+          }
+
+          // Clamp to 0-100% range
+          return {
+            ...point,
+            value: Math.max(0, Math.min(100, newValue)),
+          };
+        });
+      });
+
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [isPaused]);
+
+  const totalMemoryGB = (MEMORY_REGIONS * MEMORY_BLOCKS * BLOCK_SIZE_MB) / 1024;
+  const avgUsage =
+    memoryData.reduce((sum, p) => sum + p.value, 0) / memoryData.length;
+  const usedMemoryGB = (totalMemoryGB * avgUsage) / 100;
+
+  return (
+    <ComponentPreview
+      title="Real-Time WebGPU Memory Monitor"
+      description={`Live GPU memory allocation tracking - ${totalMemoryGB.toFixed(1)}GB VRAM across ${MEMORY_REGIONS} regions`}
+      code={`import { HeatmapChart } from "@/components/plexusui/charts/heatmap-chart";
+import { useState, useEffect } from "react";
+
+const MEMORY_REGIONS = 32;
+const MEMORY_BLOCKS = 64;
+
+const [memoryData, setMemoryData] = useState<DataPoint[]>([]);
+
+// Simulate GPU memory allocation patterns
+useEffect(() => {
+  const animate = () => {
+    setMemoryData(prev => prev.map(point => {
+      const region = point.y as number;
+      let newValue = point.value;
+
+      // System memory (stable)
+      if (region < 8) {
+        newValue += (40 - newValue) * 0.15;
+      }
+      // Texture/buffer memory (dynamic)
+      else if (region < 24) {
+        if (Math.random() < 0.02) newValue += Math.random() * 40;
+        if (Math.random() < 0.01 && newValue > 50) newValue -= Math.random() * 30;
+      }
+      // Compute shader memory (bursty)
+      else {
+        if (Math.random() < 0.03) {
+          newValue = 80 + Math.random() * 20;
+        } else {
+          newValue += (20 - newValue) * 0.2;
+        }
+      }
+
+      return { ...point, value: Math.max(0, Math.min(100, newValue)) };
+    }));
+
+    requestAnimationFrame(animate);
+  };
+
+  const frame = requestAnimationFrame(animate);
+  return () => cancelAnimationFrame(frame);
+}, []);
+
+<HeatmapChart
+  data={memoryData}
+  xAxis={{ label: "Memory Block" }}
+  yAxis={{ label: "Memory Region" }}
+  width={800}
+  height={500}
+  preferWebGPU={true}
+/>`}
+      preview={
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="text-sm font-medium">
+                WebGPU Memory Allocation Map - {MEMORY_REGIONS} Regions × {MEMORY_BLOCKS} Blocks
+              </div>
+              <div className="text-xs text-zinc-500">
+                Total VRAM: {totalMemoryGB.toFixed(1)}GB | Used: {usedMemoryGB.toFixed(2)}GB ({avgUsage.toFixed(1)}%) | Block Size: {BLOCK_SIZE_MB}MB
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPaused(!isPaused)}
+              className="px-4 py-2 rounded-md font-medium transition-colors bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              {isPaused ? "▶ Resume" : "⏸ Pause"}
+            </button>
+          </div>
+
+          <div className="w-full h-[600px]">
+            <HeatmapChart
+              data={memoryData}
+              xAxis={{
+                label: "Memory Block (8MB each)",
+              }}
+              yAxis={{
+                label: "Memory Region",
+              }}
+              width={800}
+              height={600}
+              preferWebGPU={true}
+              cellGap={0.5}
+              showTooltip
+            />
+          </div>
+        </div>
+      }
+    />
+  );
+}
+
 function PrimitiveHeatmapChart() {
   return (
     <ComponentPreview
@@ -326,9 +591,9 @@ function PrimitiveHeatmapChart() {
 export function HeatmapChartExamples() {
   return (
     <div className="space-y-8">
+      <RealTimeSystemMonitor />
+      <WebGPUMemoryMonitor />
       <BasicHeatmapChart />
-      <CorrelationMatrix />
-      <GridPerformanceHeatmap />
       <LargeScaleHeatmap />
       <PrimitiveHeatmapChart />
     </div>

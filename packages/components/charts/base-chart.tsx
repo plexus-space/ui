@@ -211,7 +211,10 @@ export interface WebGLRendererConfig<
     program: WebGLProgram,
     props: TProps
   ) => void;
-  onDestroy?: (gl: WebGL2RenderingContext, program: WebGLProgram | null) => void;
+  onDestroy?: (
+    gl: WebGL2RenderingContext,
+    program: WebGLProgram | null
+  ) => void;
 }
 
 export function createWebGLRenderer<
@@ -653,13 +656,44 @@ export function ChartAxes() {
     );
     context.stroke();
 
+    // Calculate minimum spacing between x-axis labels to avoid overlap
+    const getFilteredXTicks = () => {
+      if (ctx.xTicks.length === 0) return [];
+
+      // Measure a sample label to estimate width
+      const sampleLabel = ctx.xAxis.formatter
+        ? ctx.xAxis.formatter(ctx.xTicks[0])
+        : formatValue(ctx.xTicks[0]);
+      const labelWidth = context.measureText(sampleLabel).width;
+      const minSpacing = labelWidth + 20; // Add 20px padding between labels
+
+      const innerWidth = ctx.width - ctx.margin.left - ctx.margin.right;
+      const availableSpace = innerWidth / ctx.xTicks.length;
+
+      // If we have enough space, show all ticks
+      if (availableSpace >= minSpacing) {
+        return ctx.xTicks;
+      }
+
+      // Otherwise, intelligently skip ticks
+      const skipFactor = Math.ceil(minSpacing / availableSpace);
+      return ctx.xTicks.filter((_, i) => i % skipFactor === 0);
+    };
+
+    const visibleXTicks = getFilteredXTicks();
+
+    // Draw all tick marks
     ctx.xTicks.forEach((tick) => {
       const x = ctx.xScale(tick);
       context.beginPath();
       context.moveTo(x, ctx.height - ctx.margin.bottom);
       context.lineTo(x, ctx.height - ctx.margin.bottom + 6);
       context.stroke();
+    });
 
+    // Draw only non-overlapping labels
+    visibleXTicks.forEach((tick) => {
+      const x = ctx.xScale(tick);
       context.textAlign = "center";
       const label = ctx.xAxis.formatter
         ? ctx.xAxis.formatter(tick)
@@ -807,9 +841,7 @@ export function ChartTooltip({
         className="absolute z-50 px-3 py-2 bg-white dark:bg-zinc-950 text-sm rounded-lg shadow-xl pointer-events-none border border-zinc-200 dark:border-zinc-800"
         style={{ left: tooltipX, top: tooltipY }}
       >
-        <div className="font-semibold text-zinc-900 dark:text-white mb-1">
-          {ctx.tooltipData.title}
-        </div>
+        <div className="font-semibold mb-1">{ctx.tooltipData.title}</div>
         {ctx.tooltipData.items.map((item, idx) => (
           <div
             key={idx}

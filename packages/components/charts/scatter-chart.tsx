@@ -531,7 +531,17 @@ function createWebGPUScatterRenderer(
       });
     },
     onRender: async (device, context, pipeline, props) => {
-      const { series, xDomain, yDomain, width, height, margin } = props;
+      const {
+        series,
+        xDomain,
+        yDomain,
+        width,
+        height,
+        margin,
+        showGrid,
+        xTicks,
+        yTicks,
+      } = props;
 
       const innerWidth = width - margin.left - margin.right;
       const innerHeight = height - margin.top - margin.bottom;
@@ -579,6 +589,128 @@ function createWebGPUScatterRenderer(
       passEncoder.setPipeline(pipeline);
       passEncoder.setBindGroup(0, bindGroup);
 
+      // Draw grid if enabled
+      if (showGrid) {
+        const positions: number[] = [];
+        const colors: number[] = [];
+        const pointCoords: number[] = [];
+
+        const isDark = document.documentElement.classList.contains("dark");
+        const gridColor: [number, number, number] = isDark
+          ? [0.4, 0.4, 0.4]
+          : [0.6, 0.6, 0.6];
+        const gridSize = 2; // Size of grid line dots
+
+        // Vertical grid lines (x-axis ticks)
+        for (const tick of xTicks) {
+          const x = xScale(tick);
+          // Draw vertical line as a series of points
+          for (let y = 0; y <= innerHeight; y += 2) {
+            // Create quad for grid point
+            const halfSize = gridSize / 2;
+            // Triangle 1
+            positions.push(x - halfSize, y - halfSize);
+            pointCoords.push(0, 0);
+            colors.push(...gridColor, 0.15);
+
+            positions.push(x + halfSize, y - halfSize);
+            pointCoords.push(1, 0);
+            colors.push(...gridColor, 0.15);
+
+            positions.push(x - halfSize, y + halfSize);
+            pointCoords.push(0, 1);
+            colors.push(...gridColor, 0.15);
+
+            // Triangle 2
+            positions.push(x + halfSize, y - halfSize);
+            pointCoords.push(1, 0);
+            colors.push(...gridColor, 0.15);
+
+            positions.push(x + halfSize, y + halfSize);
+            pointCoords.push(1, 1);
+            colors.push(...gridColor, 0.15);
+
+            positions.push(x - halfSize, y + halfSize);
+            pointCoords.push(0, 1);
+            colors.push(...gridColor, 0.15);
+          }
+        }
+
+        // Horizontal grid lines (y-axis ticks)
+        for (const tick of yTicks) {
+          const y = yScaleFlipped(tick);
+          // Draw horizontal line as a series of points
+          for (let x = 0; x <= innerWidth; x += 2) {
+            // Create quad for grid point
+            const halfSize = gridSize / 2;
+            // Triangle 1
+            positions.push(x - halfSize, y - halfSize);
+            pointCoords.push(0, 0);
+            colors.push(...gridColor, 0.15);
+
+            positions.push(x + halfSize, y - halfSize);
+            pointCoords.push(1, 0);
+            colors.push(...gridColor, 0.15);
+
+            positions.push(x - halfSize, y + halfSize);
+            pointCoords.push(0, 1);
+            colors.push(...gridColor, 0.15);
+
+            // Triangle 2
+            positions.push(x + halfSize, y - halfSize);
+            pointCoords.push(1, 0);
+            colors.push(...gridColor, 0.15);
+
+            positions.push(x + halfSize, y + halfSize);
+            pointCoords.push(1, 1);
+            colors.push(...gridColor, 0.15);
+
+            positions.push(x - halfSize, y + halfSize);
+            pointCoords.push(0, 1);
+            colors.push(...gridColor, 0.15);
+          }
+        }
+
+        if (positions.length > 0) {
+          const gridPositionBuffer = device.createBuffer({
+            size: positions.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(
+            gridPositionBuffer,
+            0,
+            new Float32Array(positions)
+          );
+
+          const gridColorBuffer = device.createBuffer({
+            size: colors.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(
+            gridColorBuffer,
+            0,
+            new Float32Array(colors)
+          );
+
+          const gridPointCoordBuffer = device.createBuffer({
+            size: pointCoords.length * 4,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+          });
+          device.queue.writeBuffer(
+            gridPointCoordBuffer,
+            0,
+            new Float32Array(pointCoords)
+          );
+
+          passEncoder.setVertexBuffer(0, gridPositionBuffer);
+          passEncoder.setVertexBuffer(1, gridColorBuffer);
+          passEncoder.setVertexBuffer(2, gridPointCoordBuffer);
+
+          passEncoder.draw(positions.length / 2);
+        }
+      }
+
+      // Draw scatter points
       for (const s of series) {
         if (s.data.length === 0) continue;
 
@@ -709,7 +841,9 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
     | WebGPURenderer<ScatterRendererProps>
     | null
   >(null);
+  const mountedRef = useRef(true);
 
+  // Initialize renderer once
   useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
@@ -720,10 +854,10 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
     canvas.style.width = `${ctx.width}px`;
     canvas.style.height = `${ctx.height}px`;
 
-    let mounted = true;
+    mountedRef.current = true;
 
     async function initRenderer() {
-      if (!canvas) return;
+      if (!canvas || rendererRef.current) return;
 
       try {
         if (ctx.preferWebGPU && "gpu" in navigator) {
@@ -732,31 +866,13 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
             const device = await adapter.requestDevice();
             const renderer = createWebGPUScatterRenderer(canvas, device);
 
-            if (!mounted) {
+            if (!mountedRef.current) {
               renderer.destroy();
               return;
             }
 
             rendererRef.current = renderer;
             ctx.setRenderMode("webgpu");
-
-            await renderer.render({
-              canvas,
-              series: ctx.series,
-              xDomain: ctx.xDomain,
-              yDomain: ctx.yDomain,
-              xTicks: ctx.xTicks,
-              yTicks: ctx.yTicks,
-              width: ctx.width * dpr,
-              height: ctx.height * dpr,
-              margin: {
-                top: ctx.margin.top * dpr,
-                right: ctx.margin.right * dpr,
-                bottom: ctx.margin.bottom * dpr,
-                left: ctx.margin.left * dpr,
-              },
-              showGrid,
-            });
             return;
           }
         }
@@ -767,31 +883,13 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
       try {
         const renderer = createWebGLScatterRenderer(canvas);
 
-        if (!mounted) {
+        if (!mountedRef.current) {
           renderer.destroy();
           return;
         }
 
         rendererRef.current = renderer;
         ctx.setRenderMode("webgl");
-
-        renderer.render({
-          canvas,
-          series: ctx.series,
-          xDomain: ctx.xDomain,
-          yDomain: ctx.yDomain,
-          xTicks: ctx.xTicks,
-          yTicks: ctx.yTicks,
-          width: ctx.width * dpr,
-          height: ctx.height * dpr,
-          margin: {
-            top: ctx.margin.top * dpr,
-            right: ctx.margin.right * dpr,
-            bottom: ctx.margin.bottom * dpr,
-            left: ctx.margin.left * dpr,
-          },
-          showGrid,
-        });
       } catch (error) {
         console.error("WebGL failed:", error);
       }
@@ -800,13 +898,49 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
     initRenderer();
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       if (rendererRef.current) {
         rendererRef.current.destroy();
         rendererRef.current = null;
       }
     };
-  }, [ctx, showGrid]);
+  }, [ctx.canvasRef, ctx.width, ctx.height, ctx.devicePixelRatio, ctx.preferWebGPU, ctx.setRenderMode]);
+
+  // Render on data/config changes
+  useEffect(() => {
+    const canvas = ctx.canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer) return;
+
+    const dpr = ctx.devicePixelRatio;
+
+    const renderProps: ScatterRendererProps = {
+      canvas,
+      series: ctx.series,
+      xDomain: ctx.xDomain,
+      yDomain: ctx.yDomain,
+      xTicks: ctx.xTicks,
+      yTicks: ctx.yTicks,
+      width: ctx.width * dpr,
+      height: ctx.height * dpr,
+      margin: {
+        top: ctx.margin.top * dpr,
+        right: ctx.margin.right * dpr,
+        bottom: ctx.margin.bottom * dpr,
+        left: ctx.margin.left * dpr,
+      },
+      showGrid,
+    };
+
+    // Call render without destroying the renderer
+    const renderResult = renderer.render(renderProps);
+    if (renderResult && "then" in renderResult) {
+      // WebGPU renderer (async) - result is already rendering
+      // No need to call again
+    } else {
+      // WebGL renderer (sync) - already rendered
+    }
+  }, [ctx.series, ctx.xDomain, ctx.yDomain, ctx.xTicks, ctx.yTicks, ctx.width, ctx.height, ctx.margin, ctx.devicePixelRatio, showGrid, ctx.canvasRef]);
 
   return (
     <canvas

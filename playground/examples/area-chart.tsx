@@ -4,7 +4,10 @@ import { AreaChart } from "@plexusui/components/charts/area-chart";
 import type { DataPoint } from "@plexusui/components/charts/area-chart";
 import { ComponentPreview } from "@/components/component-preview";
 import { useState, useEffect } from "react";
-import { useColorScheme, useMultiColors } from "@/components/color-scheme-provider";
+import {
+  useColorScheme,
+  useMultiColors,
+} from "@/components/color-scheme-provider";
 
 // ============================================================================
 // Example Data
@@ -62,7 +65,7 @@ const data = Array.from({ length: 60 }, (_, i) => ({
               },
             ]}
             yAxis={{ label: "Price ($)" }}
-            xAxis={{ label: "Time (days)" }}
+            xAxis={{ label: "Time (days)", domain: [0, 59] }}
             width={800}
             height={400}
             showGrid
@@ -103,7 +106,7 @@ const series2 = [...];
                 })),
                 color: colors[0],
                 fillOpacity: 0.25,
-                strokeWidth: 2,
+                strokeWidth: 1,
               },
               {
                 name: "Server B",
@@ -113,11 +116,11 @@ const series2 = [...];
                 })),
                 color: colors[1],
                 fillOpacity: 0.25,
-                strokeWidth: 2,
+                strokeWidth: 1,
               },
             ]}
             yAxis={{ label: "CPU Usage (%)" }}
-            xAxis={{ label: "Time (min)" }}
+            xAxis={{ label: "Time (min)", domain: [0, 39] }}
             width={800}
             height={400}
             showGrid
@@ -239,6 +242,7 @@ function PrimitiveAreaChart() {
             ]}
             width={800}
             height={400}
+            xAxis={{ domain: [0, 49] }}
             preferWebGPU={true}
           >
             <AreaChart.Canvas showGrid />
