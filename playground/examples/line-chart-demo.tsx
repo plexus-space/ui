@@ -5,7 +5,7 @@ import { LineChart } from "@plexusui/components/charts/line-chart";
 /**
  * Example: Pure WebGL Line Chart
  *
- * This example demonstrates the WebGL-powered line chart with:
+ * This example demonstrates the WebGL-accelerated line chart with:
  * - Custom shaders for thick line rendering (no SVG limitations)
  * - GPU-accelerated for 100k+ points at 60fps
  * - Support for multiple data series

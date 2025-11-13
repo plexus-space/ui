@@ -16,7 +16,7 @@ export default function Home() {
         </div>
 
         <p className="max-w-3xl text-lg text-zinc-600 dark:text-zinc-400 mb-8">
-          A primitive-first, WebGPU-powered component library for physical
+          A primitive-first, WebGPU-accelerated component library for physical
           systems.
         </p>
       </div>

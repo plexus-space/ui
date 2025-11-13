@@ -2,13 +2,13 @@
 
 > The foundation for all future human-computer interaction for physical systems.
 
-A primitive-first, WebGPU-powered component library for physical systems.
+A primitive-first, WebGPU-accelerated component library for physical systems.
 
 ## Why Plexus UI?
 
 **For Physical Systems:** Standard web UI libraries optimize for forms, dashboards, and CRUD apps. Plexus UI is built for real-time physical system visualization: medical devices, aircraft HUDs, autonomous vehicle perception, and defense systems.
 
-**WebGPU-First:** True GPU compute shaders deliver 10x performance. Render 1M+ data points at 60fps. Handle real-time sensor fusion with zero-copy buffer updates.
+**GPU-Accelerated:** WebGPU and WebGL2 rendering pipelines for smooth 60fps visualization. Handle 100k+ data points in real-time. Zero-copy buffer updates for streaming sensor data.
 
 **Primitive-First Architecture:** You get the core WebGPU primitives and control the data pipeline. Maximum performance for deep-tech use cases. No black-box abstractions.
 

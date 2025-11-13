@@ -20,7 +20,7 @@
       "version": "0.2.0",
       "displayName": "Line Chart",
       "category": "charts",
-      "description": "GPU-accelerated line chart for 100k+ points at 60fps. Primitive architecture with composable components (Root, Canvas, Axes, Tooltip).",
+      "description": "Multi-series line chart with GPU-accelerated rendering. Handles 100k+ points smoothly. Use cases: Time-series trends, sensor data plotting, stock prices, temperature curves, signal analysis.",
       "files": [
         "charts/line-chart.tsx",
         "charts/base-chart.tsx",
@@ -38,7 +38,7 @@
       "version": "0.1.0",
       "displayName": "Scatter Chart",
       "category": "charts",
-      "description": "GPU-accelerated scatter plot. Supports variable point sizes, colors, and opacity. Perfect for correlation analysis and cluster visualization.",
+      "description": "Scatter plot with variable point sizes and colors. Use cases: Correlation analysis, cluster visualization, quality control plots, particle distribution, measurement scatter.",
       "files": [
         "charts/scatter-chart.tsx",
         "charts/base-chart.tsx",
@@ -56,7 +56,7 @@
       "version": "0.1.0",
       "displayName": "Bar Chart",
       "category": "charts",
-      "description": "GPU-accelerated bar chart with vertical/horizontal orientation. Supports grouped and stacked layouts. Optimized for categorical data visualization.",
+      "description": "Bar chart with vertical/horizontal orientation. Supports grouped and stacked layouts. Use cases: Categorical comparisons, test results, production counts, event frequencies.",
       "files": [
         "charts/bar-chart.tsx",
         "charts/base-chart.tsx",
@@ -74,7 +74,7 @@
       "version": "0.1.0",
       "displayName": "Area Chart",
       "category": "charts",
-      "description": "GPU-accelerated area chart with filled regions. Supports stacked areas and real-time streaming data. Ideal for time series and cumulative data.",
+      "description": "Area chart with filled regions and stacked support. Use cases: Cumulative data, bandwidth usage, memory consumption, power draw over time, filled envelopes.",
       "files": [
         "charts/area-chart.tsx",
         "charts/base-chart.tsx",
@@ -91,8 +91,8 @@
       "name": "heatmap-chart",
       "version": "0.1.0",
       "displayName": "Heatmap Chart",
-      "category": "charts",
-      "description": "GPU-accelerated heatmap for 2D grid data. Custom color scales, correlation matrices, and high-density visualizations. Handles thousands of cells with ease.",
+      "category": "sensors",
+      "description": "2D grid heatmap with custom color scales. Use cases: Thermal imaging (FLIR cameras), correlation matrices, pressure sensor arrays, PCB thermal maps, tactile sensor grids, seat occupancy.",
       "files": [
         "charts/heatmap-chart.tsx",
         "charts/base-chart.tsx",
@@ -109,8 +109,8 @@
       "name": "gauge",
       "version": "0.1.0",
       "displayName": "Gauge",
-      "category": "charts",
-      "description": "GPU-accelerated circular and semi-circular gauge with color zones. Perfect for aircraft instruments, pressure gauges, and speed indicators. Real-time needle animation.",
+      "category": "instruments",
+      "description": "Circular/semi-circular gauge with configurable zones and needle animation. Use cases: Speedometers, tachometers, pressure gauges, battery level, motor RPM, temperature indicators, tank levels.",
       "files": [
         "charts/gauge.tsx",
         "charts/base-chart.tsx"
@@ -126,8 +126,8 @@
       "name": "radar-chart",
       "version": "0.1.0",
       "displayName": "Radar Chart",
-      "category": "charts",
-      "description": "GPU-accelerated radar display with circular sweep animation. Ideal for air traffic control, weather radar, and sonar visualization. Supports target plotting with intensity.",
+      "category": "sensors",
+      "description": "Radar-style polar display with rotating sweep. Use cases: Air traffic control displays, weather radar visualization, sonar plots, 360° sensor sweeps, LIDAR scans.",
       "files": [
         "charts/radar-chart.tsx",
         "charts/base-chart.tsx"
@@ -143,8 +143,8 @@
       "name": "status-grid",
       "version": "0.1.0",
       "displayName": "Status Grid",
-      "category": "charts",
-      "description": "KPI dashboard with GPU-accelerated sparklines. Real-time metrics with threshold alerts and status indicators. Ideal for mission control and system monitoring.",
+      "category": "data-display",
+      "description": "KPI dashboard with inline sparklines and status indicators. Use cases: Mission control dashboards, system health monitoring, fleet management, production line status, device telemetry overview.",
       "files": [
         "charts/status-grid.tsx",
         "charts/base-chart.tsx"
@@ -158,8 +158,8 @@
       "name": "data-grid",
       "version": "1.0.0",
       "displayName": "Data Grid",
-      "category": "charts",
-      "description": "GPU-accelerated data table with shadcn/ui aesthetics. Virtual scrolling for 10k+ rows at 60fps. Sortable columns, custom formatters, theme-aware styling, and primitive composition pattern (Root, Canvas, Header, Body). Perfect for telemetry logs, flight operations, and system monitoring.",
+      "category": "data-display",
+      "description": "High-performance data table with virtual scrolling (10k+ rows). Use cases: Telemetry logs, test results tables, event logs, CSV data viewers, database query results, flight data records.",
       "files": [
         "charts/data-grid.tsx",
         "charts/base-chart.tsx"
@@ -175,8 +175,8 @@
       "name": "attitude-indicator",
       "version": "0.1.0",
       "displayName": "Attitude Indicator",
-      "category": "charts",
-      "description": "GPU-accelerated artificial horizon showing pitch and roll. Essential for aircraft, drones, spacecraft, surgical robots, and any system requiring orientation visualization. Configurable pitch ladder and bank indicator.",
+      "category": "instruments",
+      "description": "Artificial horizon showing pitch and roll orientation. Use cases: Aircraft displays, drone ground stations, spacecraft attitude, surgical robot orientation, gimbal stabilization, ROV navigation.",
       "files": [
         "charts/attitude-indicator.tsx",
         "charts/base-chart.tsx"
