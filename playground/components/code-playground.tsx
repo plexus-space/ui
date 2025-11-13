@@ -6,9 +6,7 @@ type CodePlaygroundProps = {
   initialCode: string;
 };
 
-export default function CodePlayground({
-  initialCode = ``,
-}: CodePlaygroundProps) {
+export default function CodePlayground({ initialCode = `` }: CodePlaygroundProps) {
   const lines = initialCode.split("\n");
 
   return (
@@ -35,10 +33,7 @@ export default function CodePlayground({
         <div className="flex-1 overflow-x-auto py-4 px-4">
           <div className="flex flex-col">
             {lines.map((line, i) => (
-              <div
-                key={i}
-                className="leading-6 whitespace-pre text-zinc-800 dark:text-zinc-200"
-              >
+              <div key={i} className="leading-6 whitespace-pre text-zinc-800 dark:text-zinc-200">
                 {line || "\u00A0"}
               </div>
             ))}

@@ -2,11 +2,7 @@ import * as THREE from "three";
 import { extend } from "@react-three/fiber";
 
 function getPoint(v, size, data, offset) {
-  v.set(
-    Math.random() * 2 - 1,
-    Math.random() * 2 - 1,
-    Math.random() * 2 - 1
-  );
+  v.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
   if (v.length() > 1) return getPoint(v, size, data, offset);
   return v.normalize().multiplyScalar(size).toArray(data, offset);
 }

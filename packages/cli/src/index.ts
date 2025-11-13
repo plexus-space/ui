@@ -27,10 +27,7 @@ program
 program
   .command("list")
   .description("List all available components")
-  .option(
-    "-c, --category <category>",
-    "filter by category (3d, charts, orbital, primitives)"
-  )
+  .option("-c, --category <category>", "filter by category (3d, charts, orbital, primitives)")
   .action((options) => {
     list(options);
   });

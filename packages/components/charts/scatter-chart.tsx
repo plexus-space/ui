@@ -64,9 +64,7 @@ const ScatterChartContext = createContext<ScatterChartContextType | null>(null);
 function useScatterChartData() {
   const ctx = useContext(ScatterChartContext);
   if (!ctx) {
-    throw new Error(
-      "ScatterChart components must be used within ScatterChart.Root"
-    );
+    throw new Error("ScatterChart components must be used within ScatterChart.Root");
   }
   return ctx;
 }
@@ -272,9 +270,7 @@ function drawGrid(
   const sizes: number[] = [];
 
   const isDark = document.documentElement.classList.contains("dark");
-  const gridColor: [number, number, number] = isDark
-    ? [0.4, 0.4, 0.4]
-    : [0.6, 0.6, 0.6];
+  const gridColor: [number, number, number] = isDark ? [0.4, 0.4, 0.4] : [0.6, 0.6, 0.6];
 
   // We'll draw grid as points along lines - not ideal but works with point rendering
   for (const tick of xTicks) {
@@ -335,17 +331,7 @@ function createWebGLScatterRenderer(
       fragmentSource: FRAGMENT_SHADER,
     }),
     onRender: (gl, program, props) => {
-      const {
-        series,
-        xDomain,
-        yDomain,
-        width,
-        height,
-        margin,
-        showGrid,
-        xTicks,
-        yTicks,
-      } = props;
+      const { series, xDomain, yDomain, width, height, margin, showGrid, xTicks, yTicks } = props;
 
       // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
       gl.useProgram(program);
@@ -359,10 +345,8 @@ function createWebGLScatterRenderer(
       const matrixLoc = gl.getUniformLocation(program, "u_matrix");
       gl.uniformMatrix3fv(matrixLoc, false, matrix);
 
-      const xScale = (x: number) =>
-        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-      const yScale = (y: number) =>
-        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const xScale = (x: number) => ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) => ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
       if (showGrid) {
@@ -405,31 +389,19 @@ function createWebGLScatterRenderer(
         if (!buffers.size) buffers.size = gl.createBuffer();
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(geometry.positions),
-          gl.STATIC_DRAW
-        );
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.positions), gl.STATIC_DRAW);
         const positionLoc = gl.getAttribLocation(program, "a_position");
         gl.enableVertexAttribArray(positionLoc);
         gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(geometry.colors),
-          gl.STATIC_DRAW
-        );
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.colors), gl.STATIC_DRAW);
         const colorLoc = gl.getAttribLocation(program, "a_color");
         gl.enableVertexAttribArray(colorLoc);
         gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.size);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(geometry.sizes),
-          gl.STATIC_DRAW
-        );
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.sizes), gl.STATIC_DRAW);
         const sizeLoc = gl.getAttribLocation(program, "a_size");
         gl.enableVertexAttribArray(sizeLoc);
         gl.vertexAttribPointer(sizeLoc, 1, gl.FLOAT, false, 0, 0);
@@ -488,21 +460,15 @@ function createWebGPUScatterRenderer(
           buffers: [
             {
               arrayStride: 8,
-              attributes: [
-                { shaderLocation: 0, offset: 0, format: "float32x2" },
-              ],
+              attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
             },
             {
               arrayStride: 16,
-              attributes: [
-                { shaderLocation: 1, offset: 0, format: "float32x4" },
-              ],
+              attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
             },
             {
               arrayStride: 8,
-              attributes: [
-                { shaderLocation: 2, offset: 0, format: "float32x2" },
-              ],
+              attributes: [{ shaderLocation: 2, offset: 0, format: "float32x2" }],
             },
           ],
         },
@@ -531,17 +497,7 @@ function createWebGPUScatterRenderer(
       });
     },
     onRender: async (device, context, pipeline, props) => {
-      const {
-        series,
-        xDomain,
-        yDomain,
-        width,
-        height,
-        margin,
-        showGrid,
-        xTicks,
-        yTicks,
-      } = props;
+      const { series, xDomain, yDomain, width, height, margin, showGrid, xTicks, yTicks } = props;
 
       const innerWidth = width - margin.left - margin.right;
       const innerHeight = height - margin.top - margin.bottom;
@@ -566,10 +522,8 @@ function createWebGPUScatterRenderer(
       ]);
       device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
-      const xScale = (x: number) =>
-        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-      const yScale = (y: number) =>
-        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const xScale = (x: number) => ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) => ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
       const commandEncoder = device.createCommandEncoder();
@@ -596,9 +550,7 @@ function createWebGPUScatterRenderer(
         const pointCoords: number[] = [];
 
         const isDark = document.documentElement.classList.contains("dark");
-        const gridColor: [number, number, number] = isDark
-          ? [0.4, 0.4, 0.4]
-          : [0.6, 0.6, 0.6];
+        const gridColor: [number, number, number] = isDark ? [0.4, 0.4, 0.4] : [0.6, 0.6, 0.6];
         const gridSize = 2; // Size of grid line dots
 
         // Vertical grid lines (x-axis ticks)
@@ -676,31 +628,19 @@ function createWebGPUScatterRenderer(
             size: positions.length * 4,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
           });
-          device.queue.writeBuffer(
-            gridPositionBuffer,
-            0,
-            new Float32Array(positions)
-          );
+          device.queue.writeBuffer(gridPositionBuffer, 0, new Float32Array(positions));
 
           const gridColorBuffer = device.createBuffer({
             size: colors.length * 4,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
           });
-          device.queue.writeBuffer(
-            gridColorBuffer,
-            0,
-            new Float32Array(colors)
-          );
+          device.queue.writeBuffer(gridColorBuffer, 0, new Float32Array(colors));
 
           const gridPointCoordBuffer = device.createBuffer({
             size: pointCoords.length * 4,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
           });
-          device.queue.writeBuffer(
-            gridPointCoordBuffer,
-            0,
-            new Float32Array(pointCoords)
-          );
+          device.queue.writeBuffer(gridPointCoordBuffer, 0, new Float32Array(pointCoords));
 
           passEncoder.setVertexBuffer(0, gridPositionBuffer);
           passEncoder.setVertexBuffer(1, gridColorBuffer);
@@ -730,31 +670,19 @@ function createWebGPUScatterRenderer(
           size: geometry.positions.length * 4,
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        device.queue.writeBuffer(
-          positionBuffer,
-          0,
-          new Float32Array(geometry.positions)
-        );
+        device.queue.writeBuffer(positionBuffer, 0, new Float32Array(geometry.positions));
 
         const colorBuffer = device.createBuffer({
           size: geometry.colors.length * 4,
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        device.queue.writeBuffer(
-          colorBuffer,
-          0,
-          new Float32Array(geometry.colors)
-        );
+        device.queue.writeBuffer(colorBuffer, 0, new Float32Array(geometry.colors));
 
         const pointCoordBuffer = device.createBuffer({
           size: geometry.pointCoords.length * 4,
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        device.queue.writeBuffer(
-          pointCoordBuffer,
-          0,
-          new Float32Array(geometry.pointCoords)
-        );
+        device.queue.writeBuffer(pointCoordBuffer, 0, new Float32Array(geometry.pointCoords));
 
         passEncoder.setVertexBuffer(0, positionBuffer);
         passEncoder.setVertexBuffer(1, colorBuffer);
@@ -827,9 +755,7 @@ function Root({
       preferWebGPU={preferWebGPU}
       className={className}
     >
-      <ScatterChartContext.Provider value={{ series }}>
-        {children}
-      </ScatterChartContext.Provider>
+      <ScatterChartContext.Provider value={{ series }}>{children}</ScatterChartContext.Provider>
     </ChartRoot>
   );
 }
@@ -837,9 +763,7 @@ function Root({
 function Canvas({ showGrid = true }: { showGrid?: boolean }) {
   const ctx = useScatterChart();
   const rendererRef = useRef<
-    | WebGLRenderer<ScatterRendererProps>
-    | WebGPURenderer<ScatterRendererProps>
-    | null
+    WebGLRenderer<ScatterRendererProps> | WebGPURenderer<ScatterRendererProps> | null
   >(null);
   const mountedRef = useRef(true);
 
@@ -904,7 +828,14 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
         rendererRef.current = null;
       }
     };
-  }, [ctx.canvasRef, ctx.width, ctx.height, ctx.devicePixelRatio, ctx.preferWebGPU, ctx.setRenderMode]);
+  }, [
+    ctx.canvasRef,
+    ctx.width,
+    ctx.height,
+    ctx.devicePixelRatio,
+    ctx.preferWebGPU,
+    ctx.setRenderMode,
+  ]);
 
   // Render on data/config changes
   useEffect(() => {
@@ -940,7 +871,19 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
     } else {
       // WebGL renderer (sync) - already rendered
     }
-  }, [ctx.series, ctx.xDomain, ctx.yDomain, ctx.xTicks, ctx.yTicks, ctx.width, ctx.height, ctx.margin, ctx.devicePixelRatio, showGrid, ctx.canvasRef]);
+  }, [
+    ctx.series,
+    ctx.xDomain,
+    ctx.yDomain,
+    ctx.xTicks,
+    ctx.yTicks,
+    ctx.width,
+    ctx.height,
+    ctx.margin,
+    ctx.devicePixelRatio,
+    showGrid,
+    ctx.canvasRef,
+  ]);
 
   return (
     <canvas
@@ -1050,8 +993,7 @@ function Tooltip() {
           <div
             className="w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 animate-pulse"
             style={{
-              backgroundColor:
-                ctx.series[ctx.hoveredPoint.seriesIdx].color || "#3b82f6",
+              backgroundColor: ctx.series[ctx.hoveredPoint.seriesIdx].color || "#3b82f6",
             }}
           />
         </div>

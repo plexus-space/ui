@@ -3,7 +3,10 @@
 import { BarChart } from "@plexusui/components/charts/bar-chart";
 import type { DataPoint } from "@plexusui/components/charts/bar-chart";
 import { ComponentPreview } from "@/components/component-preview";
-import { useColorScheme, useMultiColors } from "@/components/color-scheme-provider";
+import {
+  useColorScheme,
+  useMultiColors,
+} from "@/components/color-scheme-provider";
 
 // ============================================================================
 // Example Data
@@ -64,9 +67,7 @@ const data = [
       preview={
         <div className="w-full h-[400px]">
           <BarChart
-            series={[
-              { name: "Revenue ($K)", data: monthlyData, color: color },
-            ]}
+            series={[{ name: "Revenue ($K)", data: monthlyData, color: color }]}
             yAxis={{ label: "Revenue ($K)" }}
             width={800}
             height={400}
@@ -161,9 +162,7 @@ function HorizontalBarChart() {
       preview={
         <div className="w-full h-[400px]">
           <BarChart
-            series={[
-              { name: "Team Size", data: departmentData, color: color },
-            ]}
+            series={[{ name: "Team Size", data: departmentData, color: color }]}
             orientation="horizontal"
             xAxis={{ label: "Number of Employees" }}
             width={800}

@@ -16,11 +16,7 @@ export const TopNav = () => {
       <div className="flex items-center gap-2">
         <ColorSchemeToggle />
         <ThemeToggle />
-        <Link
-          href="https://github.com/plexus-space/ui"
-          className="cursor-pointer"
-          target="_blank"
-        >
+        <Link href="https://github.com/plexus-space/ui" className="cursor-pointer" target="_blank">
           <Button variant="ghost" size="sm">
             <Github />
           </Button>

@@ -68,9 +68,7 @@ const HeatmapChartContext = createContext<HeatmapChartContextType | null>(null);
 function useHeatmapChartData() {
   const ctx = useContext(HeatmapChartContext);
   if (!ctx) {
-    throw new Error(
-      "HeatmapChart components must be used within HeatmapChart.Root"
-    );
+    throw new Error("HeatmapChart components must be used within HeatmapChart.Root");
   }
   return ctx;
 }
@@ -288,10 +286,8 @@ function createWebGLHeatmapRenderer(
       const matrixLoc = gl.getUniformLocation(program, "u_matrix");
       gl.uniformMatrix3fv(matrixLoc, false, matrix);
 
-      const xScale = (x: number) =>
-        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-      const yScale = (y: number) =>
-        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const xScale = (x: number) => ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) => ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
       const cellWidth = innerWidth / xCategoryMap.size;
@@ -317,21 +313,13 @@ function createWebGLHeatmapRenderer(
       if (!buffers.color) buffers.color = gl.createBuffer();
 
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.positions),
-        gl.STATIC_DRAW
-      );
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.positions), gl.STATIC_DRAW);
       const positionLoc = gl.getAttribLocation(program, "a_position");
       gl.enableVertexAttribArray(positionLoc);
       gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array(geometry.colors),
-        gl.STATIC_DRAW
-      );
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.colors), gl.STATIC_DRAW);
       const colorLoc = gl.getAttribLocation(program, "a_color");
       gl.enableVertexAttribArray(colorLoc);
       gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
@@ -388,15 +376,11 @@ function createWebGPUHeatmapRenderer(
           buffers: [
             {
               arrayStride: 8,
-              attributes: [
-                { shaderLocation: 0, offset: 0, format: "float32x2" },
-              ],
+              attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
             },
             {
               arrayStride: 16,
-              attributes: [
-                { shaderLocation: 1, offset: 0, format: "float32x4" },
-              ],
+              attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
             },
           ],
         },
@@ -463,10 +447,8 @@ function createWebGPUHeatmapRenderer(
       ]);
       device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
-      const xScale = (x: number) =>
-        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-      const yScale = (y: number) =>
-        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const xScale = (x: number) => ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) => ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
       const cellWidth = innerWidth / xCategoryMap.size;
@@ -509,21 +491,13 @@ function createWebGPUHeatmapRenderer(
         size: geometry.positions.length * 4,
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
       });
-      device.queue.writeBuffer(
-        positionBuffer,
-        0,
-        new Float32Array(geometry.positions)
-      );
+      device.queue.writeBuffer(positionBuffer, 0, new Float32Array(geometry.positions));
 
       const colorBuffer = device.createBuffer({
         size: geometry.colors.length * 4,
         usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
       });
-      device.queue.writeBuffer(
-        colorBuffer,
-        0,
-        new Float32Array(geometry.colors)
-      );
+      device.queue.writeBuffer(colorBuffer, 0, new Float32Array(geometry.colors));
 
       passEncoder.setVertexBuffer(0, positionBuffer);
       passEncoder.setVertexBuffer(1, colorBuffer);
@@ -589,7 +563,7 @@ function Root({
     });
     const arr = Array.from(cats);
     // Only sort if all categories are numbers
-    if (arr.length > 0 && arr.every(c => typeof c === "number")) {
+    if (arr.length > 0 && arr.every((c) => typeof c === "number")) {
       return arr.sort((a, b) => (a as number) - (b as number));
     }
     // For strings or mixed types, preserve insertion order
@@ -604,7 +578,7 @@ function Root({
     });
     const arr = Array.from(cats);
     // Only sort if all categories are numbers
-    if (arr.length > 0 && arr.every(c => typeof c === "number")) {
+    if (arr.length > 0 && arr.every((c) => typeof c === "number")) {
       return arr.sort((a, b) => (a as number) - (b as number));
     }
     // For strings or mixed types, preserve insertion order
@@ -656,28 +630,30 @@ function Root({
       return Array.from(
         { length: Math.ceil(yCategories.length / step) },
         (_, i) => i * step
-      ).filter(i => i < yCategories.length);
+      ).filter((i) => i < yCategories.length);
     }
     return Array.from({ length: yCategories.length }, (_, i) => i);
   }, [yCategories.length]);
 
   // Formatters to map indices to category labels
   const xFormatter = useMemo(() => {
-    return xAxis.formatter || ((value: number) => {
-      const idx = Math.round(value);
-      return idx >= 0 && idx < xCategories.length
-        ? String(xCategories[idx])
-        : "";
-    });
+    return (
+      xAxis.formatter ||
+      ((value: number) => {
+        const idx = Math.round(value);
+        return idx >= 0 && idx < xCategories.length ? String(xCategories[idx]) : "";
+      })
+    );
   }, [xCategories, xAxis.formatter]);
 
   const yFormatter = useMemo(() => {
-    return yAxis.formatter || ((value: number) => {
-      const idx = Math.round(value);
-      return idx >= 0 && idx < yCategories.length
-        ? String(yCategories[idx])
-        : "";
-    });
+    return (
+      yAxis.formatter ||
+      ((value: number) => {
+        const idx = Math.round(value);
+        return idx >= 0 && idx < yCategories.length ? String(yCategories[idx]) : "";
+      })
+    );
   }, [yCategories, yAxis.formatter]);
 
   return (
@@ -715,9 +691,7 @@ function Root({
 function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   const ctx = useHeatmapChart();
   const rendererRef = useRef<
-    | WebGLRenderer<HeatmapRendererProps>
-    | WebGPURenderer<HeatmapRendererProps>
-    | null
+    WebGLRenderer<HeatmapRendererProps> | WebGPURenderer<HeatmapRendererProps> | null
   >(null);
   const mountedRef = useRef(true);
 
@@ -883,12 +857,7 @@ function Tooltip() {
     const xIdx = Math.floor(relX / cellWidth);
     const yIdx = Math.floor((innerHeight - relY) / cellHeight);
 
-    if (
-      xIdx < 0 ||
-      xIdx >= ctx.xCategories.length ||
-      yIdx < 0 ||
-      yIdx >= ctx.yCategories.length
-    ) {
+    if (xIdx < 0 || xIdx >= ctx.xCategories.length || yIdx < 0 || yIdx >= ctx.yCategories.length) {
       ctx.setHoveredPoint(null);
       ctx.setTooltipData(null);
       return;
@@ -911,9 +880,7 @@ function Tooltip() {
       if (cellChanged) {
         const screenX = ctx.margin.left + xIdx * cellWidth + cellWidth / 2;
         const screenY =
-          ctx.margin.top +
-          (ctx.yCategories.length - yIdx - 1) * cellHeight +
-          cellHeight / 2;
+          ctx.margin.top + (ctx.yCategories.length - yIdx - 1) * cellHeight + cellHeight / 2;
 
         ctx.setHoveredPoint({
           seriesIdx: 0,

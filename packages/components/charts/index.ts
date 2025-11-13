@@ -99,6 +99,57 @@ export type {
   HeatmapChartProps,
 } from "./heatmap-chart";
 
+export { Gauge } from "./gauge";
+export type { Zone, GaugeProps } from "./gauge";
+
+export { RadarChart } from "./radar-chart";
+export type {
+  RadarDataPoint,
+  RadarSeries,
+  RadarChartProps,
+} from "./radar-chart";
+
+export { WaterfallChart } from "./waterfall-chart";
+export type { WaterfallData, WaterfallChartProps } from "./waterfall-chart";
+
+export { StatusGrid } from "./status-grid";
+export type { StatusLevel, KPIMetric, StatusGridProps } from "./status-grid";
+
+export { Timeline } from "./timeline";
+export type {
+  EventType,
+  TimelineEvent,
+  TimelineLane,
+  TimelineProps,
+} from "./timeline";
+
+export { SurfacePlot } from "./surface-plot";
+export type { SurfaceData, SurfacePlotProps } from "./surface-plot";
+
+export { DataGrid } from "./data-grid";
+export type {
+  ColumnAlignment,
+  ColumnType,
+  Column,
+  DataGridProps,
+} from "./data-grid";
+
+export { AttitudeIndicator } from "./attitude-indicator";
+export type { AttitudeIndicatorProps } from "./attitude-indicator";
+
+export { CompassRose } from "./compass-rose";
+export type { CompassRoseProps } from "./compass-rose";
+
+export { NetworkGraph } from "./network-graph";
+export type {
+  NodeShape,
+  NodeStatus,
+  EdgeStyle,
+  NetworkNode,
+  NetworkEdge,
+  NetworkGraphProps,
+} from "./network-graph";
+
 // Base chart infrastructure (reusable for all chart types)
 export {
   ChartRoot,
@@ -138,5 +189,4 @@ export {
   generateSineWave,
   generateTelemetryData,
   normalizeData,
-  StreamingBuffer,
 } from "../lib/data-utils";

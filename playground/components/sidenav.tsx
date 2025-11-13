@@ -10,13 +10,15 @@ export const Sidenav = () => {
   const componentId = params.component as string;
 
   const freeComponents = components.filter((comp) => comp.tier !== "pro");
-  // const proComponents = components.filter((comp) => comp.tier === "pro");
+
+  // Get unique categories from components
+  const categories = Array.from(new Set(freeComponents.map((comp) => comp.category))).sort();
 
   return (
     <aside className="w-52 flex-shrink-0  bg-background overflow-y-auto">
       <nav className="p-4 pt-6">
         <div className="space-y-1">
-          {["Charts"].map((category) => (
+          {categories.map((category) => (
             <div key={category}>
               <div className="mt-6 mb-2 px-3 text-xs font-geist-mono uppercase font-semibold text-zinc-400 dark:text-zinc-600 ">
                 {category}
@@ -29,9 +31,7 @@ export const Sidenav = () => {
                       <Button
                         variant="ghost"
                         className={`${
-                          comp.id === componentId
-                            ? "bg-zinc-200 dark:bg-zinc-800"
-                            : ""
+                          comp.id === componentId ? "bg-zinc-200 dark:bg-zinc-800" : ""
                         } cursor-pointer`}
                         size="sm"
                       >

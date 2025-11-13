@@ -4,10 +4,7 @@ import { LineChart } from "@plexusui/components/charts/line-chart";
 import type { DataPoint } from "@plexusui/components/charts/line-chart";
 import { ComponentPreview } from "@/components/component-preview";
 import { useState, useEffect } from "react";
-import {
-  useColorScheme,
-  useMultiColors,
-} from "@/components/color-scheme-provider";
+import { useColorScheme, useMultiColors } from "@/components/color-scheme-provider";
 /**
  * Generates realistic EEG-like waveforms by combining multiple frequency bands:
  * - Delta (0.5-4 Hz): Deep sleep waves
@@ -81,10 +78,7 @@ function StreamingChart() {
           newPoints.push({ x: newTime, y: generateEEGSample(timeRadians, 0) });
           lastTime = newTime; // Update for next iteration
         }
-        return [
-          ...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)),
-          ...newPoints,
-        ];
+        return [...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)), ...newPoints];
       });
 
       setChannel2((prev) => {
@@ -99,10 +93,7 @@ function StreamingChart() {
           });
           lastTime = newTime; // Update for next iteration
         }
-        return [
-          ...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)),
-          ...newPoints,
-        ];
+        return [...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)), ...newPoints];
       });
 
       setChannel3((prev) => {
@@ -117,10 +108,7 @@ function StreamingChart() {
           });
           lastTime = newTime; // Update for next iteration
         }
-        return [
-          ...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)),
-          ...newPoints,
-        ];
+        return [...prev.slice(-(WINDOW_SIZE - SAMPLES_PER_UPDATE)), ...newPoints];
       });
     }, UPDATE_INTERVAL);
 
@@ -129,8 +117,7 @@ function StreamingChart() {
 
   // Calculate exact domain for streaming data (no padding)
   const xMin = channel1.length > 0 ? channel1[0].x : 0;
-  const xMax =
-    channel1.length > 0 ? channel1[channel1.length - 1].x : WINDOW_DURATION;
+  const xMax = channel1.length > 0 ? channel1[channel1.length - 1].x : WINDOW_DURATION;
 
   // Fixed Y-axis domain for stable display (typical EEG range)
   const yMin = -80;
@@ -371,10 +358,7 @@ function WebGPUPerformanceMonitor() {
 
     const animate = () => {
       // Helper function to generate realistic GPU timing
-      const generateTiming = (
-        stage: typeof stages.vertex,
-        prevValue: number
-      ) => {
+      const generateTiming = (stage: typeof stages.vertex, prevValue: number) => {
         // Smooth drift around baseline
         const drift = (Math.random() - 0.5) * stage.variance;
 
@@ -514,12 +498,9 @@ useEffect(() => {
         <div className="w-full space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <div className="text-sm font-medium">
-                WebGPU Performance Monitor
-              </div>
+              <div className="text-sm font-medium">WebGPU Performance Monitor</div>
               <div className="text-xs text-zinc-500">
-                Update Rate: {UPDATE_RATE} fps | Window: {WINDOW_DURATION}s (
-                {WINDOW_SIZE} frames)
+                Update Rate: {UPDATE_RATE} fps | Window: {WINDOW_DURATION}s ({WINDOW_SIZE} frames)
               </div>
             </div>
             <button

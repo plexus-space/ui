@@ -192,52 +192,22 @@ function createBarGeometry(
     if (orientation === "vertical") {
       const centerX = xScale(categoryValue);
       const x =
-        centerX -
-        (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 +
-        barOffset;
+        centerX - (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 + barOffset;
       const y0 = yScale(baseValue);
       const y1 = yScale(point.y);
       const width = effectiveBarWidth;
 
       // Two triangles for rectangle
-      positions.push(
-        x,
-        y0,
-        x + width,
-        y0,
-        x,
-        y1,
-        x + width,
-        y0,
-        x + width,
-        y1,
-        x,
-        y1
-      );
+      positions.push(x, y0, x + width, y0, x, y1, x + width, y0, x + width, y1, x, y1);
     } else {
       const centerY = yScale(categoryValue);
       const y =
-        centerY -
-        (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 +
-        barOffset;
+        centerY - (grouped ? totalSeries * effectiveBarWidth : effectiveBarWidth) / 2 + barOffset;
       const x0 = xScale(baseValue);
       const x1 = xScale(point.y);
       const height = effectiveBarWidth;
 
-      positions.push(
-        x0,
-        y,
-        x1,
-        y,
-        x0,
-        y + height,
-        x1,
-        y,
-        x1,
-        y + height,
-        x0,
-        y + height
-      );
+      positions.push(x0, y, x1, y, x0, y + height, x1, y, x1, y + height, x0, y + height);
     }
 
     // Colors for 6 vertices
@@ -250,9 +220,7 @@ function createBarGeometry(
 }
 
 // Factory function to create WebGL bar renderer
-function createWebGLBarRenderer(
-  canvas: HTMLCanvasElement
-): WebGLRenderer<BarRendererProps> {
+function createWebGLBarRenderer(canvas: HTMLCanvasElement): WebGLRenderer<BarRendererProps> {
   const buffers = {
     position: null as WebGLBuffer | null,
     color: null as WebGLBuffer | null,
@@ -290,16 +258,12 @@ function createWebGLBarRenderer(
       const matrixLoc = gl.getUniformLocation(program, "u_matrix");
       gl.uniformMatrix3fv(matrixLoc, false, matrix);
 
-      const xScale = (x: number) =>
-        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-      const yScale = (y: number) =>
-        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const xScale = (x: number) => ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) => ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
       const baseValue =
-        orientation === "vertical"
-          ? Math.max(yDomain[0], 0)
-          : Math.max(xDomain[0], 0);
+        orientation === "vertical" ? Math.max(yDomain[0], 0) : Math.max(xDomain[0], 0);
 
       series.forEach((s, seriesIndex) => {
         if (s.data.length === 0) return;
@@ -323,21 +287,13 @@ function createWebGLBarRenderer(
         if (!buffers.color) buffers.color = gl.createBuffer();
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(geometry.positions),
-          gl.STATIC_DRAW
-        );
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.positions), gl.STATIC_DRAW);
         const positionLoc = gl.getAttribLocation(program, "a_position");
         gl.enableVertexAttribArray(positionLoc);
         gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-        gl.bufferData(
-          gl.ARRAY_BUFFER,
-          new Float32Array(geometry.colors),
-          gl.STATIC_DRAW
-        );
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.colors), gl.STATIC_DRAW);
         const colorLoc = gl.getAttribLocation(program, "a_color");
         gl.enableVertexAttribArray(colorLoc);
         gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
@@ -395,15 +351,11 @@ function createWebGPUBarRenderer(
           buffers: [
             {
               arrayStride: 8,
-              attributes: [
-                { shaderLocation: 0, offset: 0, format: "float32x2" },
-              ],
+              attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
             },
             {
               arrayStride: 16,
-              attributes: [
-                { shaderLocation: 1, offset: 0, format: "float32x4" },
-              ],
+              attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
             },
           ],
         },
@@ -468,10 +420,8 @@ function createWebGPUBarRenderer(
       ]);
       device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
-      const xScale = (x: number) =>
-        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-      const yScale = (y: number) =>
-        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const xScale = (x: number) => ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) => ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
       const commandEncoder = device.createCommandEncoder();
@@ -492,9 +442,7 @@ function createWebGPUBarRenderer(
       passEncoder.setBindGroup(0, bindGroup);
 
       const baseValue =
-        orientation === "vertical"
-          ? Math.max(yDomain[0], 0)
-          : Math.max(xDomain[0], 0);
+        orientation === "vertical" ? Math.max(yDomain[0], 0) : Math.max(xDomain[0], 0);
 
       for (const [seriesIndex, s] of series.entries()) {
         if (s.data.length === 0) continue;
@@ -518,21 +466,13 @@ function createWebGPUBarRenderer(
           size: geometry.positions.length * 4,
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        device.queue.writeBuffer(
-          positionBuffer,
-          0,
-          new Float32Array(geometry.positions)
-        );
+        device.queue.writeBuffer(positionBuffer, 0, new Float32Array(geometry.positions));
 
         const colorBuffer = device.createBuffer({
           size: geometry.colors.length * 4,
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
-        device.queue.writeBuffer(
-          colorBuffer,
-          0,
-          new Float32Array(geometry.colors)
-        );
+        device.queue.writeBuffer(colorBuffer, 0, new Float32Array(geometry.colors));
 
         passEncoder.setVertexBuffer(0, positionBuffer);
         passEncoder.setVertexBuffer(1, colorBuffer);
@@ -646,16 +586,7 @@ function Root({
 
     // Cap at reasonable max (80px) and min (20px)
     return Math.max(20, Math.min(80, calculatedWidth * 0.8)); // Use 80% for spacing
-  }, [
-    barWidthProp,
-    width,
-    height,
-    orientation,
-    categoryMap.size,
-    barGap,
-    grouped,
-    series.length,
-  ]);
+  }, [barWidthProp, width, height, orientation, categoryMap.size, barGap, grouped, series.length]);
 
   // Calculate domains
   const numericPoints: Point[] = series.flatMap((s) =>
@@ -666,8 +597,8 @@ function Root({
     orientation === "vertical"
       ? [-0.5, categoryMap.size - 0.5] // Categories
       : yAxis.domain === "auto" || !yAxis.domain
-      ? getDomain(numericPoints, (p) => p.y)
-      : yAxis.domain;
+        ? getDomain(numericPoints, (p) => p.y)
+        : yAxis.domain;
 
   const yDomain: [number, number] =
     orientation === "vertical"
@@ -873,15 +804,11 @@ function Tooltip() {
     let hoveredScreenX = 0;
     let hoveredScreenY = 0;
 
-    const effectiveBarWidth = ctx.grouped
-      ? ctx.barWidth / ctx.series.length
-      : ctx.barWidth;
+    const effectiveBarWidth = ctx.grouped ? ctx.barWidth / ctx.series.length : ctx.barWidth;
 
     // Calculate base value based on orientation
     const baseValue =
-      ctx.orientation === "vertical"
-        ? Math.max(ctx.yDomain[0], 0)
-        : Math.max(ctx.xDomain[0], 0);
+      ctx.orientation === "vertical" ? Math.max(ctx.yDomain[0], 0) : Math.max(ctx.xDomain[0], 0);
 
     ctx.series.forEach((s, seriesIdx) => {
       s.data.forEach((point, pointIdx) => {
@@ -892,10 +819,7 @@ function Tooltip() {
           const centerX = ctx.xScale(categoryValue);
           const barX =
             centerX -
-            (ctx.grouped
-              ? ctx.series.length * effectiveBarWidth
-              : effectiveBarWidth) /
-              2 +
+            (ctx.grouped ? ctx.series.length * effectiveBarWidth : effectiveBarWidth) / 2 +
             barOffset;
           const barY0 = ctx.yScale(baseValue);
           const barY1 = ctx.yScale(point.y);
@@ -916,10 +840,7 @@ function Tooltip() {
           const centerY = ctx.yScale(categoryValue);
           const barY =
             centerY -
-            (ctx.grouped
-              ? ctx.series.length * effectiveBarWidth
-              : effectiveBarWidth) /
-              2 +
+            (ctx.grouped ? ctx.series.length * effectiveBarWidth : effectiveBarWidth) / 2 +
             barOffset;
           const barX0 = ctx.xScale(baseValue);
           const barX1 = ctx.xScale(point.y);

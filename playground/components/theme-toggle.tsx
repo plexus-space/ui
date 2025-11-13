@@ -14,11 +14,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button
-        className="cursor-pointer"
-        variant="ghost"
-        aria-label="Toggle theme"
-      >
+      <Button className="cursor-pointer" variant="ghost" aria-label="Toggle theme">
         <div className="w-5 h-5" />
       </Button>
     );

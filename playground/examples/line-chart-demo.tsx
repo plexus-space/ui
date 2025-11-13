@@ -25,7 +25,7 @@ function generateData(points: number, offset: number = 0) {
   return data;
 }
 
-export function LineChartDemo() {
+export function LineChartDemoExamples() {
   // Create multiple series with different data
   const series = [
     {
@@ -75,11 +75,6 @@ export function LineChartDemo() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold mb-2">🚀 WebGL GPU-Accelerated</h2>
-        <p className="text-zinc-600 dark:text-zinc-400 mb-4">
-          100,000 points rendered with WebGL custom shaders -
-          <span className="text-emerald-600 font-semibold"> smooth 60fps</span>
-        </p>
         <LineChart
           series={[
             {
@@ -176,5 +171,3 @@ export function LineChartDemo() {
     </div>
   );
 }
-
-export default LineChartDemo;

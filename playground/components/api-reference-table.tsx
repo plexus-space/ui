@@ -35,9 +35,7 @@ export function ApiReferenceTable({ props }: ApiReferenceTableProps) {
               >
                 {prop.default}
               </td>
-              <td className="p-3 text-zinc-600 dark:text-zinc-400">
-                {prop.description}
-              </td>
+              <td className="p-3 text-zinc-600 dark:text-zinc-400">{prop.description}</td>
             </tr>
           ))}
         </tbody>

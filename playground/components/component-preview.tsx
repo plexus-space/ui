@@ -10,22 +10,13 @@ interface ComponentPreviewProps {
   description?: string;
 }
 
-export function ComponentPreview({
-  preview,
-  code,
-  title,
-  description,
-}: ComponentPreviewProps) {
+export function ComponentPreview({ preview, code, title, description }: ComponentPreviewProps) {
   const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
 
   return (
     <div className="space-y-3 w-full">
       {title && <h3 className="text-lg font-semibold">{title}</h3>}
-      {description && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {description}
-        </p>
-      )}
+      {description && <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>}
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800">

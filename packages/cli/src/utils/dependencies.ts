@@ -21,14 +21,10 @@ export async function getInstalledDependencies(): Promise<Set<string>> {
 
     // Check both dependencies and devDependencies
     if (packageJson.dependencies) {
-      Object.keys(packageJson.dependencies).forEach((dep) =>
-        installed.add(dep)
-      );
+      Object.keys(packageJson.dependencies).forEach((dep) => installed.add(dep));
     }
     if (packageJson.devDependencies) {
-      Object.keys(packageJson.devDependencies).forEach((dep) =>
-        installed.add(dep)
-      );
+      Object.keys(packageJson.devDependencies).forEach((dep) => installed.add(dep));
     }
 
     return installed;
@@ -40,10 +36,7 @@ export async function getInstalledDependencies(): Promise<Set<string>> {
 /**
  * Install npm dependencies and dev dependencies
  */
-export async function installDependencies(
-  deps: string[],
-  devDeps: string[]
-): Promise<void> {
+export async function installDependencies(deps: string[], devDeps: string[]): Promise<void> {
   const cwd = process.cwd();
 
   try {

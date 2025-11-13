@@ -19,15 +19,9 @@ interface ColorSchemeContextValue {
   color: string;
 }
 
-const ColorSchemeContext = createContext<ColorSchemeContextValue | undefined>(
-  undefined
-);
+const ColorSchemeContext = createContext<ColorSchemeContextValue | undefined>(undefined);
 
-export function ColorSchemeProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
   const [colorScheme, setColorScheme] = useState<ColorSchemeName>("green");
 
   // Load from localStorage on mount

@@ -4,13 +4,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-export const CopyButton = ({
-  copyText,
-  hideText,
-}: {
-  copyText: string;
-  hideText?: boolean;
-}) => {
+export const CopyButton = ({ copyText, hideText }: { copyText: string; hideText?: boolean }) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -18,12 +12,7 @@ export const CopyButton = ({
     setCopied(true);
   };
   return (
-    <Button
-      onClick={handleCopy}
-      variant="ghost"
-      size="sm"
-      className="cursor-pointer"
-    >
+    <Button onClick={handleCopy} variant="ghost" size="sm" className="cursor-pointer">
       {copied ? (
         <>
           <svg
@@ -33,12 +22,7 @@ export const CopyButton = ({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
           Copied!
         </>

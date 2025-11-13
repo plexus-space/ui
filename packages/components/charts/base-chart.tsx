@@ -78,6 +78,7 @@ export interface BaseChartContext {
   preferWebGPU: boolean;
   renderMode: "webgpu" | "webgl" | null;
   setRenderMode: (mode: "webgpu" | "webgl" | null) => void;
+  gpuDevice: GPUDevice | null; // WebGPU device if available
 
   // Interaction state
   hoveredPoint: HoveredPoint | null;
@@ -442,6 +443,52 @@ export function ChartRoot({
     null
   );
 
+  const [gpuDevice, setGpuDevice] = React.useState<GPUDevice | null>(null);
+
+  // Initialize WebGPU device if preferred and available
+  React.useEffect(() => {
+    if (!preferWebGPU) {
+      setRenderMode("webgl");
+      return;
+    }
+
+    if (!navigator.gpu) {
+      console.warn("WebGPU not supported, falling back to WebGL");
+      setRenderMode("webgl");
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) {
+          if (!cancelled) {
+            console.warn("No WebGPU adapter found, falling back to WebGL");
+            setRenderMode("webgl");
+          }
+          return;
+        }
+
+        const device = await adapter.requestDevice();
+        if (!cancelled) {
+          setGpuDevice(device);
+          setRenderMode("webgpu");
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to initialize WebGPU:", error);
+          setRenderMode("webgl");
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [preferWebGPU]);
+
   // Time series state
   const [timeSeriesState, setTimeSeriesState] =
     React.useState<TimeSeriesState | null>(() => {
@@ -584,6 +631,7 @@ export function ChartRoot({
     preferWebGPU,
     renderMode,
     setRenderMode,
+    gpuDevice,
     hoveredPoint,
     setHoveredPoint,
     tooltipData,
@@ -641,7 +689,7 @@ export function ChartAxes() {
 
     // Get theme-aware colors
     const isDark = document.documentElement.classList.contains("dark");
-    const textColor = isDark ? "#e4e4e7" : "#18181b";
+    const textColor = isDark ? "#6e6e6e" : "#999999";
 
     context.strokeStyle = textColor;
     context.fillStyle = textColor;

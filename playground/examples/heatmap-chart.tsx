@@ -95,7 +95,9 @@ function RealTimeSystemMonitor() {
       setCpuData((prev) => {
         const newTimeSlice: DataPoint[] = [];
         const lastTime =
-          prev.length > 0 ? (prev[prev.length - 1].x as number) : HISTORY_SECONDS;
+          prev.length > 0
+            ? (prev[prev.length - 1].x as number)
+            : HISTORY_SECONDS;
         const newTime = lastTime + 1 / UPDATE_RATE;
 
         for (let core = 0; core < CPU_CORES; core++) {
@@ -275,44 +277,6 @@ useEffect(() => {
   );
 }
 
-function BasicHeatmapChart() {
-  return (
-    <ComponentPreview
-      title="Basic Heatmap"
-      description="Simple heatmap showing server activity by day and hour"
-      code={`import { HeatmapChart } from "@/components/plexusui/charts/heatmap-chart";
-
-const data = [
-  { x: "Mon", y: 0, value: 45 },
-  { x: "Mon", y: 1, value: 35 },
-  // ... more data
-];
-
-<HeatmapChart
-  data={data}
-  xAxis={{ label: "Day of Week" }}
-  yAxis={{ label: "Hour" }}
-  width={800}
-  height={400}
-  showTooltip
-/>`}
-      preview={
-        <div className="w-full h-[500px]">
-          <HeatmapChart
-            data={serverActivityData}
-            xAxis={{ label: "Day of Week" }}
-            yAxis={{ label: "Hour of Day" }}
-            width={800}
-            height={500}
-            showTooltip
-            cellGap={1}
-          />
-        </div>
-      }
-    />
-  );
-}
-
 function LargeScaleHeatmap() {
   const largeData: DataPoint[] = [];
   for (let x = 0; x < 50; x++) {
@@ -456,7 +420,9 @@ function WebGPUMemoryMonitor() {
   return (
     <ComponentPreview
       title="Real-Time WebGPU Memory Monitor"
-      description={`Live GPU memory allocation tracking - ${totalMemoryGB.toFixed(1)}GB VRAM across ${MEMORY_REGIONS} regions`}
+      description={`Live GPU memory allocation tracking - ${totalMemoryGB.toFixed(
+        1
+      )}GB VRAM across ${MEMORY_REGIONS} regions`}
       code={`import { HeatmapChart } from "@/components/plexusui/charts/heatmap-chart";
 import { useState, useEffect } from "react";
 
@@ -513,10 +479,13 @@ useEffect(() => {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <div className="text-sm font-medium">
-                WebGPU Memory Allocation Map - {MEMORY_REGIONS} Regions × {MEMORY_BLOCKS} Blocks
+                WebGPU Memory Allocation Map - {MEMORY_REGIONS} Regions ×{" "}
+                {MEMORY_BLOCKS} Blocks
               </div>
               <div className="text-xs text-zinc-500">
-                Total VRAM: {totalMemoryGB.toFixed(1)}GB | Used: {usedMemoryGB.toFixed(2)}GB ({avgUsage.toFixed(1)}%) | Block Size: {BLOCK_SIZE_MB}MB
+                Total VRAM: {totalMemoryGB.toFixed(1)}GB | Used:{" "}
+                {usedMemoryGB.toFixed(2)}GB ({avgUsage.toFixed(1)}%) | Block
+                Size: {BLOCK_SIZE_MB}MB
               </div>
             </div>
             <button
@@ -593,7 +562,6 @@ export function HeatmapChartExamples() {
     <div className="space-y-8">
       <RealTimeSystemMonitor />
       <WebGPUMemoryMonitor />
-      <BasicHeatmapChart />
       <LargeScaleHeatmap />
       <PrimitiveHeatmapChart />
     </div>
