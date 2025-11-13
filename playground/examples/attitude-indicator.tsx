@@ -1,312 +1,818 @@
-/** biome-ignore-all lint/a11y/noLabelWithoutControl: <explanation> */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AttitudeIndicator } from "@plexusui/components/charts/attitude-indicator";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { ComponentPreview } from "@/components/component-preview";
 
-export function AttitudeIndicatorExamples() {
+// ============================================================================
+// Basic Interactive Example
+// ============================================================================
+
+function BasicExample() {
   const [pitch, setPitch] = useState(0);
   const [roll, setRoll] = useState(0);
-  const [autoRotate, setAutoRotate] = useState(false);
+
+  return (
+    <ComponentPreview
+      title="Basic Attitude Indicator"
+      description="Interactive artificial horizon for pitch and roll visualization"
+      code={`import { AttitudeIndicator } from "@/components/plexusui/charts/attitude-indicator";
+import { useState } from "react";
+
+function AttitudeDemo() {
+  const [pitch, setPitch] = useState(0);
+  const [roll, setRoll] = useState(0);
+
+  return (
+    <AttitudeIndicator
+      pitch={pitch}
+      roll={roll}
+      width={400}
+      height={400}
+      showPitchLadder={true}
+      showBankIndicator={true}
+      pitchStep={10}
+    />
+  );
+}`}
+      preview={
+        <div className="w-full space-y-6">
+          <div className="flex justify-center">
+            <AttitudeIndicator
+              pitch={pitch}
+              roll={roll}
+              width={400}
+              height={400}
+              showPitchLadder={true}
+              showBankIndicator={true}
+              pitchStep={10}
+            />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Controls</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="pitch-slider" className="text-sm font-medium">
+                    Pitch
+                  </Label>
+                  <Badge variant="outline" className="font-mono tabular-nums">
+                    {pitch > 0 && "+"}
+                    {pitch.toFixed(1)}°
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      {pitch > 0 ? "↑ up" : pitch < 0 ? "↓ down" : "level"}
+                    </span>
+                  </Badge>
+                </div>
+                <Slider
+                  id="pitch-slider"
+                  min={-90}
+                  max={90}
+                  step={0.5}
+                  value={[pitch]}
+                  onValueChange={(value) => setPitch(value[0])}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="roll-slider" className="text-sm font-medium">
+                    Roll
+                  </Label>
+                  <Badge variant="outline" className="font-mono tabular-nums">
+                    {roll > 0 && "+"}
+                    {roll.toFixed(1)}°
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      {roll > 0 ? "→ right" : roll < 0 ? "← left" : "level"}
+                    </span>
+                  </Badge>
+                </div>
+                <Slider
+                  id="roll-slider"
+                  min={-180}
+                  max={180}
+                  step={1}
+                  value={[roll]}
+                  onValueChange={(value) => setRoll(value[0])}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPitch(0);
+                    setRoll(0);
+                  }}
+                >
+                  Level
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPitch(15);
+                    setRoll(0);
+                  }}
+                >
+                  Climb
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPitch(0);
+                    setRoll(30);
+                  }}
+                >
+                  Bank Right
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPitch(-10);
+                    setRoll(-25);
+                  }}
+                >
+                  Turn Left
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    />
+  );
+}
+
+// ============================================================================
+// Drone Flight Simulation
+// ============================================================================
+
+function DroneFlightSimulation() {
+  const [pitch, setPitch] = useState(0);
+  const [roll, setRoll] = useState(0);
+  const [isFlying, setIsFlying] = useState(false);
+  const [altitude, setAltitude] = useState(50);
+  const [heading, setHeading] = useState(0);
 
   useEffect(() => {
-    if (!autoRotate) return;
+    if (!isFlying) return;
 
     const interval = setInterval(() => {
-      setPitch((p) => {
-        const newPitch = p + 0.5;
-        return newPitch > 30 ? -30 : newPitch;
-      });
-      setRoll((r) => {
-        const newRoll = r + 1;
-        return newRoll > 45 ? -45 : newRoll;
-      });
+      const time = Date.now() / 1000;
+      const windPitch = Math.sin(time * 0.3) * 8;
+      const windRoll = Math.sin(time * 0.4) * 12;
+      const correction = (Math.random() - 0.5) * 2;
+
+      setPitch((p) => p + (windPitch + correction - p) * 0.1);
+      setRoll((r) => r + (windRoll - r) * 0.08);
+      setAltitude((a) =>
+        Math.max(10, Math.min(200, a + (Math.random() - 0.5) * 2))
+      );
+      setHeading((h) => (h + 0.3) % 360);
     }, 50);
 
     return () => clearInterval(interval);
-  }, [autoRotate]);
+  }, [isFlying]);
 
   return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Attitude Indicator</h1>
-        <p className="text-zinc-400">
-          Artificial horizon showing pitch and roll for aircraft, drones,
-          surgical robots, and spacecraft
-        </p>
-      </div>
+    <ComponentPreview
+      title="Drone Flight Simulation"
+      description="Real-time UAV attitude monitoring with live telemetry - Perfect for drone control interfaces"
+      code={`import { AttitudeIndicator } from "@/components/plexusui/charts/attitude-indicator";
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Interactive Demo */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Interactive Demo</h2>
-          <AttitudeIndicator
-            pitch={pitch}
-            roll={roll}
-            width={400}
-            height={400}
-            showPitchLadder={true}
-            showBankIndicator={true}
-            pitchStep={10}
-          />
+function DroneMonitor() {
+  const [pitch, setPitch] = useState(0);
+  const [roll, setRoll] = useState(0);
+  const [isFlying, setIsFlying] = useState(false);
 
-          <div className="space-y-4 bg-zinc-900 p-4 rounded-lg">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Pitch: {pitch.toFixed(1)}°{" "}
-                {pitch > 0 ? "(nose up)" : pitch < 0 ? "(nose down)" : ""}
-              </label>
-              <input
-                type="range"
-                min="-90"
-                max="90"
-                step="0.5"
-                value={pitch}
-                onChange={(e) => setPitch(Number(e.target.value))}
-                className="w-full"
-              />
+  return (
+    <AttitudeIndicator
+      pitch={pitch}
+      roll={roll}
+      width={400}
+      height={400}
+    />
+  );
+}`}
+      preview={
+        <div className="w-full space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-normal text-muted-foreground">
+                  Primary Flight Display
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <AttitudeIndicator
+                  pitch={pitch}
+                  roll={roll}
+                  width={400}
+                  height={400}
+                  showPitchLadder
+                  showBankIndicator
+                  pitchStep={10}
+                />
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Flight Telemetry</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Altitude
+                      </Label>
+                      <div className="text-2xl font-mono font-bold tabular-nums">
+                        {altitude.toFixed(1)}
+                        <span className="text-sm text-muted-foreground ml-1">
+                          m
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Heading
+                      </Label>
+                      <div className="text-2xl font-mono font-bold tabular-nums">
+                        {heading.toFixed(0)}
+                        <span className="text-sm text-muted-foreground ml-1">
+                          °
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Pitch
+                      </Label>
+                      <div className="text-2xl font-mono font-bold tabular-nums">
+                        {pitch > 0 && "+"}
+                        {pitch.toFixed(1)}
+                        <span className="text-sm text-muted-foreground ml-1">
+                          °
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Roll
+                      </Label>
+                      <div className="text-2xl font-mono font-bold tabular-nums">
+                        {roll > 0 && "+"}
+                        {roll.toFixed(1)}
+                        <span className="text-sm text-muted-foreground ml-1">
+                          °
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={isFlying ? "destructive" : "default"}
+                      className="flex-1"
+                      onClick={() => setIsFlying(!isFlying)}
+                    >
+                      {isFlying ? "🛬 Land" : "🛫 Take Off"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setPitch(0);
+                        setRoll(0);
+                        setAltitude(50);
+                        setHeading(0);
+                        setIsFlying(false);
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                  <Badge
+                    variant={isFlying ? "default" : "outline"}
+                    className="w-full justify-center py-2 font-mono text-xs"
+                  >
+                    {isFlying ? "IN FLIGHT" : "LANDED"}
+                  </Badge>
+                </CardContent>
+              </Card>
             </div>
+          </div>
+        </div>
+      }
+    />
+  );
+}
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Roll: {roll.toFixed(1)}°{" "}
-                {roll > 0
-                  ? "(right wing down)"
-                  : roll < 0
-                  ? "(left wing down)"
-                  : ""}
-              </label>
-              <input
-                type="range"
-                min="-180"
-                max="180"
-                step="1"
-                value={roll}
-                onChange={(e) => setRoll(Number(e.target.value))}
-                className="w-full"
-              />
+// ============================================================================
+// Spacecraft Attitude Control
+// ============================================================================
+
+function SpacecraftAttitudeControl() {
+  const [pitch, setPitch] = useState(0);
+  const [roll, setRoll] = useState(0);
+  const [yaw, setYaw] = useState(0);
+  const [rcsActive, setRcsActive] = useState(false);
+  const [targetPitch, setTargetPitch] = useState(0);
+  const [targetRoll, setTargetRoll] = useState(0);
+
+  useEffect(() => {
+    if (!rcsActive) return;
+
+    const interval = setInterval(() => {
+      setPitch((p) => {
+        const diff = targetPitch - p;
+        return Math.abs(diff) < 0.5 ? targetPitch : p + diff * 0.05;
+      });
+      setRoll((r) => {
+        const diff = targetRoll - r;
+        return Math.abs(diff) < 0.5 ? targetRoll : r + diff * 0.05;
+      });
+      setYaw((y) => (y + 0.1) % 360);
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [rcsActive, targetPitch, targetRoll]);
+
+  return (
+    <ComponentPreview
+      title="Spacecraft Attitude Control"
+      description="Orbital vehicle orientation with RCS thruster control - Used in satellite operations"
+      code={`import { AttitudeIndicator } from "@/components/plexusui/charts/attitude-indicator";
+
+function SpacecraftControl() {
+  return (
+    <AttitudeIndicator
+      pitch={pitch}
+      roll={roll}
+      skyColor="#000000"
+      groundColor="#1a1a2e"
+      horizonColor="#00ffff"
+    />
+  );
+}`}
+      preview={
+        <div className="w-full space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-normal text-muted-foreground">
+                  Spacecraft Orientation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <AttitudeIndicator
+                  pitch={pitch}
+                  roll={roll}
+                  width={400}
+                  height={400}
+                  showPitchLadder
+                  showBankIndicator
+                  pitchStep={10}
+                  skyColor="#000000"
+                  groundColor="#1a1a2e"
+                  horizonColor="#00ffff"
+                />
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">RCS Controls</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label
+                        htmlFor="target-pitch"
+                        className="text-xs font-medium"
+                      >
+                        Target Pitch
+                      </Label>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {targetPitch > 0 && "+"}
+                        {targetPitch}°
+                      </Badge>
+                    </div>
+                    <Slider
+                      id="target-pitch"
+                      min={-45}
+                      max={45}
+                      step={5}
+                      value={[targetPitch]}
+                      onValueChange={(value) => setTargetPitch(value[0])}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label
+                        htmlFor="target-roll"
+                        className="text-xs font-medium"
+                      >
+                        Target Roll
+                      </Label>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {targetRoll > 0 && "+"}
+                        {targetRoll}°
+                      </Badge>
+                    </div>
+                    <Slider
+                      id="target-roll"
+                      min={-45}
+                      max={45}
+                      step={5}
+                      value={[targetRoll]}
+                      onValueChange={(value) => setTargetRoll(value[0])}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Current Attitude</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1 text-center">
+                      <Label className="text-xs text-muted-foreground">
+                        Pitch
+                      </Label>
+                      <div className="text-lg font-mono font-bold">
+                        {pitch > 0 && "+"}
+                        {pitch.toFixed(1)}°
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-center">
+                      <Label className="text-xs text-muted-foreground">
+                        Roll
+                      </Label>
+                      <div className="text-lg font-mono font-bold">
+                        {roll > 0 && "+"}
+                        {roll.toFixed(1)}°
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-center">
+                      <Label className="text-xs text-muted-foreground">
+                        Yaw
+                      </Label>
+                      <div className="text-lg font-mono font-bold">
+                        {yaw.toFixed(0)}°
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6 space-y-3">
+                  <Button
+                    variant={rcsActive ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => setRcsActive(!rcsActive)}
+                  >
+                    {rcsActive ? "🔥 RCS ACTIVE" : "RCS STANDBY"}
+                  </Button>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setTargetPitch(0);
+                        setTargetRoll(0);
+                      }}
+                    >
+                      Zero
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setPitch(0);
+                        setRoll(0);
+                        setYaw(0);
+                        setTargetPitch(0);
+                        setTargetRoll(0);
+                        setRcsActive(false);
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
+        </div>
+      }
+    />
+  );
+}
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setAutoRotate(!autoRotate)}
-                className={`px-4 py-2 rounded font-medium ${
-                  autoRotate
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
+// ============================================================================
+// Surgical Robot Monitor
+// ============================================================================
+
+function SurgicalRobotMonitor() {
+  const [pitch, setPitch] = useState(0);
+  const [roll, setRoll] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [tremorFilter, setTremorFilter] = useState(true);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const interval = setInterval(() => {
+      const time = Date.now() / 1000;
+      const basePitch = Math.sin(time * 0.2) * 5;
+      const baseRoll = Math.cos(time * 0.15) * 3;
+      const tremorAmount = !tremorFilter ? (Math.random() - 0.5) * 0.5 : 0;
+
+      setPitch(basePitch + tremorAmount);
+      setRoll(baseRoll + tremorAmount);
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [isActive, tremorFilter]);
+
+  return (
+    <ComponentPreview
+      title="Surgical Robot Orientation"
+      description="Real-time surgical instrument tracking - Used in da Vinci systems and minimally invasive surgery"
+      code={`import { AttitudeIndicator } from "@/components/plexusui/charts/attitude-indicator";
+
+function SurgicalMonitor() {
+  return (
+    <AttitudeIndicator
+      pitch={pitch}
+      roll={roll}
+      pitchStep={5}
+      skyColor="#e0f2fe"
+      groundColor="#f8fafc"
+      horizonColor="#0ea5e9"
+    />
+  );
+}`}
+      preview={
+        <div className="w-full space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-normal text-muted-foreground">
+                  Instrument Orientation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <AttitudeIndicator
+                  pitch={pitch}
+                  roll={roll}
+                  width={400}
+                  height={400}
+                  showPitchLadder
+                  showBankIndicator
+                  pitchStep={5}
+                  skyColor="#e0f2fe"
+                  groundColor="#f8fafc"
+                  horizonColor="#0ea5e9"
+                />
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Angle Readings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Pitch Angle
+                      </Label>
+                      <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">
+                        {pitch > 0 && "+"}
+                        {pitch.toFixed(2)}°
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Range: ±15°
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">
+                        Roll Angle
+                      </Label>
+                      <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">
+                        {roll > 0 && "+"}
+                        {roll.toFixed(2)}°
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Range: ±15°
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">System Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="tremor" className="text-sm">
+                        Tremor Filtering
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Remove hand tremor
+                      </p>
+                    </div>
+                    <Switch
+                      id="tremor"
+                      checked={tremorFilter}
+                      onCheckedChange={setTremorFilter}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Motion Scaling</Label>
+                    <Badge variant="outline" className="font-mono">
+                      3:1
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm">Precision Mode</Label>
+                    <Badge className="bg-green-600">Active</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6 space-y-3">
+                  <Button
+                    variant={isActive ? "destructive" : "default"}
+                    className="w-full"
+                    onClick={() => setIsActive(!isActive)}
+                  >
+                    {isActive ? "⏸ Pause" : "▶ Start"}
+                  </Button>
+                  <Badge
+                    variant={isActive ? "default" : "outline"}
+                    className="w-full justify-center py-2 font-mono text-xs"
+                  >
+                    {isActive ? "ACTIVE" : "STANDBY"}
+                  </Badge>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      }
+    />
+  );
+}
+
+// ============================================================================
+// Primitive Composition Example
+// ============================================================================
+
+function PrimitiveExample() {
+  const [pitch, setPitch] = useState(15);
+  const [roll, setRoll] = useState(-20);
+
+  return (
+    <ComponentPreview
+      title="Primitive Components"
+      description="Build custom attitude indicators with primitive components for maximum flexibility"
+      code={`import { AttitudeIndicator } from "@/components/plexusui/charts/attitude-indicator";
+
+function CustomIndicator() {
+  return (
+    <AttitudeIndicator.Root
+      pitch={pitch}
+      roll={roll}
+      width={400}
+      height={400}
+      skyColor="#1e3a8a"
+      groundColor="#92400e"
+    >
+      <AttitudeIndicator.Canvas />
+      <AttitudeIndicator.ValueDisplay />
+    </AttitudeIndicator.Root>
+  );
+}`}
+      preview={
+        <div className="w-full space-y-6">
+          <Card>
+            <CardContent className="flex justify-center pt-6">
+              <AttitudeIndicator.Root
+                pitch={pitch}
+                roll={roll}
+                width={400}
+                height={400}
+                showPitchLadder
+                showBankIndicator
+                pitchStep={10}
+                skyColor="#1e3a8a"
+                groundColor="#92400e"
+                preferWebGPU
               >
-                {autoRotate ? "Stop Animation" : "Auto Rotate"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPitch(0);
-                  setRoll(0);
-                }}
-                className="px-4 py-2 rounded bg-zinc-700 hover:bg-zinc-600 font-medium"
-              >
-                Reset Level
-              </button>
-            </div>
-          </div>
+                <AttitudeIndicator.Canvas />
+                <AttitudeIndicator.ValueDisplay />
+              </AttitudeIndicator.Root>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Adjust Orientation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="prim-pitch" className="text-sm">
+                    Pitch
+                  </Label>
+                  <Badge variant="outline" className="font-mono">
+                    {pitch}°
+                  </Badge>
+                </div>
+                <Slider
+                  id="prim-pitch"
+                  min={-45}
+                  max={45}
+                  value={[pitch]}
+                  onValueChange={(value) => setPitch(value[0])}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="prim-roll" className="text-sm">
+                    Roll
+                  </Label>
+                  <Badge variant="outline" className="font-mono">
+                    {roll}°
+                  </Badge>
+                </div>
+                <Slider
+                  id="prim-roll"
+                  min={-90}
+                  max={90}
+                  value={[roll]}
+                  onValueChange={(value) => setRoll(value[0])}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      }
+    />
+  );
+}
 
-        {/* Use Case Examples */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Cross-Domain Applications</h2>
+// ============================================================================
+// Main Export
+// ============================================================================
 
-          <div className="space-y-4">
-            {/* Aerospace */}
-            <div className="bg-zinc-900 p-4 rounded-lg border border-blue-500/30">
-              <h3 className="font-semibold text-blue-400 mb-2">
-                🛩️ Aerospace & Aviation
-              </h3>
-              <ul className="text-sm text-zinc-300 space-y-1 list-disc list-inside">
-                <li>Commercial aircraft primary flight display</li>
-                <li>Drone/UAV control interfaces</li>
-                <li>Flight simulators and training systems</li>
-                <li>Spacecraft attitude control displays</li>
-                <li>Helicopter attitude monitoring</li>
-              </ul>
-            </div>
-
-            {/* Medical */}
-            <div className="bg-zinc-900 p-4 rounded-lg border border-green-500/30">
-              <h3 className="font-semibold text-green-400 mb-2">
-                🏥 Medical & Surgical
-              </h3>
-              <ul className="text-sm text-zinc-300 space-y-1 list-disc list-inside">
-                <li>Surgical robot orientation (da Vinci systems)</li>
-                <li>Endoscope camera angle visualization</li>
-                <li>Patient positioning monitors</li>
-                <li>Medical imaging device orientation</li>
-                <li>Rehabilitation balance tracking</li>
-              </ul>
-            </div>
-
-            {/* Robotics */}
-            <div className="bg-zinc-900 p-4 rounded-lg border border-purple-500/30">
-              <h3 className="font-semibold text-purple-400 mb-2">
-                🤖 Robotics & Automation
-              </h3>
-              <ul className="text-sm text-zinc-300 space-y-1 list-disc list-inside">
-                <li>Autonomous vehicle orientation</li>
-                <li>ROV/submarine pitch and roll</li>
-                <li>Robotic arm end-effector angle</li>
-                <li>Mobile robot tilt monitoring</li>
-                <li>Camera gimbal stabilization display</li>
-              </ul>
-            </div>
-
-            {/* Defense */}
-            <div className="bg-zinc-900 p-4 rounded-lg border border-red-500/30">
-              <h3 className="font-semibold text-red-400 mb-2">
-                🛡️ Defense & Military
-              </h3>
-              <ul className="text-sm text-zinc-300 space-y-1 list-disc list-inside">
-                <li>Military aircraft HUD</li>
-                <li>Missile guidance systems</li>
-                <li>Tank turret orientation</li>
-                <li>Naval vessel pitch and roll</li>
-                <li>Tactical vehicle monitoring</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Preset Scenarios */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Preset Scenarios</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button
-            type="button"
-            onClick={() => {
-              setPitch(0);
-              setRoll(0);
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 p-4 rounded-lg text-left"
-          >
-            <div className="font-semibold">Level Flight</div>
-            <div className="text-sm text-zinc-400">Pitch: 0° Roll: 0°</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPitch(15);
-              setRoll(0);
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 p-4 rounded-lg text-left"
-          >
-            <div className="font-semibold">Climb</div>
-            <div className="text-sm text-zinc-400">Pitch: +15° Roll: 0°</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPitch(0);
-              setRoll(30);
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 p-4 rounded-lg text-left"
-          >
-            <div className="font-semibold">Right Turn</div>
-            <div className="text-sm text-zinc-400">Pitch: 0° Roll: +30°</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPitch(-10);
-              setRoll(-25);
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 p-4 rounded-lg text-left"
-          >
-            <div className="font-semibold">Descending Left</div>
-            <div className="text-sm text-zinc-400">Pitch: -10° Roll: -25°</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPitch(20);
-              setRoll(15);
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 p-4 rounded-lg text-left"
-          >
-            <div className="font-semibold">Climbing Turn</div>
-            <div className="text-sm text-zinc-400">Pitch: +20° Roll: +15°</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPitch(0);
-              setRoll(45);
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 p-4 rounded-lg text-left"
-          >
-            <div className="font-semibold">Steep Bank</div>
-            <div className="text-sm text-zinc-400">Pitch: 0° Roll: +45°</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPitch(30);
-              setRoll(0);
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 p-4 rounded-lg text-left"
-          >
-            <div className="font-semibold">Steep Climb</div>
-            <div className="text-sm text-zinc-400">Pitch: +30° Roll: 0°</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPitch(-15);
-              setRoll(0);
-            }}
-            className="bg-zinc-800 hover:bg-zinc-700 p-4 rounded-lg text-left"
-          >
-            <div className="font-semibold">Descent</div>
-            <div className="text-sm text-zinc-400">Pitch: -15° Roll: 0°</div>
-          </button>
-        </div>
-      </div>
-
-      {/* Technical Specifications */}
-      <div className="bg-zinc-900 p-6 rounded-lg space-y-4">
-        <h2 className="text-xl font-semibold">Technical Specifications</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-          <div>
-            <h3 className="font-semibold text-zinc-300 mb-2">Features</h3>
-            <ul className="space-y-1 text-zinc-400">
-              <li>• Pitch range: -90° to +90°</li>
-              <li>• Roll range: -180° to +180°</li>
-              <li>• Configurable pitch ladder (5°, 10°, or custom)</li>
-              <li>• Bank angle indicator with major/minor marks</li>
-              <li>• Fixed aircraft symbol overlay</li>
-              <li>• Smooth WebGL rendering at 60fps</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-zinc-300 mb-2">Customization</h3>
-            <ul className="space-y-1 text-zinc-400">
-              <li>• Customizable sky/ground colors</li>
-              <li>• Toggle pitch ladder visibility</li>
-              <li>• Toggle bank indicator visibility</li>
-              <li>• Adjustable pitch step intervals</li>
-              <li>• Responsive sizing</li>
-              <li>• Dark mode optimized</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+export function AttitudeIndicatorExamples() {
+  return (
+    <div className="space-y-8">
+      <BasicExample />
+      <DroneFlightSimulation />
+      <SpacecraftAttitudeControl />
+      <SurgicalRobotMonitor />
+      <PrimitiveExample />
     </div>
   );
 }

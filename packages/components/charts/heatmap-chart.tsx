@@ -37,11 +37,18 @@ export interface HeatmapChartProps {
     categories?: (string | number)[];
     formatter?: (value: number | string) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string; // Support "100%", "50vw", etc.
+  height?: number | string;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  aspectRatio?: number; // e.g., 16/9, 4/3
+  margin?: { top: number; right: number; bottom: number; left: number };
   showGrid?: boolean;
   showAxes?: boolean;
   showTooltip?: boolean;
+  showLegend?: boolean;
   className?: string;
   preferWebGPU?: boolean;
   colorScale?: (value: number) => string; // Function to map value to color
@@ -525,6 +532,12 @@ function Root({
   yAxis = {},
   width = 800,
   height = 400,
+  minWidth,
+  minHeight,
+  maxWidth,
+  maxHeight,
+  aspectRatio,
+  margin,
   preferWebGPU = true,
   colorScale = defaultColorScale,
   minValue,
@@ -544,8 +557,14 @@ function Root({
     categories?: (string | number)[];
     formatter?: (value: number | string) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
+  minWidth?: number;
+  minHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  aspectRatio?: number;
+  margin?: { top: number; right: number; bottom: number; left: number };
   preferWebGPU?: boolean;
   colorScale?: (value: number) => string;
   minValue?: number;
@@ -660,6 +679,12 @@ function Root({
     <ChartRoot
       width={width}
       height={height}
+      minWidth={minWidth}
+      minHeight={minHeight}
+      maxWidth={maxWidth}
+      maxHeight={maxHeight}
+      aspectRatio={aspectRatio}
+      margin={margin}
       xAxis={{ ...xAxis, formatter: xFormatter }}
       yAxis={{ ...yAxis, formatter: yFormatter }}
       xDomain={xDomain}
@@ -688,7 +713,7 @@ function Root({
   );
 }
 
-function Canvas({ showGrid = false }: { showGrid?: boolean }) {
+function Canvas() {
   const ctx = useHeatmapChart();
   const rendererRef = useRef<
     WebGLRenderer<HeatmapRendererProps> | WebGPURenderer<HeatmapRendererProps> | null
@@ -782,7 +807,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
         bottom: ctx.margin.bottom * dpr,
         left: ctx.margin.left * dpr,
       },
-      showGrid,
+      showGrid: false,
       xCategoryMap: ctx.xCategoryMap,
       yCategoryMap: ctx.yCategoryMap,
       colorScale: ctx.colorScale,
@@ -812,7 +837,6 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     ctx.minValue,
     ctx.maxValue,
     ctx.cellGap,
-    showGrid,
   ]);
 
   return (
@@ -824,6 +848,117 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
         height: `${ctx.height}px`,
       }}
     />
+  );
+}
+
+function Grid() {
+  const ctx = useHeatmapChart();
+
+  useEffect(() => {
+    const canvas = ctx.overlayRef.current;
+    if (!canvas) return;
+
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    const dpr = ctx.devicePixelRatio;
+
+    // Get theme-aware colors
+    const isDark = document.documentElement.classList.contains("dark");
+    const gridColor = isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)";
+
+    context.save();
+    context.scale(dpr, dpr);
+    context.strokeStyle = gridColor;
+    context.lineWidth = 1;
+
+    const innerWidth = ctx.width - ctx.margin.left - ctx.margin.right;
+    const innerHeight = ctx.height - ctx.margin.top - ctx.margin.bottom;
+
+    // Draw vertical grid lines (one for each x category)
+    for (let i = 0; i <= ctx.xCategories.length; i++) {
+      const x = ctx.margin.left + (i / ctx.xCategories.length) * innerWidth;
+      context.beginPath();
+      context.moveTo(x, ctx.margin.top);
+      context.lineTo(x, ctx.height - ctx.margin.bottom);
+      context.stroke();
+    }
+
+    // Draw horizontal grid lines (one for each y category)
+    for (let i = 0; i <= ctx.yCategories.length; i++) {
+      const y = ctx.margin.top + (i / ctx.yCategories.length) * innerHeight;
+      context.beginPath();
+      context.moveTo(ctx.margin.left, y);
+      context.lineTo(ctx.width - ctx.margin.right, y);
+      context.stroke();
+    }
+
+    context.restore();
+  }, [
+    ctx.overlayRef,
+    ctx.width,
+    ctx.height,
+    ctx.margin,
+    ctx.devicePixelRatio,
+    ctx.xCategories.length,
+    ctx.yCategories.length,
+  ]);
+
+  return null;
+}
+
+function Legend({ title = "Value" }: { title?: string }) {
+  const ctx = useHeatmapChart();
+
+  // Generate gradient stops
+  const gradientStops = useMemo(() => {
+    const stops: { offset: number; color: string }[] = [];
+    const numStops = 10;
+    for (let i = 0; i <= numStops; i++) {
+      const offset = i / numStops;
+      const color = ctx.colorScale(offset);
+      stops.push({ offset, color });
+    }
+    return stops;
+  }, [ctx.colorScale]);
+
+  const gradientId = `heatmap-legend-gradient-${Math.random().toString(36).substring(2, 11)}`;
+
+  return (
+    <div className="absolute top-4 right-4 bg-white dark:bg-zinc-950 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 p-3">
+      <div className="text-xs font-medium mb-2 text-zinc-700 dark:text-zinc-300">
+        {title}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          {ctx.minValue.toFixed(1)}
+        </span>
+        <svg width="120" height="20">
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+              {gradientStops.map((stop, idx) => (
+                <stop
+                  key={idx}
+                  offset={`${stop.offset * 100}%`}
+                  stopColor={stop.color}
+                />
+              ))}
+            </linearGradient>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width="120"
+            height="20"
+            fill={`url(#${gradientId})`}
+            rx="2"
+          />
+        </svg>
+        <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          {ctx.maxValue.toFixed(1)}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -919,9 +1054,16 @@ export function HeatmapChart({
   yAxis = {},
   width = 800,
   height = 400,
+  minWidth,
+  minHeight,
+  maxWidth,
+  maxHeight,
+  aspectRatio,
+  margin,
   showGrid = false,
   showAxes = true,
   showTooltip = false,
+  showLegend = false,
   preferWebGPU = true,
   colorScale = defaultColorScale,
   minValue,
@@ -936,6 +1078,12 @@ export function HeatmapChart({
       yAxis={yAxis}
       width={width}
       height={height}
+      minWidth={minWidth}
+      minHeight={minHeight}
+      maxWidth={maxWidth}
+      maxHeight={maxHeight}
+      aspectRatio={aspectRatio}
+      margin={margin}
       preferWebGPU={preferWebGPU}
       colorScale={colorScale}
       minValue={minValue}
@@ -943,16 +1091,20 @@ export function HeatmapChart({
       cellGap={cellGap}
       className={className}
     >
-      <Canvas showGrid={showGrid} />
+      <Canvas />
+      {showGrid && <Grid />}
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
+      {showLegend && <Legend />}
     </Root>
   );
 }
 
 HeatmapChart.Root = Root;
 HeatmapChart.Canvas = Canvas;
+HeatmapChart.Grid = Grid;
 HeatmapChart.Axes = ChartAxes;
 HeatmapChart.Tooltip = Tooltip;
+HeatmapChart.Legend = Legend;
 
 export default HeatmapChart;

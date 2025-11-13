@@ -29,7 +29,7 @@ export interface GaugeProps {
   zones?: Zone[];
   label?: string;
   unit?: string;
-  variant?: "circular" | "semi";
+  variant?: "circular" | "semi" | "linear";
   width?: number;
   height?: number;
   showValue?: boolean;
@@ -40,6 +40,9 @@ export interface GaugeProps {
   preferWebGPU?: boolean;
 }
 
+// Export types for external use
+export type { GaugeProps as GaugeConfig };
+
 interface GaugeContextType {
   value: number;
   min: number;
@@ -47,7 +50,7 @@ interface GaugeContextType {
   zones: Zone[];
   label?: string;
   unit?: string;
-  variant: "circular" | "semi";
+  variant: "circular" | "semi" | "linear";
   showValue: boolean;
   showTicks: boolean;
   tickCount: number;
@@ -144,7 +147,7 @@ interface GaugeRendererProps extends RendererProps {
   min: number;
   max: number;
   zones: Zone[];
-  variant: "circular" | "semi";
+  variant: "circular" | "semi" | "linear";
   showTicks: boolean;
   tickCount: number;
   needleColor: string;
@@ -295,6 +298,75 @@ function createTickGeometry(
   return { positions, colors };
 }
 
+function createLinearBarGeometry(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color: [number, number, number],
+  opacity = 1
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
+
+  // Two triangles to form a rectangle
+  positions.push(
+    x, y,
+    x + width, y,
+    x, y + height,
+    x + width, y,
+    x + width, y + height,
+    x, y + height
+  );
+
+  for (let i = 0; i < 6; i++) {
+    colors.push(...color, opacity);
+  }
+
+  return { positions, colors };
+}
+
+function createLinearIndicatorGeometry(
+  x: number,
+  y: number,
+  height: number,
+  color: [number, number, number],
+  indicatorWidth = 4
+) {
+  const positions: number[] = [];
+  const colors: number[] = [];
+
+  const halfWidth = indicatorWidth / 2;
+
+  // Triangle pointing down
+  const tipY = y - 8;
+  const baseY = y;
+
+  positions.push(
+    x, tipY,
+    x - halfWidth * 2, baseY,
+    x + halfWidth * 2, baseY
+  );
+
+  colors.push(...color, 0.95, ...color, 0.95, ...color, 0.95);
+
+  // Vertical line from base to bottom
+  positions.push(
+    x - halfWidth, baseY,
+    x + halfWidth, baseY,
+    x - halfWidth, y + height,
+    x + halfWidth, baseY,
+    x + halfWidth, y + height,
+    x - halfWidth, y + height
+  );
+
+  for (let i = 0; i < 6; i++) {
+    colors.push(...color, 0.95);
+  }
+
+  return { positions, colors };
+}
+
 function createWebGLGaugeRenderer(canvas: HTMLCanvasElement): WebGLRenderer<GaugeRendererProps> {
   const buffers = {
     position: null as WebGLBuffer | null,
@@ -316,102 +388,184 @@ function createWebGLGaugeRenderer(canvas: HTMLCanvasElement): WebGLRenderer<Gaug
       const resolutionLoc = gl.getUniformLocation(program, "u_resolution");
       gl.uniform2f(resolutionLoc, width, height);
 
-      const centerX = width / 2;
-      const centerY = variant === "semi" ? height * 0.85 : height / 2;
-      const radius = Math.min(width, height) * 0.35;
+      const allPositions: number[] = [];
+      const allColors: number[] = [];
 
-      const startAngle = variant === "semi" ? Math.PI : Math.PI * 0.75;
-      const endAngle = variant === "semi" ? 0 : Math.PI * 2.25;
+      if (variant === "linear") {
+        // Linear gauge rendering
+        const barHeight = 40;
+        const barY = height / 2 - barHeight / 2;
+        const margin = 80;
+        const barWidth = width - margin * 2;
+        const barX = margin;
 
-      let allPositions: number[] = [];
-      let allColors: number[] = [];
+        const ratio = (value - min) / (max - min);
 
-      // Draw zone boundaries first (background, dimmed)
-      if (zones.length > 0) {
-        for (const zone of zones) {
-          const zoneStartRatio = (zone.from - min) / (max - min);
-          const zoneEndRatio = (zone.to - min) / (max - min);
-          const angleRange = endAngle - startAngle;
-          const zoneStartAngle = startAngle + zoneStartRatio * angleRange;
-          const zoneEndAngle = startAngle + zoneEndRatio * angleRange;
+        // Draw zone backgrounds
+        if (zones.length > 0) {
+          for (const zone of zones) {
+            const zoneStartRatio = (zone.from - min) / (max - min);
+            const zoneEndRatio = (zone.to - min) / (max - min);
+            const zoneX = barX + zoneStartRatio * barWidth;
+            const zoneWidth = (zoneEndRatio - zoneStartRatio) * barWidth;
 
-          const color = hexToRgb(zone.color);
-          const { positions, colors } = createArcGeometry(
-            centerX,
-            centerY,
-            radius,
-            zoneStartAngle,
-            zoneEndAngle,
-            color,
-            24,
-            64,
-            0.25  // Dimmed to show boundaries
+            const color = hexToRgb(zone.color);
+            const { positions, colors } = createLinearBarGeometry(
+              zoneX,
+              barY,
+              zoneWidth,
+              barHeight,
+              color,
+              0.25
+            );
+            allPositions.push(...positions);
+            allColors.push(...colors);
+          }
+        } else {
+          // Default background
+          const bgColor = hexToRgb("#27272a");
+          const { positions, colors } = createLinearBarGeometry(
+            barX,
+            barY,
+            barWidth,
+            barHeight,
+            bgColor,
+            0.2
           );
           allPositions.push(...positions);
           allColors.push(...colors);
         }
-      } else {
-        // Default background arc if no zones
-        const bgColor = hexToRgb("#27272a");
-        const bgGeometry = createArcGeometry(
-          centerX,
-          centerY,
-          radius,
-          startAngle,
-          endAngle,
-          bgColor,
-          24,
-          64,
-          0.2
-        );
-        allPositions.push(...bgGeometry.positions);
-        allColors.push(...bgGeometry.colors);
-      }
 
-      // Draw progress arc on top (bright)
-      const ratio = (value - min) / (max - min);
-      const angleRange = endAngle - startAngle;
-      const valueAngle = startAngle + ratio * angleRange;
-
-      // Determine color based on zones or use default
-      let progressColor = hexToRgb(needleColor);
-      if (zones.length > 0) {
-        for (const zone of zones) {
-          if (value >= zone.from && value <= zone.to) {
-            progressColor = hexToRgb(zone.color);
-            break;
+        // Draw progress bar
+        const progressWidth = ratio * barWidth;
+        let progressColor = hexToRgb(needleColor);
+        if (zones.length > 0) {
+          for (const zone of zones) {
+            if (value >= zone.from && value <= zone.to) {
+              progressColor = hexToRgb(zone.color);
+              break;
+            }
           }
         }
-      }
 
-      const { positions, colors } = createArcGeometry(
-        centerX,
-        centerY,
-        radius,
-        startAngle,
-        valueAngle,
-        progressColor,
-        24,
-        64,
-        1.0  // Full opacity for progress
-      );
-      allPositions.push(...positions);
-      allColors.push(...colors);
+        const { positions: progPos, colors: progCol } = createLinearBarGeometry(
+          barX,
+          barY,
+          progressWidth,
+          barHeight,
+          progressColor,
+          1.0
+        );
+        allPositions.push(...progPos);
+        allColors.push(...progCol);
 
-      // Draw ticks (if enabled)
-      if (showTicks) {
-        const tickColor = hexToRgb("#64748b");
-        const { positions, colors } = createTickGeometry(
+        // Draw indicator
+        const indicatorX = barX + ratio * barWidth;
+        const { positions: indPos, colors: indCol } = createLinearIndicatorGeometry(
+          indicatorX,
+          barY,
+          barHeight,
+          progressColor
+        );
+        allPositions.push(...indPos);
+        allColors.push(...indCol);
+
+      } else {
+        // Circular/Semi gauge rendering
+        const centerX = width / 2;
+        const centerY = variant === "semi" ? height * 0.85 : height / 2;
+        const radius = Math.min(width, height) * 0.35;
+
+        const startAngle = variant === "semi" ? Math.PI : Math.PI * 0.75;
+        const endAngle = variant === "semi" ? 0 : Math.PI * 2.25;
+
+        // Draw zone boundaries first (background, dimmed)
+        if (zones.length > 0) {
+          for (const zone of zones) {
+            const zoneStartRatio = (zone.from - min) / (max - min);
+            const zoneEndRatio = (zone.to - min) / (max - min);
+            const angleRange = endAngle - startAngle;
+            const zoneStartAngle = startAngle + zoneStartRatio * angleRange;
+            const zoneEndAngle = startAngle + zoneEndRatio * angleRange;
+
+            const color = hexToRgb(zone.color);
+            const { positions, colors } = createArcGeometry(
+              centerX,
+              centerY,
+              radius,
+              zoneStartAngle,
+              zoneEndAngle,
+              color,
+              24,
+              64,
+              0.25  // Dimmed to show boundaries
+            );
+            allPositions.push(...positions);
+            allColors.push(...colors);
+          }
+        } else {
+          // Default background arc if no zones
+          const bgColor = hexToRgb("#27272a");
+          const bgGeometry = createArcGeometry(
+            centerX,
+            centerY,
+            radius,
+            startAngle,
+            endAngle,
+            bgColor,
+            24,
+            64,
+            0.2
+          );
+          allPositions.push(...bgGeometry.positions);
+          allColors.push(...bgGeometry.colors);
+        }
+
+        // Draw progress arc on top (bright)
+        const ratio = (value - min) / (max - min);
+        const angleRange = endAngle - startAngle;
+        const valueAngle = startAngle + ratio * angleRange;
+
+        // Determine color based on zones or use default
+        let progressColor = hexToRgb(needleColor);
+        if (zones.length > 0) {
+          for (const zone of zones) {
+            if (value >= zone.from && value <= zone.to) {
+              progressColor = hexToRgb(zone.color);
+              break;
+            }
+          }
+        }
+
+        const { positions, colors } = createArcGeometry(
           centerX,
           centerY,
           radius,
           startAngle,
-          endAngle,
-          tickCount,
-          tickColor
+          valueAngle,
+          progressColor,
+          24,
+          64,
+          1.0  // Full opacity for progress
         );
         allPositions.push(...positions);
         allColors.push(...colors);
+
+        // Draw ticks (if enabled)
+        if (showTicks) {
+          const tickColor = hexToRgb("#64748b");
+          const { positions, colors } = createTickGeometry(
+            centerX,
+            centerY,
+            radius,
+            startAngle,
+            endAngle,
+            tickCount,
+            tickColor
+          );
+          allPositions.push(...positions);
+          allColors.push(...colors);
+        }
       }
 
       // Create or update buffers
@@ -541,108 +695,190 @@ async function createWebGPUGaugeRenderer(
         margin,
       } = props;
 
-      const innerWidth = width - margin.left - margin.right;
-      const innerHeight = height - margin.top - margin.bottom;
-      const centerX = innerWidth / 2 + margin.left;
-      const centerY = variant === "semi" ? innerHeight * 0.85 + margin.top : innerHeight / 2 + margin.top;
-      const radius = Math.min(innerWidth, innerHeight) * 0.35;
+      const allPositions: number[] = [];
+      const allColors: number[] = [];
 
-      const startAngle = variant === "circular" ? -Math.PI : -Math.PI * 0.75;
-      const endAngle = variant === "circular" ? Math.PI : Math.PI * 0.75;
-      const angleRange = endAngle - startAngle;
+      if (variant === "linear") {
+        // Linear gauge rendering
+        const barHeight = 40;
+        const barY = height / 2 - barHeight / 2;
+        const marginX = 80;
+        const barWidth = width - marginX * 2;
+        const barX = marginX;
 
-      let allPositions: number[] = [];
-      let allColors: number[] = [];
+        const ratio = (value - min) / (max - min);
 
-      // Draw zone boundaries first (background, dimmed)
-      if (zones.length > 0) {
-        for (const zone of zones) {
-          const zoneStartRatio = (zone.from - min) / (max - min);
-          const zoneEndRatio = (zone.to - min) / (max - min);
-          const zoneStartAngle = startAngle + zoneStartRatio * angleRange;
-          const zoneEndAngle = startAngle + zoneEndRatio * angleRange;
+        // Draw zone backgrounds
+        if (zones.length > 0) {
+          for (const zone of zones) {
+            const zoneStartRatio = (zone.from - min) / (max - min);
+            const zoneEndRatio = (zone.to - min) / (max - min);
+            const zoneX = barX + zoneStartRatio * barWidth;
+            const zoneWidth = (zoneEndRatio - zoneStartRatio) * barWidth;
 
-          const color = hexToRgb(zone.color);
-          const { positions, colors } = createArcGeometry(
-            centerX,
-            centerY,
-            radius,
-            zoneStartAngle,
-            zoneEndAngle,
-            color,
-            24,
-            64,
-            0.25  // Dimmed to show boundaries
+            const color = hexToRgb(zone.color);
+            const { positions, colors } = createLinearBarGeometry(
+              zoneX,
+              barY,
+              zoneWidth,
+              barHeight,
+              color,
+              0.25
+            );
+            allPositions.push(...positions);
+            allColors.push(...colors);
+          }
+        } else {
+          // Default background
+          const bgColor = hexToRgb("#27272a");
+          const { positions, colors } = createLinearBarGeometry(
+            barX,
+            barY,
+            barWidth,
+            barHeight,
+            bgColor,
+            0.2
           );
           allPositions.push(...positions);
           allColors.push(...colors);
         }
+
+        // Draw progress bar
+        const progressWidth = ratio * barWidth;
+        let progressColor = hexToRgb(needleColor);
+        if (zones.length > 0) {
+          for (const zone of zones) {
+            if (value >= zone.from && value <= zone.to) {
+              progressColor = hexToRgb(zone.color);
+              break;
+            }
+          }
+        }
+
+        const { positions: progPos, colors: progCol } = createLinearBarGeometry(
+          barX,
+          barY,
+          progressWidth,
+          barHeight,
+          progressColor,
+          1.0
+        );
+        allPositions.push(...progPos);
+        allColors.push(...progCol);
+
+        // Draw indicator
+        const indicatorX = barX + ratio * barWidth;
+        const { positions: indPos, colors: indCol } = createLinearIndicatorGeometry(
+          indicatorX,
+          barY,
+          barHeight,
+          progressColor
+        );
+        allPositions.push(...indPos);
+        allColors.push(...indCol);
+
       } else {
-        // Default background arc if no zones
-        const bgColor = hexToRgb("#27272a");
-        const bgGeometry = createArcGeometry(
+        // Circular/Semi gauge rendering
+        const innerWidth = width - margin.left - margin.right;
+        const innerHeight = height - margin.top - margin.bottom;
+        const centerX = innerWidth / 2 + margin.left;
+        const centerY = variant === "semi" ? innerHeight * 0.85 + margin.top : innerHeight / 2 + margin.top;
+        const radius = Math.min(innerWidth, innerHeight) * 0.35;
+
+        const startAngle = variant === "circular" ? -Math.PI : -Math.PI * 0.75;
+        const endAngle = variant === "circular" ? Math.PI : Math.PI * 0.75;
+        const angleRange = endAngle - startAngle;
+
+        // Draw zone boundaries first (background, dimmed)
+        if (zones.length > 0) {
+          for (const zone of zones) {
+            const zoneStartRatio = (zone.from - min) / (max - min);
+            const zoneEndRatio = (zone.to - min) / (max - min);
+            const zoneStartAngle = startAngle + zoneStartRatio * angleRange;
+            const zoneEndAngle = startAngle + zoneEndRatio * angleRange;
+
+            const color = hexToRgb(zone.color);
+            const { positions, colors } = createArcGeometry(
+              centerX,
+              centerY,
+              radius,
+              zoneStartAngle,
+              zoneEndAngle,
+              color,
+              24,
+              64,
+              0.25  // Dimmed to show boundaries
+            );
+            allPositions.push(...positions);
+            allColors.push(...colors);
+          }
+        } else {
+          // Default background arc if no zones
+          const bgColor = hexToRgb("#27272a");
+          const bgGeometry = createArcGeometry(
+            centerX,
+            centerY,
+            radius,
+            startAngle,
+            endAngle,
+            bgColor,
+            24,
+            64,
+            0.2
+          );
+          allPositions.push(...bgGeometry.positions);
+          allColors.push(...bgGeometry.colors);
+        }
+
+        // Draw progress arc on top (bright)
+        const normalizedValue = (value - min) / (max - min);
+        const valueAngle = startAngle + normalizedValue * angleRange;
+
+        // Determine color based on zones or use default
+        let progressColor = hexToRgb(needleColor);
+        if (zones.length > 0) {
+          for (const zone of zones) {
+            if (value >= zone.from && value <= zone.to) {
+              progressColor = hexToRgb(zone.color);
+              break;
+            }
+          }
+        }
+
+        const { positions, colors } = createArcGeometry(
           centerX,
           centerY,
           radius,
           startAngle,
-          endAngle,
-          bgColor,
+          valueAngle,
+          progressColor,
           24,
           64,
-          0.2
+          1.0  // Full opacity for progress
         );
-        allPositions.push(...bgGeometry.positions);
-        allColors.push(...bgGeometry.colors);
-      }
+        allPositions.push(...positions);
+        allColors.push(...colors);
 
-      // Draw progress arc on top (bright)
-      const normalizedValue = (value - min) / (max - min);
-      const valueAngle = startAngle + normalizedValue * angleRange;
+        // Draw tick marks (if enabled)
+        if (showTicks) {
+          for (let i = 0; i < tickCount; i++) {
+            const t = i / (tickCount - 1);
+            const angle = startAngle + t * angleRange;
+            const tickLength = i % 2 === 0 ? 10 : 5;
+            const color = hexToRgb("#71717a");
 
-      // Determine color based on zones or use default
-      let progressColor = hexToRgb(needleColor);
-      if (zones.length > 0) {
-        for (const zone of zones) {
-          if (value >= zone.from && value <= zone.to) {
-            progressColor = hexToRgb(zone.color);
-            break;
+            const { positions, colors } = createTickGeometry(
+              centerX,
+              centerY,
+              radius - 15,
+              angle,
+              tickLength,
+              2,
+              color
+            );
+            allPositions.push(...positions);
+            allColors.push(...colors);
           }
-        }
-      }
-
-      const { positions, colors } = createArcGeometry(
-        centerX,
-        centerY,
-        radius,
-        startAngle,
-        valueAngle,
-        progressColor,
-        24,
-        64,
-        1.0  // Full opacity for progress
-      );
-      allPositions.push(...positions);
-      allColors.push(...colors);
-
-      // Draw tick marks (if enabled)
-      if (showTicks) {
-        for (let i = 0; i < tickCount; i++) {
-          const t = i / (tickCount - 1);
-          const angle = startAngle + t * angleRange;
-          const tickLength = i % 2 === 0 ? 10 : 5;
-          const color = hexToRgb("#71717a");
-
-          const { positions, colors } = createTickGeometry(
-            centerX,
-            centerY,
-            radius - 15,
-            angle,
-            tickLength,
-            2,
-            color
-          );
-          allPositions.push(...positions);
-          allColors.push(...colors);
         }
       }
 
@@ -784,8 +1020,9 @@ function Root({
 // Canvas Component
 // ============================================================================
 
-function Canvas() {
+function Canvas({ showTicks }: { showTicks?: boolean } = {}) {
   const ctx = useGauge();
+  const shouldShowTicks = showTicks ?? ctx.showTicks;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<
     WebGLRenderer<GaugeRendererProps> | WebGPURenderer<GaugeRendererProps> | null
@@ -831,7 +1068,7 @@ function Canvas() {
       max: ctx.max,
       zones: ctx.zones,
       variant: ctx.variant,
-      showTicks: ctx.showTicks,
+      showTicks: shouldShowTicks,
       tickCount: ctx.tickCount,
       needleColor: ctx.needleColor,
       width: canvas.width,
@@ -847,7 +1084,7 @@ function Canvas() {
     if (rendererRef.current) {
       rendererRef.current.render(props);
     }
-  }, [ctx, isInitializing]);
+  }, [ctx, isInitializing, shouldShowTicks]);
 
   return (
     <canvas
@@ -862,11 +1099,35 @@ function Canvas() {
 // Value Display Component
 // ============================================================================
 
-function ValueDisplay() {
+function ValueDisplay({ format }: { format?: (value: number) => string } = {}) {
   const ctx = useGauge();
 
   if (!ctx.showValue) return null;
 
+  const displayValue = format ? format(ctx.value) : Math.round(ctx.value).toString();
+
+  // For linear variant, show value on the left side
+  if (ctx.variant === "linear") {
+    return (
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="flex flex-col items-start gap-1">
+          <div className="text-xs text-zinc-500 dark:text-zinc-400 font-medium uppercase tracking-wide">
+            {ctx.label || "Value"}
+          </div>
+          <div className="text-4xl font-bold tabular-nums leading-none">
+            {displayValue}
+          </div>
+          {ctx.unit && (
+            <div className="text-sm text-zinc-400 dark:text-zinc-500 font-medium">
+              {ctx.unit}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // For circular/semi variants, show in center
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
       <div
@@ -874,7 +1135,7 @@ function ValueDisplay() {
         style={{ marginTop: ctx.variant === "semi" ? "20%" : "0%" }}
       >
         <div className="text-[220px] font-bold tabular-nums leading-none tracking-[-0.05em]">
-          {Math.round(ctx.value)}
+          {displayValue}
         </div>
         <div className="text-lg text-zinc-400 dark:text-zinc-500 font-medium tracking-wide">
           {ctx.label && ctx.unit ? `${ctx.value.toFixed(0)} ${ctx.unit}` :
@@ -895,6 +1156,38 @@ function TickLabels() {
 
   if (!ctx.showTicks) return null;
 
+  // For linear variant, show labels below the bar
+  if (ctx.variant === "linear") {
+    const margin = 80;
+    const barWidth = ctx.width - margin * 2;
+    const barY = ctx.height / 2 + 20; // Below the bar
+    const labels = [];
+    const majorTickIndices = [0, Math.floor(ctx.tickCount / 2), ctx.tickCount - 1];
+
+    for (const i of majorTickIndices) {
+      const ratio = i / (ctx.tickCount - 1);
+      const x = margin + ratio * barWidth;
+      const value = ctx.min + ratio * (ctx.max - ctx.min);
+
+      labels.push(
+        <div
+          key={i}
+          className="absolute text-xs text-zinc-600 dark:text-zinc-400 font-medium tabular-nums pointer-events-none"
+          style={{
+            left: x,
+            top: barY + 30,
+            transform: "translateX(-50%)",
+          }}
+        >
+          {value.toFixed(0)}
+        </div>
+      );
+    }
+
+    return <>{labels}</>;
+  }
+
+  // For circular/semi variants
   const centerX = ctx.width / 2;
   const centerY = ctx.variant === "semi" ? ctx.height * 0.85 : ctx.height / 2;
   const radius = Math.min(ctx.width, ctx.height) * 0.35;

@@ -6,7 +6,11 @@
     "displayName": "Lib",
     "type": "infrastructure",
     "description": "Shared utility functions, constants, and type definitions (automatically installed)",
-    "files": ["lib/utils.ts", "lib/timezone.ts", "lib/index.ts"],
+    "files": [
+      "lib/utils.ts",
+      "lib/timezone.ts",
+      "lib/index.ts"
+    ],
     "dependencies": [],
     "registryDependencies": []
   },
@@ -17,9 +21,15 @@
       "displayName": "Line Chart",
       "category": "charts",
       "description": "GPU-accelerated line chart for 100k+ points at 60fps. Primitive architecture with composable components (Root, Canvas, Axes, Tooltip).",
-      "files": ["charts/line-chart.tsx", "charts/base-chart.tsx", "charts/data-utils.ts"],
+      "files": [
+        "charts/line-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     },
@@ -29,9 +39,15 @@
       "displayName": "Scatter Chart",
       "category": "charts",
       "description": "GPU-accelerated scatter plot. Supports variable point sizes, colors, and opacity. Perfect for correlation analysis and cluster visualization.",
-      "files": ["charts/scatter-chart.tsx", "charts/base-chart.tsx", "charts/data-utils.ts"],
+      "files": [
+        "charts/scatter-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     },
@@ -41,9 +57,15 @@
       "displayName": "Bar Chart",
       "category": "charts",
       "description": "GPU-accelerated bar chart with vertical/horizontal orientation. Supports grouped and stacked layouts. Optimized for categorical data visualization.",
-      "files": ["charts/bar-chart.tsx", "charts/base-chart.tsx", "charts/data-utils.ts"],
+      "files": [
+        "charts/bar-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     },
@@ -53,9 +75,15 @@
       "displayName": "Area Chart",
       "category": "charts",
       "description": "GPU-accelerated area chart with filled regions. Supports stacked areas and real-time streaming data. Ideal for time series and cumulative data.",
-      "files": ["charts/area-chart.tsx", "charts/base-chart.tsx", "charts/data-utils.ts"],
+      "files": [
+        "charts/area-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     },
@@ -65,9 +93,15 @@
       "displayName": "Heatmap Chart",
       "category": "charts",
       "description": "GPU-accelerated heatmap for 2D grid data. Custom color scales, correlation matrices, and high-density visualizations. Handles thousands of cells with ease.",
-      "files": ["charts/heatmap-chart.tsx", "charts/base-chart.tsx", "charts/data-utils.ts"],
+      "files": [
+        "charts/heatmap-chart.tsx",
+        "charts/base-chart.tsx",
+        "charts/data-utils.ts"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     },
@@ -77,9 +111,14 @@
       "displayName": "Gauge",
       "category": "charts",
       "description": "GPU-accelerated circular and semi-circular gauge with color zones. Perfect for aircraft instruments, pressure gauges, and speed indicators. Real-time needle animation.",
-      "files": ["charts/gauge.tsx", "charts/base-chart.tsx"],
+      "files": [
+        "charts/gauge.tsx",
+        "charts/base-chart.tsx"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     },
@@ -89,21 +128,14 @@
       "displayName": "Radar Chart",
       "category": "charts",
       "description": "GPU-accelerated radar display with circular sweep animation. Ideal for air traffic control, weather radar, and sonar visualization. Supports target plotting with intensity.",
-      "files": ["charts/radar-chart.tsx", "charts/base-chart.tsx"],
+      "files": [
+        "charts/radar-chart.tsx",
+        "charts/base-chart.tsx"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "waterfall-chart": {
-      "name": "waterfall-chart",
-      "version": "0.1.0",
-      "displayName": "Waterfall Chart",
-      "category": "charts",
-      "description": "GPU-accelerated time-frequency spectrum visualization. Multiple colormaps (viridis, plasma, thermal). Perfect for RF spectrum analysis, audio visualization, and sonar displays.",
-      "files": ["charts/waterfall-chart.tsx", "charts/base-chart.tsx"],
-      "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     },
@@ -113,45 +145,29 @@
       "displayName": "Status Grid",
       "category": "charts",
       "description": "KPI dashboard with GPU-accelerated sparklines. Real-time metrics with threshold alerts and status indicators. Ideal for mission control and system monitoring.",
-      "files": ["charts/status-grid.tsx", "charts/base-chart.tsx"],
+      "files": [
+        "charts/status-grid.tsx",
+        "charts/base-chart.tsx"
+      ],
       "dependencies": [],
       "devDependencies": [],
       "registryDependencies": [],
       "tier": "free"
     },
-    "timeline": {
-      "name": "timeline",
-      "version": "0.1.0",
-      "displayName": "Timeline",
-      "category": "charts",
-      "description": "GPU-accelerated multi-lane timeline with event markers. Supports duration spans and event types (info, warning, error, milestone). Perfect for mission logs and flight recorders.",
-      "files": ["charts/timeline.tsx", "charts/base-chart.tsx"],
-      "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "surface-plot": {
-      "name": "surface-plot",
-      "version": "0.1.0",
-      "displayName": "3D Surface Plot",
-      "category": "charts",
-      "description": "Three.js-powered 3D surface visualization. Height-mapped meshes with color mapping. Ideal for terrain, medical imaging, and thermal data. Interactive orbit controls.",
-      "files": ["charts/surface-plot.tsx"],
-      "dependencies": ["three", "@react-three/fiber", "@react-three/drei"],
-      "devDependencies": ["@types/three"],
-      "registryDependencies": [],
-      "tier": "free"
-    },
     "data-grid": {
       "name": "data-grid",
-      "version": "0.1.0",
+      "version": "1.0.0",
       "displayName": "Data Grid",
       "category": "charts",
-      "description": "GPU-accelerated data grid with virtual scrolling. Handles 100k+ rows at 60fps. Interactive hover, sorting, and row selection. Perfect for telemetry logs, flight operations, and system monitoring.",
-      "files": ["charts/data-grid.tsx", "charts/base-chart.tsx"],
+      "description": "GPU-accelerated data table with shadcn/ui aesthetics. Virtual scrolling for 10k+ rows at 60fps. Sortable columns, custom formatters, theme-aware styling, and primitive composition pattern (Root, Canvas, Header, Body). Perfect for telemetry logs, flight operations, and system monitoring.",
+      "files": [
+        "charts/data-grid.tsx",
+        "charts/base-chart.tsx"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     },
@@ -161,33 +177,14 @@
       "displayName": "Attitude Indicator",
       "category": "charts",
       "description": "GPU-accelerated artificial horizon showing pitch and roll. Essential for aircraft, drones, spacecraft, surgical robots, and any system requiring orientation visualization. Configurable pitch ladder and bank indicator.",
-      "files": ["charts/attitude-indicator.tsx", "charts/base-chart.tsx"],
+      "files": [
+        "charts/attitude-indicator.tsx",
+        "charts/base-chart.tsx"
+      ],
       "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "compass-rose": {
-      "name": "compass-rose",
-      "version": "0.1.0",
-      "displayName": "Compass Rose",
-      "category": "charts",
-      "description": "GPU-accelerated heading indicator with rotating compass card. Essential for navigation in aircraft, ships, autonomous vehicles, robotic systems, and directional instruments. Supports heading bug for desired course.",
-      "files": ["charts/compass-rose.tsx", "charts/base-chart.tsx"],
-      "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "network-graph": {
-      "name": "network-graph",
-      "version": "0.1.0",
-      "displayName": "Network Graph",
-      "category": "charts",
-      "description": "GPU-accelerated network topology visualization with force-directed layout. Multiple node shapes and status colors. Perfect for system architectures, medical device networks, robotic sensor networks, and fault isolation. Handles 1000+ nodes.",
-      "files": ["charts/network-graph.tsx", "charts/base-chart.tsx"],
-      "dependencies": [],
-      "devDependencies": ["@webgpu/types"],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
       "registryDependencies": [],
       "tier": "free"
     }

@@ -173,6 +173,111 @@ function PrimitiveGaugeExample() {
   );
 }
 
+function FuelLevelGauge() {
+  const { color } = useColorScheme();
+  const [fuelLevel, setFuelLevel] = useState(75);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+
+    const interval = setInterval(() => {
+      setFuelLevel((prev) => {
+        // Simulate fuel consumption with occasional refills
+        if (Math.random() < 0.01) {
+          return Math.min(100, prev + 30); // Refill
+        }
+
+        const change = (Math.random() - 0.7) * 2; // Slow decrease
+        return Math.max(0, Math.min(100, prev + change));
+      });
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [isPaused]);
+
+  const fuelStatus =
+    fuelLevel < 15
+      ? "Critical"
+      : fuelLevel < 30
+      ? "Low"
+      : fuelLevel < 70
+      ? "Normal"
+      : "Full";
+
+  return (
+    <ComponentPreview
+      title="Linear Fuel Gauge"
+      description="Flat horizontal gauge with color zones - Perfect for dashboard displays"
+      code={`import { Gauge } from "@/components/plexusui/charts/gauge";
+
+<Gauge
+  value={fuelLevel}
+  min={0}
+  max={100}
+  label="Fuel"
+  unit="%"
+  variant="linear"
+  zones={[
+    { from: 0, to: 15, color: "#ef4444" },
+    { from: 15, to: 30, color: "#f97316" },
+    { from: 30, to: 70, color: "#10b981" },
+    { from: 70, to: 100, color: "#06b6d4" },
+  ]}
+  showTicks={true}
+  tickCount={11}
+  width={800}
+  height={200}
+/>`}
+      preview={
+        <div className="w-full space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="text-sm font-medium">
+                Fuel Status: {fuelStatus} ({fuelLevel.toFixed(1)}%)
+              </div>
+              <div className="text-xs text-zinc-500">
+                Zones: Critical (0-15%) | Low (15-30%) | Normal (30-70%) | Full
+                (70-100%)
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPaused(!isPaused)}
+              className="px-4 py-2 rounded-md font-medium transition-colors bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              {isPaused ? "▶ Resume" : "⏸ Pause"}
+            </button>
+          </div>
+
+          <div className="w-full h-[200px]">
+            <Gauge
+              value={fuelLevel}
+              min={0}
+              max={100}
+              label="Fuel"
+              unit="%"
+              variant="linear"
+              zones={[
+                { from: 0, to: 15, color: "#ef4444" },
+                { from: 15, to: 30, color: "#f97316" },
+                { from: 30, to: 70, color: "#10b981" },
+                { from: 70, to: 100, color: "#06b6d4" },
+              ]}
+              needleColor={color}
+              showTicks={true}
+              tickCount={11}
+              width={800}
+              height={200}
+              preferWebGPU={true}
+            />
+          </div>
+        </div>
+      }
+    />
+  );
+}
+
 // ============================================================================
 // Main Export
 // ============================================================================
@@ -181,6 +286,7 @@ export function GaugeExamples() {
   return (
     <div className="space-y-8">
       <EngineRPMGauge />
+      <FuelLevelGauge />
       <PrimitiveGaugeExample />
     </div>
   );

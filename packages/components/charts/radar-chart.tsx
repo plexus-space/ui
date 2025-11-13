@@ -30,21 +30,13 @@
  */
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useRef,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useRef, useEffect, useState } from "react";
 import {
   createWebGLRenderer,
   createWebGPURenderer,
   ChartRoot,
   ChartTooltip,
   hexToRgb,
-  type Point,
   type RendererProps,
   type WebGLRenderer,
   type WebGPURenderer,
@@ -560,7 +552,8 @@ async function createWebGPURadarRenderer(
       return pipeline;
     },
     onRender: async (device, context, pipeline, props) => {
-      const { series, rings, sectors, showSweep, sweepAngle, width, height } = props;
+      const { series, rings, sectors, showSweep, sweepAngle, width, height } =
+        props;
 
       const centerX = width / 2;
       const centerY = height / 2;
@@ -806,89 +799,154 @@ function Root({
 
 function Canvas() {
   const ctx = useRadarChart();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<
     | WebGLRenderer<RadarRendererProps>
     | WebGPURenderer<RadarRendererProps>
     | null
   >(null);
   const frameRef = useRef<number>(0);
-  const [isInitializing, setIsInitializing] = useState(false);
 
-  const render = () => {
-    if (!canvasRef.current || !rendererRef.current) return;
-
-    const props: RadarRendererProps = {
-      canvas: canvasRef.current,
-      series: ctx.series,
-      rings: ctx.rings,
-      sectors: ctx.sectors,
-      showSweep: ctx.showSweep,
-      sweepAngle: ctx.sweepAngle,
-      width: canvasRef.current.width,
-      height: canvasRef.current.height,
-      margin: ctx.margin,
-      xDomain: [0, 1],
-      yDomain: [0, 1],
-      xTicks: [],
-      yTicks: [],
-      showGrid: ctx.showGrid,
-    };
-
-    rendererRef.current.render(props);
-
-    if (ctx.showSweep) {
-      frameRef.current = requestAnimationFrame(render);
-    }
-  };
-
+  // Initialize renderer once
   useEffect(() => {
-    if (!canvasRef.current || isInitializing) return;
-    if (ctx.renderMode === null) return;
+    const canvas = ctx.canvasRef.current;
+    if (!canvas) return;
 
-    const canvas = canvasRef.current;
-    const dpr = window.devicePixelRatio || 1;
-
+    const dpr = ctx.devicePixelRatio;
     canvas.width = ctx.width * dpr;
     canvas.height = ctx.height * dpr;
     canvas.style.width = `${ctx.width}px`;
     canvas.style.height = `${ctx.height}px`;
 
-    if (!rendererRef.current) {
-      if (ctx.renderMode === "webgpu" && ctx.gpuDevice) {
-        setIsInitializing(true);
-        createWebGPURadarRenderer(canvas, ctx.gpuDevice)
-          .then((renderer) => {
-            rendererRef.current = renderer;
-            setIsInitializing(false);
-            render();
-          })
-          .catch((error) => {
-            console.error("Failed to create WebGPU renderer:", error);
-            rendererRef.current = createWebGLRadarRenderer(canvas);
-            setIsInitializing(false);
-            render();
-          });
-        return;
-      } else {
-        rendererRef.current = createWebGLRadarRenderer(canvas);
+    let mounted = true;
+
+    async function initRenderer() {
+      if (!canvas) return;
+
+      try {
+        if (ctx.renderMode === "webgpu" && ctx.gpuDevice) {
+          const renderer = await createWebGPURadarRenderer(
+            canvas,
+            ctx.gpuDevice
+          );
+
+          if (!mounted) {
+            renderer.destroy();
+            return;
+          }
+
+          rendererRef.current = renderer;
+          return;
+        }
+      } catch (error) {
+        console.warn("WebGPU failed, falling back to WebGL:", error);
+      }
+
+      try {
+        const renderer = createWebGLRadarRenderer(canvas);
+
+        if (!mounted) {
+          renderer.destroy();
+          return;
+        }
+
+        rendererRef.current = renderer;
+      } catch (error) {
+        console.error("WebGL failed:", error);
       }
     }
 
-    render();
+    initRenderer();
+
+    return () => {
+      mounted = false;
+      if (rendererRef.current) {
+        rendererRef.current.destroy();
+        rendererRef.current = null;
+      }
+    };
+  }, [
+    ctx.renderMode,
+    ctx.gpuDevice,
+    ctx.width,
+    ctx.height,
+    ctx.devicePixelRatio,
+    ctx.canvasRef,
+  ]);
+
+  // Render when data changes
+  useEffect(() => {
+    const canvas = ctx.canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer || !ctx.renderMode) return;
+
+    const dpr = ctx.devicePixelRatio;
+
+    async function render() {
+      const currentRenderer = rendererRef.current;
+      const currentCanvas = ctx.canvasRef.current;
+      if (!currentRenderer || !currentCanvas) return;
+
+      const renderProps: RadarRendererProps = {
+        canvas: currentCanvas,
+        series: ctx.series,
+        rings: ctx.rings,
+        sectors: ctx.sectors,
+        showSweep: ctx.showSweep,
+        sweepAngle: ctx.sweepAngle,
+        width: ctx.width * dpr,
+        height: ctx.height * dpr,
+        margin: {
+          top: ctx.margin.top * dpr,
+          right: ctx.margin.right * dpr,
+          bottom: ctx.margin.bottom * dpr,
+          left: ctx.margin.left * dpr,
+        },
+        xDomain: [0, 1],
+        yDomain: [0, 1],
+        xTicks: [],
+        yTicks: [],
+        showGrid: ctx.showGrid,
+      };
+
+      await currentRenderer.render(renderProps);
+
+      // Continue animation loop if sweep is enabled
+      if (ctx.showSweep) {
+        frameRef.current = requestAnimationFrame(render);
+      }
+    }
+
+    // Start render loop
+    frameRef.current = requestAnimationFrame(render);
 
     return () => {
       if (frameRef.current) {
         cancelAnimationFrame(frameRef.current);
       }
     };
-  }, [ctx, isInitializing]);
+  }, [
+    ctx.series,
+    ctx.rings,
+    ctx.sectors,
+    ctx.showSweep,
+    ctx.sweepAngle,
+    ctx.showGrid,
+    ctx.width,
+    ctx.height,
+    ctx.margin,
+    ctx.devicePixelRatio,
+    ctx.renderMode,
+    ctx.canvasRef,
+  ]);
 
   return (
     <canvas
-      ref={canvasRef}
+      ref={ctx.canvasRef}
       className="absolute inset-0"
-      style={{ width: "100%", height: "100%" }}
+      style={{
+        width: `${ctx.width}px`,
+        height: `${ctx.height}px`,
+      }}
     />
   );
 }
@@ -942,6 +1000,15 @@ function Labels() {
 // Tooltip Component
 // ============================================================================
 
+interface ClosestPoint {
+  seriesIdx: number;
+  pointIdx: number;
+  distance: number;
+  point: RadarDataPoint;
+  screenX: number;
+  screenY: number;
+}
+
 function Tooltip() {
   const ctx = useRadarChart();
 
@@ -954,14 +1021,7 @@ function Tooltip() {
     const centerY = ctx.height / 2;
     const radius = Math.min(ctx.width, ctx.height) * 0.42;
 
-    let closestPoint: {
-      seriesIdx: number;
-      pointIdx: number;
-      distance: number;
-      point: RadarDataPoint;
-      screenX: number;
-      screenY: number;
-    } | null = null;
+    let closestPoint: ClosestPoint | null = null as ClosestPoint | null;
 
     // Find closest data point
     ctx.series.forEach((series, seriesIdx) => {
@@ -992,7 +1052,7 @@ function Tooltip() {
       });
     });
 
-    if (closestPoint) {
+    if (closestPoint !== null) {
       ctx.setHoveredPoint({
         seriesIdx: closestPoint.seriesIdx,
         pointIdx: closestPoint.pointIdx,
@@ -1002,7 +1062,8 @@ function Tooltip() {
 
       const series = ctx.series[closestPoint.seriesIdx];
       ctx.setTooltipData({
-        title: closestPoint.point.label || `Target ${closestPoint.pointIdx + 1}`,
+        title:
+          closestPoint.point?.label || `Target ${closestPoint.pointIdx + 1}`,
         items: [
           { label: "Category", value: series.name },
           { label: "Angle", value: `${closestPoint.point.angle.toFixed(1)}°` },

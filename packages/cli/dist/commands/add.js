@@ -176,8 +176,7 @@ export async function add(components) {
                     console.log(chalk.green("\n✅ Dependencies installed successfully!"));
                 }
                 catch (error) {
-                    console.log(chalk.yellow("\n⚠️  " +
-                        (error instanceof Error ? error.message : "Unknown error")));
+                    console.log(chalk.yellow("\n⚠️  " + (error instanceof Error ? error.message : "Unknown error")));
                 }
             }
             else {

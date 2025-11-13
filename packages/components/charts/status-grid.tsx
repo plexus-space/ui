@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useEffect } from "react";
+import * as React from "react";
 import { createWebGLRenderer, hexToRgb, type WebGLRenderer } from "./base-chart";
 
 // ============================================================================
@@ -25,6 +25,13 @@ export interface KPIMetric {
   };
 }
 
+export interface StatusGridRootProps {
+  columns?: number;
+  gap?: number;
+  className?: string;
+  children?: React.ReactNode;
+}
+
 export interface StatusGridProps {
   metrics: KPIMetric[];
   columns?: number;
@@ -34,18 +41,16 @@ export interface StatusGridProps {
 }
 
 interface StatusGridContextType {
-  metrics: KPIMetric[];
   columns: number;
   gap: number;
-  showSparklines: boolean;
 }
 
-const StatusGridContext = createContext<StatusGridContextType | null>(null);
+const StatusGridContext = React.createContext<StatusGridContextType | null>(null);
 
 function useStatusGrid() {
-  const ctx = useContext(StatusGridContext);
+  const ctx = React.useContext(StatusGridContext);
   if (!ctx) {
-    throw new Error("StatusGrid components must be used within StatusGrid");
+    throw new Error("StatusGrid components must be used within StatusGrid.Root");
   }
   return ctx;
 }
@@ -72,21 +77,28 @@ function getStatusFromValue(
 }
 
 // ============================================================================
-// Sparkline Renderer
+// Sparkline Component
 // ============================================================================
 
-interface SparklineProps {
+export interface SparklineProps {
   data: number[];
-  width: number;
-  height: number;
-  color: string;
+  width?: number;
+  height?: number;
+  color?: string;
+  className?: string;
 }
 
-function Sparkline({ data, width, height, color }: SparklineProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rendererRef = useRef<WebGLRenderer<any> | null>(null);
+export function Sparkline({
+  data,
+  width = 200,
+  height = 48,
+  color = "#3b82f6",
+  className = ""
+}: SparklineProps) {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const rendererRef = React.useRef<WebGLRenderer<any> | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!canvasRef.current || data.length < 2) return;
 
     const canvas = canvasRef.current;
@@ -173,6 +185,9 @@ function Sparkline({ data, width, height, color }: SparklineProps) {
 
           gl.drawArrays(gl.LINES, 0, positions.length / 2);
         },
+        onDestroy: (gl) => {
+          // Cleanup buffers if needed
+        }
       });
     }
 
@@ -182,105 +197,182 @@ function Sparkline({ data, width, height, color }: SparklineProps) {
       width: canvas.width,
       height: canvas.height,
     });
+
+    return () => {
+      if (rendererRef.current) {
+        rendererRef.current.destroy();
+        rendererRef.current = null;
+      }
+    };
   }, [data, width, height, color]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="w-full h-full"
+      className={className}
       style={{ width: `${width}px`, height: `${height}px` }}
     />
   );
 }
 
 // ============================================================================
-// KPI Card Component
+// Primitive Components
+// ============================================================================
+
+export interface CardProps {
+  metric?: KPIMetric;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function Card({ metric, className = "", children }: CardProps) {
+  return (
+    <div className={`relative bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export interface StatusIndicatorProps {
+  status?: StatusLevel;
+  color?: string;
+  className?: string;
+}
+
+export function StatusIndicator({ status, color, className = "" }: StatusIndicatorProps) {
+  const indicatorColor = color || (status ? STATUS_COLORS[status] : STATUS_COLORS.normal);
+
+  return (
+    <div
+      className={`absolute top-3 right-3 w-2 h-2 rounded-full ${className}`}
+      style={{ backgroundColor: indicatorColor }}
+    />
+  );
+}
+
+export interface LabelProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function Label({ children, className = "" }: LabelProps) {
+  return (
+    <div className={`text-xs text-zinc-500 font-medium mb-1 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export interface ValueProps {
+  value: number;
+  unit?: string;
+  decimals?: number;
+  className?: string;
+}
+
+export function Value({ value, unit, decimals = 1, className = "" }: ValueProps) {
+  return (
+    <div className={`flex items-baseline gap-2 mb-2 ${className}`}>
+      <span className="text-3xl font-bold tabular-nums">{value.toFixed(decimals)}</span>
+      {unit && <span className="text-sm text-zinc-500">{unit}</span>}
+    </div>
+  );
+}
+
+export interface ChangeIndicatorProps {
+  change: number;
+  className?: string;
+}
+
+export function ChangeIndicator({ change, className = "" }: ChangeIndicatorProps) {
+  const colorClass = change > 0
+    ? "text-green-500"
+    : change < 0
+      ? "text-red-500"
+      : "text-zinc-500";
+
+  return (
+    <div className={`text-xs font-medium ${colorClass} ${className}`}>
+      {change > 0 && "+"}
+      {change.toFixed(1)}%
+    </div>
+  );
+}
+
+export interface RangeProps {
+  min: number;
+  max: number;
+  className?: string;
+}
+
+export function Range({ min, max, className = "" }: RangeProps) {
+  return (
+    <div className={`mt-2 text-xs text-zinc-600 ${className}`}>
+      Range: {min} - {max}
+    </div>
+  );
+}
+
+// ============================================================================
+// Root Component (Primitive)
+// ============================================================================
+
+export function StatusGridRoot({
+  columns = 3,
+  gap = 16,
+  className = "",
+  children,
+}: StatusGridRootProps) {
+  const contextValue: StatusGridContextType = {
+    columns,
+    gap,
+  };
+
+  const gridStyle = {
+    display: "grid",
+    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+    gap: `${gap}px`,
+  };
+
+  return (
+    <StatusGridContext.Provider value={contextValue}>
+      <div className={className} style={gridStyle}>
+        {children}
+      </div>
+    </StatusGridContext.Provider>
+  );
+}
+
+// ============================================================================
+// Compound Component (Simple API - Backward Compatible)
 // ============================================================================
 
 interface KPICardProps {
   metric: KPIMetric;
-  showSparkline: boolean;
+  showSparkline?: boolean;
 }
 
-function KPICard({ metric, showSparkline }: KPICardProps) {
+function KPICard({ metric, showSparkline = true }: KPICardProps) {
   const status = metric.status || getStatusFromValue(metric.value, metric.threshold);
   const statusColor = STATUS_COLORS[status];
 
   return (
-    <div className="relative bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors">
-      {/* Status Indicator */}
-      <div
-        className="absolute top-3 right-3 w-2 h-2 rounded-full"
-        style={{ backgroundColor: statusColor }}
-      />
-
-      {/* Label */}
-      <div className="text-xs text-zinc-500 font-medium mb-1">{metric.label}</div>
-
-      {/* Value */}
-      <div className="flex items-baseline gap-2 mb-2">
-        <span className="text-3xl font-bold tabular-nums">{metric.value.toFixed(1)}</span>
-        {metric.unit && <span className="text-sm text-zinc-500">{metric.unit}</span>}
-      </div>
-
-      {/* Change Indicator */}
-      {metric.change !== undefined && (
-        <div
-          className={`text-xs font-medium ${
-            metric.change > 0
-              ? "text-green-500"
-              : metric.change < 0
-                ? "text-red-500"
-                : "text-zinc-500"
-          }`}
-        >
-          {metric.change > 0 && "+"}
-          {metric.change.toFixed(1)}%
-        </div>
-      )}
-
-      {/* Sparkline */}
+    <Card>
+      <StatusIndicator status={status} />
+      <Label>{metric.label}</Label>
+      <Value value={metric.value} unit={metric.unit} />
+      {metric.change !== undefined && <ChangeIndicator change={metric.change} />}
       {showSparkline && metric.sparkline && metric.sparkline.length > 1 && (
         <div className="mt-3 h-12">
           <Sparkline data={metric.sparkline} width={200} height={48} color={statusColor} />
         </div>
       )}
-
-      {/* Min/Max Range */}
       {metric.min !== undefined && metric.max !== undefined && (
-        <div className="mt-2 text-xs text-zinc-600">
-          Range: {metric.min} - {metric.max}
-        </div>
+        <Range min={metric.min} max={metric.max} />
       )}
-    </div>
+    </Card>
   );
 }
-
-// ============================================================================
-// Grid Component
-// ============================================================================
-
-function Grid() {
-  const ctx = useStatusGrid();
-
-  const gridStyle = {
-    display: "grid",
-    gridTemplateColumns: `repeat(${ctx.columns}, 1fr)`,
-    gap: `${ctx.gap}px`,
-  };
-
-  return (
-    <div style={gridStyle}>
-      {ctx.metrics.map((metric) => (
-        <KPICard key={metric.id} metric={metric} showSparkline={ctx.showSparklines} />
-      ))}
-    </div>
-  );
-}
-
-// ============================================================================
-// Main Component
-// ============================================================================
 
 export function StatusGrid({
   metrics,
@@ -289,23 +381,26 @@ export function StatusGrid({
   showSparklines = true,
   className = "",
 }: StatusGridProps) {
-  const contextValue: StatusGridContextType = {
-    metrics,
-    columns,
-    gap,
-    showSparklines,
-  };
-
   return (
-    <StatusGridContext.Provider value={contextValue}>
-      <div className={className}>
-        <Grid />
-      </div>
-    </StatusGridContext.Provider>
+    <StatusGridRoot columns={columns} gap={gap} className={className}>
+      {metrics.map((metric) => (
+        <KPICard key={metric.id} metric={metric} showSparkline={showSparklines} />
+      ))}
+    </StatusGridRoot>
   );
 }
 
-StatusGrid.Card = KPICard;
-StatusGrid.Grid = Grid;
+// ============================================================================
+// Exports
+// ============================================================================
+
+StatusGrid.Root = StatusGridRoot;
+StatusGrid.Card = Card;
+StatusGrid.Label = Label;
+StatusGrid.Value = Value;
+StatusGrid.StatusIndicator = StatusIndicator;
+StatusGrid.ChangeIndicator = ChangeIndicator;
+StatusGrid.Range = Range;
+StatusGrid.Sparkline = Sparkline;
 
 export default StatusGrid;

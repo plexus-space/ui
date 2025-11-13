@@ -1,22 +1,10 @@
 "use client";
 
 import { Footer } from "@/components/footer";
-import { CameraShake } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
-import { Particles } from "@/components/particles";
-import { useTheme } from "next-themes";
+// import { useTheme } from "next-themes";
 
 export default function Home() {
-  const { theme } = useTheme();
-
-  const props = {
-    curl: 0.5,
-    focus: 5.1,
-    fov: 50,
-    aperture: 4.8,
-    speed: 9.4,
-    color: theme === "dark" ? "#ffffff" : "#000000",
-  };
+  // const { theme } = useTheme();
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-12">
@@ -33,20 +21,6 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="relative h-[500px]">
-        <Canvas camera={{ position: [0, 0, 5], fov: 40 }} gl={{ alpha: true }}>
-          <CameraShake
-            yawFrequency={1}
-            maxYaw={0.05}
-            pitchFrequency={1}
-            maxPitch={0.05}
-            rollFrequency={0.5}
-            maxRoll={0.5}
-            intensity={0.2}
-          />
-          <Particles {...props} />
-        </Canvas>
-      </div>
       <Footer />
     </div>
   );

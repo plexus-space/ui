@@ -269,6 +269,7 @@ useEffect(() => {
               preferWebGPU={true}
               cellGap={1}
               showTooltip
+              showLegend
             />
           </div>
         </div>
@@ -511,6 +512,7 @@ useEffect(() => {
               preferWebGPU={true}
               cellGap={0.5}
               showTooltip
+              showLegend
             />
           </div>
         </div>
@@ -523,17 +525,21 @@ function PrimitiveHeatmapChart() {
   return (
     <ComponentPreview
       title="Primitive Components"
-      description="Build custom heatmaps with primitive components"
+      description="Build custom heatmaps with primitive components for full control"
       code={`import { HeatmapChart } from "@/components/plexusui/charts/heatmap-chart";
 
 <HeatmapChart.Root
   data={data}
   width={800}
   height={400}
+  xAxis={{ label: "Day" }}
+  yAxis={{ label: "Hour" }}
 >
   <HeatmapChart.Canvas />
+  <HeatmapChart.Grid />
   <HeatmapChart.Axes />
   <HeatmapChart.Tooltip />
+  <HeatmapChart.Legend title="Activity" />
 </HeatmapChart.Root>`}
       preview={
         <div className="w-full h-[500px]">
@@ -541,12 +547,61 @@ function PrimitiveHeatmapChart() {
             data={serverActivityData.slice(0, 168)} // One week
             width={800}
             height={500}
+            xAxis={{ label: "Day of Week" }}
+            yAxis={{ label: "Hour of Day" }}
             preferWebGPU={true}
           >
             <HeatmapChart.Canvas />
+            <HeatmapChart.Grid />
             <HeatmapChart.Axes />
             <HeatmapChart.Tooltip />
+            <HeatmapChart.Legend title="Activity Level" />
           </HeatmapChart.Root>
+        </div>
+      }
+    />
+  );
+}
+
+function ResponsiveHeatmap() {
+  return (
+    <ComponentPreview
+      title="Responsive Heatmap"
+      description="Heatmap with responsive sizing and custom margins"
+      code={`import { HeatmapChart } from "@/components/plexusui/charts/heatmap-chart";
+
+<div style={{ width: "100%", height: "500px" }}>
+  <HeatmapChart
+    data={correlationData}
+    width="100%"
+    height="100%"
+    minWidth={400}
+    minHeight={300}
+    margin={{ top: 40, right: 40, bottom: 70, left: 80 }}
+    showGrid
+    showAxes
+    showTooltip
+    showLegend
+    preferWebGPU={true}
+  />
+</div>`}
+      preview={
+        <div className="w-full" style={{ height: "500px" }}>
+          <HeatmapChart
+            data={correlationData}
+            width="100%"
+            height="100%"
+            minWidth={400}
+            minHeight={300}
+            xAxis={{ label: "Variables" }}
+            yAxis={{ label: "Variables" }}
+            margin={{ top: 40, right: 40, bottom: 70, left: 80 }}
+            showGrid
+            showAxes
+            showTooltip
+            showLegend
+            preferWebGPU={true}
+          />
         </div>
       }
     />
@@ -563,6 +618,7 @@ export function HeatmapChartExamples() {
       <RealTimeSystemMonitor />
       <WebGPUMemoryMonitor />
       <LargeScaleHeatmap />
+      <ResponsiveHeatmap />
       <PrimitiveHeatmapChart />
     </div>
   );
