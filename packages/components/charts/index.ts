@@ -147,19 +147,6 @@ export type {
   GanttChartControlsProps,
 } from "./gantt";
 
-export { PointCloudViewer } from "./point-cloud-viewer";
-export type {
-  PointCloudPoint,
-  PointCloudViewerProps,
-} from "./point-cloud-viewer";
-
-export { VectorField } from "./vector-field";
-export type {
-  VectorFieldPoint,
-  VectorFieldProps,
-  StreamlineParticle,
-} from "./vector-field";
-
 // Base chart infrastructure (reusable for all chart types)
 export {
   ChartRoot,

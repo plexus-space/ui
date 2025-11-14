@@ -207,74 +207,6 @@
       "registryDependencies": [],
       "tier": "free"
     },
-    "point-cloud-viewer": {
-      "name": "point-cloud-viewer",
-      "version": "0.1.0",
-      "displayName": "Point Cloud Viewer",
-      "category": "3d",
-      "status": "beta",
-      "complexity": "advanced",
-      "description": "Display millions of 3D points with attributes and filtering. Three.js-based with instanced rendering for optimal performance. Use cases: LIDAR scans, CT/MRI voxel data, particle simulations, sensor network positions, astronomical data.",
-      "files": [
-        "charts/point-cloud-viewer.tsx",
-        "lib/color-scales.ts"
-      ],
-      "dependencies": [
-        "@react-three/fiber",
-        "@react-three/drei",
-        "three"
-      ],
-      "devDependencies": [],
-      "registryDependencies": [],
-      "features": [
-        "10M+ points with instanced rendering",
-        "Color by value, height, or custom RGB",
-        "Variable point sizes and shapes (square, circle, sphere)",
-        "Filtering by attribute ranges",
-        "Point picking with click events",
-        "Orbit camera controls",
-        "Multiple color scales (viridis, plasma, inferno, cool, warm, grayscale)"
-      ],
-      "performanceTarget": "10M+ points at 60fps",
-      "tier": "free"
-    },
-    "vector-field-viz": {
-      "name": "vector-field-viz",
-      "version": "0.1.0",
-      "displayName": "Vector Field Visualization",
-      "category": "3d",
-      "status": "beta",
-      "complexity": "advanced",
-      "description": "Visualize directional data with arrows, streamlines, and particle tracing. Three.js-based with instanced arrow rendering. Use cases: Fluid dynamics (CFD airflow, blood flow), electromagnetic fields, force vectors on structures, wind patterns, thermal gradients.",
-      "files": [
-        "charts/vector-field.tsx",
-        "lib/color-scales.ts"
-      ],
-      "dependencies": [
-        "@react-three/fiber",
-        "@react-three/drei",
-        "three"
-      ],
-      "devDependencies": [],
-      "registryDependencies": [],
-      "features": [
-        "2D and 3D vector fields",
-        "Arrow rendering with instanced geometry",
-        "Streamlines with Euler integration",
-        "Animated flow particles",
-        "Color by magnitude, direction, or uniform",
-        "Arrow density control",
-        "Multiple visualization modes (arrows, streamlines, both)",
-        "Multiple color scales (viridis, plasma, inferno, cool, warm)"
-      ],
-      "performanceTarget": "100k+ arrows at 60fps",
-      "futureEnhancements": [
-        "Line Integral Convolution (LIC)",
-        "RK4 integration for streamlines",
-        "WebGPU compute shaders for particle tracing"
-      ],
-      "tier": "free"
-    },
     "waterfall-chart": {
       "name": "waterfall-chart",
       "version": "0.1.0",
@@ -285,7 +217,6 @@
       "description": "Time vs frequency spectrogram with GPU-accelerated rendering. Custom WebGPU texture-based architecture with circular buffer for smooth scrolling. Use cases: RF spectrum analysis, vibration analysis, audio processing, seismic data, bio-signals (EMG, EEG).",
       "files": [
         "charts/waterfall-chart.tsx",
-        "lib/fft-utils.ts",
         "lib/color-scales.ts"
       ],
       "dependencies": [],
@@ -348,7 +279,6 @@
         "Alert zones with color coding"
       ],
       "performanceTarget": "Real-time on 100k+ points",
-      "estimatedQuarter": "2025-Q2",
       "tier": "free"
     }
   }
