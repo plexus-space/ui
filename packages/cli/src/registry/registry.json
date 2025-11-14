@@ -19,7 +19,7 @@
       "name": "line-chart",
       "version": "0.2.0",
       "displayName": "Line Chart",
-      "category": "charts",
+      "category": "visualization",
       "description": "Multi-series line chart with GPU-accelerated rendering. Handles 100k+ points smoothly. Use cases: Time-series trends, sensor data plotting, stock prices, temperature curves, signal analysis.",
       "files": [
         "charts/line-chart.tsx",
@@ -37,7 +37,7 @@
       "name": "scatter-chart",
       "version": "0.1.0",
       "displayName": "Scatter Chart",
-      "category": "charts",
+      "category": "visualization",
       "description": "Scatter plot with variable point sizes and colors. Use cases: Correlation analysis, cluster visualization, quality control plots, particle distribution, measurement scatter.",
       "files": [
         "charts/scatter-chart.tsx",
@@ -55,7 +55,7 @@
       "name": "bar-chart",
       "version": "0.1.0",
       "displayName": "Bar Chart",
-      "category": "charts",
+      "category": "visualization",
       "description": "Bar chart with vertical/horizontal orientation. Supports grouped and stacked layouts. Use cases: Categorical comparisons, test results, production counts, event frequencies.",
       "files": [
         "charts/bar-chart.tsx",
@@ -73,7 +73,7 @@
       "name": "area-chart",
       "version": "0.1.0",
       "displayName": "Area Chart",
-      "category": "charts",
+      "category": "visualization",
       "description": "Area chart with filled regions and stacked support. Use cases: Cumulative data, bandwidth usage, memory consumption, power draw over time, filled envelopes.",
       "files": [
         "charts/area-chart.tsx",
@@ -91,12 +91,51 @@
       "name": "heatmap-chart",
       "version": "0.1.0",
       "displayName": "Heatmap Chart",
-      "category": "sensors",
+      "category": "visualization",
       "description": "2D grid heatmap with custom color scales. Use cases: Thermal imaging (FLIR cameras), correlation matrices, pressure sensor arrays, PCB thermal maps, tactile sensor grids, seat occupancy.",
       "files": [
         "charts/heatmap-chart.tsx",
         "charts/base-chart.tsx",
         "charts/data-utils.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "histogram-chart": {
+      "name": "histogram-chart",
+      "version": "0.1.0",
+      "displayName": "Histogram",
+      "category": "statistical",
+      "status": "stable",
+      "description": "Distribution visualization with automatic binning (Sturges, Scott, Freedman-Diaconis methods). Supports count, density, and frequency modes with optional normal curve overlay. Use cases: Data distribution analysis, quality control, experiment results, measurement statistics, tolerance analysis.",
+      "files": [
+        "charts/histogram-chart.tsx",
+        "charts/bar-chart.tsx",
+        "charts/base-chart.tsx",
+        "lib/data-utils.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "control-chart": {
+      "name": "control-chart",
+      "version": "0.1.0",
+      "displayName": "Control Chart (SPC)",
+      "category": "statistical",
+      "status": "stable",
+      "description": "Statistical Process Control charts with Western Electric rules detection. Displays control limits (UCL/LCL), warning limits, and zones (A/B/C). Automatic violation detection for rules 1-4. Use cases: Manufacturing quality control, process monitoring, Levey-Jennings charts (medical labs), SPC analysis, out-of-control detection.",
+      "files": [
+        "charts/control-chart.tsx",
+        "charts/line-chart.tsx",
+        "charts/base-chart.tsx"
       ],
       "dependencies": [],
       "devDependencies": [
@@ -126,7 +165,7 @@
       "name": "radar-chart",
       "version": "0.1.0",
       "displayName": "Radar Chart",
-      "category": "sensors",
+      "category": "instruments",
       "description": "Radar-style polar display with rotating sweep. Use cases: Air traffic control displays, weather radar visualization, sonar plots, 360° sensor sweeps, LIDAR scans.",
       "files": [
         "charts/radar-chart.tsx",
@@ -189,67 +228,11 @@
       "tier": "free",
       "status": "stable"
     },
-    "3d-model-viewer": {
-      "name": "3d-model-viewer",
-      "version": "0.1.0",
-      "displayName": "3D Model Viewer",
-      "category": "charts",
-      "status": "beta",
-      "description": "WebGPU-accelerated 3D model viewer with real-time heatmap data overlay. Supports orbit controls, scientific color maps, and vertex-based data visualization. Currently renders test geometry with full camera controls.",
-      "files": [
-        "charts/3d-model-viewer.tsx",
-        "charts/base-chart.tsx"
-      ],
-      "dependencies": [],
-      "devDependencies": [
-        "@webgpu/types"
-      ],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "waterfall-chart": {
-      "name": "waterfall-chart",
-      "version": "0.1.0",
-      "displayName": "Waterfall Chart",
-      "category": "sensors",
-      "status": "beta",
-      "complexity": "medium-high",
-      "description": "Time vs frequency spectrogram with GPU-accelerated rendering. Custom WebGPU texture-based architecture with circular buffer for smooth scrolling. Use cases: RF spectrum analysis, vibration analysis, audio processing, seismic data, bio-signals (EMG, EEG).",
-      "files": [
-        "charts/waterfall-chart.tsx",
-        "lib/color-scales.ts"
-      ],
-      "dependencies": [],
-      "devDependencies": [
-        "@webgpu/types"
-      ],
-      "registryDependencies": [],
-      "features": [
-        "WebGPU texture-based rendering with Canvas2D fallback",
-        "Circular texture buffer for efficient scrolling",
-        "FFT computation (CPU-based, GPU compute planned)",
-        "Window functions (Hann, Hamming, Blackman, Rectangular)",
-        "Logarithmic or linear frequency scale",
-        "dB or linear magnitude scale",
-        "Custom color scales (viridis, jet, inferno, turbo, etc.)",
-        "STFT (Short-Time Fourier Transform) support",
-        "Configurable FFT size (256, 512, 1024, 2048, 4096)"
-      ],
-      "performanceTarget": "1024 FFT bins at 60fps (WebGPU mode)",
-      "futureEnhancements": [
-        "WebGPU compute shader for FFT",
-        "Frequency markers and annotations",
-        "Peak detection and tracking",
-        "Time cursors with spectrum snapshot",
-        "Signal-to-noise ratio (SNR) indicators"
-      ],
-      "tier": "free"
-    },
     "gantt": {
       "name": "gantt",
       "version": "0.1.0",
       "displayName": "Gantt Chart",
-      "category": "charts",
+      "category": "timeline",
       "status": "stable",
       "description": "Interactive timeline visualization with infinite scroll, zoom controls, and live time tracking. Use cases: Ground station contact schedules, mission planning, flight operations, maintenance windows, spacecraft subsystem timelines.",
       "files": [
@@ -262,23 +245,24 @@
       "registryDependencies": [],
       "tier": "free"
     },
-    "anomaly-detection": {
-      "name": "anomaly-detection",
-      "version": "0.0.0",
-      "displayName": "Anomaly Detection",
-      "category": "analysis",
-      "status": "planned",
-      "complexity": "medium-high",
-      "description": "Real-time anomaly highlighting on time-series data. Use cases: Sensor fault detection, quality control, network monitoring, predictive maintenance.",
-      "plannedFeatures": [
-        "Threshold-based detection",
-        "Statistical anomalies (z-score, IQR, Grubbs)",
-        "ML-based anomaly scores (ONNX Runtime)",
-        "Anomaly markers and annotations",
-        "Confidence intervals and bands",
-        "Alert zones with color coding"
+    "waterfall-chart": {
+      "name": "waterfall-chart",
+      "version": "0.1.0",
+      "displayName": "Waterfall / Spectrogram Chart",
+      "category": "visualization",
+      "status": "stable",
+      "description": "Frequency-time analysis with FFT computation for real-time signal monitoring. WebGPU-accelerated rendering of spectrograms. Use cases: RF spectrum analysis (aerospace communications), EEG frequency bands (medical devices), audio spectrograms, vibration analysis (predictive maintenance), sonar/radar displays.",
+      "files": [
+        "charts/waterfall-chart.tsx",
+        "charts/base-chart.tsx",
+        "lib/data-utils.ts",
+        "lib/color-scales.ts"
       ],
-      "performanceTarget": "Real-time on 100k+ points",
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
       "tier": "free"
     }
   }

@@ -14,83 +14,139 @@ import {
 } from "./base-chart";
 import { createContext, useContext, useEffect, useMemo, useRef } from "react";
 import { viridis as defaultColorScale } from "../lib/color-scales";
+import {
+  generateSpectrogram,
+  type WindowFunction,
+  type SpectrogramPoint,
+} from "../lib/data-utils";
 
 // ============================================================================
-// Heatmap Chart Types
+// Waterfall Chart Types
 // ============================================================================
 
-export interface DataPoint {
-  x: number | string;
-  y: number | string;
-  value: number;
-  label?: string;
-}
+/**
+ * Waterfall/Spectrogram Chart for frequency-time analysis
+ *
+ * Use cases:
+ * - RF spectrum analysis (aerospace/defense)
+ * - EEG frequency bands (medical devices)
+ * - Vibration analysis (industrial automation)
+ * - Audio spectrogram (scientific computing)
+ */
 
-export interface HeatmapChartProps {
-  data: DataPoint[];
+export interface WaterfallChartProps {
+  /**
+   * Time-series signal data
+   */
+  signal: number[];
+
+  /**
+   * Sampling rate in Hz (e.g., 1000 Hz = 1000 samples/second)
+   */
+  sampleRate: number;
+
+  /**
+   * FFT window size (must be power of 2)
+   * Larger = better frequency resolution, worse time resolution
+   * Smaller = better time resolution, worse frequency resolution
+   * Typical: 256, 512, 1024, 2048
+   */
+  fftSize?: number;
+
+  /**
+   * Hop size (overlap between windows in samples)
+   * Smaller = smoother transitions, more computation
+   * Typical: fftSize / 2 (50% overlap)
+   */
+  hopSize?: number;
+
+  /**
+   * Window function to reduce spectral leakage
+   */
+  windowFunction?: WindowFunction;
+
+  /**
+   * Use decibel scale (true) or linear power (false)
+   */
+  useDb?: boolean;
+
+  /**
+   * Minimum magnitude for color scale
+   * Auto-calculated if not provided
+   */
+  minMagnitude?: number;
+
+  /**
+   * Maximum magnitude for color scale
+   * Auto-calculated if not provided
+   */
+  maxMagnitude?: number;
+
+  /**
+   * Frequency range to display [minHz, maxHz]
+   * Defaults to [0, sampleRate / 2] (Nyquist limit)
+   */
+  frequencyRange?: [number, number];
+
+  /**
+   * Time range to display in samples
+   * Defaults to entire signal
+   */
+  timeRange?: [number, number];
+
   xAxis?: {
     label?: string;
-    categories?: (string | number)[];
-    formatter?: (value: number | string) => string;
+    formatter?: (value: number) => string;
   };
   yAxis?: {
     label?: string;
-    categories?: (string | number)[];
-    formatter?: (value: number | string) => string;
+    formatter?: (value: number) => string;
   };
-  width?: number | string; // Support "100%", "50vw", etc.
-  height?: number | string;
-  minWidth?: number;
-  minHeight?: number;
-  maxWidth?: number;
-  maxHeight?: number;
-  aspectRatio?: number; // e.g., 16/9, 4/3
-  margin?: { top: number; right: number; bottom: number; left: number };
+  width?: number;
+  height?: number;
   showGrid?: boolean;
   showAxes?: boolean;
   showTooltip?: boolean;
   showLegend?: boolean;
   className?: string;
   preferWebGPU?: boolean;
-  colorScale?: (value: number) => string; // Function to map value to color
-  minValue?: number;
-  maxValue?: number;
-  cellGap?: number;
+  colorScale?: (value: number) => string;
 }
 
-// Extended context for heatmap chart
-interface HeatmapChartContextType {
-  data: DataPoint[];
-  xCategories: (string | number)[];
-  yCategories: (string | number)[];
-  xCategoryMap: Map<string | number, number>;
-  yCategoryMap: Map<string | number, number>;
+// Extended context for waterfall chart
+interface WaterfallChartContextType {
+  spectrogramData: SpectrogramPoint[];
+  frequencyBins: number[];
+  timeBins: number[];
   colorScale: (value: number) => string;
-  minValue: number;
-  maxValue: number;
-  cellGap: number;
+  minMagnitude: number;
+  maxMagnitude: number;
+  sampleRate: number;
+  useDb: boolean;
 }
 
-const HeatmapChartContext = createContext<HeatmapChartContextType | null>(null);
+const WaterfallChartContext = createContext<WaterfallChartContextType | null>(
+  null
+);
 
-function useHeatmapChartData() {
-  const ctx = useContext(HeatmapChartContext);
+function useWaterfallChartData() {
+  const ctx = useContext(WaterfallChartContext);
   if (!ctx) {
     throw new Error(
-      "HeatmapChart components must be used within HeatmapChart.Root"
+      "WaterfallChart components must be used within WaterfallChart.Root"
     );
   }
   return ctx;
 }
 
-function useHeatmapChart() {
+function useWaterfallChart() {
   const baseCtx = useBaseChart();
-  const heatmapCtx = useHeatmapChartData();
-  return { ...baseCtx, ...heatmapCtx };
+  const waterfallCtx = useWaterfallChartData();
+  return { ...baseCtx, ...waterfallCtx };
 }
 
 // ============================================================================
-// Shaders
+// Shaders (reuse heatmap shaders - same rendering approach)
 // ============================================================================
 
 const VERTEX_SHADER = `
@@ -159,78 +215,109 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
 `;
 
 // ============================================================================
-// Heatmap Renderers
+// Waterfall Renderers
 // ============================================================================
 
-interface HeatmapRendererProps extends RendererProps {
-  data: DataPoint[];
-  xCategoryMap: Map<string | number, number>;
-  yCategoryMap: Map<string | number, number>;
+interface WaterfallRendererProps extends RendererProps {
+  spectrogramData: SpectrogramPoint[];
+  timeBins: number[];
+  frequencyBins: number[];
   colorScale: (value: number) => string;
-  minValue: number;
-  maxValue: number;
-  cellGap: number;
+  minMagnitude: number;
+  maxMagnitude: number;
 }
 
-// Helper function to create heatmap geometry
-function createHeatmapGeometry(
-  data: DataPoint[],
+// Helper function to create waterfall geometry
+function createWaterfallGeometry(
+  spectrogramData: SpectrogramPoint[],
+  timeBins: number[],
+  frequencyBins: number[],
   xScale: (x: number) => number,
   yScale: (y: number) => number,
-  xCategoryMap: Map<string | number, number>,
-  yCategoryMap: Map<string | number, number>,
   colorScale: (value: number) => string,
-  minValue: number,
-  maxValue: number,
-  cellWidth: number,
-  cellHeight: number,
-  cellGap: number
+  minMagnitude: number,
+  maxMagnitude: number
 ) {
   const positions: number[] = [];
   const colors: number[] = [];
 
-  for (const point of data) {
-    const xIdx = xCategoryMap.get(point.x);
-    const yIdx = yCategoryMap.get(point.y);
+  if (timeBins.length === 0 || frequencyBins.length === 0) {
+    return { positions, colors };
+  }
 
-    if (xIdx === undefined || yIdx === undefined) continue;
+  const cellWidth =
+    timeBins.length > 1
+      ? Math.abs(xScale(timeBins[1]) - xScale(timeBins[0]))
+      : 10;
+  const cellHeight =
+    frequencyBins.length > 1
+      ? Math.abs(yScale(frequencyBins[1]) - yScale(frequencyBins[0]))
+      : 10;
 
-    // xScale/yScale return the center position, so offset by half cell size
-    // to position the cell correctly
-    const centerX = xScale(xIdx);
-    const centerY = yScale(yIdx);
-    const x = centerX - cellWidth / 2;
-    const y = centerY - cellHeight / 2;
-    const w = cellWidth - cellGap;
-    const h = cellHeight - cellGap;
+  // Create a map for fast lookup
+  const dataMap = new Map<string, number>();
+  for (const point of spectrogramData) {
+    const key = `${point.time},${point.frequency}`;
+    dataMap.set(key, point.magnitude);
+  }
 
-    // Normalize value to [0, 1]
-    const normalizedValue = (point.value - minValue) / (maxValue - minValue);
-    const colorStr = colorScale(normalizedValue);
-    const rgb = hexToRgb(colorStr);
+  // Render cells
+  for (let tIdx = 0; tIdx < timeBins.length; tIdx++) {
+    for (let fIdx = 0; fIdx < frequencyBins.length; fIdx++) {
+      const timeBin = timeBins[tIdx];
+      const freqBin = frequencyBins[fIdx];
+      const key = `${timeBin},${freqBin}`;
+      const magnitude = dataMap.get(key);
 
-    // Two triangles for rectangle
-    positions.push(x, y, x + w, y, x, y + h, x + w, y, x + w, y + h, x, y + h);
+      if (magnitude === undefined) continue;
 
-    // Same color for all 6 vertices
-    for (let i = 0; i < 6; i++) {
-      colors.push(...rgb, 1.0);
+      const x = xScale(timeBin);
+      const y = yScale(freqBin);
+
+      // Normalize magnitude to [0, 1]
+      const normalizedMag =
+        (magnitude - minMagnitude) / (maxMagnitude - minMagnitude);
+      const clampedMag = Math.max(0, Math.min(1, normalizedMag));
+
+      const colorStr = colorScale(clampedMag);
+      const rgb = hexToRgb(colorStr);
+
+      // Two triangles for rectangle
+      positions.push(
+        x,
+        y,
+        x + cellWidth,
+        y,
+        x,
+        y + cellHeight,
+        x + cellWidth,
+        y,
+        x + cellWidth,
+        y + cellHeight,
+        x,
+        y + cellHeight
+      );
+
+      // Same color for all 6 vertices
+      for (let i = 0; i < 6; i++) {
+        colors.push(...rgb, 1.0);
+      }
     }
   }
 
   return { positions, colors };
 }
 
-// Factory function to create WebGL heatmap renderer
-function createWebGLHeatmapRenderer(
+// Factory function to create WebGL waterfall renderer
+function createWebGLWaterfallRenderer(
   canvas: HTMLCanvasElement
-): WebGLRenderer<HeatmapRendererProps> {
+): WebGLRenderer<WaterfallRendererProps> {
   const buffers = {
     position: null as WebGLBuffer | null,
     color: null as WebGLBuffer | null,
   };
 
-  const renderer = createWebGLRenderer<HeatmapRendererProps>({
+  const renderer = createWebGLRenderer<WaterfallRendererProps>({
     canvas,
     createShaders: () => ({
       vertexSource: VERTEX_SHADER,
@@ -238,18 +325,17 @@ function createWebGLHeatmapRenderer(
     }),
     onRender: (gl, program, props) => {
       const {
-        data,
+        spectrogramData,
+        timeBins,
+        frequencyBins,
         xDomain,
         yDomain,
         width,
         height,
         margin,
-        xCategoryMap,
-        yCategoryMap,
         colorScale,
-        minValue,
-        maxValue,
-        cellGap,
+        minMagnitude,
+        maxMagnitude,
       } = props;
 
       gl.useProgram(program);
@@ -269,21 +355,15 @@ function createWebGLHeatmapRenderer(
         ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
-      const cellWidth = innerWidth / xCategoryMap.size;
-      const cellHeight = innerHeight / yCategoryMap.size;
-
-      const geometry = createHeatmapGeometry(
-        data,
+      const geometry = createWaterfallGeometry(
+        spectrogramData,
+        timeBins,
+        frequencyBins,
         xScale,
         yScaleFlipped,
-        xCategoryMap,
-        yCategoryMap,
         colorScale,
-        minValue,
-        maxValue,
-        cellWidth,
-        cellHeight,
-        cellGap
+        minMagnitude,
+        maxMagnitude
       );
 
       if (geometry.positions.length === 0) return;
@@ -322,11 +402,11 @@ function createWebGLHeatmapRenderer(
   return renderer;
 }
 
-// Factory function to create WebGPU heatmap renderer
-function createWebGPUHeatmapRenderer(
+// Factory function to create WebGPU waterfall renderer
+function createWebGPUWaterfallRenderer(
   canvas: HTMLCanvasElement,
   device: GPUDevice
-): WebGPURenderer<HeatmapRendererProps> {
+): WebGPURenderer<WaterfallRendererProps> {
   const shaderModule = device.createShaderModule({ code: WGSL_SHADER });
 
   const uniformBuffer = device.createBuffer({
@@ -349,13 +429,13 @@ function createWebGPUHeatmapRenderer(
     entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
 
-  // Persistent buffers for heatmap rendering (reused across frames)
-  const heatmapBuffers = {
+  // Persistent buffers with 1.5x growth factor
+  const waterfallBuffers = {
     position: null as GPUBuffer | null,
     color: null as GPUBuffer | null,
   };
 
-  const renderer = createWebGPURenderer<HeatmapRendererProps>({
+  const renderer = createWebGPURenderer<WaterfallRendererProps>({
     canvas,
     device,
     createPipeline: (device, format) => {
@@ -407,18 +487,17 @@ function createWebGPUHeatmapRenderer(
     },
     onRender: async (device, context, pipeline, props) => {
       const {
-        data,
+        spectrogramData,
+        timeBins,
+        frequencyBins,
         xDomain,
         yDomain,
         width,
         height,
         margin,
-        xCategoryMap,
-        yCategoryMap,
         colorScale,
-        minValue,
-        maxValue,
-        cellGap,
+        minMagnitude,
+        maxMagnitude,
       } = props;
 
       const innerWidth = width - margin.left - margin.right;
@@ -450,21 +529,15 @@ function createWebGPUHeatmapRenderer(
         ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
-      const cellWidth = innerWidth / xCategoryMap.size;
-      const cellHeight = innerHeight / yCategoryMap.size;
-
-      const geometry = createHeatmapGeometry(
-        data,
+      const geometry = createWaterfallGeometry(
+        spectrogramData,
+        timeBins,
+        frequencyBins,
         xScale,
         yScaleFlipped,
-        xCategoryMap,
-        yCategoryMap,
         colorScale,
-        minValue,
-        maxValue,
-        cellWidth,
-        cellHeight,
-        cellGap
+        minMagnitude,
+        maxMagnitude
       );
 
       if (geometry.positions.length === 0) return;
@@ -491,11 +564,11 @@ function createWebGPUHeatmapRenderer(
 
       // Create or resize position buffer with 1.5x growth factor
       if (
-        !heatmapBuffers.position ||
-        heatmapBuffers.position.size < positionData.byteLength * 1.5
+        !waterfallBuffers.position ||
+        waterfallBuffers.position.size < positionData.byteLength * 1.5
       ) {
-        heatmapBuffers.position?.destroy();
-        heatmapBuffers.position = device.createBuffer({
+        waterfallBuffers.position?.destroy();
+        waterfallBuffers.position = device.createBuffer({
           size: Math.ceil(positionData.byteLength * 1.5),
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
@@ -503,22 +576,22 @@ function createWebGPUHeatmapRenderer(
 
       // Create or resize color buffer with 1.5x growth factor
       if (
-        !heatmapBuffers.color ||
-        heatmapBuffers.color.size < colorData.byteLength * 1.5
+        !waterfallBuffers.color ||
+        waterfallBuffers.color.size < colorData.byteLength * 1.5
       ) {
-        heatmapBuffers.color?.destroy();
-        heatmapBuffers.color = device.createBuffer({
+        waterfallBuffers.color?.destroy();
+        waterfallBuffers.color = device.createBuffer({
           size: Math.ceil(colorData.byteLength * 1.5),
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
       }
 
       // Write data to buffers
-      device.queue.writeBuffer(heatmapBuffers.position, 0, positionData);
-      device.queue.writeBuffer(heatmapBuffers.color, 0, colorData);
+      device.queue.writeBuffer(waterfallBuffers.position, 0, positionData);
+      device.queue.writeBuffer(waterfallBuffers.color, 0, colorData);
 
-      passEncoder.setVertexBuffer(0, heatmapBuffers.position);
-      passEncoder.setVertexBuffer(1, heatmapBuffers.color);
+      passEncoder.setVertexBuffer(0, waterfallBuffers.position);
+      passEncoder.setVertexBuffer(1, waterfallBuffers.color);
 
       passEncoder.draw(geometry.positions.length / 2);
 
@@ -527,9 +600,8 @@ function createWebGPUHeatmapRenderer(
     },
     onDestroy: () => {
       uniformBuffer.destroy();
-      // Clean up heatmap buffers
-      heatmapBuffers.position?.destroy();
-      heatmapBuffers.color?.destroy();
+      waterfallBuffers.position?.destroy();
+      waterfallBuffers.color?.destroy();
     },
   });
 
@@ -537,205 +609,181 @@ function createWebGPUHeatmapRenderer(
 }
 
 // ============================================================================
-// Heatmap Chart Components
+// Waterfall Chart Components
 // ============================================================================
 
 function Root({
-  data,
+  signal,
+  sampleRate,
+  fftSize = 256,
+  hopSize,
+  windowFunction = "hann",
+  useDb = true,
+  minMagnitude,
+  maxMagnitude,
+  frequencyRange,
+  timeRange,
   xAxis = {},
   yAxis = {},
   width = 800,
   height = 400,
-  minWidth,
-  minHeight,
-  maxWidth,
-  maxHeight,
-  aspectRatio,
-  margin,
   preferWebGPU = true,
   colorScale = defaultColorScale,
-  minValue,
-  maxValue,
-  cellGap = 2,
   className,
   children,
 }: {
-  data: DataPoint[];
+  signal: number[];
+  sampleRate: number;
+  fftSize?: number;
+  hopSize?: number;
+  windowFunction?: WindowFunction;
+  useDb?: boolean;
+  minMagnitude?: number;
+  maxMagnitude?: number;
+  frequencyRange?: [number, number];
+  timeRange?: [number, number];
   xAxis?: {
     label?: string;
-    categories?: (string | number)[];
-    formatter?: (value: number | string) => string;
+    formatter?: (value: number) => string;
   };
   yAxis?: {
     label?: string;
-    categories?: (string | number)[];
-    formatter?: (value: number | string) => string;
+    formatter?: (value: number) => string;
   };
-  width?: number | string;
-  height?: number | string;
-  minWidth?: number;
-  minHeight?: number;
-  maxWidth?: number;
-  maxHeight?: number;
-  aspectRatio?: number;
-  margin?: { top: number; right: number; bottom: number; left: number };
+  width?: number;
+  height?: number;
   preferWebGPU?: boolean;
   colorScale?: (value: number) => string;
-  minValue?: number;
-  maxValue?: number;
-  cellGap?: number;
   className?: string;
   children?: React.ReactNode;
 }) {
-  // Extract categories - preserve insertion order for strings, sort numbers
-  const xCategories = useMemo(() => {
-    if (xAxis.categories) return xAxis.categories;
-    const cats = new Set<string | number>();
-    data.forEach((d: DataPoint) => {
-      cats.add(d.x);
-    });
-    const arr = Array.from(cats);
-    // Only sort if all categories are numbers
-    if (arr.length > 0 && arr.every((c) => typeof c === "number")) {
-      return arr.sort((a, b) => (a as number) - (b as number));
+  // Calculate spectrogram
+  const spectrogramData = useMemo(() => {
+    if (signal.length === 0) return [];
+    const actualHopSize = hopSize ?? Math.floor(fftSize / 2);
+    return generateSpectrogram(
+      signal,
+      fftSize,
+      actualHopSize,
+      sampleRate,
+      windowFunction,
+      useDb
+    );
+  }, [signal, fftSize, hopSize, sampleRate, windowFunction, useDb]);
+
+  // Extract unique time and frequency bins
+  const { timeBins, frequencyBins } = useMemo(() => {
+    const timeSet = new Set<number>();
+    const freqSet = new Set<number>();
+
+    for (const point of spectrogramData) {
+      timeSet.add(point.time);
+      freqSet.add(point.frequency);
     }
-    // For strings or mixed types, preserve insertion order
-    return arr;
-  }, [data, xAxis.categories]);
 
-  const yCategories = useMemo(() => {
-    if (yAxis.categories) return yAxis.categories;
-    const cats = new Set<string | number>();
-    data.forEach((d) => {
-      cats.add(d.y);
-    });
-    const arr = Array.from(cats);
-    // Only sort if all categories are numbers
-    if (arr.length > 0 && arr.every((c) => typeof c === "number")) {
-      return arr.sort((a, b) => (a as number) - (b as number));
+    const times = Array.from(timeSet).sort((a, b) => a - b);
+    const freqs = Array.from(freqSet).sort((a, b) => a - b);
+
+    // Apply frequency range filter if specified
+    const filteredFreqs = frequencyRange
+      ? freqs.filter((f) => f >= frequencyRange[0] && f <= frequencyRange[1])
+      : freqs;
+
+    // Apply time range filter if specified
+    const filteredTimes = timeRange
+      ? times.filter((t) => t >= timeRange[0] && t <= timeRange[1])
+      : times;
+
+    return { timeBins: filteredTimes, frequencyBins: filteredFreqs };
+  }, [spectrogramData, frequencyRange, timeRange]);
+
+  // Calculate magnitude range
+  const { calculatedMin, calculatedMax } = useMemo(() => {
+    if (spectrogramData.length === 0) {
+      return { calculatedMin: 0, calculatedMax: 1 };
     }
-    // For strings or mixed types, preserve insertion order
-    return arr;
-  }, [data, yAxis.categories]);
 
-  // Create category mappings
-  const xCategoryMap = useMemo(() => {
-    const map = new Map<string | number, number>();
-    xCategories.forEach((cat, idx) => {
-      map.set(cat, idx);
-    });
-    return map;
-  }, [xCategories]);
-
-  const yCategoryMap = useMemo(() => {
-    const map = new Map<string | number, number>();
-    yCategories.forEach((cat, idx) => {
-      map.set(cat, idx);
-    });
-    return map;
-  }, [yCategories]);
-
-  // Calculate value range
-  const calculatedMinValue = useMemo(() => {
-    if (minValue !== undefined) return minValue;
-    return Math.min(...data.map((d) => d.value));
-  }, [data, minValue]);
-
-  const calculatedMaxValue = useMemo(() => {
-    if (maxValue !== undefined) return maxValue;
-    return Math.max(...data.map((d) => d.value));
-  }, [data, maxValue]);
+    const magnitudes = spectrogramData.map((d) => d.magnitude);
+    return {
+      calculatedMin: minMagnitude ?? Math.min(...magnitudes),
+      calculatedMax: maxMagnitude ?? Math.max(...magnitudes),
+    };
+  }, [spectrogramData, minMagnitude, maxMagnitude]);
 
   // Domains for rendering
-  const xDomain: [number, number] = [-0.5, xCategories.length - 0.5];
-  const yDomain: [number, number] = [-0.5, yCategories.length - 0.5];
+  const xDomain: [number, number] = useMemo(() => {
+    if (timeBins.length === 0) return [0, 1];
+    return [timeBins[0], timeBins[timeBins.length - 1]];
+  }, [timeBins]);
 
-  // Generate ticks at integer positions for categorical data
-  const xTicksArray = useMemo(() => {
-    // Show all X category ticks (usually not too many)
-    return Array.from({ length: xCategories.length }, (_, i) => i);
-  }, [xCategories.length]);
+  const yDomain: [number, number] = useMemo(() => {
+    if (frequencyBins.length === 0) return [0, sampleRate / 2];
+    return [frequencyBins[0], frequencyBins[frequencyBins.length - 1]];
+  }, [frequencyBins, sampleRate]);
 
-  const yTicksArray = useMemo(() => {
-    // For Y axis, if there are many categories (>10), show a subset for readability
-    if (yCategories.length > 10) {
-      const step = Math.ceil(yCategories.length / 8);
-      return Array.from(
-        { length: Math.ceil(yCategories.length / step) },
-        (_, i) => i * step
-      ).filter((i) => i < yCategories.length);
-    }
-    return Array.from({ length: yCategories.length }, (_, i) => i);
-  }, [yCategories.length]);
-
-  // Formatters to map indices to category labels
+  // Default formatters
   const xFormatter = useMemo(() => {
     return (
       xAxis.formatter ||
       ((value: number) => {
-        const idx = Math.round(value);
-        return idx >= 0 && idx < xCategories.length
-          ? String(xCategories[idx])
-          : "";
+        // Format as time (samples or seconds)
+        const timeInSeconds = value / sampleRate;
+        return `${timeInSeconds.toFixed(2)}s`;
       })
     );
-  }, [xCategories, xAxis.formatter]);
+  }, [xAxis.formatter, sampleRate]);
 
   const yFormatter = useMemo(() => {
     return (
       yAxis.formatter ||
       ((value: number) => {
-        const idx = Math.round(value);
-        return idx >= 0 && idx < yCategories.length
-          ? String(yCategories[idx])
-          : "";
+        // Format as frequency
+        if (value >= 1000) {
+          return `${(value / 1000).toFixed(1)}kHz`;
+        }
+        return `${value.toFixed(0)}Hz`;
       })
     );
-  }, [yCategories, yAxis.formatter]);
+  }, [yAxis.formatter]);
 
   return (
     <ChartRoot
       width={width}
       height={height}
-      minWidth={minWidth}
-      minHeight={minHeight}
-      maxWidth={maxWidth}
-      maxHeight={maxHeight}
-      aspectRatio={aspectRatio}
-      margin={margin}
-      xAxis={{ ...xAxis, formatter: xFormatter }}
-      yAxis={{ ...yAxis, formatter: yFormatter }}
+      xAxis={{ ...xAxis, label: xAxis.label || "Time", formatter: xFormatter }}
+      yAxis={{
+        ...yAxis,
+        label: yAxis.label || "Frequency",
+        formatter: yFormatter,
+      }}
       xDomain={xDomain}
       yDomain={yDomain}
-      xTicks={xTicksArray}
-      yTicks={yTicksArray}
       preferWebGPU={preferWebGPU}
       className={className}
     >
-      <HeatmapChartContext.Provider
+      <WaterfallChartContext.Provider
         value={{
-          data,
-          xCategories,
-          yCategories,
-          xCategoryMap,
-          yCategoryMap,
+          spectrogramData,
+          frequencyBins,
+          timeBins,
           colorScale,
-          minValue: calculatedMinValue,
-          maxValue: calculatedMaxValue,
-          cellGap,
+          minMagnitude: calculatedMin,
+          maxMagnitude: calculatedMax,
+          sampleRate,
+          useDb,
         }}
       >
         {children}
-      </HeatmapChartContext.Provider>
+      </WaterfallChartContext.Provider>
     </ChartRoot>
   );
 }
 
 function Canvas() {
-  const ctx = useHeatmapChart();
+  const ctx = useWaterfallChart();
   const rendererRef = useRef<
-    | WebGLRenderer<HeatmapRendererProps>
-    | WebGPURenderer<HeatmapRendererProps>
+    | WebGLRenderer<WaterfallRendererProps>
+    | WebGPURenderer<WaterfallRendererProps>
     | null
   >(null);
   const mountedRef = useRef(true);
@@ -761,7 +809,7 @@ function Canvas() {
           const adapter = await navigator.gpu?.requestAdapter();
           if (adapter) {
             const device = await adapter.requestDevice();
-            const renderer = createWebGPUHeatmapRenderer(canvas, device);
+            const renderer = createWebGPUWaterfallRenderer(canvas, device);
 
             if (!mountedRef.current) {
               renderer.destroy();
@@ -778,7 +826,7 @@ function Canvas() {
       }
 
       try {
-        const renderer = createWebGLHeatmapRenderer(canvas);
+        const renderer = createWebGLWaterfallRenderer(canvas);
 
         if (!mountedRef.current) {
           renderer.destroy();
@@ -814,7 +862,9 @@ function Canvas() {
 
     const renderProps = {
       canvas,
-      data: ctx.data,
+      spectrogramData: ctx.spectrogramData,
+      timeBins: ctx.timeBins,
+      frequencyBins: ctx.frequencyBins,
       xDomain: ctx.xDomain,
       yDomain: ctx.yDomain,
       xTicks: ctx.xTicks,
@@ -828,18 +878,17 @@ function Canvas() {
         left: ctx.margin.left * dpr,
       },
       showGrid: false,
-      xCategoryMap: ctx.xCategoryMap,
-      yCategoryMap: ctx.yCategoryMap,
       colorScale: ctx.colorScale,
-      minValue: ctx.minValue,
-      maxValue: ctx.maxValue,
-      cellGap: ctx.cellGap * dpr,
+      minMagnitude: ctx.minMagnitude,
+      maxMagnitude: ctx.maxMagnitude,
     };
 
     renderer.render(renderProps);
   }, [
     ctx.canvasRef,
-    ctx.data,
+    ctx.spectrogramData,
+    ctx.timeBins,
+    ctx.frequencyBins,
     ctx.xDomain,
     ctx.yDomain,
     ctx.xTicks,
@@ -847,16 +896,10 @@ function Canvas() {
     ctx.width,
     ctx.height,
     ctx.devicePixelRatio,
-    ctx.margin.top,
-    ctx.margin.right,
-    ctx.margin.bottom,
-    ctx.margin.left,
-    ctx.xCategoryMap,
-    ctx.yCategoryMap,
+    ctx.margin,
     ctx.colorScale,
-    ctx.minValue,
-    ctx.maxValue,
-    ctx.cellGap,
+    ctx.minMagnitude,
+    ctx.maxMagnitude,
   ]);
 
   return (
@@ -871,66 +914,13 @@ function Canvas() {
   );
 }
 
-function Grid() {
-  const ctx = useHeatmapChart();
+function Legend({ title }: { title?: string }) {
+  const ctx = useWaterfallChart();
 
-  useEffect(() => {
-    const canvas = ctx.overlayRef.current;
-    if (!canvas) return;
-
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    const dpr = ctx.devicePixelRatio;
-
-    // Get theme-aware colors
-    const isDark = document.documentElement.classList.contains("dark");
-    const gridColor = isDark
-      ? "rgba(255, 255, 255, 0.05)"
-      : "rgba(0, 0, 0, 0.05)";
-
-    context.save();
-    context.scale(dpr, dpr);
-    context.strokeStyle = gridColor;
-    context.lineWidth = 1;
-
-    const innerWidth = ctx.width - ctx.margin.left - ctx.margin.right;
-    const innerHeight = ctx.height - ctx.margin.top - ctx.margin.bottom;
-
-    // Draw vertical grid lines (one for each x category)
-    for (let i = 0; i <= ctx.xCategories.length; i++) {
-      const x = ctx.margin.left + (i / ctx.xCategories.length) * innerWidth;
-      context.beginPath();
-      context.moveTo(x, ctx.margin.top);
-      context.lineTo(x, ctx.height - ctx.margin.bottom);
-      context.stroke();
-    }
-
-    // Draw horizontal grid lines (one for each y category)
-    for (let i = 0; i <= ctx.yCategories.length; i++) {
-      const y = ctx.margin.top + (i / ctx.yCategories.length) * innerHeight;
-      context.beginPath();
-      context.moveTo(ctx.margin.left, y);
-      context.lineTo(ctx.width - ctx.margin.right, y);
-      context.stroke();
-    }
-
-    context.restore();
-  }, [
-    ctx.overlayRef,
-    ctx.width,
-    ctx.height,
-    ctx.margin,
-    ctx.devicePixelRatio,
-    ctx.xCategories.length,
-    ctx.yCategories.length,
-  ]);
-
-  return null;
-}
-
-function Legend({ title = "Value" }: { title?: string }) {
-  const ctx = useHeatmapChart();
+  const displayTitle = useMemo(() => {
+    if (title) return title;
+    return ctx.useDb ? "Power (dB)" : "Power";
+  }, [title, ctx.useDb]);
 
   // Generate gradient stops
   const gradientStops = useMemo(() => {
@@ -944,21 +934,21 @@ function Legend({ title = "Value" }: { title?: string }) {
     return stops;
   }, [ctx.colorScale]);
 
-  const gradientId = `heatmap-legend-gradient-${Math.random()
+  const gradientId = `waterfall-legend-gradient-${Math.random()
     .toString(36)
     .substring(2, 11)}`;
 
   return (
     <div className="absolute top-4 right-4 bg-white dark:bg-zinc-950 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 p-3">
       <div className="text-xs font-medium mb-2 text-zinc-700 dark:text-zinc-300">
-        {title}
+        {displayTitle}
       </div>
       <div className="flex items-center gap-2">
         <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {ctx.minValue.toFixed(1)}
+          {ctx.minMagnitude.toFixed(1)}
         </span>
         <svg width="120" height="20">
-          <title className="sr-only">Heatmap Legend</title>
+          <title className="sr-only">Waterfall Legend</title>
           <defs>
             <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
               {gradientStops.map((stop, idx) => (
@@ -980,7 +970,7 @@ function Legend({ title = "Value" }: { title?: string }) {
           />
         </svg>
         <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {ctx.maxValue.toFixed(1)}
+          {ctx.maxMagnitude.toFixed(1)}
         </span>
       </div>
     </div>
@@ -988,7 +978,7 @@ function Legend({ title = "Value" }: { title?: string }) {
 }
 
 function Tooltip() {
-  const ctx = useHeatmapChart();
+  const ctx = useWaterfallChart();
 
   const handleHover = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -1006,70 +996,69 @@ function Tooltip() {
       return;
     }
 
+    // Convert screen coordinates to data coordinates
     const innerWidth = ctx.width - ctx.margin.left - ctx.margin.right;
     const innerHeight = ctx.height - ctx.margin.top - ctx.margin.bottom;
-    const cellWidth = innerWidth / ctx.xCategoryMap.size;
-    const cellHeight = innerHeight / ctx.yCategoryMap.size;
 
     const relX = x - ctx.margin.left;
     const relY = y - ctx.margin.top;
 
-    const xIdx = Math.floor(relX / cellWidth);
-    const yIdx = Math.floor((innerHeight - relY) / cellHeight);
+    const dataX =
+      ctx.xDomain[0] + (relX / innerWidth) * (ctx.xDomain[1] - ctx.xDomain[0]);
+    const dataY =
+      ctx.yDomain[0] +
+      ((innerHeight - relY) / innerHeight) * (ctx.yDomain[1] - ctx.yDomain[0]);
 
-    if (
-      xIdx < 0 ||
-      xIdx >= ctx.xCategories.length ||
-      yIdx < 0 ||
-      yIdx >= ctx.yCategories.length
-    ) {
-      ctx.setHoveredPoint(null);
-      ctx.setTooltipData(null);
-      return;
+    // Find closest data point
+    let closestPoint: SpectrogramPoint | null = null;
+    let minDist = Infinity;
+
+    for (const point of ctx.spectrogramData) {
+      const timeDist = Math.abs(point.time - dataX);
+      const freqDist = Math.abs(point.frequency - dataY);
+      const dist = Math.sqrt(timeDist * timeDist + freqDist * freqDist);
+
+      if (dist < minDist) {
+        minDist = dist;
+        closestPoint = point;
+      }
     }
 
-    const xCat = ctx.xCategories[xIdx];
-    const yCat = ctx.yCategories[yIdx];
+    if (closestPoint) {
+      const xFormatter = ctx.xAxis?.formatter;
+      const yFormatter = ctx.yAxis?.formatter;
 
-    // Find the data point
-    const dataPoint = ctx.data.find((d) => d.x === xCat && d.y === yCat);
+      ctx.setHoveredPoint({
+        seriesIdx: 0,
+        pointIdx: 0,
+        screenX: x,
+        screenY: y,
+      });
 
-    if (dataPoint) {
-      // Only update if the hovered cell has changed
-      const cellChanged =
-        !ctx.hoveredPoint ||
-        !ctx.tooltipData ||
-        ctx.tooltipData.items[0].value !== String(dataPoint.x) ||
-        ctx.tooltipData.items[1].value !== String(dataPoint.y);
-
-      if (cellChanged) {
-        const screenX = ctx.margin.left + xIdx * cellWidth + cellWidth / 2;
-        const screenY =
-          ctx.margin.top +
-          (ctx.yCategories.length - yIdx - 1) * cellHeight +
-          cellHeight / 2;
-
-        ctx.setHoveredPoint({
-          seriesIdx: 0,
-          pointIdx: 0,
-          screenX,
-          screenY,
-        });
-
-        ctx.setTooltipData({
-          title: "Heatmap Cell",
-          items: [
-            { label: "X", value: String(dataPoint.x) },
-            { label: "Y", value: String(dataPoint.y) },
-            { label: "Value", value: dataPoint.value.toFixed(2) },
-          ],
-        });
-      }
+      ctx.setTooltipData({
+        title: "Spectrogram",
+        items: [
+          {
+            label: "Time",
+            value: xFormatter
+              ? xFormatter(closestPoint.time)
+              : `${(closestPoint.time / ctx.sampleRate).toFixed(3)}s`,
+          },
+          {
+            label: "Frequency",
+            value: yFormatter
+              ? yFormatter(closestPoint.frequency)
+              : `${closestPoint.frequency.toFixed(1)}Hz`,
+          },
+          {
+            label: ctx.useDb ? "Power (dB)" : "Power",
+            value: closestPoint.magnitude.toFixed(2),
+          },
+        ],
+      });
     } else {
-      if (ctx.hoveredPoint !== null) {
-        ctx.setHoveredPoint(null);
-        ctx.setTooltipData(null);
-      }
+      ctx.setHoveredPoint(null);
+      ctx.setTooltipData(null);
     }
   };
 
@@ -1080,51 +1069,50 @@ function Tooltip() {
 // Composed Component (Simple API)
 // ============================================================================
 
-export function HeatmapChart({
-  data,
+export function WaterfallChart({
+  signal,
+  sampleRate,
+  fftSize = 256,
+  hopSize,
+  windowFunction = "hann",
+  useDb = true,
+  minMagnitude,
+  maxMagnitude,
+  frequencyRange,
+  timeRange,
   xAxis = {},
   yAxis = {},
   width = 800,
   height = 400,
-  minWidth,
-  minHeight,
-  maxWidth,
-  maxHeight,
-  aspectRatio,
-  margin,
   showGrid = false,
   showAxes = true,
   showTooltip = false,
-  showLegend = false,
+  showLegend = true,
   preferWebGPU = true,
   colorScale = defaultColorScale,
-  minValue,
-  maxValue,
-  cellGap = 2,
   className,
-}: HeatmapChartProps) {
+}: WaterfallChartProps) {
   return (
     <Root
-      data={data}
+      signal={signal}
+      sampleRate={sampleRate}
+      fftSize={fftSize}
+      hopSize={hopSize}
+      windowFunction={windowFunction}
+      useDb={useDb}
+      minMagnitude={minMagnitude}
+      maxMagnitude={maxMagnitude}
+      frequencyRange={frequencyRange}
+      timeRange={timeRange}
       xAxis={xAxis}
       yAxis={yAxis}
       width={width}
       height={height}
-      minWidth={minWidth}
-      minHeight={minHeight}
-      maxWidth={maxWidth}
-      maxHeight={maxHeight}
-      aspectRatio={aspectRatio}
-      margin={margin}
       preferWebGPU={preferWebGPU}
       colorScale={colorScale}
-      minValue={minValue}
-      maxValue={maxValue}
-      cellGap={cellGap}
       className={className}
     >
       <Canvas />
-      {showGrid && <Grid />}
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
       {showLegend && <Legend />}
@@ -1137,60 +1125,42 @@ export function HeatmapChart({
 // ============================================================================
 
 /**
- * HeatmapChart Primitives - Composable chart components for custom layouts
+ * WaterfallChart Primitives - Composable chart components for custom layouts
  *
  * @example Simple usage (monolithic)
  * ```tsx
- * <HeatmapChart data={data} showGrid showAxes showTooltip showLegend />
+ * <WaterfallChart
+ *   signal={audioData}
+ *   sampleRate={48000}
+ *   fftSize={512}
+ *   showAxes
+ *   showTooltip
+ *   showLegend
+ * />
  * ```
  *
  * @example Advanced usage (composable)
  * ```tsx
- * <HeatmapChart.Root data={data} colorScale="viridis" width={800} height={400}>
- *   <HeatmapChart.Canvas />
- *   <HeatmapChart.Grid />
- *   <HeatmapChart.Axes />
- *   <HeatmapChart.Legend title="Temperature (°C)" />
- *   <HeatmapChart.Tooltip />
- * </HeatmapChart.Root>
+ * <WaterfallChart.Root
+ *   signal={eegData}
+ *   sampleRate={256}
+ *   fftSize={256}
+ *   colorScale={viridis}
+ * >
+ *   <WaterfallChart.Canvas />
+ *   <WaterfallChart.Axes />
+ *   <WaterfallChart.Legend title="EEG Power (dB)" />
+ *   <WaterfallChart.Tooltip />
+ * </WaterfallChart.Root>
  * ```
  */
-HeatmapChart.Root = Root;
-HeatmapChart.Canvas = Canvas;
-HeatmapChart.Grid = Grid;
-HeatmapChart.Axes = ChartAxes;
-HeatmapChart.Tooltip = Tooltip;
-HeatmapChart.Legend = Legend;
+WaterfallChart.Root = Root;
+WaterfallChart.Canvas = Canvas;
+WaterfallChart.Axes = ChartAxes;
+WaterfallChart.Tooltip = Tooltip;
+WaterfallChart.Legend = Legend;
 
-export interface HeatmapChartRootProps {
-  data: DataPoint[];
-  xAxis?: {
-    label?: string;
-    formatter?: (value: number | string) => string;
-  };
-  yAxis?: {
-    label?: string;
-    formatter?: (value: number | string) => string;
-  };
-  width?: number;
-  height?: number;
-  minWidth?: number;
-  minHeight?: number;
-  maxWidth?: number;
-  maxHeight?: number;
-  aspectRatio?: number;
-  margin?: { top: number; right: number; bottom: number; left: number };
-  preferWebGPU?: boolean;
-  colorScale?: (t: number) => [number, number, number];
-  minValue?: number;
-  maxValue?: number;
-  cellGap?: number;
-  className?: string;
-  children?: React.ReactNode;
-}
+// Export types
+export type { SpectrogramPoint, WindowFunction };
 
-export interface HeatmapChartLegendProps {
-  title?: string;
-}
-
-export default HeatmapChart;
+export default WaterfallChart;

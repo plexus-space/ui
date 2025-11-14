@@ -724,7 +724,7 @@ function Root({
   );
 }
 
-function Canvas({ showGrid = true }: { showGrid?: boolean }) {
+function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   const ctx = useBarChart();
   const rendererRef = React.useRef<
     WebGLRenderer<BarRendererProps> | WebGPURenderer<BarRendererProps> | null
@@ -978,8 +978,16 @@ function Tooltip() {
   return <ChartTooltip onHover={handleHover} />;
 }
 
+// Separate Grid component for composable API
+function Grid() {
+  // Grid is now rendered via Canvas with showGrid prop
+  // This component exists for API consistency but doesn't render anything
+  // The actual grid rendering happens in Canvas when showGrid={true}
+  return null;
+}
+
 // ============================================================================
-// Composed Component
+// Composed Component (Simple API)
 // ============================================================================
 
 export function BarChart({
@@ -1019,9 +1027,58 @@ export function BarChart({
   );
 }
 
+// ============================================================================
+// Primitive API (Composable)
+// ============================================================================
+
+/**
+ * BarChart Primitives - Composable chart components for custom layouts
+ *
+ * @example Simple usage (monolithic)
+ * ```tsx
+ * <BarChart series={data} showGrid showAxes showTooltip />
+ * ```
+ *
+ * @example Advanced usage (composable)
+ * ```tsx
+ * <BarChart.Root series={data} orientation="vertical" width={800} height={400}>
+ *   <BarChart.Canvas showGrid />
+ *   <BarChart.Axes />
+ *   <BarChart.Tooltip />
+ * </BarChart.Root>
+ * ```
+ */
 BarChart.Root = Root;
 BarChart.Canvas = Canvas;
+BarChart.Grid = Grid;
 BarChart.Axes = ChartAxes;
 BarChart.Tooltip = Tooltip;
+
+export interface BarChartRootProps {
+  series: Series[];
+  xAxis?: {
+    label?: string;
+    domain?: [number, number] | "auto";
+    formatter?: (value: number) => string;
+  };
+  yAxis?: {
+    label?: string;
+    domain?: [number, number] | "auto";
+    formatter?: (value: number) => string;
+  };
+  width?: number;
+  height?: number;
+  preferWebGPU?: boolean;
+  orientation?: "vertical" | "horizontal";
+  barWidth?: number;
+  barGap?: number;
+  grouped?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export interface BarChartCanvasProps {
+  showGrid?: boolean;
+}
 
 export default BarChart;

@@ -900,7 +900,7 @@ function Root({
   );
 }
 
-function Canvas({ showGrid = true }: { showGrid?: boolean }) {
+function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   const ctx = useLineChart();
   const rendererRef = useRef<
     WebGLRenderer<LineRendererProps> | WebGPURenderer<LineRendererProps> | null
@@ -1053,6 +1053,14 @@ function Canvas({ showGrid = true }: { showGrid?: boolean }) {
       }}
     />
   );
+}
+
+// Separate Grid component for composable API
+function Grid() {
+  // Grid is now rendered via Canvas with showGrid prop
+  // This component exists for API consistency but doesn't render anything
+  // The actual grid rendering happens in Canvas when showGrid={true}
+  return null;
 }
 
 // Helper to find closest X coordinate for multi-series tooltips
@@ -1385,7 +1393,7 @@ function Tooltip() {
 }
 
 // ============================================================================
-// Composed Component
+// Composed Component (Simple API)
 // ============================================================================
 
 export function LineChart({
@@ -1417,9 +1425,54 @@ export function LineChart({
   );
 }
 
+// ============================================================================
+// Primitive API (Composable)
+// ============================================================================
+
+/**
+ * LineChart Primitives - Composable chart components for custom layouts
+ *
+ * @example Simple usage (monolithic)
+ * ```tsx
+ * <LineChart series={data} showGrid showAxes showTooltip />
+ * ```
+ *
+ * @example Advanced usage (composable)
+ * ```tsx
+ * <LineChart.Root series={data} width={800} height={400}>
+ *   <LineChart.Canvas showGrid />
+ *   <LineChart.Axes />
+ *   <LineChart.Tooltip />
+ * </LineChart.Root>
+ * ```
+ */
 LineChart.Root = Root;
 LineChart.Canvas = Canvas;
+LineChart.Grid = Grid;
 LineChart.Axes = ChartAxes;
 LineChart.Tooltip = Tooltip;
+
+export interface LineChartRootProps {
+  series: Series[];
+  xAxis?: {
+    label?: string;
+    domain?: [number, number] | "auto";
+    formatter?: (value: number) => string;
+  };
+  yAxis?: {
+    label?: string;
+    domain?: [number, number] | "auto";
+    formatter?: (value: number) => string;
+  };
+  width?: number;
+  height?: number;
+  preferWebGPU?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export interface LineChartCanvasProps {
+  showGrid?: boolean;
+}
 
 export default LineChart;

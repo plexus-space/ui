@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useRef, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   createWebGLRenderer,
   createWebGPURenderer,
@@ -203,51 +210,6 @@ function createArcGeometry(
   return { positions, colors };
 }
 
-function createNeedleGeometry(
-  centerX: number,
-  centerY: number,
-  radius: number,
-  angle: number,
-  color: [number, number, number],
-  needleWidth = 2
-) {
-  const positions: number[] = [];
-  const colors: number[] = [];
-
-  const tipX = centerX + radius * 0.9 * Math.cos(angle);
-  const tipY = centerY + radius * 0.9 * Math.sin(angle);
-
-  const perpAngle1 = angle + Math.PI / 2;
-  const perpAngle2 = angle - Math.PI / 2;
-
-  const baseX1 = centerX + needleWidth * Math.cos(perpAngle1);
-  const baseY1 = centerY + needleWidth * Math.sin(perpAngle1);
-  const baseX2 = centerX + needleWidth * Math.cos(perpAngle2);
-  const baseY2 = centerY + needleWidth * Math.sin(perpAngle2);
-
-  // Needle triangle (minimal design)
-  positions.push(tipX, tipY, baseX1, baseY1, baseX2, baseY2);
-  colors.push(...color, 0.9, ...color, 0.9, ...color, 0.9);
-
-  // Center circle (small and simple)
-  const circleRadius = 6;
-  const circleSegments = 20;
-  for (let i = 0; i < circleSegments; i++) {
-    const a1 = (i / circleSegments) * Math.PI * 2;
-    const a2 = ((i + 1) / circleSegments) * Math.PI * 2;
-
-    const x1 = centerX + circleRadius * Math.cos(a1);
-    const y1 = centerY + circleRadius * Math.sin(a1);
-    const x2 = centerX + circleRadius * Math.cos(a2);
-    const y2 = centerY + circleRadius * Math.sin(a2);
-
-    positions.push(centerX, centerY, x1, y1, x2, y2);
-    colors.push(...color, 1, ...color, 1, ...color, 1);
-  }
-
-  return { positions, colors };
-}
-
 function createTickGeometry(
   centerX: number,
   centerY: number,
@@ -311,12 +273,18 @@ function createLinearBarGeometry(
 
   // Two triangles to form a rectangle
   positions.push(
-    x, y,
-    x + width, y,
-    x, y + height,
-    x + width, y,
-    x + width, y + height,
-    x, y + height
+    x,
+    y,
+    x + width,
+    y,
+    x,
+    y + height,
+    x + width,
+    y,
+    x + width,
+    y + height,
+    x,
+    y + height
   );
 
   for (let i = 0; i < 6; i++) {
@@ -342,22 +310,24 @@ function createLinearIndicatorGeometry(
   const tipY = y - 8;
   const baseY = y;
 
-  positions.push(
-    x, tipY,
-    x - halfWidth * 2, baseY,
-    x + halfWidth * 2, baseY
-  );
+  positions.push(x, tipY, x - halfWidth * 2, baseY, x + halfWidth * 2, baseY);
 
   colors.push(...color, 0.95, ...color, 0.95, ...color, 0.95);
 
   // Vertical line from base to bottom
   positions.push(
-    x - halfWidth, baseY,
-    x + halfWidth, baseY,
-    x - halfWidth, y + height,
-    x + halfWidth, baseY,
-    x + halfWidth, y + height,
-    x - halfWidth, y + height
+    x - halfWidth,
+    baseY,
+    x + halfWidth,
+    baseY,
+    x - halfWidth,
+    y + height,
+    x + halfWidth,
+    baseY,
+    x + halfWidth,
+    y + height,
+    x - halfWidth,
+    y + height
   );
 
   for (let i = 0; i < 6; i++) {
@@ -367,7 +337,9 @@ function createLinearIndicatorGeometry(
   return { positions, colors };
 }
 
-function createWebGLGaugeRenderer(canvas: HTMLCanvasElement): WebGLRenderer<GaugeRendererProps> {
+function createWebGLGaugeRenderer(
+  canvas: HTMLCanvasElement
+): WebGLRenderer<GaugeRendererProps> {
   const buffers = {
     position: null as WebGLBuffer | null,
     color: null as WebGLBuffer | null,
@@ -380,8 +352,18 @@ function createWebGLGaugeRenderer(canvas: HTMLCanvasElement): WebGLRenderer<Gaug
       fragmentSource: FRAGMENT_SHADER,
     }),
     onRender: (gl, program, props) => {
-      const { value, min, max, zones, variant, showTicks, tickCount, needleColor, width, height } =
-        props;
+      const {
+        value,
+        min,
+        max,
+        zones,
+        variant,
+        showTicks,
+        tickCount,
+        needleColor,
+        width,
+        height,
+      } = props;
 
       gl.useProgram(program);
 
@@ -461,15 +443,15 @@ function createWebGLGaugeRenderer(canvas: HTMLCanvasElement): WebGLRenderer<Gaug
 
         // Draw indicator
         const indicatorX = barX + ratio * barWidth;
-        const { positions: indPos, colors: indCol } = createLinearIndicatorGeometry(
-          indicatorX,
-          barY,
-          barHeight,
-          progressColor
-        );
+        const { positions: indPos, colors: indCol } =
+          createLinearIndicatorGeometry(
+            indicatorX,
+            barY,
+            barHeight,
+            progressColor
+          );
         allPositions.push(...indPos);
         allColors.push(...indCol);
-
       } else {
         // Circular/Semi gauge rendering
         const centerX = width / 2;
@@ -498,7 +480,7 @@ function createWebGLGaugeRenderer(canvas: HTMLCanvasElement): WebGLRenderer<Gaug
               color,
               24,
               64,
-              0.25  // Dimmed to show boundaries
+              0.25 // Dimmed to show boundaries
             );
             allPositions.push(...positions);
             allColors.push(...colors);
@@ -546,7 +528,7 @@ function createWebGLGaugeRenderer(canvas: HTMLCanvasElement): WebGLRenderer<Gaug
           progressColor,
           24,
           64,
-          1.0  // Full opacity for progress
+          1.0 // Full opacity for progress
         );
         allPositions.push(...positions);
         allColors.push(...colors);
@@ -578,14 +560,22 @@ function createWebGLGaugeRenderer(canvas: HTMLCanvasElement): WebGLRenderer<Gaug
 
       // Upload position data
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(allPositions), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(allPositions),
+        gl.STATIC_DRAW
+      );
       const positionLoc = gl.getAttribLocation(program, "a_position");
       gl.enableVertexAttribArray(positionLoc);
       gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
       // Upload color data
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(allColors), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(allColors),
+        gl.STATIC_DRAW
+      );
       const colorLoc = gl.getAttribLocation(program, "a_color");
       gl.enableVertexAttribArray(colorLoc);
       gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
@@ -768,21 +758,24 @@ async function createWebGPUGaugeRenderer(
 
         // Draw indicator
         const indicatorX = barX + ratio * barWidth;
-        const { positions: indPos, colors: indCol } = createLinearIndicatorGeometry(
-          indicatorX,
-          barY,
-          barHeight,
-          progressColor
-        );
+        const { positions: indPos, colors: indCol } =
+          createLinearIndicatorGeometry(
+            indicatorX,
+            barY,
+            barHeight,
+            progressColor
+          );
         allPositions.push(...indPos);
         allColors.push(...indCol);
-
       } else {
         // Circular/Semi gauge rendering
         const innerWidth = width - margin.left - margin.right;
         const innerHeight = height - margin.top - margin.bottom;
         const centerX = innerWidth / 2 + margin.left;
-        const centerY = variant === "semi" ? innerHeight * 0.85 + margin.top : innerHeight / 2 + margin.top;
+        const centerY =
+          variant === "semi"
+            ? innerHeight * 0.85 + margin.top
+            : innerHeight / 2 + margin.top;
         const radius = Math.min(innerWidth, innerHeight) * 0.35;
 
         const startAngle = variant === "circular" ? -Math.PI : -Math.PI * 0.75;
@@ -807,7 +800,7 @@ async function createWebGPUGaugeRenderer(
               color,
               24,
               64,
-              0.25  // Dimmed to show boundaries
+              0.25 // Dimmed to show boundaries
             );
             allPositions.push(...positions);
             allColors.push(...colors);
@@ -854,7 +847,7 @@ async function createWebGPUGaugeRenderer(
           progressColor,
           24,
           64,
-          1.0  // Full opacity for progress
+          1.0 // Full opacity for progress
         );
         allPositions.push(...positions);
         allColors.push(...colors);
@@ -886,7 +879,10 @@ async function createWebGPUGaugeRenderer(
       const positionData = new Float32Array(allPositions);
       const colorData = new Float32Array(allColors);
 
-      if (!buffers.position || buffers.position.size < positionData.byteLength * 1.5) {
+      if (
+        !buffers.position ||
+        buffers.position.size < positionData.byteLength * 1.5
+      ) {
         buffers.position?.destroy();
         buffers.position = device.createBuffer({
           size: Math.ceil(positionData.byteLength * 1.5),
@@ -1025,7 +1021,9 @@ function Canvas({ showTicks }: { showTicks?: boolean } = {}) {
   const shouldShowTicks = showTicks ?? ctx.showTicks;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<
-    WebGLRenderer<GaugeRendererProps> | WebGPURenderer<GaugeRendererProps> | null
+    | WebGLRenderer<GaugeRendererProps>
+    | WebGPURenderer<GaugeRendererProps>
+    | null
   >(null);
   const [isInitializing, setIsInitializing] = useState(false);
 
@@ -1104,7 +1102,9 @@ function ValueDisplay({ format }: { format?: (value: number) => string } = {}) {
 
   if (!ctx.showValue) return null;
 
-  const displayValue = format ? format(ctx.value) : Math.round(ctx.value).toString();
+  const displayValue = format
+    ? format(ctx.value)
+    : Math.round(ctx.value).toString();
 
   // For linear variant, show value on the left side
   if (ctx.variant === "linear") {
@@ -1138,9 +1138,13 @@ function ValueDisplay({ format }: { format?: (value: number) => string } = {}) {
           {displayValue}
         </div>
         <div className="text-lg text-zinc-400 dark:text-zinc-500 font-medium tracking-wide">
-          {ctx.label && ctx.unit ? `${ctx.value.toFixed(0)} ${ctx.unit}` :
-           ctx.unit ? ctx.unit :
-           ctx.label ? ctx.label : ''}
+          {ctx.label && ctx.unit
+            ? `${ctx.value.toFixed(0)} ${ctx.unit}`
+            : ctx.unit
+            ? ctx.unit
+            : ctx.label
+            ? ctx.label
+            : ""}
         </div>
       </div>
     </div>
@@ -1162,7 +1166,11 @@ function TickLabels() {
     const barWidth = ctx.width - margin * 2;
     const barY = ctx.height / 2 + 20; // Below the bar
     const labels = [];
-    const majorTickIndices = [0, Math.floor(ctx.tickCount / 2), ctx.tickCount - 1];
+    const majorTickIndices = [
+      0,
+      Math.floor(ctx.tickCount / 2),
+      ctx.tickCount - 1,
+    ];
 
     for (const i of majorTickIndices) {
       const ratio = i / (ctx.tickCount - 1);
@@ -1198,7 +1206,11 @@ function TickLabels() {
   const angleRange = endAngle - startAngle;
 
   const labels = [];
-  const majorTickIndices = [0, Math.floor(ctx.tickCount / 2), ctx.tickCount - 1];
+  const majorTickIndices = [
+    0,
+    Math.floor(ctx.tickCount / 2),
+    ctx.tickCount - 1,
+  ];
 
   for (const i of majorTickIndices) {
     const angle = startAngle + (i / (ctx.tickCount - 1)) * angleRange;

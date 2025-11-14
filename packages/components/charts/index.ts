@@ -70,6 +70,8 @@ export type {
   DataPoint as LineDataPoint,
   Series as LineSeries,
   LineChartProps,
+  LineChartRootProps,
+  LineChartCanvasProps,
 } from "./line-chart";
 
 export { ScatterChart } from "./scatter-chart";
@@ -77,6 +79,8 @@ export type {
   DataPoint as ScatterDataPoint,
   Series as ScatterSeries,
   ScatterChartProps,
+  ScatterChartRootProps,
+  ScatterChartCanvasProps,
 } from "./scatter-chart";
 
 export { BarChart } from "./bar-chart";
@@ -84,6 +88,8 @@ export type {
   DataPoint as BarDataPoint,
   Series as BarSeries,
   BarChartProps,
+  BarChartRootProps,
+  BarChartCanvasProps,
 } from "./bar-chart";
 
 export { AreaChart } from "./area-chart";
@@ -91,13 +97,31 @@ export type {
   DataPoint as AreaDataPoint,
   Series as AreaSeries,
   AreaChartProps,
+  AreaChartRootProps,
+  AreaChartCanvasProps,
 } from "./area-chart";
 
 export { HeatmapChart } from "./heatmap-chart";
 export type {
   DataPoint as HeatmapDataPoint,
   HeatmapChartProps,
+  HeatmapChartRootProps,
+  HeatmapChartLegendProps,
 } from "./heatmap-chart";
+
+export { HistogramChart } from "./histogram-chart";
+export type { HistogramChartProps } from "./histogram-chart";
+
+export {
+  ControlChart,
+  calculateControlLimits,
+  generateSPCData,
+} from "./control-chart";
+export type {
+  ControlChartProps,
+  ControlLimits,
+  ControlViolation,
+} from "./control-chart";
 
 export { Gauge } from "./gauge";
 export type { Zone, GaugeProps } from "./gauge";
@@ -129,9 +153,6 @@ export type {
 export { AttitudeIndicator } from "./attitude-indicator";
 export type { AttitudeIndicatorProps } from "./attitude-indicator";
 
-export { ModelViewer } from "./3d-model-viewer";
-export type { VertexData, ModelViewerProps } from "./3d-model-viewer";
-
 export { GanttChart } from "./gantt";
 export type {
   Task,
@@ -146,6 +167,13 @@ export type {
   GanttChartLeftPanelProps,
   GanttChartControlsProps,
 } from "./gantt";
+
+export { WaterfallChart } from "./waterfall-chart";
+export type {
+  WaterfallChartProps,
+  SpectrogramPoint,
+  WindowFunction,
+} from "./waterfall-chart";
 
 // Base chart infrastructure (reusable for all chart types)
 export {
@@ -173,6 +201,24 @@ export type {
   WebGPURenderer,
 } from "./base-chart";
 
+// Chart interactions
+export {
+  ChartInteractions,
+  ChartClick,
+  ChartBrush,
+  ChartCrosshair,
+} from "./interactions";
+
+export type {
+  ClickEvent,
+  BrushSelection,
+  CrosshairPosition,
+  ChartInteractionsProps,
+  ChartClickProps,
+  ChartBrushProps,
+  ChartCrosshairProps,
+} from "./interactions";
+
 // Data utilities
 export {
   calculateBounds,
@@ -186,4 +232,19 @@ export {
   generateSineWave,
   generateTelemetryData,
   normalizeData,
+  createHistogramBins,
+  calculateBinCount,
+  calculateNormalCurve,
+  // FFT utilities for waterfall/spectrogram charts
+  fft,
+  applyWindow,
+  fftToPowerSpectrum,
+  powerToDb,
+  generateSpectrogram,
+  nextPowerOf2,
+  zeroPad,
+  type BinMethod,
+  type HistogramBin,
+  type Complex,
+  type SpectrogramPoint as DataSpectrogramPoint,
 } from "../lib/data-utils";

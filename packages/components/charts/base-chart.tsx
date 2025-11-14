@@ -644,8 +644,8 @@ export function ChartRoot({
   // For responsive behavior: always use 100% width/height and let constraints control size
   const containerStyle: React.CSSProperties = {
     position: "relative",
-    width: typeof widthProp === "string" ? widthProp : "100%",
-    height: typeof heightProp === "string" ? heightProp : "100%",
+    width: typeof widthProp === "string" ? widthProp : typeof widthProp === "number" ? `${widthProp}px` : "100%",
+    height: typeof heightProp === "string" ? heightProp : typeof heightProp === "number" ? `${heightProp}px` : "100%",
     minWidth: minWidth,
     minHeight: minHeight,
     maxWidth: typeof widthProp === "number" ? widthProp : maxWidth,

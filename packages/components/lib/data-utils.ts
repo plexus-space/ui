@@ -311,6 +311,176 @@ export function calculateNiceBounds(
 }
 
 // ============================================================================
+// Histogram Utilities
+// ============================================================================
+
+export interface HistogramBin {
+  min: number;
+  max: number;
+  count: number;
+  density: number; // count / bin width
+  center: number;
+}
+
+/**
+ * Bin calculation methods
+ */
+export type BinMethod =
+  | "sturges" // Good for normal distributions
+  | "scott" // Good for continuous data
+  | "freedman-diaconis" // Good for non-normal distributions
+  | "sqrt" // Square root rule (simple, general purpose)
+  | number; // Manual bin count
+
+/**
+ * Calculate optimal number of bins using various methods
+ */
+export function calculateBinCount(
+  data: number[],
+  method: BinMethod = "sturges"
+): number {
+  const n = data.length;
+  if (n === 0) return 1;
+
+  if (typeof method === "number") {
+    return Math.max(1, Math.floor(method));
+  }
+
+  switch (method) {
+    case "sturges":
+      // k = ceil(log2(n) + 1)
+      return Math.ceil(Math.log2(n) + 1);
+
+    case "scott": {
+      // Bin width = 3.5 * σ * n^(-1/3)
+      const stdDev = calculateStdDev(data);
+      const binWidth = 3.5 * stdDev * Math.pow(n, -1 / 3);
+      const [min, max] = [Math.min(...data), Math.max(...data)];
+      const range = max - min;
+      return Math.max(1, Math.ceil(range / binWidth));
+    }
+
+    case "freedman-diaconis": {
+      // Bin width = 2 * IQR * n^(-1/3)
+      const iqr = calculateIQR(data);
+      const binWidth = 2 * iqr * Math.pow(n, -1 / 3);
+      const [min, max] = [Math.min(...data), Math.max(...data)];
+      const range = max - min;
+      return Math.max(1, Math.ceil(range / binWidth));
+    }
+
+    case "sqrt":
+      // k = ceil(sqrt(n))
+      return Math.ceil(Math.sqrt(n));
+
+    default:
+      return Math.ceil(Math.log2(n) + 1); // fallback to Sturges
+  }
+}
+
+/**
+ * Create histogram bins from data
+ */
+export function createHistogramBins(
+  data: number[],
+  binCount?: number,
+  method: BinMethod = "sturges"
+): HistogramBin[] {
+  if (data.length === 0) {
+    return [];
+  }
+
+  const n = binCount ?? calculateBinCount(data, method);
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min;
+  const binWidth = range / n;
+
+  // Initialize bins
+  const bins: HistogramBin[] = [];
+  for (let i = 0; i < n; i++) {
+    const binMin = min + i * binWidth;
+    const binMax = i === n - 1 ? max : binMin + binWidth; // Last bin includes max
+    bins.push({
+      min: binMin,
+      max: binMax,
+      count: 0,
+      density: 0,
+      center: (binMin + binMax) / 2,
+    });
+  }
+
+  // Count data points in each bin
+  for (const value of data) {
+    // Find which bin this value belongs to
+    const binIndex = Math.min(Math.floor((value - min) / binWidth), n - 1);
+    bins[binIndex].count++;
+  }
+
+  // Calculate density (count per unit width)
+  const totalCount = data.length;
+  for (const bin of bins) {
+    bin.density = bin.count / binWidth / totalCount;
+  }
+
+  return bins;
+}
+
+/**
+ * Calculate standard deviation
+ */
+function calculateStdDev(data: number[]): number {
+  if (data.length === 0) return 0;
+  const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
+  const variance =
+    data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
+  return Math.sqrt(variance);
+}
+
+/**
+ * Calculate interquartile range (IQR)
+ */
+function calculateIQR(data: number[]): number {
+  if (data.length === 0) return 0;
+  const sorted = [...data].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(sorted.length * 0.25)];
+  const q3 = sorted[Math.floor(sorted.length * 0.75)];
+  return q3 - q1;
+}
+
+/**
+ * Calculate normal distribution curve for overlay
+ */
+export function calculateNormalCurve(
+  data: number[],
+  points = 100
+): DataPoint[] {
+  if (data.length === 0) return [];
+
+  const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
+  const stdDev = calculateStdDev(data);
+
+  if (stdDev === 0) return [];
+
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min;
+
+  const curve: DataPoint[] = [];
+  for (let i = 0; i < points; i++) {
+    const x = min + (i / (points - 1)) * range;
+    const z = (x - mean) / stdDev;
+    const y =
+      (1 / (stdDev * Math.sqrt(2 * Math.PI))) *
+      Math.exp(-0.5 * z * z) *
+      data.length;
+    curve.push({ x, y });
+  }
+
+  return curve;
+}
+
+// ============================================================================
 // Data Generation (for testing/examples)
 // ============================================================================
 
@@ -474,4 +644,233 @@ export function getTicks(domain: [number, number], count: number): number[] {
   }
 
   return ticks;
+}
+
+// ============================================================================
+// FFT Utilities (for Waterfall/Spectrogram Charts)
+// ============================================================================
+
+/**
+ * Complex number representation
+ */
+export interface Complex {
+  re: number;
+  im: number;
+}
+
+/**
+ * Add two complex numbers
+ */
+function complexAdd(a: Complex, b: Complex): Complex {
+  return { re: a.re + b.re, im: a.im + b.im };
+}
+
+/**
+ * Subtract two complex numbers
+ */
+function complexSubtract(a: Complex, b: Complex): Complex {
+  return { re: a.re - b.re, im: a.im - b.im };
+}
+
+/**
+ * Multiply two complex numbers
+ */
+function complexMultiply(a: Complex, b: Complex): Complex {
+  return {
+    re: a.re * b.re - a.im * b.im,
+    im: a.re * b.im + a.im * b.re,
+  };
+}
+
+/**
+ * Calculate magnitude of complex number
+ */
+function complexMagnitude(c: Complex): number {
+  return Math.sqrt(c.re * c.re + c.im * c.im);
+}
+
+/**
+ * Fast Fourier Transform (Cooley-Tukey algorithm)
+ * Input size must be a power of 2
+ */
+export function fft(input: number[]): Complex[] {
+  const n = input.length;
+
+  // Base case
+  if (n === 1) {
+    return [{ re: input[0], im: 0 }];
+  }
+
+  // Ensure n is power of 2
+  if (n & (n - 1)) {
+    throw new Error("FFT input size must be a power of 2");
+  }
+
+  // Divide into even and odd
+  const even: number[] = [];
+  const odd: number[] = [];
+  for (let i = 0; i < n; i += 2) {
+    even.push(input[i]);
+    odd.push(input[i + 1]);
+  }
+
+  // Recursive FFT
+  const evenFFT = fft(even);
+  const oddFFT = fft(odd);
+
+  // Combine results
+  const result: Complex[] = new Array(n);
+  for (let k = 0; k < n / 2; k++) {
+    const angle = (-2 * Math.PI * k) / n;
+    const twiddle: Complex = {
+      re: Math.cos(angle),
+      im: Math.sin(angle),
+    };
+
+    const t = complexMultiply(twiddle, oddFFT[k]);
+    result[k] = complexAdd(evenFFT[k], t);
+    result[k + n / 2] = complexSubtract(evenFFT[k], t);
+  }
+
+  return result;
+}
+
+/**
+ * Apply window function to reduce spectral leakage
+ */
+export type WindowFunction = "hann" | "hamming" | "blackman" | "none";
+
+export function applyWindow(data: number[], windowType: WindowFunction = "hann"): number[] {
+  const n = data.length;
+  const windowed = new Array(n);
+
+  for (let i = 0; i < n; i++) {
+    let w = 1;
+
+    switch (windowType) {
+      case "hann":
+        w = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (n - 1)));
+        break;
+      case "hamming":
+        w = 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (n - 1));
+        break;
+      case "blackman":
+        w = 0.42 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1)) +
+            0.08 * Math.cos((4 * Math.PI * i) / (n - 1));
+        break;
+      case "none":
+        w = 1;
+        break;
+    }
+
+    windowed[i] = data[i] * w;
+  }
+
+  return windowed;
+}
+
+/**
+ * Convert FFT output to power spectrum (magnitude squared)
+ */
+export function fftToPowerSpectrum(fftOutput: Complex[]): number[] {
+  const n = fftOutput.length;
+  const spectrum = new Array(Math.floor(n / 2)); // Only positive frequencies
+
+  for (let i = 0; i < spectrum.length; i++) {
+    const mag = complexMagnitude(fftOutput[i]);
+    spectrum[i] = mag * mag; // Power = magnitude squared
+  }
+
+  return spectrum;
+}
+
+/**
+ * Convert power to decibels
+ */
+export function powerToDb(power: number, referenceLevel = 1): number {
+  // Add small epsilon to avoid log(0)
+  return 10 * Math.log10(Math.max(power, 1e-10) / referenceLevel);
+}
+
+/**
+ * Spectrogram data point (time, frequency, magnitude)
+ */
+export interface SpectrogramPoint {
+  time: number;      // Time index
+  frequency: number; // Frequency bin
+  magnitude: number; // Power in dB or linear
+}
+
+/**
+ * Generate spectrogram data from time-series signal
+ *
+ * @param signal - Input time-series data
+ * @param fftSize - FFT window size (must be power of 2)
+ * @param hopSize - Number of samples to advance between windows
+ * @param sampleRate - Sampling rate in Hz
+ * @param windowType - Window function to apply
+ * @param useDb - Convert to decibels (true) or keep linear (false)
+ */
+export function generateSpectrogram(
+  signal: number[],
+  fftSize = 256,
+  hopSize = 128,
+  sampleRate = 1000,
+  windowType: WindowFunction = "hann",
+  useDb = true
+): SpectrogramPoint[] {
+  const spectrogramData: SpectrogramPoint[] = [];
+  const numFreqBins = fftSize / 2;
+
+  // Process signal in overlapping windows
+  for (let timeIndex = 0; timeIndex + fftSize <= signal.length; timeIndex += hopSize) {
+    // Extract window
+    const window = signal.slice(timeIndex, timeIndex + fftSize);
+
+    // Apply window function
+    const windowed = applyWindow(window, windowType);
+
+    // Compute FFT
+    const fftOutput = fft(windowed);
+
+    // Convert to power spectrum
+    const powerSpectrum = fftToPowerSpectrum(fftOutput);
+
+    // Add data points for each frequency bin
+    for (let freqBin = 0; freqBin < numFreqBins; freqBin++) {
+      const frequency = (freqBin * sampleRate) / fftSize;
+      const magnitude = useDb
+        ? powerToDb(powerSpectrum[freqBin])
+        : powerSpectrum[freqBin];
+
+      spectrogramData.push({
+        time: timeIndex,
+        frequency,
+        magnitude,
+      });
+    }
+  }
+
+  return spectrogramData;
+}
+
+/**
+ * Find next power of 2 greater than or equal to n
+ */
+export function nextPowerOf2(n: number): number {
+  return Math.pow(2, Math.ceil(Math.log2(n)));
+}
+
+/**
+ * Zero-pad array to next power of 2
+ */
+export function zeroPad(data: number[]): number[] {
+  const nextPow2 = nextPowerOf2(data.length);
+  if (data.length === nextPow2) return data;
+
+  const padded = new Array(nextPow2).fill(0);
+  for (let i = 0; i < data.length; i++) {
+    padded[i] = data[i];
+  }
+  return padded;
 }

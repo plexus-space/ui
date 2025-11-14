@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { createWebGLRenderer, hexToRgb, type WebGLRenderer } from "./base-chart";
+import {
+  createWebGLRenderer,
+  hexToRgb,
+  type WebGLRenderer,
+} from "./base-chart";
 
 // ============================================================================
 // Status Grid Types
@@ -45,15 +49,9 @@ interface StatusGridContextType {
   gap: number;
 }
 
-const StatusGridContext = React.createContext<StatusGridContextType | null>(null);
-
-function useStatusGrid() {
-  const ctx = React.useContext(StatusGridContext);
-  if (!ctx) {
-    throw new Error("StatusGrid components must be used within StatusGrid.Root");
-  }
-  return ctx;
-}
+const StatusGridContext = React.createContext<StatusGridContextType | null>(
+  null
+);
 
 // ============================================================================
 // Status Colors
@@ -93,7 +91,7 @@ export function Sparkline({
   width = 200,
   height = 48,
   color = "#3b82f6",
-  className = ""
+  className = "",
 }: SparklineProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const rendererRef = React.useRef<WebGLRenderer<any> | null>(null);
@@ -145,8 +143,13 @@ export function Sparkline({
         onRender: (gl, program, props) => {
           const { data, color, width, height } = props;
 
+          // biome-ignore lint/correctness/useHookAtTopLevel: gl.useProgram is a WebGL method
           gl.useProgram(program);
-          gl.uniform2f(gl.getUniformLocation(program, "u_resolution"), width, height);
+          gl.uniform2f(
+            gl.getUniformLocation(program, "u_resolution"),
+            width,
+            height
+          );
 
           const min = Math.min(...data);
           const max = Math.max(...data);
@@ -169,7 +172,11 @@ export function Sparkline({
 
           const positionBuffer = gl.createBuffer();
           gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(positions),
+            gl.STATIC_DRAW
+          );
 
           const positionLoc = gl.getAttribLocation(program, "a_position");
           gl.enableVertexAttribArray(positionLoc);
@@ -177,7 +184,11 @@ export function Sparkline({
 
           const colorBuffer = gl.createBuffer();
           gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array(colors),
+            gl.STATIC_DRAW
+          );
 
           const colorLoc = gl.getAttribLocation(program, "a_color");
           gl.enableVertexAttribArray(colorLoc);
@@ -187,7 +198,7 @@ export function Sparkline({
         },
         onDestroy: (gl) => {
           // Cleanup buffers if needed
-        }
+        },
       });
     }
 
@@ -227,7 +238,9 @@ export interface CardProps {
 
 export function Card({ metric, className = "", children }: CardProps) {
   return (
-    <div className={`relative bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors ${className}`}>
+    <div
+      className={`relative bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors ${className}`}
+    >
       {children}
     </div>
   );
@@ -239,8 +252,13 @@ export interface StatusIndicatorProps {
   className?: string;
 }
 
-export function StatusIndicator({ status, color, className = "" }: StatusIndicatorProps) {
-  const indicatorColor = color || (status ? STATUS_COLORS[status] : STATUS_COLORS.normal);
+export function StatusIndicator({
+  status,
+  color,
+  className = "",
+}: StatusIndicatorProps) {
+  const indicatorColor =
+    color || (status ? STATUS_COLORS[status] : STATUS_COLORS.normal);
 
   return (
     <div
@@ -270,10 +288,17 @@ export interface ValueProps {
   className?: string;
 }
 
-export function Value({ value, unit, decimals = 1, className = "" }: ValueProps) {
+export function Value({
+  value,
+  unit,
+  decimals = 1,
+  className = "",
+}: ValueProps) {
   return (
     <div className={`flex items-baseline gap-2 mb-2 ${className}`}>
-      <span className="text-3xl font-bold tabular-nums">{value.toFixed(decimals)}</span>
+      <span className="text-3xl font-bold tabular-nums">
+        {value.toFixed(decimals)}
+      </span>
       {unit && <span className="text-sm text-zinc-500">{unit}</span>}
     </div>
   );
@@ -284,10 +309,14 @@ export interface ChangeIndicatorProps {
   className?: string;
 }
 
-export function ChangeIndicator({ change, className = "" }: ChangeIndicatorProps) {
-  const colorClass = change > 0
-    ? "text-green-500"
-    : change < 0
+export function ChangeIndicator({
+  change,
+  className = "",
+}: ChangeIndicatorProps) {
+  const colorClass =
+    change > 0
+      ? "text-green-500"
+      : change < 0
       ? "text-red-500"
       : "text-zinc-500";
 
@@ -353,7 +382,8 @@ interface KPICardProps {
 }
 
 function KPICard({ metric, showSparkline = true }: KPICardProps) {
-  const status = metric.status || getStatusFromValue(metric.value, metric.threshold);
+  const status =
+    metric.status || getStatusFromValue(metric.value, metric.threshold);
   const statusColor = STATUS_COLORS[status];
 
   return (
@@ -361,10 +391,17 @@ function KPICard({ metric, showSparkline = true }: KPICardProps) {
       <StatusIndicator status={status} />
       <Label>{metric.label}</Label>
       <Value value={metric.value} unit={metric.unit} />
-      {metric.change !== undefined && <ChangeIndicator change={metric.change} />}
+      {metric.change !== undefined && (
+        <ChangeIndicator change={metric.change} />
+      )}
       {showSparkline && metric.sparkline && metric.sparkline.length > 1 && (
         <div className="mt-3 h-12">
-          <Sparkline data={metric.sparkline} width={200} height={48} color={statusColor} />
+          <Sparkline
+            data={metric.sparkline}
+            width={200}
+            height={48}
+            color={statusColor}
+          />
         </div>
       )}
       {metric.min !== undefined && metric.max !== undefined && (
@@ -384,7 +421,11 @@ export function StatusGrid({
   return (
     <StatusGridRoot columns={columns} gap={gap} className={className}>
       {metrics.map((metric) => (
-        <KPICard key={metric.id} metric={metric} showSparkline={showSparklines} />
+        <KPICard
+          key={metric.id}
+          metric={metric}
+          showSparkline={showSparklines}
+        />
       ))}
     </StatusGridRoot>
   );

@@ -808,7 +808,7 @@ function Root({
   );
 }
 
-function Canvas({ showGrid = true }: { showGrid?: boolean }) {
+function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   const ctx = useAreaChart();
   const rendererRef = useRef<
     WebGLRenderer<AreaRendererProps> | WebGPURenderer<AreaRendererProps> | null
@@ -1062,8 +1062,16 @@ function Tooltip() {
   );
 }
 
+// Separate Grid component for composable API
+function Grid() {
+  // Grid is now rendered via Canvas with showGrid prop
+  // This component exists for API consistency but doesn't render anything
+  // The actual grid rendering happens in Canvas when showGrid={true}
+  return null;
+}
+
 // ============================================================================
-// Composed Component
+// Composed Component (Simple API)
 // ============================================================================
 
 export function AreaChart({
@@ -1097,11 +1105,56 @@ export function AreaChart({
   );
 }
 
+// ============================================================================
+// Primitive API (Composable)
+// ============================================================================
+
+/**
+ * AreaChart Primitives - Composable chart components for custom layouts
+ *
+ * @example Simple usage (monolithic)
+ * ```tsx
+ * <AreaChart series={data} showGrid showAxes showTooltip />
+ * ```
+ *
+ * @example Advanced usage (composable)
+ * ```tsx
+ * <AreaChart.Root series={data} stacked width={800} height={400}>
+ *   <AreaChart.Canvas showGrid />
+ *   <AreaChart.Axes />
+ *   <AreaChart.Tooltip />
+ * </AreaChart.Root>
+ * ```
+ */
 AreaChart.Root = Root;
 AreaChart.Canvas = Canvas;
+AreaChart.Grid = Grid;
 AreaChart.Axes = ChartAxes;
 AreaChart.Tooltip = Tooltip;
 
+export interface AreaChartRootProps {
+  series: Series[];
+  xAxis?: {
+    label?: string;
+    domain?: [number, number] | "auto";
+    formatter?: (value: number) => string;
+  };
+  yAxis?: {
+    label?: string;
+    domain?: [number, number] | "auto";
+    formatter?: (value: number) => string;
+  };
+  width?: number;
+  height?: number;
+  preferWebGPU?: boolean;
+  stacked?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export interface AreaChartCanvasProps {
+  showGrid?: boolean;
+}
 AreaChart.displayName = "AreaChart";
 
 export default AreaChart;

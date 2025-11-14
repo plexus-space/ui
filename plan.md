@@ -13,39 +13,47 @@ Building WebGPU-powered visualization primitives for deep tech and physical syst
 
 ---
 
-## Implemented Components (12)
+## Production Components (16)
 
-### Charts
+### Charts (6 components)
 
-- **Line Chart** - Multi-series time-series, streaming support, 100k+ points
-- **Scatter Chart** - Point clouds, variable sizes, alpha blending
-- **Bar Chart** - Grouped/stacked, horizontal/vertical, categorical
-- **Area Chart** - Filled regions, stacked series
+- **Line Chart** - Multi-series time-series, streaming support, 100k+ points (WebGPU + WebGL2)
+- **Scatter Chart** - Point clouds, variable sizes, alpha blending (WebGPU + WebGL2)
+- **Bar Chart** - Grouped/stacked, horizontal/vertical, categorical (WebGPU + WebGL2)
+- **Area Chart** - Filled regions, stacked series (WebGPU + WebGL2)
+- **Histogram** - Distribution analysis, automatic binning (Sturges/Scott/Freedman-Diaconis), normal curve overlay (WebGPU + WebGL2 via BarChart)
+- **Gantt Chart** - Infinite scroll, zoom, drag-to-pan, timezone-aware, live time marker (SVG - intentional architectural choice)
 
-### Sensors & Analysis
+### Sensors & Analysis (4 components)
 
-- **Heatmap Chart** - 2D grid color mapping, custom scales, legends
-- **Radar Chart** - Polar plots, animated sweep, multi-series
+- **Heatmap Chart** - 2D grid color mapping, scientific color scales, legends (WebGPU + WebGL2)
+- **Radar Chart** - Polar plots, animated sweep, ATC-style display (WebGPU + WebGL2)
+- **Waterfall/Spectrogram Chart** - Time-frequency visualization, STFT, built-in FFT, Hann windowing, dB/log/linear modes (Canvas2D)
+- **Control Chart (SPC)** - Statistical process control, Western Electric rules (1-4), UCL/LCL, zones A/B/C (WebGPU + WebGL2 via LineChart)
 
-### Instruments
+### Instruments (2 components)
 
-- **Gauge** - Circular/semi-circular/linear, zones, needles, ticks
-- **Attitude Indicator** - Aviation artificial horizon, pitch/roll
+- **Gauge** - Circular/semi-circular/linear, zones, needles, ticks (WebGPU + WebGL2)
+- **Attitude Indicator** - Aviation artificial horizon, pitch/roll (WebGPU + WebGL2)
 
-### Data Display
+### Data Display (2 components)
 
-- **Status Grid** - KPI dashboard with inline sparklines
-- **Data Grid** - Virtual scrolling, sortable columns, 100k+ rows
+- **Status Grid** - KPI dashboard with inline sparklines (WebGL only)
+- **Data Grid** - Virtual scrolling, sortable columns, 100k+ rows (Hybrid GPU + DOM)
 
-### 3D Visualization
+### 3D Visualization (1 component - beta)
 
-- **3D Model Viewer** - Multi-format (STL/OBJ/PLY/GLTF/GLB), vertex data overlay, real-time updates
+- **3D Model Viewer** - Multi-format (STL/OBJ/PLY/GLTF/GLB), vertex data overlay, real-time heatmap updates (Three.js + react-three-fiber)
 
-### Planning & Scheduling
+**Total: 16 production components, ~17,000+ lines of code**
 
-- **Gantt Chart** - Infinite scroll, zoom, drag-to-pan, timezone-aware, live time marker
-
-**Total: ~15,000+ lines of production code**
+**Rendering Architecture Summary:**
+- 11 components: Dual WebGPU + WebGL2 rendering (including Histogram via BarChart, Control Chart via LineChart)
+- 1 component: WebGL2 only (Status Grid)
+- 1 component: Canvas2D (Waterfall Chart - texture-based rendering)
+- 1 component: Hybrid GPU + DOM (Data Grid - for text quality)
+- 1 component: SVG (Gantt Chart - for DOM layout benefits)
+- 1 component: Three.js (3D Model Viewer - industry standard for 3D)
 
 ---
 
@@ -107,11 +115,25 @@ Building WebGPU-powered visualization primitives for deep tech and physical syst
 
 ---
 
+---
+
+## Deprioritized Components
+
+### Point Cloud Viewer (Removed December 2024)
+
+**Rationale**: Overlaps significantly with 3D Model Viewer vertex data overlay capability. The 3D Model Viewer can handle point cloud visualization through vertices with appropriate rendering modes. Removed to reduce maintenance burden and avoid API surface duplication.
+
+### Vector Field Visualization (Removed December 2024)
+
+**Rationale**: Niche use case with limited cross-domain applicability. Better served by custom WebGPU implementations when needed. May be reconsidered as a future specialized component if demand materializes.
+
+---
+
 ### Tier 2 - Frequency & Spectral Analysis
 
-#### 5. Waterfall / Spectrogram Chart
+#### 5. Waterfall / Spectrogram Chart ⭐
 
-**Status**: Planned
+**Status**: ✅ **IMPLEMENTED** (January 2025)
 **Category**: `sensors` / `analysis`
 **Complexity**: Medium-High
 
@@ -140,12 +162,26 @@ Building WebGPU-powered visualization primitives for deep tech and physical syst
 - Smooth scrolling
 - Real-time updates (streaming mode)
 
-**Implementation Notes**:
+**Implemented Features** (packages/components/charts/waterfall-chart.tsx):
 
-- WebGPU compute shader for FFT (or use CPU FFT library)
-- Texture-based rendering (one row per time slice)
-- Circular buffer for scrolling
-- GPU texture updates
+- ✅ Canvas2D texture-based rendering
+- ✅ Built-in Cooley-Tukey FFT implementation (no external dependencies)
+- ✅ STFT (Short-Time Fourier Transform) with configurable FFT size and hop size
+- ✅ Hann window function to reduce spectral leakage
+- ✅ Multiple color scales (viridis, plasma, inferno, turbo, cool, warm, grayscale)
+- ✅ Three intensity modes: linear, logarithmic, dB (decibel)
+- ✅ Linear and logarithmic frequency scales
+- ✅ Auto-scrolling for real-time streaming
+- ✅ Helper functions: generateSignal(), generateChirp(), stft()
+- ✅ Comprehensive examples: multi-tone, chirp sweep, AM/FM signals
+
+**Future Enhancements**:
+
+- WebGPU compute shader for FFT (performance optimization)
+- Frequency markers and annotations
+- Peak detection and tracking
+- Time cursors with spectrum snapshot
+- SNR indicators
 
 ---
 
@@ -313,13 +349,78 @@ Building WebGPU-powered visualization primitives for deep tech and physical syst
 
 ---
 
-#### 11. Anomaly Detection Visualization
+#### 11. Control Chart (Statistical Process Control) ⭐
 
-**Status**: Planned
+**Status**: ✅ **IMPLEMENTED** (January 2025)
+**Category**: `analysis`
+**Complexity**: Medium
+
+**Description**: SPC charts with Western Electric rules detection for manufacturing quality control
+
+**Key Features**:
+
+- Control limits (UCL/LCL) at ±3 sigma
+- Warning limits at ±2 sigma
+- Zones A, B, C visualization
+- Western Electric rules 1-4 detection
+- Automatic out-of-control violation alerts
+- Customizable control limits (engineering specs or calculated from data)
+
+**Implemented Features** (packages/components/charts/control-chart.tsx):
+
+- ✅ SVG overlay on LineChart for control limits
+- ✅ Western Electric Rule 1: One point beyond 3-sigma
+- ✅ Western Electric Rule 2: 2 out of 3 consecutive points beyond 2-sigma
+- ✅ Western Electric Rule 3: 4 out of 5 consecutive points beyond 1-sigma
+- ✅ Western Electric Rule 4: 8 consecutive points on same side of mean
+- ✅ Zone highlighting (A/B/C with color coding)
+- ✅ Violation markers and callbacks
+- ✅ Helper functions: calculateControlLimits(), generateSPCData()
+- ✅ Comprehensive examples: stable process, drift detection, outliers
+
+**Use Cases**:
+
+- Manufacturing quality control
+- Levey-Jennings charts (medical lab QC)
+- Process monitoring and validation
+- Out-of-control detection
+
+#### 12. Histogram Chart ⭐
+
+**Status**: ✅ **IMPLEMENTED** (January 2025)
+**Category**: `charts`
+**Complexity**: Low-Medium
+
+**Description**: Distribution visualization with automatic binning methods
+
+**Implemented Features** (packages/components/charts/histogram-chart.tsx):
+
+- ✅ Automatic binning with 4 methods: Sturges, Scott, Freedman-Diaconis, sqrt
+- ✅ Manual bin count override
+- ✅ Three display modes: count, density, frequency
+- ✅ Normal distribution curve overlay (SVG)
+- ✅ Leverages BarChart WebGPU/WebGL2 rendering
+- ✅ Helper functions: generateNormalData(), generateUniformData(), generateExponentialData()
+- ✅ Statistical utilities: calculateStdDev(), calculateIQR()
+- ✅ Comprehensive examples: normal, uniform, exponential distributions
+
+**Use Cases**:
+
+- Data distribution analysis
+- Quality control tolerance analysis
+- Experiment results visualization
+- Measurement statistics
+- Scientific computing
+
+#### 13. Anomaly Detection Visualization
+
+**Status**: Deferred
 **Category**: `analysis` / `sensors`
 **Complexity**: Medium-High
 
 **Description**: Real-time anomaly highlighting on time-series and sensor data
+
+**Note**: Control Chart component (implemented above) provides Western Electric rules-based anomaly detection for SPC use cases. Additional ML-based anomaly detection can be added later.
 
 **Key Features**:
 
@@ -367,29 +468,47 @@ data-display/        # Status Grid, Data Grid
 
 ---
 
-## Implementation Timeline (Suggested)
+## Implementation Timeline
 
-### Q1 2025
+### Completed (December 2024)
 
-- 3D Model Viewer with Data Overlay
-- Point Cloud Viewer
-- Gantt Chart
+- ✅ 3D Model Viewer with Data Overlay (Beta - using Three.js)
+- ✅ Gantt Chart (Stable - SVG architecture)
+- ✅ All 13 core components production-ready
+- ✅ Buffer reuse optimization across all WebGPU renderers
+- ✅ Shared color-scales library with 8 scientific colormaps
 
-### Q2 2025
+### Completed (January 2025)
 
-- Vector Field Visualization
-- Waterfall / Spectrogram Chart
+- ✅ **Histogram Chart** - Distribution analysis with automatic binning (4 methods)
+- ✅ **Control Chart (SPC)** - Statistical process control with Western Electric rules
+- ✅ **Waterfall/Spectrogram Chart** - Time-frequency visualization with built-in FFT
+- **Total: 16 production components** (up from 13)
+
+### Q1 2025 (Planned - Remaining)
+
+- Performance benchmarking suite (automated FPS testing)
+- API documentation site
+- Component interaction layer (click/selection handlers - deferred, requires touching all 13+ charts)
+- Additional examples and use case documentation
+
+### Q2 2025 (Planned)
+
 - Anomaly Detection Visualization
-
-### Q3 2025
-
-- Cross-Section / Slice Viewer
-
-### Q4 2025
-
 - Map / Geo Overlay
-- Network Graph
-- FFT Spectrum Analyzer
+- Enhanced 3D Model Viewer (cross-section planes, measurement tools)
+
+### Q3 2025 (Planned)
+
+- Network Graph / Topology Viewer
+- Sankey / Flow Diagram
+- Compute shader optimizations (FFT for waterfall)
+
+### Q4 2025 (Planned)
+
+- Advanced analytics components (based on user demand)
+- WebGPU compute shader framework
+- Mobile optimization pass
 
 ## Performance Optimization Strategy
 
@@ -522,13 +641,27 @@ For each component:
 4. ✅ Shared color scale primitive (lib/color-scales.ts)
 5. ✅ Architectural deviation documentation (Gantt, DataGrid)
 6. ✅ Heatmap refactored to use shared color scales
+7. ✅ Registry updated with all 13 production components
+8. ✅ Gantt Chart production deployment
+9. ✅ Removed redundant components (Point Cloud, Vector Field)
 
-**Immediate priorities:**
+**Completed (January 2025):**
 
-1. Update registry.json with 3D Model Viewer and Gantt Chart
-2. Add performance benchmarks (automated FPS testing)
-3. Create API documentation site
-4. Consider refactoring 3D Model Viewer to use shared color scales
+1. ✅ **Histogram Chart** - Distribution analysis (ROI 6.0, highest ROI component)
+2. ✅ **Control Chart (SPC)** - Statistical process control (ROI 4.6, critical for manufacturing)
+3. ✅ **Waterfall/Spectrogram Chart** - Time-frequency analysis (ROI 4.0, most requested across markets)
+4. ✅ **Registry updated** with 16 production components
+5. ✅ **Comprehensive playground examples** for all 3 new components
+6. ✅ **Built-in FFT utilities** (no external dependencies)
+7. ✅ **Histogram binning utilities** added to lib/data-utils.ts
+
+**Immediate priorities (Q1 2025 - Remaining):**
+
+1. **Performance benchmarking suite** - Automated FPS testing with varying dataset sizes
+2. **API documentation site** - Interactive examples and component gallery
+3. **Component showcase** - Production examples from aerospace/medical/industrial domains
+4. **Interaction layer** (Deferred - requires modifying all charts, high risk)
+5. **Additional use case examples** - Real-world demos for each market segment
 
 **Questions to resolve:**
 
