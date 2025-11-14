@@ -129,6 +129,37 @@ export type {
 export { AttitudeIndicator } from "./attitude-indicator";
 export type { AttitudeIndicatorProps } from "./attitude-indicator";
 
+export { ModelViewer } from "./3d-model-viewer";
+export type { VertexData, ModelViewerProps } from "./3d-model-viewer";
+
+export { GanttChart } from "./gantt";
+export type {
+  Task,
+  TaskStatus,
+  GanttChartRootProps,
+  GanttChartContainerProps,
+  GanttChartViewportProps,
+  GanttChartGridProps,
+  GanttChartHeaderProps,
+  GanttChartTasksProps,
+  GanttChartCurrentTimeProps,
+  GanttChartLeftPanelProps,
+  GanttChartControlsProps,
+} from "./gantt";
+
+export { PointCloudViewer } from "./point-cloud-viewer";
+export type {
+  PointCloudPoint,
+  PointCloudViewerProps,
+} from "./point-cloud-viewer";
+
+export { VectorField } from "./vector-field";
+export type {
+  VectorFieldPoint,
+  VectorFieldProps,
+  StreamlineParticle,
+} from "./vector-field";
+
 // Base chart infrastructure (reusable for all chart types)
 export {
   ChartRoot,

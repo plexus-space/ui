@@ -8,3 +8,4 @@
 export * from "./timezone";
 export * from "./utils";
 export * from "./data-utils";
+export * from "./color-scales";

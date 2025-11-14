@@ -13,6 +13,7 @@ import {
   useBaseChart,
 } from "./base-chart";
 import { createContext, useContext, useEffect, useMemo, useRef } from "react";
+import { viridis as defaultColorScale } from "../lib/color-scales";
 
 // ============================================================================
 // Heatmap Chart Types
@@ -75,7 +76,9 @@ const HeatmapChartContext = createContext<HeatmapChartContextType | null>(null);
 function useHeatmapChartData() {
   const ctx = useContext(HeatmapChartContext);
   if (!ctx) {
-    throw new Error("HeatmapChart components must be used within HeatmapChart.Root");
+    throw new Error(
+      "HeatmapChart components must be used within HeatmapChart.Root"
+    );
   }
   return ctx;
 }
@@ -84,39 +87,6 @@ function useHeatmapChart() {
   const baseCtx = useBaseChart();
   const heatmapCtx = useHeatmapChartData();
   return { ...baseCtx, ...heatmapCtx };
-}
-
-// ============================================================================
-// Default Color Scales
-// ============================================================================
-
-function defaultColorScale(value: number): string {
-  // Viridis-inspired color scale
-  const colors = [
-    [68, 1, 84], // Purple
-    [59, 82, 139], // Blue
-    [33, 145, 140], // Cyan
-    [94, 201, 98], // Green
-    [253, 231, 37], // Yellow
-  ];
-
-  const clamped = Math.max(0, Math.min(1, value));
-  const scaled = clamped * (colors.length - 1);
-  const i = Math.floor(scaled);
-  const f = scaled - i;
-
-  if (i >= colors.length - 1) {
-    const c = colors[colors.length - 1];
-    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
-  }
-
-  const c1 = colors[i];
-  const c2 = colors[i + 1];
-  const r = Math.round(c1[0] + f * (c2[0] - c1[0]));
-  const g = Math.round(c1[1] + f * (c2[1] - c1[1]));
-  const b = Math.round(c1[2] + f * (c2[2] - c1[2]));
-
-  return `rgb(${r}, ${g}, ${b})`;
 }
 
 // ============================================================================
@@ -293,8 +263,10 @@ function createWebGLHeatmapRenderer(
       const matrixLoc = gl.getUniformLocation(program, "u_matrix");
       gl.uniformMatrix3fv(matrixLoc, false, matrix);
 
-      const xScale = (x: number) => ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-      const yScale = (y: number) => ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
       const cellWidth = innerWidth / xCategoryMap.size;
@@ -320,13 +292,21 @@ function createWebGLHeatmapRenderer(
       if (!buffers.color) buffers.color = gl.createBuffer();
 
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.positions), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(geometry.positions),
+        gl.STATIC_DRAW
+      );
       const positionLoc = gl.getAttribLocation(program, "a_position");
       gl.enableVertexAttribArray(positionLoc);
       gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
 
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(geometry.colors), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(geometry.colors),
+        gl.STATIC_DRAW
+      );
       const colorLoc = gl.getAttribLocation(program, "a_color");
       gl.enableVertexAttribArray(colorLoc);
       gl.vertexAttribPointer(colorLoc, 4, gl.FLOAT, false, 0, 0);
@@ -369,6 +349,12 @@ function createWebGPUHeatmapRenderer(
     entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
 
+  // Persistent buffers for heatmap rendering (reused across frames)
+  const heatmapBuffers = {
+    position: null as GPUBuffer | null,
+    color: null as GPUBuffer | null,
+  };
+
   const renderer = createWebGPURenderer<HeatmapRendererProps>({
     canvas,
     device,
@@ -383,11 +369,15 @@ function createWebGPUHeatmapRenderer(
           buffers: [
             {
               arrayStride: 8,
-              attributes: [{ shaderLocation: 0, offset: 0, format: "float32x2" }],
+              attributes: [
+                { shaderLocation: 0, offset: 0, format: "float32x2" },
+              ],
             },
             {
               arrayStride: 16,
-              attributes: [{ shaderLocation: 1, offset: 0, format: "float32x4" }],
+              attributes: [
+                { shaderLocation: 1, offset: 0, format: "float32x4" },
+              ],
             },
           ],
         },
@@ -454,8 +444,10 @@ function createWebGPUHeatmapRenderer(
       ]);
       device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
-      const xScale = (x: number) => ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
-      const yScale = (y: number) => ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
+      const xScale = (x: number) =>
+        ((x - xDomain[0]) / (xDomain[1] - xDomain[0])) * innerWidth;
+      const yScale = (y: number) =>
+        ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
       const cellWidth = innerWidth / xCategoryMap.size;
@@ -494,20 +486,39 @@ function createWebGPUHeatmapRenderer(
       passEncoder.setPipeline(pipeline);
       passEncoder.setBindGroup(0, bindGroup);
 
-      const positionBuffer = device.createBuffer({
-        size: geometry.positions.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      });
-      device.queue.writeBuffer(positionBuffer, 0, new Float32Array(geometry.positions));
+      const positionData = new Float32Array(geometry.positions);
+      const colorData = new Float32Array(geometry.colors);
 
-      const colorBuffer = device.createBuffer({
-        size: geometry.colors.length * 4,
-        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-      });
-      device.queue.writeBuffer(colorBuffer, 0, new Float32Array(geometry.colors));
+      // Create or resize position buffer with 1.5x growth factor
+      if (
+        !heatmapBuffers.position ||
+        heatmapBuffers.position.size < positionData.byteLength * 1.5
+      ) {
+        heatmapBuffers.position?.destroy();
+        heatmapBuffers.position = device.createBuffer({
+          size: Math.ceil(positionData.byteLength * 1.5),
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+      }
 
-      passEncoder.setVertexBuffer(0, positionBuffer);
-      passEncoder.setVertexBuffer(1, colorBuffer);
+      // Create or resize color buffer with 1.5x growth factor
+      if (
+        !heatmapBuffers.color ||
+        heatmapBuffers.color.size < colorData.byteLength * 1.5
+      ) {
+        heatmapBuffers.color?.destroy();
+        heatmapBuffers.color = device.createBuffer({
+          size: Math.ceil(colorData.byteLength * 1.5),
+          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+      }
+
+      // Write data to buffers
+      device.queue.writeBuffer(heatmapBuffers.position, 0, positionData);
+      device.queue.writeBuffer(heatmapBuffers.color, 0, colorData);
+
+      passEncoder.setVertexBuffer(0, heatmapBuffers.position);
+      passEncoder.setVertexBuffer(1, heatmapBuffers.color);
 
       passEncoder.draw(geometry.positions.length / 2);
 
@@ -516,6 +527,9 @@ function createWebGPUHeatmapRenderer(
     },
     onDestroy: () => {
       uniformBuffer.destroy();
+      // Clean up heatmap buffers
+      heatmapBuffers.position?.destroy();
+      heatmapBuffers.color?.destroy();
     },
   });
 
@@ -660,7 +674,9 @@ function Root({
       xAxis.formatter ||
       ((value: number) => {
         const idx = Math.round(value);
-        return idx >= 0 && idx < xCategories.length ? String(xCategories[idx]) : "";
+        return idx >= 0 && idx < xCategories.length
+          ? String(xCategories[idx])
+          : "";
       })
     );
   }, [xCategories, xAxis.formatter]);
@@ -670,7 +686,9 @@ function Root({
       yAxis.formatter ||
       ((value: number) => {
         const idx = Math.round(value);
-        return idx >= 0 && idx < yCategories.length ? String(yCategories[idx]) : "";
+        return idx >= 0 && idx < yCategories.length
+          ? String(yCategories[idx])
+          : "";
       })
     );
   }, [yCategories, yAxis.formatter]);
@@ -716,7 +734,9 @@ function Root({
 function Canvas() {
   const ctx = useHeatmapChart();
   const rendererRef = useRef<
-    WebGLRenderer<HeatmapRendererProps> | WebGPURenderer<HeatmapRendererProps> | null
+    | WebGLRenderer<HeatmapRendererProps>
+    | WebGPURenderer<HeatmapRendererProps>
+    | null
   >(null);
   const mountedRef = useRef(true);
 
@@ -865,7 +885,9 @@ function Grid() {
 
     // Get theme-aware colors
     const isDark = document.documentElement.classList.contains("dark");
-    const gridColor = isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)";
+    const gridColor = isDark
+      ? "rgba(255, 255, 255, 0.05)"
+      : "rgba(0, 0, 0, 0.05)";
 
     context.save();
     context.scale(dpr, dpr);
@@ -922,7 +944,9 @@ function Legend({ title = "Value" }: { title?: string }) {
     return stops;
   }, [ctx.colorScale]);
 
-  const gradientId = `heatmap-legend-gradient-${Math.random().toString(36).substring(2, 11)}`;
+  const gradientId = `heatmap-legend-gradient-${Math.random()
+    .toString(36)
+    .substring(2, 11)}`;
 
   return (
     <div className="absolute top-4 right-4 bg-white dark:bg-zinc-950 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 p-3">
@@ -934,6 +958,7 @@ function Legend({ title = "Value" }: { title?: string }) {
           {ctx.minValue.toFixed(1)}
         </span>
         <svg width="120" height="20">
+          <title className="sr-only">Heatmap Legend</title>
           <defs>
             <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
               {gradientStops.map((stop, idx) => (
@@ -992,7 +1017,12 @@ function Tooltip() {
     const xIdx = Math.floor(relX / cellWidth);
     const yIdx = Math.floor((innerHeight - relY) / cellHeight);
 
-    if (xIdx < 0 || xIdx >= ctx.xCategories.length || yIdx < 0 || yIdx >= ctx.yCategories.length) {
+    if (
+      xIdx < 0 ||
+      xIdx >= ctx.xCategories.length ||
+      yIdx < 0 ||
+      yIdx >= ctx.yCategories.length
+    ) {
       ctx.setHoveredPoint(null);
       ctx.setTooltipData(null);
       return;
@@ -1015,7 +1045,9 @@ function Tooltip() {
       if (cellChanged) {
         const screenX = ctx.margin.left + xIdx * cellWidth + cellWidth / 2;
         const screenY =
-          ctx.margin.top + (ctx.yCategories.length - yIdx - 1) * cellHeight + cellHeight / 2;
+          ctx.margin.top +
+          (ctx.yCategories.length - yIdx - 1) * cellHeight +
+          cellHeight / 2;
 
         ctx.setHoveredPoint({
           seriesIdx: 0,

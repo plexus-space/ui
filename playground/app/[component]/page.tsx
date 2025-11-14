@@ -10,6 +10,7 @@ import { CopyButton } from "@/components/copy-button";
 /**
  * Auto-discover example components by convention
  * Converts component-id to PascalCase + "Examples"
+ * Falls back to default export if named export doesn't exist
  */
 function loadExampleComponent(componentId: string): React.ComponentType | null {
   const exportName =
@@ -21,7 +22,8 @@ function loadExampleComponent(componentId: string): React.ComponentType | null {
   return lazy(() =>
     import(`@/examples/${componentId}`)
       .then((module) => ({
-        default: module[exportName],
+        // Try the named export first, fall back to default export
+        default: module[exportName] || module.default,
       }))
       .catch(() => ({
         default: () => null,
@@ -33,9 +35,15 @@ export default function ComponentPage() {
   const params = useParams();
   const componentId = params.component as string;
 
-  const component = useMemo(() => components.find((c) => c.id === componentId), [componentId]);
+  const component = useMemo(
+    () => components.find((c) => c.id === componentId),
+    [componentId]
+  );
 
-  const ExampleComponent = useMemo(() => loadExampleComponent(componentId), [componentId]);
+  const ExampleComponent = useMemo(
+    () => loadExampleComponent(componentId),
+    [componentId]
+  );
   if (!component) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -71,7 +79,10 @@ export default function ComponentPage() {
                 <pre className="text-sm font-geist-mono text-emerald-600 dark:text-emerald-400">
                   npx @plexusui/cli add {componentId}
                 </pre>
-                <CopyButton hideText copyText={`npx @plexusui/cli add ${componentId}`} />
+                <CopyButton
+                  hideText
+                  copyText={`npx @plexusui/cli add ${componentId}`}
+                />
               </div>
             </div>
           </div>
@@ -87,7 +98,9 @@ export default function ComponentPage() {
                     components/{componentId}.tsx
                   </code>
                 </p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">2. Install dependencies:</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  2. Install dependencies:
+                </p>
                 <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-lg p-3">
                   <pre className="text-xs">npm install react@latest</pre>
                 </div>
@@ -103,7 +116,9 @@ export default function ComponentPage() {
       {ExampleComponent ? (
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-6">Examples</h2>
-          <Suspense fallback={<div className="text-zinc-500">Loading example...</div>}>
+          <Suspense
+            fallback={<div className="text-zinc-500">Loading example...</div>}
+          >
             <ExampleComponent />
           </Suspense>
         </section>
@@ -124,7 +139,11 @@ export default function ComponentPage() {
                   download={textureName}
                   className="group relative aspect-square border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors"
                 >
-                  <img src={texture} alt={textureName} className="w-full h-full object-cover" />
+                  <img
+                    src={texture}
+                    alt={textureName}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <div className="text-white text-center">
                       <svg

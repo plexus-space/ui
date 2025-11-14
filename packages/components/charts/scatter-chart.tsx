@@ -446,6 +446,13 @@ function createWebGPUScatterRenderer(
     entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
 
+  // Persistent buffers for grid rendering (reused across frames)
+  const gridBuffers = {
+    position: null as GPUBuffer | null,
+    color: null as GPUBuffer | null,
+    pointCoord: null as GPUBuffer | null,
+  };
+
   const renderer = createWebGPURenderer<ScatterRendererProps>({
     canvas,
     device,
@@ -624,33 +631,52 @@ function createWebGPUScatterRenderer(
         }
 
         if (positions.length > 0) {
-          const gridPositionBuffer = device.createBuffer({
-            size: positions.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
-          device.queue.writeBuffer(gridPositionBuffer, 0, new Float32Array(positions));
+          const positionData = new Float32Array(positions);
+          const colorData = new Float32Array(colors);
+          const pointCoordData = new Float32Array(pointCoords);
 
-          const gridColorBuffer = device.createBuffer({
-            size: colors.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
-          device.queue.writeBuffer(gridColorBuffer, 0, new Float32Array(colors));
+          // Create or resize position buffer with 1.5x growth factor
+          if (!gridBuffers.position || gridBuffers.position.size < positionData.byteLength * 1.5) {
+            gridBuffers.position?.destroy();
+            gridBuffers.position = device.createBuffer({
+              size: Math.ceil(positionData.byteLength * 1.5),
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+          }
 
-          const gridPointCoordBuffer = device.createBuffer({
-            size: pointCoords.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
-          device.queue.writeBuffer(gridPointCoordBuffer, 0, new Float32Array(pointCoords));
+          // Create or resize color buffer with 1.5x growth factor
+          if (!gridBuffers.color || gridBuffers.color.size < colorData.byteLength * 1.5) {
+            gridBuffers.color?.destroy();
+            gridBuffers.color = device.createBuffer({
+              size: Math.ceil(colorData.byteLength * 1.5),
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+          }
 
-          passEncoder.setVertexBuffer(0, gridPositionBuffer);
-          passEncoder.setVertexBuffer(1, gridColorBuffer);
-          passEncoder.setVertexBuffer(2, gridPointCoordBuffer);
+          // Create or resize pointCoord buffer with 1.5x growth factor
+          if (!gridBuffers.pointCoord || gridBuffers.pointCoord.size < pointCoordData.byteLength * 1.5) {
+            gridBuffers.pointCoord?.destroy();
+            gridBuffers.pointCoord = device.createBuffer({
+              size: Math.ceil(pointCoordData.byteLength * 1.5),
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+          }
+
+          // Write data to buffers
+          device.queue.writeBuffer(gridBuffers.position, 0, positionData);
+          device.queue.writeBuffer(gridBuffers.color, 0, colorData);
+          device.queue.writeBuffer(gridBuffers.pointCoord, 0, pointCoordData);
+
+          passEncoder.setVertexBuffer(0, gridBuffers.position);
+          passEncoder.setVertexBuffer(1, gridBuffers.color);
+          passEncoder.setVertexBuffer(2, gridBuffers.pointCoord);
 
           passEncoder.draw(positions.length / 2);
         }
       }
 
       // Draw scatter points
+      // NOTE: Create buffers per series to avoid overwriting data in multi-series scenarios
       for (const s of series) {
         if (s.data.length === 0) continue;
 
@@ -666,6 +692,7 @@ function createWebGPUScatterRenderer(
           opacity
         );
 
+        // Create buffers per series (cannot reuse across series in same frame)
         const positionBuffer = device.createBuffer({
           size: geometry.positions.length * 4,
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
@@ -696,6 +723,10 @@ function createWebGPUScatterRenderer(
     },
     onDestroy: () => {
       uniformBuffer.destroy();
+      // Clean up grid buffers
+      gridBuffers.position?.destroy();
+      gridBuffers.color?.destroy();
+      gridBuffers.pointCoord?.destroy();
     },
   });
 

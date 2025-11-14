@@ -186,6 +186,167 @@
         "@webgpu/types"
       ],
       "registryDependencies": [],
+      "tier": "free",
+      "status": "stable"
+    },
+    "3d-model-viewer": {
+      "name": "3d-model-viewer",
+      "version": "0.1.0",
+      "displayName": "3D Model Viewer",
+      "category": "charts",
+      "status": "beta",
+      "description": "WebGPU-accelerated 3D model viewer with real-time heatmap data overlay. Supports orbit controls, scientific color maps, and vertex-based data visualization. Currently renders test geometry with full camera controls.",
+      "files": [
+        "charts/3d-model-viewer.tsx",
+        "charts/base-chart.tsx"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "point-cloud-viewer": {
+      "name": "point-cloud-viewer",
+      "version": "0.1.0",
+      "displayName": "Point Cloud Viewer",
+      "category": "3d",
+      "status": "beta",
+      "complexity": "advanced",
+      "description": "Display millions of 3D points with attributes and filtering. Three.js-based with instanced rendering for optimal performance. Use cases: LIDAR scans, CT/MRI voxel data, particle simulations, sensor network positions, astronomical data.",
+      "files": [
+        "charts/point-cloud-viewer.tsx",
+        "lib/color-scales.ts"
+      ],
+      "dependencies": [
+        "@react-three/fiber",
+        "@react-three/drei",
+        "three"
+      ],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "features": [
+        "10M+ points with instanced rendering",
+        "Color by value, height, or custom RGB",
+        "Variable point sizes and shapes (square, circle, sphere)",
+        "Filtering by attribute ranges",
+        "Point picking with click events",
+        "Orbit camera controls",
+        "Multiple color scales (viridis, plasma, inferno, cool, warm, grayscale)"
+      ],
+      "performanceTarget": "10M+ points at 60fps",
+      "tier": "free"
+    },
+    "vector-field-viz": {
+      "name": "vector-field-viz",
+      "version": "0.1.0",
+      "displayName": "Vector Field Visualization",
+      "category": "3d",
+      "status": "beta",
+      "complexity": "advanced",
+      "description": "Visualize directional data with arrows, streamlines, and particle tracing. Three.js-based with instanced arrow rendering. Use cases: Fluid dynamics (CFD airflow, blood flow), electromagnetic fields, force vectors on structures, wind patterns, thermal gradients.",
+      "files": [
+        "charts/vector-field.tsx",
+        "lib/color-scales.ts"
+      ],
+      "dependencies": [
+        "@react-three/fiber",
+        "@react-three/drei",
+        "three"
+      ],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "features": [
+        "2D and 3D vector fields",
+        "Arrow rendering with instanced geometry",
+        "Streamlines with Euler integration",
+        "Animated flow particles",
+        "Color by magnitude, direction, or uniform",
+        "Arrow density control",
+        "Multiple visualization modes (arrows, streamlines, both)",
+        "Multiple color scales (viridis, plasma, inferno, cool, warm)"
+      ],
+      "performanceTarget": "100k+ arrows at 60fps",
+      "futureEnhancements": [
+        "Line Integral Convolution (LIC)",
+        "RK4 integration for streamlines",
+        "WebGPU compute shaders for particle tracing"
+      ],
+      "tier": "free"
+    },
+    "waterfall-chart": {
+      "name": "waterfall-chart",
+      "version": "0.1.0",
+      "displayName": "Waterfall Chart",
+      "category": "sensors",
+      "status": "beta",
+      "complexity": "medium-high",
+      "description": "Time vs frequency spectrogram with GPU-accelerated rendering. Custom WebGPU texture-based architecture with circular buffer for smooth scrolling. Use cases: RF spectrum analysis, vibration analysis, audio processing, seismic data, bio-signals (EMG, EEG).",
+      "files": [
+        "charts/waterfall-chart.tsx",
+        "lib/color-scales.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [],
+      "features": [
+        "WebGPU texture-based rendering with Canvas2D fallback",
+        "Circular texture buffer for efficient scrolling",
+        "FFT computation (CPU-based, GPU compute planned)",
+        "Window functions (Hann, Hamming, Blackman, Rectangular)",
+        "Logarithmic or linear frequency scale",
+        "dB or linear magnitude scale",
+        "Custom color scales (viridis, jet, inferno, turbo, etc.)",
+        "STFT (Short-Time Fourier Transform) support",
+        "Configurable FFT size (256, 512, 1024, 2048, 4096)"
+      ],
+      "performanceTarget": "1024 FFT bins at 60fps (WebGPU mode)",
+      "futureEnhancements": [
+        "WebGPU compute shader for FFT",
+        "Frequency markers and annotations",
+        "Peak detection and tracking",
+        "Time cursors with spectrum snapshot",
+        "Signal-to-noise ratio (SNR) indicators"
+      ],
+      "tier": "free"
+    },
+    "gantt": {
+      "name": "gantt",
+      "version": "0.1.0",
+      "displayName": "Gantt Chart",
+      "category": "charts",
+      "status": "stable",
+      "description": "Interactive timeline visualization with infinite scroll, zoom controls, and live time tracking. Use cases: Ground station contact schedules, mission planning, flight operations, maintenance windows, spacecraft subsystem timelines.",
+      "files": [
+        "charts/gantt.tsx"
+      ],
+      "dependencies": [
+        "date-fns"
+      ],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "anomaly-detection": {
+      "name": "anomaly-detection",
+      "version": "0.0.0",
+      "displayName": "Anomaly Detection",
+      "category": "analysis",
+      "status": "planned",
+      "complexity": "medium-high",
+      "description": "Real-time anomaly highlighting on time-series data. Use cases: Sensor fault detection, quality control, network monitoring, predictive maintenance.",
+      "plannedFeatures": [
+        "Threshold-based detection",
+        "Statistical anomalies (z-score, IQR, Grubbs)",
+        "ML-based anomaly scores (ONNX Runtime)",
+        "Anomaly markers and annotations",
+        "Confidence intervals and bands",
+        "Alert zones with color coding"
+      ],
+      "performanceTarget": "Real-time on 100k+ points",
       "tier": "free"
     }
   }

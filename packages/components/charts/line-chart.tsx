@@ -467,6 +467,14 @@ function createWebGPULineRenderer(
     entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
 
+  // Persistent buffers for grid rendering (reused across frames)
+  const gridBuffers = {
+    position: null as GPUBuffer | null,
+    color: null as GPUBuffer | null,
+    normal: null as GPUBuffer | null,
+    width: null as GPUBuffer | null,
+  };
+
   const renderer = createWebGPURenderer<LineRendererProps>({
     canvas,
     device,
@@ -682,44 +690,76 @@ function createWebGPULineRenderer(
         }
 
         if (positions.length > 0) {
-          const positionBuffer = device.createBuffer({
-            size: positions.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
-          device.queue.writeBuffer(
-            positionBuffer,
-            0,
-            new Float32Array(positions)
-          );
+          const positionData = new Float32Array(positions);
+          const colorData = new Float32Array(colors);
+          const normalData = new Float32Array(normals);
+          const widthData = new Float32Array(widths);
 
-          const colorBuffer = device.createBuffer({
-            size: colors.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
-          device.queue.writeBuffer(colorBuffer, 0, new Float32Array(colors));
+          // Create or resize position buffer with 1.5x growth factor
+          if (
+            !gridBuffers.position ||
+            gridBuffers.position.size < positionData.byteLength * 1.5
+          ) {
+            gridBuffers.position?.destroy();
+            gridBuffers.position = device.createBuffer({
+              size: Math.ceil(positionData.byteLength * 1.5),
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+          }
 
-          const normalBuffer = device.createBuffer({
-            size: normals.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
-          device.queue.writeBuffer(normalBuffer, 0, new Float32Array(normals));
+          // Create or resize color buffer with 1.5x growth factor
+          if (
+            !gridBuffers.color ||
+            gridBuffers.color.size < colorData.byteLength * 1.5
+          ) {
+            gridBuffers.color?.destroy();
+            gridBuffers.color = device.createBuffer({
+              size: Math.ceil(colorData.byteLength * 1.5),
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+          }
 
-          const widthBuffer = device.createBuffer({
-            size: widths.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
-          device.queue.writeBuffer(widthBuffer, 0, new Float32Array(widths));
+          // Create or resize normal buffer with 1.5x growth factor
+          if (
+            !gridBuffers.normal ||
+            gridBuffers.normal.size < normalData.byteLength * 1.5
+          ) {
+            gridBuffers.normal?.destroy();
+            gridBuffers.normal = device.createBuffer({
+              size: Math.ceil(normalData.byteLength * 1.5),
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+          }
 
-          passEncoder.setVertexBuffer(0, positionBuffer);
-          passEncoder.setVertexBuffer(1, colorBuffer);
-          passEncoder.setVertexBuffer(2, normalBuffer);
-          passEncoder.setVertexBuffer(3, widthBuffer);
+          // Create or resize width buffer with 1.5x growth factor
+          if (
+            !gridBuffers.width ||
+            gridBuffers.width.size < widthData.byteLength * 1.5
+          ) {
+            gridBuffers.width?.destroy();
+            gridBuffers.width = device.createBuffer({
+              size: Math.ceil(widthData.byteLength * 1.5),
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+          }
+
+          // Write data to buffers
+          device.queue.writeBuffer(gridBuffers.position, 0, positionData);
+          device.queue.writeBuffer(gridBuffers.color, 0, colorData);
+          device.queue.writeBuffer(gridBuffers.normal, 0, normalData);
+          device.queue.writeBuffer(gridBuffers.width, 0, widthData);
+
+          passEncoder.setVertexBuffer(0, gridBuffers.position);
+          passEncoder.setVertexBuffer(1, gridBuffers.color);
+          passEncoder.setVertexBuffer(2, gridBuffers.normal);
+          passEncoder.setVertexBuffer(3, gridBuffers.width);
 
           passEncoder.draw(positions.length / 2);
         }
       }
 
       // Draw lines
+      // NOTE: Create buffers per series to avoid overwriting data in multi-series scenarios
       for (const s of series) {
         if (s.data.length < 2) {
           continue;
@@ -735,6 +775,7 @@ function createWebGPULineRenderer(
           lineWidth
         );
 
+        // Create buffers per series (cannot reuse across series in same frame)
         const positionBuffer = device.createBuffer({
           size: geometry.positions.length * 4,
           usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
@@ -788,6 +829,11 @@ function createWebGPULineRenderer(
     },
     onDestroy: () => {
       uniformBuffer.destroy();
+      // Clean up grid buffers
+      gridBuffers.position?.destroy();
+      gridBuffers.color?.destroy();
+      gridBuffers.normal?.destroy();
+      gridBuffers.width?.destroy();
     },
   });
 
