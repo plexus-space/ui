@@ -47,4 +47,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-# /packages/components-pro
+
+# Private/Paid Features (local only, not committed)
+/packages/pro/
+*.private.ts
+*.paid.ts
+
+# /playground/

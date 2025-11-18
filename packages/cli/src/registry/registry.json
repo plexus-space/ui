@@ -264,6 +264,109 @@
       ],
       "registryDependencies": [],
       "tier": "free"
+    },
+    "auto-dashboard": {
+      "name": "auto-dashboard",
+      "version": "0.1.0",
+      "displayName": "Auto Dashboard",
+      "category": "infrastructure",
+      "status": "beta",
+      "description": "AI-powered auto-generated dashboards from natural language queries. Connects data sources (WebSocket, Serial, HTTP) to charts automatically. Includes intent detection, alert execution engine, and real-time data processing. Use cases: Quick sensor monitoring setup, zero-code dashboard generation, predictive maintenance UIs, medical device monitoring.",
+      "files": [
+        "lib/auto-dashboard.tsx",
+        "lib/ai-query.ts",
+        "lib/data-connectors.ts",
+        "lib/data-utils.ts"
+      ],
+      "dependencies": [],
+      "devDependencies": [
+        "@webgpu/types"
+      ],
+      "registryDependencies": [
+        "line-chart",
+        "waterfall-chart",
+        "control-chart",
+        "gauge",
+        "heatmap-chart",
+        "radar-chart",
+        "attitude-indicator",
+        "status-grid",
+        "gantt"
+      ],
+      "tier": "free"
+    },
+    "3d-model-viewer": {
+      "name": "3d-model-viewer",
+      "version": "0.1.0",
+      "displayName": "3D Model Viewer",
+      "category": "visualization",
+      "status": "stable",
+      "description": "Interactive 3D model viewer with vertex color overlay support for stress/thermal/fatigue visualization. Supports STL, OBJ, GLTF, and GLB formats. Use cases: FEA stress analysis, thermal imaging overlays, CAD model inspection, structural health monitoring, component fatigue visualization.",
+      "files": [
+        "charts/3d-model-viewer.tsx",
+        "lib/color-scales.ts"
+      ],
+      "dependencies": [
+        "three",
+        "@react-three/fiber",
+        "@react-three/drei",
+        "@types/three"
+      ],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "quick-connect-demo": {
+      "name": "quick-connect-demo",
+      "version": "0.1.0",
+      "displayName": "Quick Connect Demo",
+      "category": "demos",
+      "status": "stable",
+      "description": "3-click workflow demo: Connect sensor → ask in English → get dashboard. Zero code required.",
+      "files": [],
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "vibration-monitoring": {
+      "name": "vibration-monitoring",
+      "version": "0.1.0",
+      "displayName": "Vibration Monitoring",
+      "category": "demos",
+      "status": "stable",
+      "description": "Industrial predictive maintenance demo with FFT, SPC control charts, and bearing fault detection (BPFO/BPFI).",
+      "files": [],
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "eeg-brain-interface": {
+      "name": "eeg-brain-interface",
+      "version": "0.1.0",
+      "displayName": "EEG Brain Interface",
+      "category": "demos",
+      "status": "stable",
+      "description": "Medical-grade EEG monitoring at 256 Hz with frequency band analysis (Delta/Theta/Alpha/Beta/Gamma) and mental state classification.",
+      "files": [],
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "cad-stress-analysis": {
+      "name": "cad-stress-analysis",
+      "version": "0.1.0",
+      "displayName": "CAD Stress Analysis",
+      "category": "demos",
+      "status": "stable",
+      "description": "Interactive FEA stress visualization. Upload STL files and visualize stress/thermal/fatigue analysis without desktop software.",
+      "files": [],
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
     }
   }
 }

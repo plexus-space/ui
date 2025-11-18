@@ -1,10 +1,7 @@
 "use client";
 
 import * as React from "react";
-
-// ============================================================================
-// Shared Types
-// ============================================================================
+import { ErrorBoundary, GPUErrorFallback } from "../lib/error-boundary";
 
 export interface Point {
   x: number;
@@ -25,12 +22,12 @@ export interface Margin {
   left: number;
 }
 
-export interface HoveredPoint {
+export interface HoveredPoint<TData = unknown> {
   seriesIdx: number;
   pointIdx: number;
   screenX: number;
   screenY: number;
-  data?: any; // Chart-specific data
+  data?: TData;
 }
 
 export interface TooltipData {
@@ -38,7 +35,6 @@ export interface TooltipData {
   items: { label: string; value: string; color?: string }[];
 }
 
-// Time series state
 export interface TimeSeriesState {
   isPlaying: boolean;
   currentTime: number;
@@ -47,48 +43,29 @@ export interface TimeSeriesState {
   playbackSpeed: number;
 }
 
-// ============================================================================
-// Base Chart Context
-// ============================================================================
-
 export interface BaseChartContext {
-  // Dimensions
   width: number;
   height: number;
   margin: Margin;
-  devicePixelRatio: number; // Unified DPR for all chart components
-
-  // Axes
+  devicePixelRatio: number;
   xAxis: Axis;
   yAxis: Axis;
   xDomain: [number, number];
   yDomain: [number, number];
   xTicks: number[];
   yTicks: number[];
-
-  // Scales
   xScale: (x: number) => number;
   yScale: (y: number) => number;
-
-  // Refs
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   overlayRef: React.RefObject<HTMLCanvasElement | null>;
-
-  // GPU preference
   preferWebGPU: boolean;
   renderMode: "webgpu" | "webgl" | null;
   setRenderMode: (mode: "webgpu" | "webgl" | null) => void;
-  gpuDevice: GPUDevice | null; // WebGPU device if available
-
-  // Interaction state
-  hoveredPoint: HoveredPoint | null;
-  setHoveredPoint: (point: HoveredPoint | null) => void;
-
-  // Tooltip data (chart-specific)
+  gpuDevice: GPUDevice | null;
+  hoveredPoint: HoveredPoint<unknown> | null;
+  setHoveredPoint: (point: HoveredPoint<unknown> | null) => void;
   tooltipData: TooltipData | null;
   setTooltipData: (data: TooltipData | null) => void;
-
-  // Time series
   timeSeriesState: TimeSeriesState | null;
   setTimeSeriesState: React.Dispatch<
     React.SetStateAction<TimeSeriesState | null>
@@ -105,10 +82,9 @@ export function useBaseChart() {
   return ctx;
 }
 
-// ============================================================================
-// Utilities
-// ============================================================================
-
+/**
+ * Calculate domain (min/max) with optional padding
+ */
 export function getDomain(
   points: Point[],
   accessor: (p: Point) => number,
@@ -125,16 +101,17 @@ export function getDomain(
     if (value > max) max = value;
   }
 
-  // Use configurable padding on each side, but don't go below 0 for positive data
   const range = max - min;
   const padding = range * paddingPercent || 1;
-
   const domainMin = min >= 0 ? Math.max(0, min - padding) : min - padding;
   const domainMax = max + padding;
 
   return [domainMin, domainMax];
 }
 
+/**
+ * Generate evenly spaced tick values for axis
+ */
 export function getTicks(domain: [number, number], count: number): number[] {
   const [min, max] = domain;
   const step = (max - min) / (count - 1);
@@ -147,6 +124,9 @@ export function getTicks(domain: [number, number], count: number): number[] {
   return ticks;
 }
 
+/**
+ * Format numeric value with k suffix for thousands
+ */
 export function formatValue(value: number): string {
   if (Math.abs(value) >= 1000) {
     return `${(value / 1000).toFixed(1)}k`;
@@ -154,8 +134,10 @@ export function formatValue(value: number): string {
   return value.toFixed(1);
 }
 
+/**
+ * Convert hex or rgb color to normalized RGB values [0-1]
+ */
 export function hexToRgb(color: string): [number, number, number] {
-  // Handle rgb(r, g, b) format
   const rgbMatch = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/i.exec(color);
   if (rgbMatch) {
     return [
@@ -165,7 +147,6 @@ export function hexToRgb(color: string): [number, number, number] {
     ];
   }
 
-  // Handle hex format
   const hexMatch = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color);
   return hexMatch
     ? [
@@ -175,10 +156,6 @@ export function hexToRgb(color: string): [number, number, number] {
       ]
     : [0, 0, 1];
 }
-
-// ============================================================================
-// Base Renderer Types & Factory Functions
-// ============================================================================
 
 export interface RendererProps {
   canvas: HTMLCanvasElement;
@@ -218,6 +195,9 @@ export interface WebGLRendererConfig<
   ) => void;
 }
 
+/**
+ * Create a WebGL2 renderer with custom shaders and render logic
+ */
 export function createWebGLRenderer<
   TProps extends RendererProps = RendererProps
 >(config: WebGLRendererConfig<TProps>): WebGLRenderer<TProps> {
@@ -334,6 +314,9 @@ export interface WebGPURendererConfig<
   onDestroy?: (device: GPUDevice, pipeline: GPURenderPipeline | null) => void;
 }
 
+/**
+ * Create a WebGPU renderer with custom pipeline and render logic
+ */
 export function createWebGPURenderer<
   TProps extends RendererProps = RendererProps
 >(config: WebGPURendererConfig<TProps>): WebGPURenderer<TProps> {
@@ -370,33 +353,34 @@ export function createWebGPURenderer<
   };
 }
 
-// ============================================================================
-// Root Component
-// ============================================================================
-
 export interface BaseChartRootProps {
-  width?: number | string; // Support "100%", "50vw", etc.
+  width?: number | string;
   height?: number | string;
   minWidth?: number;
   minHeight?: number;
   maxWidth?: number;
   maxHeight?: number;
-  aspectRatio?: number; // e.g., 16/9, 4/3
+  aspectRatio?: number;
   margin?: Margin;
   xAxis?: Axis;
   yAxis?: Axis;
   xDomain?: [number, number] | "auto";
   yDomain?: [number, number] | "auto";
-  xTicks?: number[]; // Custom tick values
-  yTicks?: number[]; // Custom tick values
+  xTicks?: number[];
+  yTicks?: number[];
   preferWebGPU?: boolean;
   className?: string;
   children?: React.ReactNode;
-  // Time series support
   enableTimeSeries?: boolean;
   timeRange?: [number, number];
+  disableErrorBoundary?: boolean;
+  errorFallback?: React.ReactNode;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
+/**
+ * Root chart component providing context and responsive container
+ */
 export function ChartRoot({
   width: widthProp = 800,
   height: heightProp = 400,
@@ -417,23 +401,24 @@ export function ChartRoot({
   children,
   enableTimeSeries = false,
   timeRange,
+  disableErrorBoundary = false,
+  errorFallback,
+  onError,
 }: BaseChartRootProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const overlayRef = React.useRef<HTMLCanvasElement>(null);
 
-  // Responsive dimensions state
   const [dimensions, setDimensions] = React.useState<{
     width: number;
     height: number;
   }>(() => {
-    // Initialize with prop values or defaults
     const w = typeof widthProp === "number" ? widthProp : 800;
     const h = typeof heightProp === "number" ? heightProp : 400;
     return { width: w, height: h };
   });
 
-  const [hoveredPoint, setHoveredPoint] = React.useState<HoveredPoint | null>(
+  const [hoveredPoint, setHoveredPoint] = React.useState<HoveredPoint<unknown> | null>(
     null
   );
   const [tooltipData, setTooltipData] = React.useState<TooltipData | null>(
@@ -445,7 +430,6 @@ export function ChartRoot({
 
   const [gpuDevice, setGpuDevice] = React.useState<GPUDevice | null>(null);
 
-  // Initialize WebGPU device if preferred and available
   React.useEffect(() => {
     if (!preferWebGPU) {
       setRenderMode("webgl");
@@ -489,7 +473,6 @@ export function ChartRoot({
     };
   }, [preferWebGPU]);
 
-  // Time series state
   const [timeSeriesState, setTimeSeriesState] =
     React.useState<TimeSeriesState | null>(() => {
       if (!enableTimeSeries || !timeRange) return null;
@@ -502,7 +485,6 @@ export function ChartRoot({
       };
     });
 
-  // ResizeObserver for responsive sizing - always active
   React.useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -517,19 +499,16 @@ export function ChartRoot({
       let newWidth = observedWidth;
       let newHeight = observedHeight;
 
-      // If dimensions are 0 (initial render), use prop defaults
       if (newWidth === 0 && newHeight === 0) {
         newWidth = typeof widthProp === "number" ? widthProp : 800;
         newHeight = typeof heightProp === "number" ? heightProp : 400;
       }
 
-      // Apply constraints
       if (minWidth !== undefined) newWidth = Math.max(minWidth, newWidth);
       if (maxWidth !== undefined) newWidth = Math.min(maxWidth, newWidth);
       if (minHeight !== undefined) newHeight = Math.max(minHeight, newHeight);
       if (maxHeight !== undefined) newHeight = Math.min(maxHeight, newHeight);
 
-      // For fixed pixel widths/heights, use them as max constraints
       if (typeof widthProp === "number") {
         newWidth = Math.min(widthProp, newWidth);
       }
@@ -537,7 +516,6 @@ export function ChartRoot({
         newHeight = Math.min(heightProp, newHeight);
       }
 
-      // Apply aspect ratio if specified
       if (aspectRatio !== undefined) {
         const currentRatio = newWidth / newHeight;
         if (currentRatio > aspectRatio) {
@@ -568,10 +546,8 @@ export function ChartRoot({
     aspectRatio,
   ]);
 
-  // Use responsive dimensions
   const { width, height } = dimensions;
 
-  // Default domains - subclasses will override via context
   const xDomain: [number, number] =
     xDomainProp === "auto" || !xDomainProp ? [0, 100] : xDomainProp;
   const yDomain: [number, number] =
@@ -586,7 +562,6 @@ export function ChartRoot({
     [yTicksProp, yDomain]
   );
 
-  // Create scale functions
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
@@ -604,12 +579,9 @@ export function ChartRoot({
     [yDomain, margin.top, innerHeight]
   );
 
-  // Capture DPR once to ensure consistency across all chart components
-  // Use 1 as default for SSR, will be updated on client mount
   const [devicePixelRatio, setDevicePixelRatio] = React.useState(1);
 
   React.useEffect(() => {
-    // Set actual DPR on client mount
     setDevicePixelRatio(window.devicePixelRatio || 1);
   }, []);
 
@@ -653,7 +625,7 @@ export function ChartRoot({
     overflow: "visible",
   };
 
-  return (
+  const chartContent = (
     <BaseChartContext.Provider value={contextValue}>
       <div
         ref={containerRef}
@@ -663,6 +635,20 @@ export function ChartRoot({
         {children}
       </div>
     </BaseChartContext.Provider>
+  );
+
+  if (disableErrorBoundary) {
+    return chartContent;
+  }
+
+  return (
+    <ErrorBoundary
+      fallback={errorFallback || <GPUErrorFallback error={null} />}
+      onError={onError}
+      resetKeys={[preferWebGPU, renderMode]}
+    >
+      {chartContent}
+    </ErrorBoundary>
   );
 }
 
@@ -687,7 +673,6 @@ export function ChartAxes() {
     context.scale(dpr, dpr);
     context.clearRect(0, 0, ctx.width, ctx.height);
 
-    // Get theme-aware colors
     const isDark = document.documentElement.classList.contains("dark");
     const textColor = isDark ? "#6e6e6e" : "#999999";
 
@@ -695,7 +680,6 @@ export function ChartAxes() {
     context.fillStyle = textColor;
     context.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
 
-    // X-axis
     context.beginPath();
     context.moveTo(ctx.margin.left, ctx.height - ctx.margin.bottom);
     context.lineTo(
@@ -704,33 +688,28 @@ export function ChartAxes() {
     );
     context.stroke();
 
-    // Calculate minimum spacing between x-axis labels to avoid overlap
     const getFilteredXTicks = () => {
       if (ctx.xTicks.length === 0) return [];
 
-      // Measure a sample label to estimate width
       const sampleLabel = ctx.xAxis.formatter
         ? ctx.xAxis.formatter(ctx.xTicks[0])
         : formatValue(ctx.xTicks[0]);
       const labelWidth = context.measureText(sampleLabel).width;
-      const minSpacing = labelWidth + 20; // Add 20px padding between labels
+      const minSpacing = labelWidth + 20;
 
       const innerWidth = ctx.width - ctx.margin.left - ctx.margin.right;
       const availableSpace = innerWidth / ctx.xTicks.length;
 
-      // If we have enough space, show all ticks
       if (availableSpace >= minSpacing) {
         return ctx.xTicks;
       }
 
-      // Otherwise, intelligently skip ticks
       const skipFactor = Math.ceil(minSpacing / availableSpace);
       return ctx.xTicks.filter((_, i) => i % skipFactor === 0);
     };
 
     const visibleXTicks = getFilteredXTicks();
 
-    // Draw all tick marks
     ctx.xTicks.forEach((tick) => {
       const x = ctx.xScale(tick);
       context.beginPath();
@@ -739,7 +718,6 @@ export function ChartAxes() {
       context.stroke();
     });
 
-    // Draw only non-overlapping labels
     visibleXTicks.forEach((tick) => {
       const x = ctx.xScale(tick);
       context.textAlign = "center";
@@ -755,7 +733,6 @@ export function ChartAxes() {
       context.fillText(ctx.xAxis.label, ctx.width / 2, ctx.height - 5);
     }
 
-    // Y-axis
     context.font = "12px -apple-system, BlinkMacSystemFont, sans-serif";
     context.beginPath();
     context.moveTo(ctx.margin.left, ctx.margin.top);

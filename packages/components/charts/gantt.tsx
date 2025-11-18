@@ -78,7 +78,7 @@ export interface Task {
    * Custom color for the task bar in any CSS color format
    * @example "#06b6d4", "rgb(6, 182, 212)"
    */
-  color?: any;
+  color?: string;
   /**
    * Additional description text shown in detailed variant
    * @example "Ground station contact", "Telemetry downlink"
