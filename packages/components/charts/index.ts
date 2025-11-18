@@ -175,6 +175,43 @@ export type {
   WindowFunction,
 } from "./waterfall-chart";
 
+export { ModelViewer } from "./3d-model-viewer";
+export type { ModelViewerProps } from "./3d-model-viewer";
+
+// Helper Components
+export { TimeRangeSelector } from "./time-range-selector";
+export type {
+  TimeRangePreset,
+  TimeRange,
+  TimeRangeSelectorProps,
+} from "./time-range-selector";
+
+export { DragFilter } from "./drag-filter";
+export type {
+  DragSelection,
+  DragFilterProps,
+} from "./drag-filter";
+
+export { MultiSelectFilter } from "./multi-select-filter";
+export type {
+  FilterOption,
+  MultiSelectFilterProps,
+} from "./multi-select-filter";
+
+export { DateRangePicker } from "./date-range-picker";
+export type {
+  DateRange,
+  DateRangePickerProps,
+} from "./date-range-picker";
+
+export { DashboardGrid } from "./dashboard-grid";
+export type {
+  GridItem,
+  DashboardGridRootProps,
+  DashboardGridItemProps,
+  DashboardGridCardProps,
+} from "./dashboard-grid";
+
 // Base chart infrastructure (reusable for all chart types)
 export {
   ChartRoot,

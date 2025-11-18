@@ -106,7 +106,9 @@ export function TimeRangeSelector({
   className,
   disabled = false,
 }: TimeRangeSelectorProps) {
-  const [selectedPreset, setSelectedPreset] = React.useState<string | number | null>(null);
+  const [selectedPreset, setSelectedPreset] = React.useState<
+    string | number | null
+  >(null);
   const [isCustom, setIsCustom] = React.useState(false);
 
   const handlePresetClick = (preset: TimeRangePreset) => {

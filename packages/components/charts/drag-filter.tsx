@@ -176,7 +176,9 @@ export function DragFilter({
   const overlayStyle = React.useMemo(() => {
     if (!showOverlay) return {};
 
-    const activeSelection = selection || (isDragging ? calculateSelection(dragStart, dragCurrent) : null);
+    const activeSelection =
+      selection ||
+      (isDragging ? calculateSelection(dragStart, dragCurrent) : null);
     if (!activeSelection) return { display: "none" };
 
     if (orientation === "horizontal") {
@@ -194,7 +196,15 @@ export function DragFilter({
         width: "100%",
       };
     }
-  }, [selection, isDragging, dragStart, dragCurrent, showOverlay, orientation, calculateSelection]);
+  }, [
+    selection,
+    isDragging,
+    dragStart,
+    dragCurrent,
+    showOverlay,
+    orientation,
+    calculateSelection,
+  ]);
 
   return (
     <div
@@ -245,7 +255,9 @@ export function DragFilter({
               <div
                 className={cn(
                   "absolute rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white shadow-lg dark:bg-blue-500",
-                  orientation === "horizontal" ? "left-0 top-0 -translate-y-full" : "left-0 top-0 -translate-x-full"
+                  orientation === "horizontal"
+                    ? "left-0 top-0 -translate-y-full"
+                    : "left-0 top-0 -translate-x-full"
                 )}
               >
                 {((selection?.startValue ?? 0) || 0).toFixed(2)}
