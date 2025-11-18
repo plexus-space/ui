@@ -53,7 +53,9 @@ function interpolateColor(
  * scale(1)    // "rgb(255, 0, 0)"
  * ```
  */
-export function createColorScale(stops: ColorStop[]): (value: number) => string {
+export function createColorScale(
+  stops: ColorStop[]
+): (value: number) => string {
   if (stops.length === 0) {
     throw new Error("Color scale must have at least one stop");
   }
@@ -76,7 +78,8 @@ export function createColorScale(stops: ColorStop[]): (value: number) => string 
 
       if (clamped <= stop2.position) {
         // Interpolate between stop1 and stop2
-        const t = (clamped - stop1.position) / (stop2.position - stop1.position);
+        const t =
+          (clamped - stop1.position) / (stop2.position - stop1.position);
         const [r, g, b] = interpolateColor(stop1.color, stop2.color, t);
         return `rgb(${r}, ${g}, ${b})`;
       }
@@ -145,11 +148,11 @@ export function createSequentialScale(
  * ```
  */
 export const viridis = createSequentialScale([
-  [68, 1, 84],      // Purple
-  [59, 82, 139],    // Blue
-  [33, 145, 140],   // Cyan
-  [94, 201, 98],    // Green
-  [253, 231, 37],   // Yellow
+  [68, 1, 84], // Purple
+  [59, 82, 139], // Blue
+  [33, 145, 140], // Cyan
+  [94, 201, 98], // Green
+  [253, 231, 37], // Yellow
 ]);
 
 /**
@@ -167,11 +170,11 @@ export const viridis = createSequentialScale([
  * ```
  */
 export const plasma = createSequentialScale([
-  [13, 8, 135],     // Deep purple
-  [126, 3, 167],    // Purple
-  [204, 71, 120],   // Pink
-  [248, 149, 64],   // Orange
-  [240, 249, 33],   // Yellow
+  [13, 8, 135], // Deep purple
+  [126, 3, 167], // Purple
+  [204, 71, 120], // Pink
+  [248, 149, 64], // Orange
+  [240, 249, 33], // Yellow
 ]);
 
 /**
@@ -189,11 +192,11 @@ export const plasma = createSequentialScale([
  * ```
  */
 export const inferno = createSequentialScale([
-  [0, 0, 4],        // Black
-  [87, 16, 110],    // Purple
-  [188, 55, 84],    // Red
-  [249, 142, 9],    // Orange
-  [252, 255, 164],  // Pale yellow
+  [0, 0, 4], // Black
+  [87, 16, 110], // Purple
+  [188, 55, 84], // Red
+  [249, 142, 9], // Orange
+  [252, 255, 164], // Pale yellow
 ]);
 
 /**
@@ -211,10 +214,10 @@ export const inferno = createSequentialScale([
  * ```
  */
 export const cool = createSequentialScale([
-  [0, 255, 255],    // Cyan
-  [0, 128, 255],    // Light blue
-  [0, 0, 255],      // Blue
-  [128, 0, 255],    // Purple
+  [0, 255, 255], // Cyan
+  [0, 128, 255], // Light blue
+  [0, 0, 255], // Blue
+  [128, 0, 255], // Purple
 ]);
 
 /**
@@ -232,11 +235,11 @@ export const cool = createSequentialScale([
  * ```
  */
 export const warm = createSequentialScale([
-  [255, 255, 0],    // Yellow
-  [255, 192, 0],    // Orange-yellow
-  [255, 128, 0],    // Orange
-  [255, 64, 0],     // Red-orange
-  [255, 0, 0],      // Red
+  [255, 255, 0], // Yellow
+  [255, 192, 0], // Orange-yellow
+  [255, 128, 0], // Orange
+  [255, 64, 0], // Red-orange
+  [255, 0, 0], // Red
 ]);
 
 /**
@@ -255,9 +258,9 @@ export const warm = createSequentialScale([
  * ```
  */
 export const diverging = createColorScale([
-  { position: 0, color: [0, 0, 255] },      // Blue
+  { position: 0, color: [0, 0, 255] }, // Blue
   { position: 0.5, color: [255, 255, 255] }, // White
-  { position: 1, color: [255, 0, 0] },      // Red
+  { position: 1, color: [255, 0, 0] }, // Red
 ]);
 
 /**
@@ -276,11 +279,11 @@ export const diverging = createColorScale([
  * ```
  */
 export const grayscale = createSequentialScale([
-  [0, 0, 0],        // Black
-  [64, 64, 64],     // Dark gray
-  [128, 128, 128],  // Medium gray
-  [192, 192, 192],  // Light gray
-  [255, 255, 255],  // White
+  [0, 0, 0], // Black
+  [64, 64, 64], // Dark gray
+  [128, 128, 128], // Medium gray
+  [192, 192, 192], // Light gray
+  [255, 255, 255], // White
 ]);
 
 /**
@@ -301,12 +304,12 @@ export const grayscale = createSequentialScale([
  * ```
  */
 export const turbo = createSequentialScale([
-  [48, 18, 59],     // Deep purple
-  [66, 64, 134],    // Purple
-  [53, 183, 121],   // Green
-  [199, 216, 64],   // Yellow-green
-  [253, 231, 37],   // Yellow
-  [234, 51, 35],    // Red
+  [48, 18, 59], // Deep purple
+  [66, 64, 134], // Purple
+  [53, 183, 121], // Green
+  [199, 216, 64], // Yellow-green
+  [253, 231, 37], // Yellow
+  [234, 51, 35], // Red
 ]);
 
 /**

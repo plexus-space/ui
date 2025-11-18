@@ -1332,12 +1332,16 @@ function Tooltip() {
 
   // Recalculate dot positions based on current data for streaming scenarios
   const dots = useMemo(() => {
-    const hoveredData = ctx.hoveredPoint?.data as { seriesPoints?: Array<{
-      seriesIdx: number;
-      point: Point;
-      screenY: number;
-      screenX: number;
-    }> } | undefined;
+    const hoveredData = ctx.hoveredPoint?.data as
+      | {
+          seriesPoints?: Array<{
+            seriesIdx: number;
+            point: Point;
+            screenY: number;
+            screenX: number;
+          }>;
+        }
+      | undefined;
 
     if (!hoveredData?.seriesPoints) return null;
 

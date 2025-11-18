@@ -740,7 +740,10 @@ export function fft(input: number[]): Complex[] {
  */
 export type WindowFunction = "hann" | "hamming" | "blackman" | "none";
 
-export function applyWindow(data: number[], windowType: WindowFunction = "hann"): number[] {
+export function applyWindow(
+  data: number[],
+  windowType: WindowFunction = "hann"
+): number[] {
   const n = data.length;
   const windowed = new Array(n);
 
@@ -755,8 +758,10 @@ export function applyWindow(data: number[], windowType: WindowFunction = "hann")
         w = 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (n - 1));
         break;
       case "blackman":
-        w = 0.42 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1)) +
-            0.08 * Math.cos((4 * Math.PI * i) / (n - 1));
+        w =
+          0.42 -
+          0.5 * Math.cos((2 * Math.PI * i) / (n - 1)) +
+          0.08 * Math.cos((4 * Math.PI * i) / (n - 1));
         break;
       case "none":
         w = 1;
@@ -796,7 +801,7 @@ export function powerToDb(power: number, referenceLevel = 1): number {
  * Spectrogram data point (time, frequency, magnitude)
  */
 export interface SpectrogramPoint {
-  time: number;      // Time index
+  time: number; // Time index
   frequency: number; // Frequency bin
   magnitude: number; // Power in dB or linear
 }
@@ -823,7 +828,11 @@ export function generateSpectrogram(
   const numFreqBins = fftSize / 2;
 
   // Process signal in overlapping windows
-  for (let timeIndex = 0; timeIndex + fftSize <= signal.length; timeIndex += hopSize) {
+  for (
+    let timeIndex = 0;
+    timeIndex + fftSize <= signal.length;
+    timeIndex += hopSize
+  ) {
     // Extract window
     const window = signal.slice(timeIndex, timeIndex + fftSize);
 
@@ -990,7 +999,10 @@ export interface GPUFFTCompute {
   destroy: () => void;
 }
 
-export const createGPUFFTCompute = (device: GPUDevice, fftSize: number): GPUFFTCompute => {
+export const createGPUFFTCompute = (
+  device: GPUDevice,
+  fftSize: number
+): GPUFFTCompute => {
   // Validate FFT size
   if ((fftSize & (fftSize - 1)) !== 0) {
     throw new Error("FFT size must be a power of 2");
@@ -1003,11 +1015,31 @@ export const createGPUFFTCompute = (device: GPUDevice, fftSize: number): GPUFFTC
   // Create bind group layout
   const bindGroupLayout = device.createBindGroupLayout({
     entries: [
-      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
-      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
-      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
-      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
-      { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
+      {
+        binding: 0,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "read-only-storage" },
+      },
+      {
+        binding: 1,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "read-only-storage" },
+      },
+      {
+        binding: 2,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "storage" },
+      },
+      {
+        binding: 3,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "storage" },
+      },
+      {
+        binding: 4,
+        visibility: GPUShaderStage.COMPUTE,
+        buffer: { type: "uniform" },
+      },
     ],
   });
 
@@ -1074,7 +1106,9 @@ export const createGPUFFTCompute = (device: GPUDevice, fftSize: number): GPUFFTC
    */
   const compute = async (input: number[]): Promise<Complex[]> => {
     if (input.length !== fftSize) {
-      throw new Error(`Input size ${input.length} does not match FFT size ${fftSize}`);
+      throw new Error(
+        `Input size ${input.length} does not match FFT size ${fftSize}`
+      );
     }
 
     // Upload input data (real part, imaginary part is zero)
@@ -1145,13 +1179,17 @@ export const createGPUFFTCompute = (device: GPUDevice, fftSize: number): GPUFFTC
     const finalImag = numPasses % 2 === 0 ? outputImagBuffer : inputImagBuffer;
 
     commandEncoder.copyBufferToBuffer(
-      finalReal, 0,
-      readbackBuffer, 0,
+      finalReal,
+      0,
+      readbackBuffer,
+      0,
       fftSize * 4
     );
     commandEncoder.copyBufferToBuffer(
-      finalImag, 0,
-      readbackBuffer, fftSize * 4,
+      finalImag,
+      0,
+      readbackBuffer,
+      fftSize * 4,
       fftSize * 4
     );
 
@@ -1218,7 +1256,11 @@ export async function generateSpectrogramGPU(
 
   try {
     // Process signal in overlapping windows
-    for (let timeIndex = 0; timeIndex + fftSize <= signal.length; timeIndex += hopSize) {
+    for (
+      let timeIndex = 0;
+      timeIndex + fftSize <= signal.length;
+      timeIndex += hopSize
+    ) {
       // Extract window
       const window = signal.slice(timeIndex, timeIndex + fftSize);
 

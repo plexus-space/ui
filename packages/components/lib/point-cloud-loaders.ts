@@ -375,7 +375,11 @@ export async function loadLAS(
 
   let offset = header.offsetToPointData;
 
-  for (let i = 0; i < header.numberOfPointRecords && positions.length / 3 < pointsToLoad; i++) {
+  for (
+    let i = 0;
+    i < header.numberOfPointRecords && positions.length / 3 < pointsToLoad;
+    i++
+  ) {
     // Skip points based on stride
     if (i % stride !== 0) {
       offset += header.pointDataRecordLength;
@@ -415,8 +419,7 @@ export async function loadLAS(
       header.pointDataFormat === 7 ||
       header.pointDataFormat === 8
     ) {
-      const rgbOffset =
-        header.pointDataFormat <= 5 ? offset + 20 : offset + 30;
+      const rgbOffset = header.pointDataFormat <= 5 ? offset + 20 : offset + 30;
       const r = view.getUint16(rgbOffset, true) / 256; // Scale 16-bit to 8-bit
       const g = view.getUint16(rgbOffset + 2, true) / 256;
       const b = view.getUint16(rgbOffset + 4, true) / 256;
@@ -449,8 +452,7 @@ export async function loadLAS(
 export function detectFormat(
   fileOrUrl: File | string
 ): "xyz" | "pcd" | "las" | "laz" | "unknown" {
-  const filename =
-    typeof fileOrUrl === "string" ? fileOrUrl : fileOrUrl.name;
+  const filename = typeof fileOrUrl === "string" ? fileOrUrl : fileOrUrl.name;
   const ext = filename.split(".").pop()?.toLowerCase();
 
   switch (ext) {

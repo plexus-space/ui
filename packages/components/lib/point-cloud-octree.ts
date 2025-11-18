@@ -172,14 +172,7 @@ export function buildOctree(
   // Insert all points into octree
   const numPoints = data.positions.length / 3;
   for (let i = 0; i < numPoints; i++) {
-    insertPoint(
-      root,
-      i,
-      data,
-      maxPointsPerNode,
-      maxDepth,
-      minNodeSize
-    );
+    insertPoint(root, i, data, maxPointsPerNode, maxDepth, minNodeSize);
   }
 
   return root;
@@ -207,10 +200,7 @@ function calculateBoundingBox(positions: Float32Array | number[]): THREE.Box3 {
 /**
  * Get octant index for a point
  */
-function getOctantIndex(
-  point: THREE.Vector3,
-  center: THREE.Vector3
-): number {
+function getOctantIndex(point: THREE.Vector3, center: THREE.Vector3): number {
   let index = 0;
   if (point.x >= center.x) index |= 1;
   if (point.y >= center.y) index |= 2;
@@ -229,9 +219,9 @@ function getOctantCenter(
   const offset = parentSize / 2;
   const center = parentCenter.clone();
 
-  center.x += (octantIndex & 1) ? offset : -offset;
-  center.y += (octantIndex & 2) ? offset : -offset;
-  center.z += (octantIndex & 4) ? offset : -offset;
+  center.x += octantIndex & 1 ? offset : -offset;
+  center.y += octantIndex & 2 ? offset : -offset;
+  center.z += octantIndex & 4 ? offset : -offset;
 
   return center;
 }
@@ -308,7 +298,14 @@ function insertPoint(
     }
 
     // Recursively insert into child
-    insertPoint(child, pointIndex, data, maxPointsPerNode, maxDepth, minNodeSize);
+    insertPoint(
+      child,
+      pointIndex,
+      data,
+      maxPointsPerNode,
+      maxDepth,
+      minNodeSize
+    );
   }
 }
 
@@ -420,7 +417,10 @@ export function selectNodesLOD(
   const frustum = new THREE.Frustum();
   const projectionMatrix = new THREE.Matrix4();
 
-  if (camera instanceof THREE.PerspectiveCamera || camera instanceof THREE.OrthographicCamera) {
+  if (
+    camera instanceof THREE.PerspectiveCamera ||
+    camera instanceof THREE.OrthographicCamera
+  ) {
     projectionMatrix.multiplyMatrices(
       camera.projectionMatrix,
       camera.matrixWorldInverse
