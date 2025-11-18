@@ -7,6 +7,7 @@ import {
   generateExponentialData,
 } from "@plexusui/components/charts/histogram-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import {
   useColorScheme,
   useMultiColors,
@@ -330,18 +331,263 @@ function ComparisonOfBinMethods() {
 }
 
 // ============================================================================
+// API Reference
+// ============================================================================
+
+const histogramChartProps: ApiProp[] = [
+  {
+    name: "data",
+    type: "number[]",
+    default: "required",
+    description: "Array of numerical values to create histogram from",
+  },
+  {
+    name: "bins",
+    type: "number | 'auto' | 'sturges' | 'scott' | 'freedman-diaconis'",
+    default: '"auto"',
+    description: "Number of bins or binning algorithm. 'auto' uses Freedman-Diaconis rule",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, domain?: [number, number], formatter?: (value: number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "color",
+    type: "string",
+    default: '"#3b82f6"',
+    description: "Bar color (hex or rgb)",
+  },
+  {
+    name: "showDensity",
+    type: "boolean",
+    default: "false",
+    description: "Show probability density curve overlay",
+  },
+  {
+    name: "showMean",
+    type: "boolean",
+    default: "false",
+    description: "Show mean line indicator",
+  },
+  {
+    name: "showMedian",
+    type: "boolean",
+    default: "false",
+    description: "Show median line indicator",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "showGrid",
+    type: "boolean",
+    default: "true",
+    description: "Show grid lines",
+  },
+  {
+    name: "showAxes",
+    type: "boolean",
+    default: "true",
+    description: "Show axis labels and ticks",
+  },
+  {
+    name: "showTooltip",
+    type: "boolean",
+    default: "false",
+    description: "Show interactive tooltip on hover",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const histogramChartRootProps: ApiProp[] = [
+  {
+    name: "data",
+    type: "number[]",
+    default: "required",
+    description: "Array of numerical values",
+  },
+  {
+    name: "bins",
+    type: "number | 'auto' | 'sturges' | 'scott' | 'freedman-diaconis'",
+    default: '"auto"',
+    description: "Binning configuration",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, domain?: [number, number], formatter?: (value: number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "color",
+    type: "string",
+    default: '"#3b82f6"',
+    description: "Bar color",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Canvas, Axes, Tooltip, Overlay)",
+  },
+];
+
+const histogramChartPrimitiveProps: ApiProp[] = [
+  {
+    name: "HistogramChart.Canvas",
+    type: "component",
+    default: "-",
+    description: "Renders the histogram bars. Props: showGrid?: boolean",
+  },
+  {
+    name: "HistogramChart.Axes",
+    type: "component",
+    default: "-",
+    description: "Renders x and y axis with labels and ticks",
+  },
+  {
+    name: "HistogramChart.Tooltip",
+    type: "component",
+    default: "-",
+    description: "Interactive tooltip showing bin information on hover",
+  },
+  {
+    name: "HistogramChart.Overlay",
+    type: "component",
+    default: "-",
+    description: "Renders statistical overlays like density curves, mean, and median lines",
+  },
+];
+
+const helperFunctions: ApiProp[] = [
+  {
+    name: "generateNormalData",
+    type: "(count: number, mean?: number, stdDev?: number) => number[]",
+    default: "-",
+    description: "Generate random data from normal distribution",
+  },
+  {
+    name: "generateUniformData",
+    type: "(count: number, min?: number, max?: number) => number[]",
+    default: "-",
+    description: "Generate random data from uniform distribution",
+  },
+  {
+    name: "generateExponentialData",
+    type: "(count: number, lambda?: number) => number[]",
+    default: "-",
+    description: "Generate random data from exponential distribution",
+  },
+];
+
+// ============================================================================
 // Main Export
 // ============================================================================
 
 export function HistogramChartExamples() {
   return (
-    <div className="space-y-8">
-      <BasicHistogram />
-      <HistogramWithNormalCurve />
-      <QualityControlHistogram />
-      <DensityHistogram />
-      <UniformDistribution />
-      <ComparisonOfBinMethods />
+    <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <BasicHistogram />
+        <HistogramWithNormalCurve />
+        <QualityControlHistogram />
+        <DensityHistogram />
+        <UniformDistribution />
+        <ComparisonOfBinMethods />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            HistogramChart component for visualizing data distributions and frequency analysis
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">HistogramChart (All-in-One)</h3>
+          <ApiReferenceTable props={histogramChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">HistogramChart.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={histogramChartRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with HistogramChart.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={histogramChartPrimitiveProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Helper Functions</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Utility functions for generating test data
+          </p>
+          <ApiReferenceTable props={helperFunctions} />
+        </div>
+      </div>
     </div>
   );
 }

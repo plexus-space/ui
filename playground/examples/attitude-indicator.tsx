@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AttitudeIndicator } from "@plexusui/components/charts/attitude-indicator";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -802,17 +803,215 @@ function CustomIndicator() {
 }
 
 // ============================================================================
+// API Reference
+// ============================================================================
+
+const attitudeIndicatorProps: ApiProp[] = [
+  {
+    name: "pitch",
+    type: "number",
+    default: "0",
+    description: "Pitch angle in degrees (-90 to 90). Positive is nose up",
+  },
+  {
+    name: "roll",
+    type: "number",
+    default: "0",
+    description: "Roll angle in degrees (-180 to 180). Positive is right wing down",
+  },
+  {
+    name: "yaw",
+    type: "number",
+    default: "undefined",
+    description: "Yaw/heading angle in degrees (0-360). Shows heading indicator if provided",
+  },
+  {
+    name: "size",
+    type: "number",
+    default: "400",
+    description: "Size of the indicator in pixels (width and height)",
+  },
+  {
+    name: "showDegreeMarkers",
+    type: "boolean",
+    default: "true",
+    description: "Show pitch degree markers on the horizon",
+  },
+  {
+    name: "showRollScale",
+    type: "boolean",
+    default: "true",
+    description: "Show roll angle scale around the edge",
+  },
+  {
+    name: "showHeading",
+    type: "boolean",
+    default: "false",
+    description: "Show heading indicator (requires yaw prop)",
+  },
+  {
+    name: "animated",
+    type: "boolean",
+    default: "true",
+    description: "Enable smooth animations for angle changes",
+  },
+  {
+    name: "skyColor",
+    type: "string",
+    default: '"#4a90e2"',
+    description: "Color of the sky (upper half)",
+  },
+  {
+    name: "groundColor",
+    type: "string",
+    default: '"#8b6914"',
+    description: "Color of the ground (lower half)",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const attitudeIndicatorRootProps: ApiProp[] = [
+  {
+    name: "pitch",
+    type: "number",
+    default: "0",
+    description: "Pitch angle in degrees",
+  },
+  {
+    name: "roll",
+    type: "number",
+    default: "0",
+    description: "Roll angle in degrees",
+  },
+  {
+    name: "yaw",
+    type: "number",
+    default: "undefined",
+    description: "Yaw/heading angle in degrees",
+  },
+  {
+    name: "size",
+    type: "number",
+    default: "400",
+    description: "Indicator size in pixels",
+  },
+  {
+    name: "animated",
+    type: "boolean",
+    default: "true",
+    description: "Enable animations",
+  },
+  {
+    name: "skyColor",
+    type: "string",
+    default: '"#4a90e2"',
+    description: "Sky color",
+  },
+  {
+    name: "groundColor",
+    type: "string",
+    default: '"#8b6914"',
+    description: "Ground color",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Horizon, Aircraft, RollScale, HeadingIndicator)",
+  },
+];
+
+const attitudeIndicatorPrimitiveProps: ApiProp[] = [
+  {
+    name: "AttitudeIndicator.Horizon",
+    type: "component",
+    default: "-",
+    description: "Renders the horizon line with pitch markers. Props: showDegreeMarkers?: boolean",
+  },
+  {
+    name: "AttitudeIndicator.Aircraft",
+    type: "component",
+    default: "-",
+    description: "Renders the fixed aircraft symbol in the center",
+  },
+  {
+    name: "AttitudeIndicator.RollScale",
+    type: "component",
+    default: "-",
+    description: "Renders the roll angle scale around the edge",
+  },
+  {
+    name: "AttitudeIndicator.HeadingIndicator",
+    type: "component",
+    default: "-",
+    description: "Renders the heading compass (requires yaw prop)",
+  },
+];
+
+// ============================================================================
 // Main Export
 // ============================================================================
 
 export function AttitudeIndicatorExamples() {
   return (
-    <div className="space-y-8">
-      <BasicExample />
-      <DroneFlightSimulation />
-      <SpacecraftAttitudeControl />
-      <SurgicalRobotMonitor />
-      <PrimitiveExample />
+    <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <BasicExample />
+        <DroneFlightSimulation />
+        <SpacecraftAttitudeControl />
+        <SurgicalRobotMonitor />
+        <PrimitiveExample />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            AttitudeIndicator component for displaying aircraft/vehicle orientation (pitch, roll, yaw)
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">AttitudeIndicator (All-in-One)</h3>
+          <ApiReferenceTable props={attitudeIndicatorProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">AttitudeIndicator.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={attitudeIndicatorRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with AttitudeIndicator.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={attitudeIndicatorPrimitiveProps} />
+        </div>
+      </div>
     </div>
   );
 }

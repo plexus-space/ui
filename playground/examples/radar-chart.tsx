@@ -7,6 +7,7 @@ import type {
   RadarDataPoint,
 } from "@plexusui/components/charts/radar-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import {
   useColorScheme,
   useMultiColors,
@@ -347,12 +348,239 @@ const targets = [
   );
 }
 
+// ============================================================================
+// API Reference
+// ============================================================================
+
+const radarChartProps: ApiProp[] = [
+  {
+    name: "series",
+    type: "RadarSeries[]",
+    default: "required",
+    description: "Array of radar data series. RadarSeries: { angle: number, distance: number, intensity?: number }[]",
+  },
+  {
+    name: "rings",
+    type: "number",
+    default: "4",
+    description: "Number of range rings to display",
+  },
+  {
+    name: "sectors",
+    type: "number",
+    default: "8",
+    description: "Number of angular sectors",
+  },
+  {
+    name: "maxRange",
+    type: "number",
+    default: "auto",
+    description: "Maximum range for the radar display",
+  },
+  {
+    name: "showSweep",
+    type: "boolean",
+    default: "false",
+    description: "Show animated radar sweep",
+  },
+  {
+    name: "sweepSpeed",
+    type: "number",
+    default: "1",
+    description: "Sweep animation speed (rotations per second)",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "600",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "600",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "showAxes",
+    type: "boolean",
+    default: "true",
+    description: "Show angular and range axes",
+  },
+  {
+    name: "showTooltip",
+    type: "boolean",
+    default: "false",
+    description: "Show interactive tooltip on hover",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const radarDataPointType: ApiProp[] = [
+  {
+    name: "angle",
+    type: "number",
+    default: "required",
+    description: "Angular position in degrees (0-360)",
+  },
+  {
+    name: "distance",
+    type: "number",
+    default: "required",
+    description: "Distance from center (0 to maxRange)",
+  },
+  {
+    name: "intensity",
+    type: "number",
+    default: "1",
+    description: "Signal intensity (0-1) for color mapping",
+  },
+];
+
+const radarChartRootProps: ApiProp[] = [
+  {
+    name: "series",
+    type: "RadarSeries[]",
+    default: "required",
+    description: "Array of radar data to plot",
+  },
+  {
+    name: "rings",
+    type: "number",
+    default: "4",
+    description: "Number of range rings",
+  },
+  {
+    name: "sectors",
+    type: "number",
+    default: "8",
+    description: "Number of angular sectors",
+  },
+  {
+    name: "maxRange",
+    type: "number",
+    default: "auto",
+    description: "Maximum range value",
+  },
+  {
+    name: "showSweep",
+    type: "boolean",
+    default: "false",
+    description: "Show radar sweep animation",
+  },
+  {
+    name: "sweepSpeed",
+    type: "number",
+    default: "1",
+    description: "Sweep speed in rotations per second",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "600",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "600",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Canvas, Labels, Tooltip)",
+  },
+];
+
+const radarChartPrimitiveProps: ApiProp[] = [
+  {
+    name: "RadarChart.Canvas",
+    type: "component",
+    default: "-",
+    description: "Renders the radar display with targets and sweep",
+  },
+  {
+    name: "RadarChart.Labels",
+    type: "component",
+    default: "-",
+    description: "Renders range and bearing labels",
+  },
+  {
+    name: "RadarChart.Tooltip",
+    type: "component",
+    default: "-",
+    description: "Interactive tooltip showing target information on hover",
+  },
+];
+
 export function RadarChartExamples() {
   return (
-    <div className="space-y-8">
-      <HighPerformanceTracking />
-      <SonarVisualization />
-      <PrimitiveExample />
+    <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <HighPerformanceTracking />
+        <SonarVisualization />
+        <PrimitiveExample />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            RadarChart component for polar coordinate visualization - ideal for sonar, tracking, and directional data
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">RadarChart (All-in-One)</h3>
+          <ApiReferenceTable props={radarChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">RadarDataPoint Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Data structure for radar targets and signals
+          </p>
+          <ApiReferenceTable props={radarDataPointType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">RadarChart.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={radarChartRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with RadarChart.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={radarChartPrimitiveProps} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 /**
  * Plexus UI - Charts
  *
- * High-performance WebGPU-accelerated chart components for mission-critical
- * visualization in aerospace, medical, and defense applications.
+ * High-performance WebGL/WebGPU-accelerated chart components for mission-critical
+ * visualization in aerospace, medical, and industrial applications.
  *
  * @module charts
  *
@@ -10,57 +10,66 @@
  *
  * The chart system is built on three layers:
  *
- * 1. **Container Layer** (`Chart.Container`)
- *    - WebGPU device/context management
+ * 1. **Base Chart Layer** (`ChartRoot`, `ChartAxes`, `ChartTooltip`)
+ *    - WebGL/WebGPU renderer management with automatic fallback
  *    - Responsive sizing with devicePixelRatio support
- *    - Layer-based rendering pipeline
- *    - Coordinate transformations (data space ↔ clip space)
+ *    - Coordinate transformations (data space ↔ screen space)
+ *    - Shared context for all chart primitives
  *
- * 2. **Component Layer** (`LineChart`, `BarChart`, etc.)
- *    - Reusable chart primitives
- *    - Automatic data optimization (downsampling, buffering)
- *    - Type-safe data interfaces
+ * 2. **Component Layer** (Chart Primitives)
+ *    - LineChart, BarChart, ScatterChart, AreaChart
+ *    - HeatmapChart, WaterfallChart, Histogram, ControlChart
+ *    - Gauge, RadarChart, AttitudeIndicator
+ *    - DataGrid, GanttChart, ModelViewer
  *
- * 3. **Utility Layer** (`data-utils`)
- *    - Data transformation functions
- *    - Buffer management
- *    - Downsampling algorithms (LTTB, min-max)
+ * 3. **Utility Layer** (`data-utils`, `interactions`)
+ *    - Data transformation functions (downsampling, binning, FFT)
+ *    - Interaction primitives (click, brush, crosshair)
+ *    - Buffer management and GPU optimization
  *
- * ## Usage
+ * ## Usage Patterns
  *
- * @example Basic Line Chart
+ * **Simple API** (Monolithic component):
  * ```tsx
- * import { Chart, LineChart } from "@/components/charts";
+ * import { LineChart } from "@plexusui/components/charts";
  *
- * <Chart.Container width={800} height={400} xMin={0} xMax={100} yMin={0} yMax={100}>
- *   <Chart.Grid />
- *   <LineChart data={telemetryData} color="#00ff00" />
- *   <Chart.XAxis label="Time (s)" />
- *   <Chart.YAxis label="Value" />
- * </Chart.Container>
+ * <LineChart
+ *   series={[{ name: "Temperature", data: telemetryData, color: "#00ff00" }]}
+ *   width={800}
+ *   height={400}
+ *   showAxes
+ *   showTooltip
+ * />
  * ```
  *
- * @example Multi-series Chart
+ * **Composable API** (Primitive-first):
  * ```tsx
- * <Chart.Container width="100%" height={400}>
- *   <Chart.Grid />
- *   <LineChart data={series1} color="#00ff00" id="series-1" />
- *   <LineChart data={series2} color="#0088ff" id="series-2" />
- *   <Chart.XAxis />
- *   <Chart.YAxis />
- * </Chart.Container>
+ * import { LineChart } from "@plexusui/components/charts";
+ *
+ * <LineChart.Root
+ *   series={[{ name: "Sensor 1", data: data1, color: "#00ff00" }]}
+ *   width={800}
+ *   height={400}
+ * >
+ *   <LineChart.Canvas />
+ *   <LineChart.Axes />
+ *   <LineChart.Tooltip />
+ * </LineChart.Root>
  * ```
  *
- * @example Bar Chart
+ * **Multi-series with Interactions**:
  * ```tsx
- * import { BarChart } from "@/components/charts";
+ * import { LineChart, ChartInteractions } from "@plexusui/components/charts";
  *
- * <Chart.Container>
- *   <BarChart data={[
- *     { category: "A", value: 75 },
- *     { category: "B", value: 50 }
- *   ]} color="#0088ff" />
- * </Chart.Container>
+ * <LineChart.Root series={multiSeriesData}>
+ *   <LineChart.Canvas />
+ *   <LineChart.Axes />
+ *   <ChartInteractions>
+ *     <ChartInteractions.Brush onBrush={(selection) => console.log(selection)} />
+ *     <ChartInteractions.Crosshair />
+ *     <ChartInteractions.Click onClick={(point) => console.log(point)} />
+ *   </ChartInteractions>
+ * </LineChart.Root>
  * ```
  */
 
@@ -106,7 +115,6 @@ export type {
   DataPoint as HeatmapDataPoint,
   HeatmapChartProps,
   HeatmapChartRootProps,
-  HeatmapChartLegendProps,
 } from "./heatmap-chart";
 
 export { HistogramChart } from "./histogram-chart";
@@ -132,15 +140,6 @@ export type {
   RadarSeries,
   RadarChartProps,
 } from "./radar-chart";
-
-export { StatusGrid, Sparkline } from "./status-grid";
-export type {
-  StatusLevel,
-  KPIMetric,
-  StatusGridProps,
-  StatusGridRootProps,
-  SparklineProps,
-} from "./status-grid";
 
 export { DataGrid } from "./data-grid";
 export type {
@@ -178,39 +177,56 @@ export type {
 export { ModelViewer } from "./3d-model-viewer";
 export type { ModelViewerProps } from "./3d-model-viewer";
 
-// Helper Components
-export { TimeRangeSelector } from "./time-range-selector";
+export { PointCloudViewer } from "./point-cloud-viewer";
 export type {
-  TimeRangePreset,
-  TimeRange,
-  TimeRangeSelectorProps,
-} from "./time-range-selector";
+  PointCloudViewerProps,
+  PointCloudData,
+  ColorMode,
+} from "./point-cloud-viewer";
 
-export { DragFilter } from "./drag-filter";
+export {
+  PointCloudInteractions,
+  PointSelection,
+  BoundingBox3D,
+  MeasurementTool,
+  SegmentationBrush,
+  PlaneFit,
+} from "./point-cloud-interactions";
 export type {
-  DragSelection,
-  DragFilterProps,
-} from "./drag-filter";
+  Point3D,
+  BoundingBox3D as BoundingBox3DType,
+  Measurement,
+  PlaneData,
+  SegmentationRegion,
+  PointSelectionProps,
+  BoundingBox3DProps,
+  MeasurementToolProps,
+  SegmentationBrushProps,
+  PlaneFitProps,
+  PointCloudInteractionsProps,
+} from "./point-cloud-interactions";
 
-export { MultiSelectFilter } from "./multi-select-filter";
-export type {
-  FilterOption,
-  MultiSelectFilterProps,
-} from "./multi-select-filter";
+// Point cloud utilities
+export {
+  loadPointCloud,
+  loadXYZ,
+  loadPCD,
+  loadLAS,
+  subsamplePointCloud,
+  detectFormat,
+} from "../lib/point-cloud-loaders";
 
-export { DateRangePicker } from "./date-range-picker";
-export type {
-  DateRange,
-  DateRangePickerProps,
-} from "./date-range-picker";
-
-export { DashboardGrid } from "./dashboard-grid";
-export type {
-  GridItem,
-  DashboardGridRootProps,
-  DashboardGridItemProps,
-  DashboardGridCardProps,
-} from "./dashboard-grid";
+export {
+  buildOctree,
+  selectNodesLOD,
+  mergeNodeData,
+  getLeafNodes,
+  getTotalPoints,
+  getMaxDepth,
+  type OctreeNode,
+  type OctreeOptions,
+  type LODOptions,
+} from "../lib/point-cloud-octree";
 
 // Base chart infrastructure (reusable for all chart types)
 export {

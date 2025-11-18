@@ -758,6 +758,14 @@ const seriesType: ApiProp[] = [
 export function LineChartExamples() {
   return (
     <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <StreamingChart />
+        <WebGPUPerformanceMonitor />
+        <PrimitiveExample />
+      </div>
+
       {/* API Reference Section */}
       <div className="space-y-6">
         <div>
@@ -795,14 +803,6 @@ export function LineChartExamples() {
           </p>
           <ApiReferenceTable props={lineChartPrimitiveProps} />
         </div>
-      </div>
-
-      {/* Examples Section */}
-      <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
-        <StreamingChart />
-        <WebGPUPerformanceMonitor />
-        <PrimitiveExample />
       </div>
     </div>
   );

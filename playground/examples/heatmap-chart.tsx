@@ -3,6 +3,10 @@
 import { HeatmapChart } from "@plexusui/components/charts/heatmap-chart";
 import type { DataPoint } from "@plexusui/components/charts/heatmap-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import { useState, useEffect } from "react";
 
 // ============================================================================
@@ -269,7 +273,6 @@ useEffect(() => {
               preferWebGPU={true}
               cellGap={1}
               showTooltip
-              showLegend
             />
           </div>
         </div>
@@ -512,7 +515,6 @@ useEffect(() => {
               preferWebGPU={true}
               cellGap={0.5}
               showTooltip
-              showLegend
             />
           </div>
         </div>
@@ -539,7 +541,6 @@ function PrimitiveHeatmapChart() {
   <HeatmapChart.Grid />
   <HeatmapChart.Axes />
   <HeatmapChart.Tooltip />
-  <HeatmapChart.Legend title="Activity" />
 </HeatmapChart.Root>`}
       preview={
         <div className="w-full h-[500px]">
@@ -555,7 +556,6 @@ function PrimitiveHeatmapChart() {
             <HeatmapChart.Grid />
             <HeatmapChart.Axes />
             <HeatmapChart.Tooltip />
-            <HeatmapChart.Legend title="Activity Level" />
           </HeatmapChart.Root>
         </div>
       }
@@ -580,8 +580,7 @@ function ResponsiveHeatmap() {
     margin={{ top: 40, right: 40, bottom: 70, left: 80 }}
     showGrid
     showAxes
-    showTooltip
-    showLegend
+    showTooltip 
     preferWebGPU={true}
   />
 </div>`}
@@ -599,7 +598,6 @@ function ResponsiveHeatmap() {
             showGrid
             showAxes
             showTooltip
-            showLegend
             preferWebGPU={true}
           />
         </div>
@@ -609,17 +607,261 @@ function ResponsiveHeatmap() {
 }
 
 // ============================================================================
+// API Reference
+// ============================================================================
+
+const heatmapChartProps: ApiProp[] = [
+  {
+    name: "data",
+    type: "DataPoint[]",
+    default: "required",
+    description:
+      "Array of data points. DataPoint: { x: string | number, y: string | number, value: number }",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, categories?: string[] }",
+    default: "{}",
+    description: "X-axis configuration with optional category labels",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, categories?: string[] }",
+    default: "{}",
+    description: "Y-axis configuration with optional category labels",
+  },
+  {
+    name: "colorScale",
+    type: "(value: number) => string",
+    default: "viridis",
+    description: "Color scale function for value visualization",
+  },
+  {
+    name: "minValue",
+    type: "number",
+    default: "auto",
+    description: "Minimum value for color scale",
+  },
+  {
+    name: "maxValue",
+    type: "number",
+    default: "auto",
+    description: "Maximum value for color scale",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "margin",
+    type: "{ top?: number, right?: number, bottom?: number, left?: number }",
+    default: "{ top: 40, right: 40, bottom: 60, left: 80 }",
+    description: "Chart margins",
+  },
+  {
+    name: "showGrid",
+    type: "boolean",
+    default: "false",
+    description: "Show grid lines",
+  },
+  {
+    name: "showAxes",
+    type: "boolean",
+    default: "true",
+    description: "Show axis labels and ticks",
+  },
+  {
+    name: "showTooltip",
+    type: "boolean",
+    default: "false",
+    description: "Show interactive tooltip on hover",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description:
+      "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const heatmapDataPointType: ApiProp[] = [
+  {
+    name: "x",
+    type: "string | number",
+    default: "required",
+    description: "X-axis category or coordinate",
+  },
+  {
+    name: "y",
+    type: "string | number",
+    default: "required",
+    description: "Y-axis category or coordinate",
+  },
+  {
+    name: "value",
+    type: "number",
+    default: "required",
+    description: "Data value for color mapping",
+  },
+];
+
+const heatmapChartRootProps: ApiProp[] = [
+  {
+    name: "data",
+    type: "DataPoint[]",
+    default: "required",
+    description: "Array of data points to plot",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, categories?: string[] }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, categories?: string[] }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "colorScale",
+    type: "(value: number) => string",
+    default: "viridis",
+    description: "Color scale function",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "margin",
+    type: "{ top?: number, right?: number, bottom?: number, left?: number }",
+    default: "{ top: 40, right: 40, bottom: 60, left: 80 }",
+    description: "Chart margins",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Canvas, Axes, Tooltip, Legend)",
+  },
+];
+
+const heatmapChartPrimitiveProps: ApiProp[] = [
+  {
+    name: "HeatmapChart.Canvas",
+    type: "component",
+    default: "-",
+    description: "Renders the heatmap cells. Props: showGrid?: boolean",
+  },
+  {
+    name: "HeatmapChart.Axes",
+    type: "component",
+    default: "-",
+    description: "Renders x and y axis with labels",
+  },
+  {
+    name: "HeatmapChart.Tooltip",
+    type: "component",
+    default: "-",
+    description: "Interactive tooltip showing cell values on hover",
+  },
+  {
+    name: "HeatmapChart.Legend",
+    type: "component",
+    default: "-",
+    description: "Color scale legend. Props: title?: string",
+  },
+];
+
+// ============================================================================
 // Main Export
 // ============================================================================
 
 export function HeatmapChartExamples() {
   return (
-    <div className="space-y-8">
-      <RealTimeSystemMonitor />
-      <WebGPUMemoryMonitor />
-      <LargeScaleHeatmap />
-      <ResponsiveHeatmap />
-      <PrimitiveHeatmapChart />
+    <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <RealTimeSystemMonitor />
+        <WebGPUMemoryMonitor />
+        <LargeScaleHeatmap />
+        <ResponsiveHeatmap />
+        <PrimitiveHeatmapChart />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            HeatmapChart component for visualizing matrix data with
+            color-encoded values
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">HeatmapChart (All-in-One)</h3>
+          <ApiReferenceTable props={heatmapChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">DataPoint Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Data structure for heatmap cells
+          </p>
+          <ApiReferenceTable props={heatmapDataPointType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">
+            HeatmapChart.Root (Composable)
+          </h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={heatmapChartRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with HeatmapChart.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={heatmapChartPrimitiveProps} />
+        </div>
+      </div>
     </div>
   );
 }

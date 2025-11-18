@@ -114,7 +114,6 @@ export interface WaterfallChartProps {
   showGrid?: boolean;
   showAxes?: boolean;
   showTooltip?: boolean;
-  showLegend?: boolean;
   className?: string;
   preferWebGPU?: boolean;
   /**
@@ -1012,69 +1011,6 @@ function Canvas() {
   );
 }
 
-function Legend({ title }: { title?: string }) {
-  const ctx = useWaterfallChart();
-
-  const displayTitle = useMemo(() => {
-    if (title) return title;
-    return ctx.useDb ? "Power (dB)" : "Power";
-  }, [title, ctx.useDb]);
-
-  // Generate gradient stops
-  const gradientStops = useMemo(() => {
-    const stops: { offset: number; color: string }[] = [];
-    const numStops = 10;
-    for (let i = 0; i <= numStops; i++) {
-      const offset = i / numStops;
-      const color = ctx.colorScale(offset);
-      stops.push({ offset, color });
-    }
-    return stops;
-  }, [ctx.colorScale]);
-
-  const gradientId = `waterfall-legend-gradient-${Math.random()
-    .toString(36)
-    .substring(2, 11)}`;
-
-  return (
-    <div className="absolute top-4 right-4 bg-white dark:bg-zinc-950 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 p-3">
-      <div className="text-xs font-medium mb-2 text-zinc-700 dark:text-zinc-300">
-        {displayTitle}
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {ctx.minMagnitude.toFixed(1)}
-        </span>
-        <svg width="120" height="20">
-          <title className="sr-only">Waterfall Legend</title>
-          <defs>
-            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-              {gradientStops.map((stop, idx) => (
-                <stop
-                  key={idx}
-                  offset={`${stop.offset * 100}%`}
-                  stopColor={stop.color}
-                />
-              ))}
-            </linearGradient>
-          </defs>
-          <rect
-            x="0"
-            y="0"
-            width="120"
-            height="20"
-            fill={`url(#${gradientId})`}
-            rx="2"
-          />
-        </svg>
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {ctx.maxMagnitude.toFixed(1)}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function Tooltip() {
   const ctx = useWaterfallChart();
 
@@ -1185,7 +1121,6 @@ export function WaterfallChart({
   showGrid = false,
   showAxes = true,
   showTooltip = false,
-  showLegend = true,
   preferWebGPU = true,
   useGPUFFT = false,
   colorScale = defaultColorScale,
@@ -1215,7 +1150,6 @@ export function WaterfallChart({
       <Canvas />
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
-      {showLegend && <Legend />}
     </Root>
   );
 }
@@ -1235,7 +1169,6 @@ export function WaterfallChart({
  *   fftSize={512}
  *   showAxes
  *   showTooltip
- *   showLegend
  * />
  * ```
  *
@@ -1249,7 +1182,6 @@ export function WaterfallChart({
  * >
  *   <WaterfallChart.Canvas />
  *   <WaterfallChart.Axes />
- *   <WaterfallChart.Legend title="EEG Power (dB)" />
  *   <WaterfallChart.Tooltip />
  * </WaterfallChart.Root>
  * ```
@@ -1258,7 +1190,6 @@ WaterfallChart.Root = Root;
 WaterfallChart.Canvas = Canvas;
 WaterfallChart.Axes = ChartAxes;
 WaterfallChart.Tooltip = Tooltip;
-WaterfallChart.Legend = Legend;
 
 // Export types
 export type { SpectrogramPoint, WindowFunction };

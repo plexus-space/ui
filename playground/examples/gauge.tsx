@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Gauge } from "@plexusui/components/charts/gauge";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import { useColorScheme } from "@/components/color-scheme-provider";
 
 // ============================================================================
@@ -279,15 +280,278 @@ function FuelLevelGauge() {
 }
 
 // ============================================================================
+// API Reference
+// ============================================================================
+
+const gaugeProps: ApiProp[] = [
+  {
+    name: "value",
+    type: "number",
+    default: "required",
+    description: "Current value to display on the gauge",
+  },
+  {
+    name: "min",
+    type: "number",
+    default: "0",
+    description: "Minimum value of the gauge range",
+  },
+  {
+    name: "max",
+    type: "number",
+    default: "100",
+    description: "Maximum value of the gauge range",
+  },
+  {
+    name: "label",
+    type: "string",
+    default: "undefined",
+    description: "Label text displayed in the center of the gauge",
+  },
+  {
+    name: "unit",
+    type: "string",
+    default: "undefined",
+    description: "Unit label displayed below the value",
+  },
+  {
+    name: "variant",
+    type: '"circular" | "semi-circular" | "arc"',
+    default: '"circular"',
+    description: "Gauge display style",
+  },
+  {
+    name: "zones",
+    type: "Zone[]",
+    default: "undefined",
+    description: "Color zones for different value ranges. Zone: { from: number, to: number, color: string }",
+  },
+  {
+    name: "needleColor",
+    type: "string",
+    default: '"#3b82f6"',
+    description: "Color of the needle indicator",
+  },
+  {
+    name: "backgroundColor",
+    type: "string",
+    default: '"#e5e7eb"',
+    description: "Background color of the gauge arc",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "600",
+    description: "Gauge width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "600",
+    description: "Gauge height in pixels",
+  },
+  {
+    name: "animated",
+    type: "boolean",
+    default: "true",
+    description: "Enable smooth needle animations",
+  },
+  {
+    name: "showValue",
+    type: "boolean",
+    default: "true",
+    description: "Show numeric value in center",
+  },
+  {
+    name: "valueFormatter",
+    type: "(value: number) => string",
+    default: "undefined",
+    description: "Custom formatter for displayed value",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const gaugeZoneType: ApiProp[] = [
+  {
+    name: "from",
+    type: "number",
+    default: "required",
+    description: "Starting value of the zone",
+  },
+  {
+    name: "to",
+    type: "number",
+    default: "required",
+    description: "Ending value of the zone",
+  },
+  {
+    name: "color",
+    type: "string",
+    default: "required",
+    description: "Color for this zone (hex or rgb)",
+  },
+];
+
+const gaugeRootProps: ApiProp[] = [
+  {
+    name: "value",
+    type: "number",
+    default: "required",
+    description: "Current value to display",
+  },
+  {
+    name: "min",
+    type: "number",
+    default: "0",
+    description: "Minimum value",
+  },
+  {
+    name: "max",
+    type: "number",
+    default: "100",
+    description: "Maximum value",
+  },
+  {
+    name: "label",
+    type: "string",
+    default: "undefined",
+    description: "Center label text",
+  },
+  {
+    name: "unit",
+    type: "string",
+    default: "undefined",
+    description: "Unit label",
+  },
+  {
+    name: "variant",
+    type: '"circular" | "semi-circular" | "arc"',
+    default: '"circular"',
+    description: "Gauge style",
+  },
+  {
+    name: "zones",
+    type: "Zone[]",
+    default: "undefined",
+    description: "Color zones",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "600",
+    description: "Gauge width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "600",
+    description: "Gauge height in pixels",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Arc, Needle, Labels, Value)",
+  },
+];
+
+const gaugePrimitiveProps: ApiProp[] = [
+  {
+    name: "Gauge.Arc",
+    type: "component",
+    default: "-",
+    description: "Renders the gauge arc with zones",
+  },
+  {
+    name: "Gauge.Needle",
+    type: "component",
+    default: "-",
+    description: "Renders the needle indicator",
+  },
+  {
+    name: "Gauge.Labels",
+    type: "component",
+    default: "-",
+    description: "Renders scale labels around the gauge",
+  },
+  {
+    name: "Gauge.Value",
+    type: "component",
+    default: "-",
+    description: "Renders the center value display",
+  },
+];
+
+// ============================================================================
 // Main Export
 // ============================================================================
 
 export function GaugeExamples() {
   return (
-    <div className="space-y-8">
-      <EngineRPMGauge />
-      <FuelLevelGauge />
-      <PrimitiveGaugeExample />
+    <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <EngineRPMGauge />
+        <FuelLevelGauge />
+        <PrimitiveGaugeExample />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            Gauge component for displaying single values with visual indicators and colored zones
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Gauge (All-in-One)</h3>
+          <ApiReferenceTable props={gaugeProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Zone Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Configuration for colored gauge zones
+          </p>
+          <ApiReferenceTable props={gaugeZoneType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Gauge.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={gaugeRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with Gauge.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={gaugePrimitiveProps} />
+        </div>
+      </div>
     </div>
   );
 }

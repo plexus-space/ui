@@ -627,6 +627,16 @@ const ganttPrimitiveProps: ApiProp[] = [
 export function GanttExamples() {
   return (
     <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <SatelliteContactSchedule />
+        <MissionOperationsTimeline />
+        <FlightOperationsSchedule />
+        <DetailedMaintenanceSchedule />
+        <PrimitiveAPIExample />
+      </div>
+
       {/* API Reference Section */}
       <div className="space-y-6">
         <div>
@@ -664,16 +674,6 @@ export function GanttExamples() {
           </p>
           <ApiReferenceTable props={ganttPrimitiveProps} />
         </div>
-      </div>
-
-      {/* Examples Section */}
-      <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
-        <SatelliteContactSchedule />
-        <MissionOperationsTimeline />
-        <FlightOperationsSchedule />
-        <DetailedMaintenanceSchedule />
-        <PrimitiveAPIExample />
       </div>
     </div>
   );

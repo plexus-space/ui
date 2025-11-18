@@ -49,7 +49,6 @@ export interface HeatmapChartProps {
   showGrid?: boolean;
   showAxes?: boolean;
   showTooltip?: boolean;
-  showLegend?: boolean;
   className?: string;
   preferWebGPU?: boolean;
   colorScale?: (value: number) => string; // Function to map value to color
@@ -929,64 +928,6 @@ function Grid() {
   return null;
 }
 
-function Legend({ title = "Value" }: { title?: string }) {
-  const ctx = useHeatmapChart();
-
-  // Generate gradient stops
-  const gradientStops = useMemo(() => {
-    const stops: { offset: number; color: string }[] = [];
-    const numStops = 10;
-    for (let i = 0; i <= numStops; i++) {
-      const offset = i / numStops;
-      const color = ctx.colorScale(offset);
-      stops.push({ offset, color });
-    }
-    return stops;
-  }, [ctx.colorScale]);
-
-  const gradientId = `heatmap-legend-gradient-${Math.random()
-    .toString(36)
-    .substring(2, 11)}`;
-
-  return (
-    <div className="absolute top-4 right-4 bg-white dark:bg-zinc-950 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 p-3">
-      <div className="text-xs font-medium mb-2 text-zinc-700 dark:text-zinc-300">
-        {title}
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {ctx.minValue.toFixed(1)}
-        </span>
-        <svg width="120" height="20">
-          <title className="sr-only">Heatmap Legend</title>
-          <defs>
-            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-              {gradientStops.map((stop, idx) => (
-                <stop
-                  key={idx}
-                  offset={`${stop.offset * 100}%`}
-                  stopColor={stop.color}
-                />
-              ))}
-            </linearGradient>
-          </defs>
-          <rect
-            x="0"
-            y="0"
-            width="120"
-            height="20"
-            fill={`url(#${gradientId})`}
-            rx="2"
-          />
-        </svg>
-        <span className="text-xs text-zinc-500 dark:text-zinc-400">
-          {ctx.maxValue.toFixed(1)}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function Tooltip() {
   const ctx = useHeatmapChart();
 
@@ -1095,7 +1036,6 @@ export function HeatmapChart({
   showGrid = false,
   showAxes = true,
   showTooltip = false,
-  showLegend = false,
   preferWebGPU = true,
   colorScale = defaultColorScale,
   minValue,
@@ -1127,7 +1067,6 @@ export function HeatmapChart({
       {showGrid && <Grid />}
       {showAxes && <ChartAxes />}
       {showTooltip && <Tooltip />}
-      {showLegend && <Legend />}
     </Root>
   );
 }
@@ -1141,7 +1080,7 @@ export function HeatmapChart({
  *
  * @example Simple usage (monolithic)
  * ```tsx
- * <HeatmapChart data={data} showGrid showAxes showTooltip showLegend />
+ * <HeatmapChart data={data} showGrid showAxes showTooltip />
  * ```
  *
  * @example Advanced usage (composable)
@@ -1150,7 +1089,6 @@ export function HeatmapChart({
  *   <HeatmapChart.Canvas />
  *   <HeatmapChart.Grid />
  *   <HeatmapChart.Axes />
- *   <HeatmapChart.Legend title="Temperature (°C)" />
  *   <HeatmapChart.Tooltip />
  * </HeatmapChart.Root>
  * ```
@@ -1160,7 +1098,6 @@ HeatmapChart.Canvas = Canvas;
 HeatmapChart.Grid = Grid;
 HeatmapChart.Axes = ChartAxes;
 HeatmapChart.Tooltip = Tooltip;
-HeatmapChart.Legend = Legend;
 
 export interface HeatmapChartRootProps {
   data: DataPoint[];
@@ -1187,10 +1124,6 @@ export interface HeatmapChartRootProps {
   cellGap?: number;
   className?: string;
   children?: React.ReactNode;
-}
-
-export interface HeatmapChartLegendProps {
-  title?: string;
 }
 
 export default HeatmapChart;

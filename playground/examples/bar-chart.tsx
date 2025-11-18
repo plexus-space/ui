@@ -3,6 +3,7 @@
 import { BarChart } from "@plexusui/components/charts/bar-chart";
 import type { DataPoint } from "@plexusui/components/charts/bar-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import {
   useColorScheme,
   useMultiColors,
@@ -279,17 +280,250 @@ function PrimitiveBarChart() {
 }
 
 // ============================================================================
+// API Reference
+// ============================================================================
+
+const barChartProps: ApiProp[] = [
+  {
+    name: "series",
+    type: "Series[]",
+    default: "required",
+    description: "Array of data series. Series: { name: string, data: Point[], color?: string }",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, formatter?: (value: string | number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "orientation",
+    type: '"vertical" | "horizontal"',
+    default: '"vertical"',
+    description: "Bar chart orientation",
+  },
+  {
+    name: "grouped",
+    type: "boolean",
+    default: "false",
+    description: "Display multiple series side-by-side (grouped) or as single bars",
+  },
+  {
+    name: "barWidth",
+    type: "number",
+    default: "auto",
+    description: "Width of each bar in pixels (or bar group width when grouped)",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "showGrid",
+    type: "boolean",
+    default: "true",
+    description: "Show grid lines",
+  },
+  {
+    name: "showAxes",
+    type: "boolean",
+    default: "true",
+    description: "Show axis labels and ticks",
+  },
+  {
+    name: "showTooltip",
+    type: "boolean",
+    default: "false",
+    description: "Show interactive tooltip on hover",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const barSeriesType: ApiProp[] = [
+  {
+    name: "name",
+    type: "string",
+    default: "required",
+    description: "Series name for legend and tooltip",
+  },
+  {
+    name: "data",
+    type: "Point[]",
+    default: "required",
+    description: "Array of data points. Point: { x: string | number, y: number }",
+  },
+  {
+    name: "color",
+    type: "string",
+    default: '"#3b82f6"',
+    description: "Bar color (hex or rgb)",
+  },
+];
+
+const barChartRootProps: ApiProp[] = [
+  {
+    name: "series",
+    type: "Series[]",
+    default: "required",
+    description: "Array of data series to plot",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, formatter?: (value: string | number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "orientation",
+    type: '"vertical" | "horizontal"',
+    default: '"vertical"',
+    description: "Bar chart orientation",
+  },
+  {
+    name: "grouped",
+    type: "boolean",
+    default: "false",
+    description: "Display multiple series side-by-side",
+  },
+  {
+    name: "barWidth",
+    type: "number",
+    default: "auto",
+    description: "Width of each bar in pixels",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Canvas, Axes, Tooltip)",
+  },
+];
+
+const barChartPrimitiveProps: ApiProp[] = [
+  {
+    name: "BarChart.Canvas",
+    type: "component",
+    default: "-",
+    description: "Renders the bar series. Props: showGrid?: boolean",
+  },
+  {
+    name: "BarChart.Axes",
+    type: "component",
+    default: "-",
+    description: "Renders x and y axis with labels and ticks",
+  },
+  {
+    name: "BarChart.Tooltip",
+    type: "component",
+    default: "-",
+    description: "Interactive tooltip showing data values on hover",
+  },
+];
+
+// ============================================================================
 // Main Export
 // ============================================================================
 
 export function BarChartExamples() {
   return (
-    <div className="space-y-8">
-      <BasicBarChart />
-      <GroupedBarChart />
-      <HorizontalBarChart />
-      <StackedBarChart />
-      <PrimitiveBarChart />
+    <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <BasicBarChart />
+        <GroupedBarChart />
+        <HorizontalBarChart />
+        <StackedBarChart />
+        <PrimitiveBarChart />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            BarChart component for comparing categorical data with vertical or horizontal bars
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">BarChart (All-in-One)</h3>
+          <ApiReferenceTable props={barChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Series Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Configuration for each data series in the chart
+          </p>
+          <ApiReferenceTable props={barSeriesType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">BarChart.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={barChartRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with BarChart.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={barChartPrimitiveProps} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -178,21 +178,6 @@
       "registryDependencies": [],
       "tier": "free"
     },
-    "status-grid": {
-      "name": "status-grid",
-      "version": "0.1.0",
-      "displayName": "Status Grid",
-      "category": "data-display",
-      "description": "KPI dashboard with inline sparklines and status indicators. Use cases: Mission control dashboards, system health monitoring, fleet management, production line status, device telemetry overview.",
-      "files": [
-        "charts/status-grid.tsx",
-        "charts/base-chart.tsx"
-      ],
-      "dependencies": [],
-      "devDependencies": [],
-      "registryDependencies": [],
-      "tier": "free"
-    },
     "data-grid": {
       "name": "data-grid",
       "version": "1.0.0",
@@ -265,81 +250,6 @@
       "registryDependencies": [],
       "tier": "free"
     },
-    "time-range-selector": {
-      "name": "time-range-selector",
-      "version": "1.0.0",
-      "displayName": "Time Range Selector",
-      "category": "helpers",
-      "status": "stable",
-      "description": "Beautiful time range selector with preset buttons (1H, 6H, 24H, 7D, 30D) and custom range selection. Shadcn-styled for filtering time-series data. Use cases: Chart filters, data exploration, log viewers, monitoring dashboards.",
-      "files": [
-        "charts/time-range-selector.tsx"
-      ],
-      "dependencies": [],
-      "devDependencies": [],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "drag-filter": {
-      "name": "drag-filter",
-      "version": "1.0.0",
-      "displayName": "Drag Filter",
-      "category": "helpers",
-      "status": "stable",
-      "description": "Interactive drag-to-select component with beautiful overlay for selecting ranges on charts. Supports horizontal/vertical orientation and live value feedback. Use cases: Time range selection, zoom controls, data region selection.",
-      "files": [
-        "charts/drag-filter.tsx"
-      ],
-      "dependencies": [],
-      "devDependencies": [],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "multi-select-filter": {
-      "name": "multi-select-filter",
-      "version": "1.0.0",
-      "displayName": "Multi-Select Filter",
-      "category": "helpers",
-      "status": "stable",
-      "description": "Multi-select component with dropdown, pills, and chips modes. Searchable, color-coded options with badges. Shadcn-styled. Use cases: Metric selection, sensor filtering, series toggle, category filters.",
-      "files": [
-        "charts/multi-select-filter.tsx"
-      ],
-      "dependencies": [],
-      "devDependencies": [],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "date-range-picker": {
-      "name": "date-range-picker",
-      "version": "1.0.0",
-      "displayName": "Date Range Picker",
-      "category": "helpers",
-      "status": "stable",
-      "description": "Calendar-based date range picker with interactive selection. Supports min/max constraints and timezone display. Perfect for historical data analysis. Use cases: Report generation, log analysis, trend comparison.",
-      "files": [
-        "charts/date-range-picker.tsx"
-      ],
-      "dependencies": [],
-      "devDependencies": [],
-      "registryDependencies": [],
-      "tier": "free"
-    },
-    "dashboard-grid": {
-      "name": "dashboard-grid",
-      "version": "1.0.0",
-      "displayName": "Dashboard Grid",
-      "category": "helpers",
-      "status": "stable",
-      "description": "Responsive 12-column grid layout system with beautiful card containers. Flexible spans, gaps, and composition patterns. Use cases: Dashboard layouts, monitoring grids, analytics panels, control centers.",
-      "files": [
-        "charts/dashboard-grid.tsx"
-      ],
-      "dependencies": [],
-      "devDependencies": [],
-      "registryDependencies": [],
-      "tier": "free"
-    },
     "3d-model-viewer": {
       "name": "3d-model-viewer",
       "version": "0.1.0",
@@ -349,6 +259,27 @@
       "description": "Interactive 3D model viewer with vertex color overlay support for stress/thermal/fatigue visualization. Supports STL, OBJ, GLTF, and GLB formats. Use cases: FEA stress analysis, thermal imaging overlays, CAD model inspection, structural health monitoring, component fatigue visualization.",
       "files": [
         "charts/3d-model-viewer.tsx",
+        "lib/color-scales.ts"
+      ],
+      "dependencies": [
+        "three",
+        "@react-three/fiber",
+        "@react-three/drei",
+        "@types/three"
+      ],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "point-cloud-viewer": {
+      "name": "point-cloud-viewer",
+      "version": "0.1.0",
+      "displayName": "Point Cloud Viewer",
+      "category": "visualization",
+      "status": "stable",
+      "description": "High-performance 3D point cloud visualization with color mapping by height, intensity, or classification. Supports millions of points with interactive camera controls. Use cases: LIDAR scans (terrain/building mapping), photogrammetry output, 3D scanning (industrial inspection), satellite/aerial imaging, medical 3D reconstructions (CT/MRI), robotics perception (depth sensors, SLAM).",
+      "files": [
+        "charts/point-cloud-viewer.tsx",
         "lib/color-scales.ts"
       ],
       "dependencies": [

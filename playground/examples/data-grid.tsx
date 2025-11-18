@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { DataGrid } from "@plexusui/components/charts/data-grid";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 
 // ============================================================================
 // Example 1: Real-time Telemetry Table
@@ -593,16 +594,255 @@ function EngineMonitor() {
 }
 
 // ============================================================================
+// API Reference
+// ============================================================================
+
+const dataGridProps: ApiProp[] = [
+  {
+    name: "data",
+    type: "T[]",
+    default: "required",
+    description: "Array of data objects to display in the grid",
+  },
+  {
+    name: "columns",
+    type: "Column<T>[]",
+    default: "required",
+    description: "Column definitions. Column: { key: keyof T, header: string, width?: number, align?: 'left'|'center'|'right', formatter?: (value) => ReactNode }",
+  },
+  {
+    name: "sortable",
+    type: "boolean",
+    default: "false",
+    description: "Enable column sorting",
+  },
+  {
+    name: "filterable",
+    type: "boolean",
+    default: "false",
+    description: "Enable column filtering",
+  },
+  {
+    name: "paginated",
+    type: "boolean",
+    default: "false",
+    description: "Enable pagination",
+  },
+  {
+    name: "pageSize",
+    type: "number",
+    default: "10",
+    description: "Number of rows per page (when paginated)",
+  },
+  {
+    name: "striped",
+    type: "boolean",
+    default: "true",
+    description: "Alternate row background colors",
+  },
+  {
+    name: "hoverable",
+    type: "boolean",
+    default: "true",
+    description: "Highlight rows on hover",
+  },
+  {
+    name: "compact",
+    type: "boolean",
+    default: "false",
+    description: "Use compact row height",
+  },
+  {
+    name: "onRowClick",
+    type: "(row: T) => void",
+    default: "undefined",
+    description: "Callback when a row is clicked",
+  },
+  {
+    name: "loading",
+    type: "boolean",
+    default: "false",
+    description: "Show loading state",
+  },
+  {
+    name: "emptyMessage",
+    type: "string",
+    default: '"No data available"',
+    description: "Message to show when data is empty",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const columnType: ApiProp[] = [
+  {
+    name: "key",
+    type: "keyof T",
+    default: "required",
+    description: "Property key from the data object",
+  },
+  {
+    name: "header",
+    type: "string | ReactNode",
+    default: "required",
+    description: "Column header label",
+  },
+  {
+    name: "width",
+    type: "number | string",
+    default: "auto",
+    description: "Column width (px or %)",
+  },
+  {
+    name: "align",
+    type: '"left" | "center" | "right"',
+    default: '"left"',
+    description: "Text alignment",
+  },
+  {
+    name: "sortable",
+    type: "boolean",
+    default: "true",
+    description: "Enable sorting for this column",
+  },
+  {
+    name: "formatter",
+    type: "(value: any, row: T) => ReactNode",
+    default: "undefined",
+    description: "Custom cell renderer",
+  },
+];
+
+const dataGridRootProps: ApiProp[] = [
+  {
+    name: "data",
+    type: "T[]",
+    default: "required",
+    description: "Array of data objects",
+  },
+  {
+    name: "columns",
+    type: "Column<T>[]",
+    default: "required",
+    description: "Column definitions",
+  },
+  {
+    name: "sortable",
+    type: "boolean",
+    default: "false",
+    description: "Enable sorting",
+  },
+  {
+    name: "filterable",
+    type: "boolean",
+    default: "false",
+    description: "Enable filtering",
+  },
+  {
+    name: "paginated",
+    type: "boolean",
+    default: "false",
+    description: "Enable pagination",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Table, Header, Body, Footer, Pagination)",
+  },
+];
+
+const dataGridPrimitiveProps: ApiProp[] = [
+  {
+    name: "DataGrid.Table",
+    type: "component",
+    default: "-",
+    description: "Table container. Props: striped?: boolean, hoverable?: boolean, compact?: boolean",
+  },
+  {
+    name: "DataGrid.Header",
+    type: "component",
+    default: "-",
+    description: "Table header with column labels",
+  },
+  {
+    name: "DataGrid.Body",
+    type: "component",
+    default: "-",
+    description: "Table body with data rows",
+  },
+  {
+    name: "DataGrid.Footer",
+    type: "component",
+    default: "-",
+    description: "Table footer (optional)",
+  },
+  {
+    name: "DataGrid.Pagination",
+    type: "component",
+    default: "-",
+    description: "Pagination controls",
+  },
+];
+
+// ============================================================================
 // Export all examples
 // ============================================================================
 
 export function DataGridExamples() {
   return (
     <div className="space-y-12">
-      <TelemetryTable />
-      <FlightDashboard />
-      <EngineMonitor />
-      <PrimitiveCompositionExample />
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <TelemetryTable />
+        <FlightDashboard />
+        <EngineMonitor />
+        <PrimitiveCompositionExample />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            DataGrid component for displaying tabular data with sorting, filtering, and pagination
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">DataGrid (All-in-One)</h3>
+          <ApiReferenceTable props={dataGridProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Column Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Configuration for table columns
+          </p>
+          <ApiReferenceTable props={columnType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">DataGrid.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={dataGridRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with DataGrid.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={dataGridPrimitiveProps} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { AreaChart } from "@plexusui/components/charts/area-chart";
 import type { DataPoint } from "@plexusui/components/charts/area-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import { useState, useEffect } from "react";
 import {
   useColorScheme,
@@ -256,16 +257,225 @@ function PrimitiveAreaChart() {
 }
 
 // ============================================================================
+// API Reference
+// ============================================================================
+
+const areaChartProps: ApiProp[] = [
+  {
+    name: "series",
+    type: "Series[]",
+    default: "required",
+    description: "Array of data series. Series: { name: string, data: Point[], color?: string, fillOpacity?: number, strokeWidth?: number }",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "showGrid",
+    type: "boolean",
+    default: "true",
+    description: "Show grid lines",
+  },
+  {
+    name: "showAxes",
+    type: "boolean",
+    default: "true",
+    description: "Show axis labels and ticks",
+  },
+  {
+    name: "showTooltip",
+    type: "boolean",
+    default: "false",
+    description: "Show interactive tooltip on hover",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const seriesType: ApiProp[] = [
+  {
+    name: "name",
+    type: "string",
+    default: "required",
+    description: "Series name for legend and tooltip",
+  },
+  {
+    name: "data",
+    type: "Point[]",
+    default: "required",
+    description: "Array of data points. Point: { x: number, y: number }",
+  },
+  {
+    name: "color",
+    type: "string",
+    default: '"#3b82f6"',
+    description: "Line and fill color (hex or rgb)",
+  },
+  {
+    name: "fillOpacity",
+    type: "number",
+    default: "0.3",
+    description: "Area fill opacity (0-1)",
+  },
+  {
+    name: "strokeWidth",
+    type: "number",
+    default: "2",
+    description: "Line thickness in pixels",
+  },
+];
+
+const areaChartRootProps: ApiProp[] = [
+  {
+    name: "series",
+    type: "Series[]",
+    default: "required",
+    description: "Array of data series to plot",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Canvas, Axes, Tooltip)",
+  },
+];
+
+const areaChartPrimitiveProps: ApiProp[] = [
+  {
+    name: "AreaChart.Canvas",
+    type: "component",
+    default: "-",
+    description: "Renders the area series. Props: showGrid?: boolean",
+  },
+  {
+    name: "AreaChart.Axes",
+    type: "component",
+    default: "-",
+    description: "Renders x and y axis with labels and ticks",
+  },
+  {
+    name: "AreaChart.Tooltip",
+    type: "component",
+    default: "-",
+    description: "Interactive tooltip showing data values on hover",
+  },
+];
+
+// ============================================================================
 // Main Export
 // ============================================================================
 
 export function AreaChartExamples() {
   return (
-    <div className="space-y-8">
-      <BasicAreaChart />
-      <MultiSeriesAreaChart />
-      <StreamingAreaChart />
-      <PrimitiveAreaChart />
+    <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <BasicAreaChart />
+        <MultiSeriesAreaChart />
+        <StreamingAreaChart />
+        <PrimitiveAreaChart />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            AreaChart component for visualizing trends and cumulative data with filled areas
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">AreaChart (All-in-One)</h3>
+          <ApiReferenceTable props={areaChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Series Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Configuration for each data series in the chart
+          </p>
+          <ApiReferenceTable props={seriesType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">AreaChart.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={areaChartRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with AreaChart.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={areaChartPrimitiveProps} />
+        </div>
+      </div>
     </div>
   );
 }

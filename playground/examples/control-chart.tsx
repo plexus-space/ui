@@ -7,6 +7,10 @@ import {
   type ControlViolation,
 } from "@plexusui/components/charts/control-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import { useColorScheme } from "@/components/color-scheme-provider";
 import { useMemo, useState } from "react";
 
@@ -291,17 +295,197 @@ function SelectiveRules() {
 }
 
 // ============================================================================
+// API Reference
+// ============================================================================
+
+const controlChartProps: ApiProp[] = [
+  {
+    name: "data",
+    type: "number[]",
+    default: "required",
+    description: "Array of measurement values to plot",
+  },
+  {
+    name: "centerLine",
+    type: "number | 'auto'",
+    default: '"auto"',
+    description: "Center line (CL) value. 'auto' calculates mean from data",
+  },
+  {
+    name: "upperControlLimit",
+    type: "number | 'auto'",
+    default: '"auto"',
+    description:
+      "Upper Control Limit (UCL). 'auto' calculates from data (mean + 3σ)",
+  },
+  {
+    name: "lowerControlLimit",
+    type: "number | 'auto'",
+    default: '"auto"',
+    description:
+      "Lower Control Limit (LCL). 'auto' calculates from data (mean - 3σ)",
+  },
+  {
+    name: "upperWarningLimit",
+    type: "number",
+    default: "undefined",
+    description: "Upper Warning Limit (mean + 2σ)",
+  },
+  {
+    name: "lowerWarningLimit",
+    type: "number",
+    default: "undefined",
+    description: "Lower Warning Limit (mean - 2σ)",
+  },
+  {
+    name: "rules",
+    type: "ControlRule[]",
+    default: "all western electric rules",
+    description:
+      "SPC rules to detect special causes. Includes Western Electric rules 1-4 by default",
+  },
+  {
+    name: "highlightViolations",
+    type: "boolean",
+    default: "true",
+    description: "Highlight points that violate control rules",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, formatter?: (value: number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "showGrid",
+    type: "boolean",
+    default: "true",
+    description: "Show grid lines",
+  },
+  {
+    name: "showTooltip",
+    type: "boolean",
+    default: "false",
+    description: "Show interactive tooltip on hover",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description:
+      "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const controlViolationType: ApiProp[] = [
+  {
+    name: "index",
+    type: "number",
+    default: "-",
+    description: "Index of the violating data point",
+  },
+  {
+    name: "rule",
+    type: "string",
+    default: "-",
+    description: "Name of the violated rule (e.g., 'Rule 1: Beyond UCL/LCL')",
+  },
+  {
+    name: "severity",
+    type: '"critical" | "warning"',
+    default: "-",
+    description: "Severity level of the violation",
+  },
+];
+
+const helperFunctionsControl: ApiProp[] = [
+  {
+    name: "calculateControlLimits",
+    type: "(data: number[]) => { cl: number, ucl: number, lcl: number, uwl: number, lwl: number }",
+    default: "-",
+    description: "Calculate control limits from data using ±3σ and ±2σ",
+  },
+  {
+    name: "generateSPCData",
+    type: "(count: number, mean?: number, stdDev?: number, outliers?: number) => number[]",
+    default: "-",
+    description:
+      "Generate synthetic SPC data with optional outliers for testing",
+  },
+];
+
+// ============================================================================
 // Main Export
 // ============================================================================
 
 export function ControlChartExamples() {
   return (
-    <div className="space-y-8">
-      <BasicControlChart />
-      <WithOutliers />
-      <HighVariationProcess />
-      <CustomLimits />
-      <SelectiveRules />
+    <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <BasicControlChart />
+        <WithOutliers />
+        <HighVariationProcess />
+        <CustomLimits />
+        <SelectiveRules />
+      </div>
+
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            ControlChart component for Statistical Process Control (SPC) with
+            Western Electric rules
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">ControlChart (All-in-One)</h3>
+          <ApiReferenceTable props={controlChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">ControlViolation Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Structure for detected control rule violations
+          </p>
+          <ApiReferenceTable props={controlViolationType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Helper Functions</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Utility functions for SPC calculations and test data
+          </p>
+          <ApiReferenceTable props={helperFunctionsControl} />
+        </div>
+      </div>
     </div>
   );
 }

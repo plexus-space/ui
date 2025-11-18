@@ -2,7 +2,10 @@
 
 import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
 import { ComponentPreview } from "@/components/component-preview";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import { useState, useEffect } from "react";
 
 /**
@@ -146,7 +149,6 @@ const signal = generateRFSignal(10000, sampleRate, [150, 250, 400, 650, 850]);
   height={500}
   showAxes
   showTooltip
-  showLegend
   preferWebGPU
 />`}
       preview={
@@ -176,7 +178,6 @@ const signal = generateRFSignal(10000, sampleRate, [150, 250, 400, 650, 850]);
               height={500}
               showAxes
               showTooltip
-              showLegend
               preferWebGPU
             />
           </div>
@@ -217,7 +218,6 @@ const signal = generateEEGSignal(sampleRate * 10, sampleRate);
   height={500}
   showAxes
   showTooltip
-  showLegend
   preferWebGPU
 />`}
       preview={
@@ -268,7 +268,6 @@ const signal = generateEEGSignal(sampleRate * 10, sampleRate);
               height={500}
               showAxes
               showTooltip
-              showLegend
               preferWebGPU
             />
           </div>
@@ -307,8 +306,7 @@ const signal = generateChirp(sampleRate * 3, sampleRate, 100, 3500);
   width={800}
   height={500}
   showAxes
-  showTooltip
-  showLegend
+  showTooltip  
   preferWebGPU
 />`}
       preview={
@@ -336,7 +334,6 @@ const signal = generateChirp(sampleRate * 3, sampleRate, 100, 3500);
               height={500}
               showAxes
               showTooltip
-              showLegend
               preferWebGPU
             />
           </div>
@@ -374,8 +371,7 @@ const signal = captureVibrationData();
   width={800}
   height={500}
   showAxes
-  showTooltip
-  showLegend
+  showTooltip   
   preferWebGPU
 />`}
       preview={
@@ -414,7 +410,6 @@ const signal = captureVibrationData();
               height={500}
               showAxes
               showTooltip
-              showLegend
               preferWebGPU
             />
           </div>
@@ -482,7 +477,6 @@ useEffect(() => {
   height={500}
   showAxes
   showTooltip
-  showLegend
   preferWebGPU
 />`}
       preview={
@@ -519,7 +513,6 @@ useEffect(() => {
               height={500}
               showAxes
               showTooltip
-              showLegend
               preferWebGPU
             />
           </div>
@@ -572,7 +565,6 @@ const signal = generateRFSignal(20000, sampleRate, [100, 250, 500, 800]);
   width={800}
   height={500}
   showAxes
-  showLegend
   preferWebGPU
 />`}
       preview={
@@ -653,7 +645,6 @@ const signal = generateRFSignal(20000, sampleRate, [100, 250, 500, 800]);
               height={500}
               showAxes
               showTooltip
-              showLegend
               preferWebGPU
             />
           </div>
@@ -684,7 +675,6 @@ import { inferno } from "@/lib/color-scales";
   <WaterfallChart.Canvas />
   <WaterfallChart.Axes />
   <WaterfallChart.Tooltip />
-  <WaterfallChart.Legend title="RF Power (dB)" />
 </WaterfallChart.Root>`}
       preview={
         <div className="w-full h-[500px]">
@@ -704,7 +694,6 @@ import { inferno } from "@/lib/color-scales";
             <WaterfallChart.Canvas />
             <WaterfallChart.Axes />
             <WaterfallChart.Tooltip />
-            <WaterfallChart.Legend title="RF Power (dBm)" />
           </WaterfallChart.Root>
         </div>
       }
@@ -729,13 +718,15 @@ const waterfallChartProps: ApiProp[] = [
     name: "fftSize",
     type: "number",
     default: "256",
-    description: "FFT window size (must be power of 2). Larger = better frequency resolution",
+    description:
+      "FFT window size (must be power of 2). Larger = better frequency resolution",
   },
   {
     name: "hopSize",
     type: "number",
     default: "fftSize / 2",
-    description: "Number of samples to advance between windows. Smaller = smoother transitions",
+    description:
+      "Number of samples to advance between windows. Smaller = smoother transitions",
   },
   {
     name: "windowFunction",
@@ -816,12 +807,6 @@ const waterfallChartProps: ApiProp[] = [
     description: "Show interactive tooltip on hover",
   },
   {
-    name: "showLegend",
-    type: "boolean",
-    default: "false",
-    description: "Show color scale legend",
-  },
-  {
     name: "preferWebGPU",
     type: "boolean",
     default: "true",
@@ -831,7 +816,8 @@ const waterfallChartProps: ApiProp[] = [
     name: "useGPUFFT",
     type: "boolean",
     default: "false",
-    description: "Use GPU compute shaders for FFT (100x+ faster, requires WebGPU)",
+    description:
+      "Use GPU compute shaders for FFT (100x+ faster, requires WebGPU)",
   },
   {
     name: "colorScale",
@@ -922,12 +908,25 @@ const waterfallPrimitiveProps: ApiProp[] = [
 export function WaterfallChartExamples() {
   return (
     <div className="space-y-12">
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <GPUAcceleratedFFT />
+        <RFSpectrumAnalyzer />
+        <EEGMonitor />
+        <AudioSpectrogram />
+        <VibrationAnalysis />
+        <StreamingWaterfall />
+        <PrimitiveWaterfallChart />
+      </div>
+
       {/* API Reference Section */}
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            WaterfallChart component for frequency-time analysis (spectrograms, FFT visualization)
+            WaterfallChart component for frequency-time analysis (spectrograms,
+            FFT visualization)
           </p>
         </div>
 
@@ -937,7 +936,9 @@ export function WaterfallChartExamples() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">WaterfallChart.Root (Composable)</h3>
+          <h3 className="text-lg font-semibold">
+            WaterfallChart.Root (Composable)
+          </h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Root component for building custom layouts with primitives
           </p>
@@ -951,18 +952,6 @@ export function WaterfallChartExamples() {
           </p>
           <ApiReferenceTable props={waterfallPrimitiveProps} />
         </div>
-      </div>
-
-      {/* Examples Section */}
-      <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
-        <GPUAcceleratedFFT />
-        <RFSpectrumAnalyzer />
-        <EEGMonitor />
-        <AudioSpectrogram />
-        <VibrationAnalysis />
-        <StreamingWaterfall />
-        <PrimitiveWaterfallChart />
       </div>
     </div>
   );

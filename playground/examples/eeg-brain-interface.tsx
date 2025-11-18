@@ -411,7 +411,6 @@ const channelData = Array.from({ length: 8 }, () =>
                       minValue={0}
                       maxValue={100}
                       showTooltip
-                      showLegend
                       preferWebGPU
                     />
                   </div>

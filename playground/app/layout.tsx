@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Open_Sans, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/app/providers";
-import { Sidenav } from "@/components/sidenav";
 import { TopNav } from "@/components/top-nav";
+import { LayoutWrapper } from "@/components/layout-wrapper";
 
 export const metadata: Metadata = {
   title: "Plexus UI - Playground",
@@ -67,10 +67,7 @@ export default function RootLayout({
           <div className="flex flex-col h-screen w-screen overflow-hidden">
             <TopNav />
             <div className="flex flex-1 overflow-hidden">
-              <Sidenav />
-              <main className="flex-1 overflow-y-auto bg-background">
-                {children}
-              </main>
+              <LayoutWrapper>{children}</LayoutWrapper>
             </div>
           </div>
         </Providers>
