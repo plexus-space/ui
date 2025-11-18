@@ -969,7 +969,7 @@ function Tooltip() {
 
     if (closestSeriesIdx !== -1 && closestPoint) {
       const point = closestPoint; // Create const for proper type narrowing
-      const currentX = ctx.hoveredPoint?.data?.xValue as number | undefined;
+      const currentX = (ctx.hoveredPoint?.data as { xValue?: number })?.xValue;
       const currentSeriesIdx = ctx.hoveredPoint?.seriesIdx;
 
       // Calculate adaptive threshold
@@ -1021,10 +1021,12 @@ function Tooltip() {
   };
 
   const dot = useMemo(() => {
-    if (!ctx.hoveredPoint?.data?.point) return null;
+    const hoveredData = ctx.hoveredPoint?.data as { point?: Point } | undefined;
 
-    const point = ctx.hoveredPoint.data.point as Point;
-    const series = ctx.series[ctx.hoveredPoint.seriesIdx];
+    if (!hoveredData?.point) return null;
+
+    const point = hoveredData.point;
+    const series = ctx?.series[ctx?.hoveredPoint?.seriesIdx ?? 0];
 
     // Find current position of this point (in case data shifted)
     const currentPoint = series.data.find(

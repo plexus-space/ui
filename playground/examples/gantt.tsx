@@ -4,6 +4,7 @@ import { useState } from "react";
 import { GanttChart } from "@plexusui/components/charts/gantt";
 import type { Task } from "@plexusui/components/charts/gantt";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import { addHours, addMinutes } from "date-fns";
 
 function SatelliteContactSchedule() {
@@ -431,14 +432,249 @@ function FlightOperationsSchedule() {
   );
 }
 
+const ganttChartProps: ApiProp[] = [
+  {
+    name: "tasks",
+    type: "Task[]",
+    default: "required",
+    description: "Array of tasks to display. Task: { id, name, start, end, status?, color?, description? }",
+  },
+  {
+    name: "timezone",
+    type: "string",
+    default: '"UTC"',
+    description: "IANA timezone identifier (e.g., 'America/New_York', 'Europe/London')",
+  },
+  {
+    name: "timeWindowHours",
+    type: "number",
+    default: "24",
+    description: "Number of hours to display in the timeline view",
+  },
+  {
+    name: "variant",
+    type: '"default" | "compact" | "detailed"',
+    default: '"default"',
+    description: "Visual density: default (40px), compact (32px), detailed (60px with descriptions)",
+  },
+  {
+    name: "rowHeight",
+    type: "number",
+    default: "40",
+    description: "Height of each task row in pixels (overrides variant default)",
+  },
+  {
+    name: "use12HourFormat",
+    type: "boolean",
+    default: "false",
+    description: "Use 12-hour (AM/PM) or 24-hour time format",
+  },
+  {
+    name: "onTaskClick",
+    type: "(task: Task) => void",
+    default: "undefined",
+    description: "Callback when a task is clicked",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const taskType: ApiProp[] = [
+  {
+    name: "id",
+    type: "string",
+    default: "required",
+    description: "Unique identifier for the task",
+  },
+  {
+    name: "name",
+    type: "string",
+    default: "required",
+    description: "Display name for the task",
+  },
+  {
+    name: "start",
+    type: "Date | number",
+    default: "required",
+    description: "Task start time as Date object or Unix timestamp",
+  },
+  {
+    name: "end",
+    type: "Date | number",
+    default: "required",
+    description: "Task end time as Date object or Unix timestamp",
+  },
+  {
+    name: "status",
+    type: '"planned" | "in-progress" | "completed" | "blocked"',
+    default: '"planned"',
+    description: "Current status affecting color and appearance",
+  },
+  {
+    name: "color",
+    type: "string",
+    default: "auto",
+    description: "Custom color for the task bar (hex or rgb)",
+  },
+  {
+    name: "description",
+    type: "string",
+    default: "undefined",
+    description: "Additional description text shown in detailed variant",
+  },
+];
+
+const ganttRootProps: ApiProp[] = [
+  {
+    name: "tasks",
+    type: "Task[]",
+    default: "required",
+    description: "Array of tasks to display",
+  },
+  {
+    name: "timezone",
+    type: "string",
+    default: '"UTC"',
+    description: "IANA timezone identifier",
+  },
+  {
+    name: "timeWindowHours",
+    type: "number",
+    default: "24",
+    description: "Number of hours to display",
+  },
+  {
+    name: "rowHeight",
+    type: "number",
+    default: "40",
+    description: "Height of each task row in pixels",
+  },
+  {
+    name: "use12HourFormat",
+    type: "boolean",
+    default: "false",
+    description: "Use 12-hour or 24-hour time format",
+  },
+  {
+    name: "onTaskClick",
+    type: "(task: Task) => void",
+    default: "undefined",
+    description: "Callback when a task is clicked",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Container, Viewport, Controls, etc.)",
+  },
+];
+
+const ganttPrimitiveProps: ApiProp[] = [
+  {
+    name: "GanttChart.Container",
+    type: "component",
+    default: "-",
+    description: "Main container with horizontal scrolling. Must contain Viewport and LeftPanel",
+  },
+  {
+    name: "GanttChart.Viewport",
+    type: "component",
+    default: "-",
+    description: "Scrollable timeline viewport. Contains Grid, Header, Tasks, CurrentTime",
+  },
+  {
+    name: "GanttChart.Grid",
+    type: "component",
+    default: "-",
+    description: "Background time grid with vertical lines for time markers",
+  },
+  {
+    name: "GanttChart.Header",
+    type: "component",
+    default: "-",
+    description: "Time axis header showing hours and labels",
+  },
+  {
+    name: "GanttChart.Tasks",
+    type: "component",
+    default: "-",
+    description: "Renders all task bars on the timeline",
+  },
+  {
+    name: "GanttChart.CurrentTime",
+    type: "component",
+    default: "-",
+    description: "Vertical line indicator showing current time",
+  },
+  {
+    name: "GanttChart.LeftPanel",
+    type: "component",
+    default: "-",
+    description: "Fixed left panel showing task names",
+  },
+  {
+    name: "GanttChart.Controls",
+    type: "component",
+    default: "-",
+    description: "Zoom controls (+/-) for adjusting timeline scale",
+  },
+];
+
 export function GanttExamples() {
   return (
-    <div className="space-y-8">
-      <SatelliteContactSchedule />
-      <MissionOperationsTimeline />
-      <FlightOperationsSchedule />
-      <DetailedMaintenanceSchedule />
-      <PrimitiveAPIExample />
+    <div className="space-y-12">
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            GanttChart component for timeline visualization and task scheduling. SVG-based rendering optimized for 1000+ tasks.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">GanttChart (All-in-One)</h3>
+          <ApiReferenceTable props={ganttChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Task Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Task data structure for timeline items
+          </p>
+          <ApiReferenceTable props={taskType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">GanttChart.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={ganttRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with GanttChart.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={ganttPrimitiveProps} />
+        </div>
+      </div>
+
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <SatelliteContactSchedule />
+        <MissionOperationsTimeline />
+        <FlightOperationsSchedule />
+        <DetailedMaintenanceSchedule />
+        <PrimitiveAPIExample />
+      </div>
     </div>
   );
 }

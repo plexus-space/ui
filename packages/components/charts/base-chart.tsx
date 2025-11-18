@@ -1,7 +1,128 @@
 "use client";
 
 import * as React from "react";
-import { ErrorBoundary, GPUErrorFallback } from "../lib/error-boundary";
+import { ErrorBoundary } from "react-error-boundary";
+
+/**
+ * Default GPU error fallback component
+ */
+function GPUErrorFallback({
+  error,
+  resetErrorBoundary,
+}: {
+  error: Error;
+  resetErrorBoundary: () => void;
+}) {
+  const isGPUError =
+    error?.message.includes("WebGPU") ||
+    error?.message.includes("WebGL") ||
+    error?.message.includes("GPU");
+
+  return (
+    <div className="flex items-center justify-center w-full h-full min-h-[300px] bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
+      <div className="text-center px-6 py-8 max-w-lg">
+        <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-amber-100 dark:bg-amber-900/20 rounded-full">
+          <svg
+            className="h-8 w-8 text-amber-600 dark:text-amber-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+
+        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+          {isGPUError
+            ? "GPU Acceleration Unavailable"
+            : "Chart Rendering Error"}
+        </h3>
+
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">
+          {isGPUError
+            ? "This chart requires GPU acceleration (WebGPU or WebGL2) which is not available in your browser."
+            : "An error occurred while rendering this chart."}
+        </p>
+
+        {isGPUError && (
+          <div className="text-left bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 mb-6">
+            <h4 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-3">
+              Troubleshooting Steps:
+            </h4>
+            <ul className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+              <li className="flex items-start gap-2">
+                <span className="text-zinc-400 dark:text-zinc-600 mt-0.5">
+                  1.
+                </span>
+                <span>
+                  <strong className="text-zinc-900 dark:text-zinc-100">
+                    Update your browser:
+                  </strong>{" "}
+                  Chrome 113+, Edge 113+, or Safari 18+
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-zinc-400 dark:text-zinc-600 mt-0.5">
+                  2.
+                </span>
+                <span>
+                  <strong className="text-zinc-900 dark:text-zinc-100">
+                    Enable hardware acceleration:
+                  </strong>{" "}
+                  Check browser settings
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-zinc-400 dark:text-zinc-600 mt-0.5">
+                  3.
+                </span>
+                <span>
+                  <strong className="text-zinc-900 dark:text-zinc-100">
+                    Update GPU drivers:
+                  </strong>{" "}
+                  Visit your graphics card manufacturer's website
+                </span>
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {error && (
+          <details className="text-left mb-4">
+            <summary className="text-xs text-zinc-500 dark:text-zinc-500 cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300">
+              Error details
+            </summary>
+            <pre className="mt-2 text-xs bg-zinc-100 dark:bg-zinc-800 p-3 rounded overflow-auto max-h-32 text-left text-zinc-800 dark:text-zinc-200">
+              {error.message}
+            </pre>
+          </details>
+        )}
+
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={resetErrorBoundary}
+            className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+            type="button"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded-lg hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+            type="button"
+          >
+            Reload Page
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export interface Point {
   x: number;
@@ -418,9 +539,8 @@ export function ChartRoot({
     return { width: w, height: h };
   });
 
-  const [hoveredPoint, setHoveredPoint] = React.useState<HoveredPoint<unknown> | null>(
-    null
-  );
+  const [hoveredPoint, setHoveredPoint] =
+    React.useState<HoveredPoint<unknown> | null>(null);
   const [tooltipData, setTooltipData] = React.useState<TooltipData | null>(
     null
   );
@@ -616,8 +736,18 @@ export function ChartRoot({
   // For responsive behavior: always use 100% width/height and let constraints control size
   const containerStyle: React.CSSProperties = {
     position: "relative",
-    width: typeof widthProp === "string" ? widthProp : typeof widthProp === "number" ? `${widthProp}px` : "100%",
-    height: typeof heightProp === "string" ? heightProp : typeof heightProp === "number" ? `${heightProp}px` : "100%",
+    width:
+      typeof widthProp === "string"
+        ? widthProp
+        : typeof widthProp === "number"
+        ? `${widthProp}px`
+        : "100%",
+    height:
+      typeof heightProp === "string"
+        ? heightProp
+        : typeof heightProp === "number"
+        ? `${heightProp}px`
+        : "100%",
     minWidth: minWidth,
     minHeight: minHeight,
     maxWidth: typeof widthProp === "number" ? widthProp : maxWidth,
@@ -643,7 +773,16 @@ export function ChartRoot({
 
   return (
     <ErrorBoundary
-      fallback={errorFallback || <GPUErrorFallback error={null} />}
+      fallbackRender={
+        errorFallback
+          ? () => <>{errorFallback}</>
+          : ({ error, resetErrorBoundary }) => (
+              <GPUErrorFallback
+                error={error}
+                resetErrorBoundary={resetErrorBoundary}
+              />
+            )
+      }
       onError={onError}
       resetKeys={[preferWebGPU, renderMode]}
     >

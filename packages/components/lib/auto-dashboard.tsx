@@ -69,27 +69,32 @@ const COMPONENT_MAP = {
 } as const;
 
 // ============================================================================
-// Alert Execution Engine
+// Alert Execution Engine - Functional Pattern
 // ============================================================================
 
-class AlertEngine {
-  private rules: ReturnType<typeof generateAlertRule>[] = [];
-  private callback?: (alert: AlertEvent) => void;
-  private lastAlertTime = 0;
-  private alertCooldown = 5000; // 5 seconds between alerts
+interface AlertEngineState {
+  rules: ReturnType<typeof generateAlertRule>[];
+  lastAlertTime: number;
+  alertCooldown: number;
+}
 
-  constructor(intent: QueryIntent, callback?: (alert: AlertEvent) => void) {
-    this.callback = callback;
-    this.rules.push(generateAlertRule(intent));
-  }
+const createAlertEngine = (
+  intent: QueryIntent,
+  callback?: (alert: AlertEvent) => void
+) => {
+  let state: AlertEngineState = {
+    rules: [generateAlertRule(intent)],
+    lastAlertTime: 0,
+    alertCooldown: 5000,
+  };
 
-  evaluate(value: number | number[]): AlertEvent | null {
+  const evaluate = (value: number | number[]): AlertEvent | null => {
     const now = Date.now();
-    if (now - this.lastAlertTime < this.alertCooldown) {
+    if (now - state.lastAlertTime < state.alertCooldown) {
       return null; // Rate limiting
     }
 
-    for (const rule of this.rules) {
+    for (const rule of state.rules) {
       const numericValue = Array.isArray(value) ? value[0] : value;
       let triggered = false;
 
@@ -110,58 +115,74 @@ class AlertEngine {
           rule: rule.condition,
         };
 
-        this.lastAlertTime = now;
-        this.callback?.(alert);
+        state = { ...state, lastAlertTime: now };
+        callback?.(alert);
         return alert;
       }
     }
 
     return null;
-  }
+  };
+
+  return { evaluate };
+};
+
+// ============================================================================
+// Data Processor - Transforms raw data for different chart types - Functional Pattern
+// ============================================================================
+
+interface DataProcessorState {
+  rawData: DataPoint[];
+  maxPoints: number;
 }
 
-// ============================================================================
-// Data Processor - Transforms raw data for different chart types
-// ============================================================================
+const createDataProcessor = (maxPoints = 1000) => {
+  let state: DataProcessorState = {
+    rawData: [],
+    maxPoints,
+  };
 
-class DataProcessor {
-  private rawData: DataPoint[] = [];
-  private maxPoints: number;
+  const addData = (point: DataPoint): void => {
+    const newRawData = [...state.rawData, point];
+    state = {
+      ...state,
+      rawData: newRawData.length > state.maxPoints
+        ? newRawData.slice(-state.maxPoints)
+        : newRawData,
+    };
+  };
 
-  constructor(maxPoints = 1000) {
-    this.maxPoints = maxPoints;
-  }
-
-  addData(point: DataPoint) {
-    this.rawData.push(point);
-    if (this.rawData.length > this.maxPoints) {
-      this.rawData.shift(); // Remove oldest
-    }
-  }
-
-  getTimeSeriesData(): Array<{ x: number; y: number }> {
-    return this.rawData.map((p, i) => ({
+  const getTimeSeriesData = (): Array<{ x: number; y: number }> => {
+    return state.rawData.map((p, i) => ({
       x: i,
       y: Array.isArray(p.value) ? p.value[0] : p.value,
     }));
-  }
+  };
 
-  getSignalData(): number[] {
-    const latest = this.rawData[this.rawData.length - 1];
+  const getSignalData = (): number[] => {
+    const latest = state.rawData[state.rawData.length - 1];
     if (!latest) return [];
     return Array.isArray(latest.value) ? latest.value : [latest.value];
-  }
+  };
 
-  getCurrentValue(): number {
-    const latest = this.rawData[this.rawData.length - 1];
+  const getCurrentValue = (): number => {
+    const latest = state.rawData[state.rawData.length - 1];
     if (!latest) return 0;
     return Array.isArray(latest.value) ? latest.value[0] : latest.value;
-  }
+  };
 
-  getRawData(): DataPoint[] {
-    return this.rawData;
-  }
-}
+  const getRawData = (): DataPoint[] => {
+    return state.rawData;
+  };
+
+  return {
+    addData,
+    getTimeSeriesData,
+    getSignalData,
+    getCurrentValue,
+    getRawData,
+  };
+};
 
 // ============================================================================
 // Auto Dashboard Hook
@@ -180,14 +201,14 @@ export function useAutoDashboard(config: AutoDashboardConfig) {
   const recommendations = useMemo(() => getRecommendations(intent), [intent]);
 
   const dataProcessor = useMemo(
-    () => new DataProcessor(config.maxDataPoints),
+    () => createDataProcessor(config.maxDataPoints),
     [config.maxDataPoints]
   );
 
   const alertEngine = useMemo(
     () =>
       config.enableAlerts !== false
-        ? new AlertEngine(intent, (alert) => {
+        ? createAlertEngine(intent, (alert) => {
             setState((prev) => ({
               ...prev,
               alerts: [...prev.alerts, alert].slice(-10), // Keep last 10 alerts

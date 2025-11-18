@@ -33,231 +33,301 @@ export type DataCallback = (data: DataPoint) => void;
 export type ErrorCallback = (error: Error) => void;
 export type StatusCallback = (status: "connecting" | "connected" | "disconnected" | "error") => void;
 
-// ============================================================================
-// Base Connector Class
-// ============================================================================
-
-export abstract class DataConnector {
-  protected config: ConnectorConfig;
-  protected dataCallback?: DataCallback;
-  protected errorCallback?: ErrorCallback;
-  protected statusCallback?: StatusCallback;
-  protected isConnected = false;
-
-  constructor(config: ConnectorConfig) {
-    this.config = {
-      reconnect: true,
-      reconnectDelay: 3000,
-      ...config,
-    };
-  }
-
-  abstract connect(): Promise<void>;
-  abstract disconnect(): void;
-
-  onData(callback: DataCallback): this {
-    this.dataCallback = callback;
-    return this;
-  }
-
-  onError(callback: ErrorCallback): this {
-    this.errorCallback = callback;
-    return this;
-  }
-
-  onStatus(callback: StatusCallback): this {
-    this.statusCallback = callback;
-    return this;
-  }
-
-  protected setStatus(status: "connecting" | "connected" | "disconnected" | "error") {
-    this.isConnected = status === "connected";
-    this.statusCallback?.(status);
-  }
-
-  protected emitData(data: DataPoint) {
-    this.dataCallback?.(data);
-  }
-
-  protected emitError(error: Error) {
-    this.errorCallback?.(error);
-    this.setStatus("error");
-  }
-
-  getStatus(): boolean {
-    return this.isConnected;
-  }
+export interface DataConnector {
+  connect: () => Promise<void>;
+  disconnect: () => void;
+  onData: (callback: DataCallback) => DataConnector;
+  onError: (callback: ErrorCallback) => DataConnector;
+  onStatus: (callback: StatusCallback) => DataConnector;
+  getStatus: () => boolean;
+  send?: (data: unknown) => void; // For WebSocket
 }
 
 // ============================================================================
 // WebSocket Connector
 // ============================================================================
 
-export class WebSocketConnector extends DataConnector {
-  private ws?: WebSocket;
-  private reconnectTimer?: NodeJS.Timeout;
+export const createWebSocketConnector = (
+  config: ConnectorConfig
+): DataConnector => {
+  const finalConfig = {
+    reconnect: true,
+    reconnectDelay: 3000,
+    ...config,
+  };
 
-  async connect(): Promise<void> {
-    if (!this.config.url) {
+  let ws: WebSocket | undefined;
+  let reconnectTimer: NodeJS.Timeout | undefined;
+  let dataCallback: DataCallback | undefined;
+  let errorCallback: ErrorCallback | undefined;
+  let statusCallback: StatusCallback | undefined;
+  let isConnected = false;
+
+  const setStatus = (status: "connecting" | "connected" | "disconnected" | "error") => {
+    isConnected = status === "connected";
+    statusCallback?.(status);
+  };
+
+  const emitData = (data: DataPoint) => {
+    dataCallback?.(data);
+  };
+
+  const emitError = (error: Error) => {
+    errorCallback?.(error);
+    setStatus("error");
+  };
+
+  const connect = async (): Promise<void> => {
+    if (!finalConfig.url) {
       throw new Error("WebSocket URL is required");
     }
 
-    this.setStatus("connecting");
+    setStatus("connecting");
 
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(this.config.url!);
+        ws = new WebSocket(finalConfig.url!);
 
-        this.ws.onopen = () => {
-          this.setStatus("connected");
+        ws.onopen = () => {
+          setStatus("connected");
           resolve();
         };
 
-        this.ws.onmessage = (event) => {
+        ws.onmessage = (event) => {
           try {
             const parsed = JSON.parse(event.data);
-            this.emitData({
+            emitData({
               timestamp: Date.now(),
               value: parsed.value ?? parsed,
               metadata: parsed.metadata,
             });
-          } catch (err) {
+          } catch {
             // If not JSON, treat as raw value
-            this.emitData({
+            emitData({
               timestamp: Date.now(),
               value: parseFloat(event.data),
             });
           }
         };
 
-        this.ws.onerror = (event) => {
-          this.emitError(new Error("WebSocket error"));
+        ws.onerror = () => {
+          emitError(new Error("WebSocket error"));
           reject(new Error("WebSocket connection failed"));
         };
 
-        this.ws.onclose = () => {
-          this.setStatus("disconnected");
-          if (this.config.reconnect) {
-            this.reconnectTimer = setTimeout(() => {
-              this.connect();
-            }, this.config.reconnectDelay);
+        ws.onclose = () => {
+          setStatus("disconnected");
+          if (finalConfig.reconnect) {
+            reconnectTimer = setTimeout(() => {
+              connect();
+            }, finalConfig.reconnectDelay);
           }
         };
       } catch (err) {
         reject(err);
       }
     });
-  }
+  };
 
-  disconnect(): void {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
+  const disconnect = (): void => {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
     }
-    this.ws?.close();
-    this.setStatus("disconnected");
-  }
+    ws?.close();
+    setStatus("disconnected");
+  };
 
-  send(data: unknown): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data));
+  const send = (data: unknown): void => {
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(data));
     }
-  }
-}
+  };
+
+  return {
+    connect,
+    disconnect,
+    send,
+    onData: (callback) => {
+      dataCallback = callback;
+      return connector;
+    },
+    onError: (callback) => {
+      errorCallback = callback;
+      return connector;
+    },
+    onStatus: (callback) => {
+      statusCallback = callback;
+      return connector;
+    },
+    getStatus: () => isConnected,
+  };
+
+  const connector = {
+    connect,
+    disconnect,
+    send,
+    onData: (callback: DataCallback) => {
+      dataCallback = callback;
+      return connector;
+    },
+    onError: (callback: ErrorCallback) => {
+      errorCallback = callback;
+      return connector;
+    },
+    onStatus: (callback: StatusCallback) => {
+      statusCallback = callback;
+      return connector;
+    },
+    getStatus: () => isConnected,
+  };
+
+  return connector;
+};
 
 // ============================================================================
 // Server-Sent Events (SSE) Connector
 // ============================================================================
 
-export class SSEConnector extends DataConnector {
-  private eventSource?: EventSource;
+export const createSSEConnector = (config: ConnectorConfig): DataConnector => {
+  const finalConfig = {
+    reconnect: true,
+    reconnectDelay: 3000,
+    ...config,
+  };
 
-  async connect(): Promise<void> {
-    if (!this.config.url) {
+  let eventSource: EventSource | undefined;
+  let dataCallback: DataCallback | undefined;
+  let errorCallback: ErrorCallback | undefined;
+  let statusCallback: StatusCallback | undefined;
+  let isConnected = false;
+
+  const setStatus = (status: "connecting" | "connected" | "disconnected" | "error") => {
+    isConnected = status === "connected";
+    statusCallback?.(status);
+  };
+
+  const emitData = (data: DataPoint) => {
+    dataCallback?.(data);
+  };
+
+  const emitError = (error: Error) => {
+    errorCallback?.(error);
+    setStatus("error");
+  };
+
+  const connect = async (): Promise<void> => {
+    if (!finalConfig.url) {
       throw new Error("SSE URL is required");
     }
 
-    this.setStatus("connecting");
+    setStatus("connecting");
 
     return new Promise((resolve, reject) => {
       try {
-        this.eventSource = new EventSource(this.config.url!);
+        eventSource = new EventSource(finalConfig.url!);
 
-        this.eventSource.onopen = () => {
-          this.setStatus("connected");
+        eventSource.onopen = () => {
+          setStatus("connected");
           resolve();
         };
 
-        this.eventSource.onmessage = (event) => {
+        eventSource.onmessage = (event) => {
           try {
             const parsed = JSON.parse(event.data);
-            this.emitData({
+            emitData({
               timestamp: Date.now(),
               value: parsed.value ?? parsed,
               metadata: parsed.metadata,
             });
           } catch {
-            this.emitData({
+            emitData({
               timestamp: Date.now(),
               value: parseFloat(event.data),
             });
           }
         };
 
-        this.eventSource.onerror = () => {
-          this.emitError(new Error("SSE connection error"));
-          this.setStatus("error");
+        eventSource.onerror = () => {
+          emitError(new Error("SSE connection error"));
+          setStatus("error");
           reject(new Error("SSE connection failed"));
         };
       } catch (err) {
         reject(err);
       }
     });
-  }
+  };
 
-  disconnect(): void {
-    this.eventSource?.close();
-    this.setStatus("disconnected");
-  }
-}
+  const disconnect = (): void => {
+    eventSource?.close();
+    setStatus("disconnected");
+  };
+
+  const connector: DataConnector = {
+    connect,
+    disconnect,
+    onData: (callback) => {
+      dataCallback = callback;
+      return connector;
+    },
+    onError: (callback) => {
+      errorCallback = callback;
+      return connector;
+    },
+    onStatus: (callback) => {
+      statusCallback = callback;
+      return connector;
+    },
+    getStatus: () => isConnected,
+  };
+
+  return connector;
+};
 
 // ============================================================================
 // Web Serial Connector (for hardware sensors)
 // ============================================================================
 
-export class SerialConnector extends DataConnector {
-  private port?: SerialPort;
-  private reader?: ReadableStreamDefaultReader<Uint8Array>;
-  private reading = false;
+export const createSerialConnector = (config: ConnectorConfig): DataConnector => {
+  const finalConfig = {
+    reconnect: true,
+    reconnectDelay: 3000,
+    baudRate: 115200,
+    ...config,
+  };
 
-  async connect(): Promise<void> {
-    this.setStatus("connecting");
+  let port: SerialPort | undefined;
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  let reading = false;
+  let dataCallback: DataCallback | undefined;
+  let errorCallback: ErrorCallback | undefined;
+  let statusCallback: StatusCallback | undefined;
+  let isConnected = false;
 
-    try {
-      // Request port from user
-      this.port = await navigator.serial.requestPort();
+  const setStatus = (status: "connecting" | "connected" | "disconnected" | "error") => {
+    isConnected = status === "connected";
+    statusCallback?.(status);
+  };
 
-      await this.port.open({
-        baudRate: this.config.baudRate || 115200,
-      });
+  const emitData = (data: DataPoint) => {
+    dataCallback?.(data);
+  };
 
-      this.setStatus("connected");
-      this.startReading();
-    } catch (err) {
-      this.emitError(err as Error);
-      throw err;
-    }
-  }
+  const emitError = (error: Error) => {
+    errorCallback?.(error);
+    setStatus("error");
+  };
 
-  private async startReading() {
-    if (!this.port?.readable) return;
+  const startReading = async () => {
+    if (!port?.readable) return;
 
-    this.reading = true;
-    this.reader = this.port.readable.getReader();
+    reading = true;
+    reader = port.readable.getReader();
     let buffer = "";
 
     try {
-      while (this.reading) {
-        const { value, done } = await this.reader.read();
+      while (reading) {
+        const { value, done } = await reader.read();
         if (done) break;
 
         // Convert bytes to string
@@ -275,7 +345,7 @@ export class SerialConnector extends DataConnector {
           try {
             // Try parsing as JSON first
             const parsed = JSON.parse(trimmed);
-            this.emitData({
+            emitData({
               timestamp: Date.now(),
               value: parsed.value ?? parsed,
               metadata: parsed.metadata,
@@ -284,7 +354,7 @@ export class SerialConnector extends DataConnector {
             // Try parsing as number
             const num = parseFloat(trimmed);
             if (!Number.isNaN(num)) {
-              this.emitData({
+              emitData({
                 timestamp: Date.now(),
                 value: num,
               });
@@ -293,47 +363,93 @@ export class SerialConnector extends DataConnector {
         }
       }
     } catch (err) {
-      this.emitError(err as Error);
+      emitError(err as Error);
     } finally {
-      this.reader?.releaseLock();
+      reader?.releaseLock();
     }
-  }
+  };
 
-  disconnect(): void {
-    this.reading = false;
-    this.reader?.cancel();
-    this.port?.close();
-    this.setStatus("disconnected");
-  }
-}
+  const connect = async (): Promise<void> => {
+    setStatus("connecting");
+
+    try {
+      // Request port from user
+      port = await navigator.serial.requestPort();
+
+      await port.open({
+        baudRate: finalConfig.baudRate,
+      });
+
+      setStatus("connected");
+      startReading();
+    } catch (err) {
+      emitError(err as Error);
+      throw err;
+    }
+  };
+
+  const disconnect = (): void => {
+    reading = false;
+    reader?.cancel();
+    port?.close();
+    setStatus("disconnected");
+  };
+
+  const connector: DataConnector = {
+    connect,
+    disconnect,
+    onData: (callback) => {
+      dataCallback = callback;
+      return connector;
+    },
+    onError: (callback) => {
+      errorCallback = callback;
+      return connector;
+    },
+    onStatus: (callback) => {
+      statusCallback = callback;
+      return connector;
+    },
+    getStatus: () => isConnected,
+  };
+
+  return connector;
+};
 
 // ============================================================================
 // HTTP Polling Connector
 // ============================================================================
 
-export class PollingConnector extends DataConnector {
-  private intervalId?: NodeJS.Timeout;
+export const createPollingConnector = (config: ConnectorConfig): DataConnector => {
+  const finalConfig = {
+    reconnect: true,
+    reconnectDelay: 3000,
+    interval: 1000,
+    ...config,
+  };
 
-  async connect(): Promise<void> {
-    if (!this.config.url) {
-      throw new Error("Polling URL is required");
-    }
+  let intervalId: NodeJS.Timeout | undefined;
+  let dataCallback: DataCallback | undefined;
+  let errorCallback: ErrorCallback | undefined;
+  let statusCallback: StatusCallback | undefined;
+  let isConnected = false;
 
-    this.setStatus("connecting");
+  const setStatus = (status: "connecting" | "connected" | "disconnected" | "error") => {
+    isConnected = status === "connected";
+    statusCallback?.(status);
+  };
 
-    // Test connection
-    await this.fetchData();
-    this.setStatus("connected");
+  const emitData = (data: DataPoint) => {
+    dataCallback?.(data);
+  };
 
-    // Start polling
-    this.intervalId = setInterval(() => {
-      this.fetchData().catch((err) => this.emitError(err));
-    }, this.config.interval || 1000);
-  }
+  const emitError = (error: Error) => {
+    errorCallback?.(error);
+  };
 
-  private async fetchData() {
-    const response = await fetch(this.config.url!, {
-      headers: this.config.headers,
+  const fetchData = async () => {
+    const response = await fetch(finalConfig.url!, {
+      headers: finalConfig.headers,
     });
 
     if (!response.ok) {
@@ -341,39 +457,76 @@ export class PollingConnector extends DataConnector {
     }
 
     const data = await response.json();
-    this.emitData({
+    emitData({
       timestamp: Date.now(),
       value: data.value ?? data,
       metadata: data.metadata,
     });
-  }
+  };
 
-  disconnect(): void {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
+  const connect = async (): Promise<void> => {
+    if (!finalConfig.url) {
+      throw new Error("Polling URL is required");
     }
-    this.setStatus("disconnected");
-  }
-}
+
+    setStatus("connecting");
+
+    // Test connection
+    await fetchData();
+    setStatus("connected");
+
+    // Start polling
+    intervalId = setInterval(() => {
+      fetchData().catch((err) => emitError(err));
+    }, finalConfig.interval);
+  };
+
+  const disconnect = (): void => {
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+    setStatus("disconnected");
+  };
+
+  const connector: DataConnector = {
+    connect,
+    disconnect,
+    onData: (callback) => {
+      dataCallback = callback;
+      return connector;
+    },
+    onError: (callback) => {
+      errorCallback = callback;
+      return connector;
+    },
+    onStatus: (callback) => {
+      statusCallback = callback;
+      return connector;
+    },
+    getStatus: () => isConnected,
+  };
+
+  return connector;
+};
 
 // ============================================================================
 // Connector Factory
 // ============================================================================
 
-export function createConnector(config: ConnectorConfig): DataConnector {
+export const createConnector = (config: ConnectorConfig): DataConnector => {
   switch (config.type) {
     case "websocket":
-      return new WebSocketConnector(config);
+      return createWebSocketConnector(config);
     case "sse":
-      return new SSEConnector(config);
+      return createSSEConnector(config);
     case "serial":
-      return new SerialConnector(config);
+      return createSerialConnector(config);
     case "polling":
-      return new PollingConnector(config);
+      return createPollingConnector(config);
     default:
       throw new Error(`Unsupported connector type: ${config.type}`);
   }
-}
+};
 
 // ============================================================================
 // Auto-detect data format and create appropriate parser
@@ -386,7 +539,7 @@ export interface DataSchema {
   channels?: number;
 }
 
-export function detectDataSchema(samples: DataPoint[]): DataSchema {
+export const detectDataSchema = (samples: DataPoint[]): DataSchema => {
   if (samples.length === 0) {
     return { type: "scalar", fields: [] };
   }
@@ -418,7 +571,7 @@ export function detectDataSchema(samples: DataPoint[]): DataSchema {
   }
 
   return { type: "scalar", fields: ["value"] };
-}
+};
 
 // ============================================================================
 // Pre-configured connectors for common devices

@@ -1168,7 +1168,7 @@ function handleMultiSeriesHover(
   if (seriesPoints.length === 0) return false;
 
   const primaryPoint = seriesPoints[0];
-  const currentX = ctx.hoveredPoint?.data?.xValue as number | undefined;
+  const currentX = (ctx.hoveredPoint?.data as { xValue?: number })?.xValue;
 
   // Calculate adaptive threshold based on domain
   const domainRange = ctx.xDomain[1] - ctx.xDomain[0];
@@ -1242,7 +1242,7 @@ function handleSingleSeriesHover(
   if (closestSeriesIdx === -1 || closestPoint === undefined) return false;
 
   const point: Point = closestPoint;
-  const currentX = ctx.hoveredPoint?.data?.xValue as number | undefined;
+  const currentX = (ctx.hoveredPoint?.data as { xValue?: number })?.xValue;
   const currentSeriesIdx = ctx.hoveredPoint?.seriesIdx;
 
   // Calculate adaptive threshold
@@ -1332,14 +1332,16 @@ function Tooltip() {
 
   // Recalculate dot positions based on current data for streaming scenarios
   const dots = useMemo(() => {
-    if (!ctx.hoveredPoint?.data?.seriesPoints) return null;
-
-    const seriesPoints = ctx.hoveredPoint.data.seriesPoints as Array<{
+    const hoveredData = ctx.hoveredPoint?.data as { seriesPoints?: Array<{
       seriesIdx: number;
       point: Point;
       screenY: number;
       screenX: number;
-    }>;
+    }> } | undefined;
+
+    if (!hoveredData?.seriesPoints) return null;
+
+    const seriesPoints = hoveredData.seriesPoints;
 
     // Recalculate positions based on current data and scales
     return seriesPoints

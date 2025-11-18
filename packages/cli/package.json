@@ -1,6 +1,6 @@
 {
   "name": "@plexusui/cli",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "CLI for adding Plexus UI aerospace components to your project",
   "type": "module",
   "bin": {

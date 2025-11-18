@@ -2,6 +2,7 @@
 
 import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import { useState, useEffect } from "react";
 
 /**
@@ -711,16 +712,258 @@ import { inferno } from "@/lib/color-scales";
   );
 }
 
+const waterfallChartProps: ApiProp[] = [
+  {
+    name: "signal",
+    type: "number[]",
+    default: "required",
+    description: "Time-series signal data to analyze",
+  },
+  {
+    name: "sampleRate",
+    type: "number",
+    default: "required",
+    description: "Sampling rate in Hz (samples per second)",
+  },
+  {
+    name: "fftSize",
+    type: "number",
+    default: "256",
+    description: "FFT window size (must be power of 2). Larger = better frequency resolution",
+  },
+  {
+    name: "hopSize",
+    type: "number",
+    default: "fftSize / 2",
+    description: "Number of samples to advance between windows. Smaller = smoother transitions",
+  },
+  {
+    name: "windowFunction",
+    type: '"hann" | "hamming" | "blackman" | "none"',
+    default: '"hann"',
+    description: "Window function to reduce spectral leakage",
+  },
+  {
+    name: "useDb",
+    type: "boolean",
+    default: "true",
+    description: "Use decibel scale (true) or linear power (false)",
+  },
+  {
+    name: "minMagnitude",
+    type: "number",
+    default: "auto",
+    description: "Minimum magnitude for color scale",
+  },
+  {
+    name: "maxMagnitude",
+    type: "number",
+    default: "auto",
+    description: "Maximum magnitude for color scale",
+  },
+  {
+    name: "frequencyRange",
+    type: "[number, number]",
+    default: "[0, sampleRate/2]",
+    description: "Frequency range to display [minHz, maxHz]",
+  },
+  {
+    name: "timeRange",
+    type: "[number, number]",
+    default: "entire signal",
+    description: "Time range to display in samples",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, formatter?: (value: number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "showGrid",
+    type: "boolean",
+    default: "false",
+    description: "Show grid lines",
+  },
+  {
+    name: "showAxes",
+    type: "boolean",
+    default: "true",
+    description: "Show axis labels and ticks",
+  },
+  {
+    name: "showTooltip",
+    type: "boolean",
+    default: "false",
+    description: "Show interactive tooltip on hover",
+  },
+  {
+    name: "showLegend",
+    type: "boolean",
+    default: "false",
+    description: "Show color scale legend",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering over WebGL",
+  },
+  {
+    name: "useGPUFFT",
+    type: "boolean",
+    default: "false",
+    description: "Use GPU compute shaders for FFT (100x+ faster, requires WebGPU)",
+  },
+  {
+    name: "colorScale",
+    type: "(value: number) => string",
+    default: "viridis",
+    description: "Color scale function for magnitude visualization",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const waterfallRootProps: ApiProp[] = [
+  {
+    name: "signal",
+    type: "number[]",
+    default: "required",
+    description: "Time-series signal data",
+  },
+  {
+    name: "sampleRate",
+    type: "number",
+    default: "required",
+    description: "Sampling rate in Hz",
+  },
+  {
+    name: "fftSize",
+    type: "number",
+    default: "256",
+    description: "FFT window size (power of 2)",
+  },
+  {
+    name: "hopSize",
+    type: "number",
+    default: "fftSize / 2",
+    description: "Samples to advance between windows",
+  },
+  {
+    name: "windowFunction",
+    type: '"hann" | "hamming" | "blackman" | "none"',
+    default: '"hann"',
+    description: "Window function type",
+  },
+  {
+    name: "colorScale",
+    type: "(value: number) => string",
+    default: "viridis",
+    description: "Color scale function",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Canvas, Axes, Tooltip, Legend)",
+  },
+];
+
+const waterfallPrimitiveProps: ApiProp[] = [
+  {
+    name: "WaterfallChart.Canvas",
+    type: "component",
+    default: "-",
+    description: "Renders the spectrogram heatmap",
+  },
+  {
+    name: "WaterfallChart.Axes",
+    type: "component",
+    default: "-",
+    description: "Renders x and y axis with labels",
+  },
+  {
+    name: "WaterfallChart.Tooltip",
+    type: "component",
+    default: "-",
+    description: "Interactive tooltip showing frequency and time",
+  },
+  {
+    name: "WaterfallChart.Legend",
+    type: "component",
+    default: "-",
+    description: "Color scale legend. Props: title?: string",
+  },
+];
+
 export function WaterfallChartExamples() {
   return (
-    <div className="space-y-8">
-      <GPUAcceleratedFFT />
-      <RFSpectrumAnalyzer />
-      <EEGMonitor />
-      <AudioSpectrogram />
-      <VibrationAnalysis />
-      <StreamingWaterfall />
-      <PrimitiveWaterfallChart />
+    <div className="space-y-12">
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            WaterfallChart component for frequency-time analysis (spectrograms, FFT visualization)
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">WaterfallChart (All-in-One)</h3>
+          <ApiReferenceTable props={waterfallChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">WaterfallChart.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={waterfallRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with WaterfallChart.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={waterfallPrimitiveProps} />
+        </div>
+      </div>
+
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <GPUAcceleratedFFT />
+        <RFSpectrumAnalyzer />
+        <EEGMonitor />
+        <AudioSpectrogram />
+        <VibrationAnalysis />
+        <StreamingWaterfall />
+        <PrimitiveWaterfallChart />
+      </div>
     </div>
   );
 }

@@ -981,108 +981,90 @@ fn butterflyPass(@builtin(global_invocation_id) global_id: vec3<u32>) {
 `;
 
 /**
- * GPU-accelerated FFT compute class
+ * GPU-accelerated FFT compute - Functional Pattern
  *
- * Manages WebGPU resources for FFT computation
+ * Manages WebGPU resources for FFT computation using closures
  */
-export class GPUFFTCompute {
-  private device: GPUDevice;
-  private bitReversePipeline: GPUComputePipeline;
-  private butterflyPipeline: GPUComputePipeline;
-  private bindGroupLayout: GPUBindGroupLayout;
-  private fftSize: number;
+export interface GPUFFTCompute {
+  compute: (input: number[]) => Promise<Complex[]>;
+  destroy: () => void;
+}
 
-  // Persistent buffers
-  private inputRealBuffer: GPUBuffer | null = null;
-  private inputImagBuffer: GPUBuffer | null = null;
-  private outputRealBuffer: GPUBuffer | null = null;
-  private outputImagBuffer: GPUBuffer | null = null;
-  private paramsBuffer: GPUBuffer;
-  private readbackBuffer: GPUBuffer | null = null;
-
-  constructor(device: GPUDevice, fftSize: number) {
-    this.device = device;
-    this.fftSize = fftSize;
-
-    // Validate FFT size
-    if ((fftSize & (fftSize - 1)) !== 0) {
-      throw new Error("FFT size must be a power of 2");
-    }
-
-    const shaderModule = device.createShaderModule({
-      code: FFT_COMPUTE_SHADER,
-    });
-
-    // Create bind group layout
-    this.bindGroupLayout = device.createBindGroupLayout({
-      entries: [
-        { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
-        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
-        { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
-        { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
-        { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
-      ],
-    });
-
-    const pipelineLayout = device.createPipelineLayout({
-      bindGroupLayouts: [this.bindGroupLayout],
-    });
-
-    // Create compute pipelines
-    this.bitReversePipeline = device.createComputePipeline({
-      layout: pipelineLayout,
-      compute: {
-        module: shaderModule,
-        entryPoint: "bitReversePass",
-      },
-    });
-
-    this.butterflyPipeline = device.createComputePipeline({
-      layout: pipelineLayout,
-      compute: {
-        module: shaderModule,
-        entryPoint: "butterflyPass",
-      },
-    });
-
-    // Create params buffer (16 bytes aligned)
-    this.paramsBuffer = device.createBuffer({
-      size: 16, // 4 floats * 4 bytes
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
-
-    // Initialize buffers
-    this.initializeBuffers();
+export const createGPUFFTCompute = (device: GPUDevice, fftSize: number): GPUFFTCompute => {
+  // Validate FFT size
+  if ((fftSize & (fftSize - 1)) !== 0) {
+    throw new Error("FFT size must be a power of 2");
   }
 
-  private initializeBuffers() {
-    const bufferSize = this.fftSize * 4; // f32 = 4 bytes
+  const shaderModule = device.createShaderModule({
+    code: FFT_COMPUTE_SHADER,
+  });
 
-    this.inputRealBuffer = this.device.createBuffer({
-      size: bufferSize,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-    });
+  // Create bind group layout
+  const bindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
+      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
+      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
+      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
+      { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
+    ],
+  });
 
-    this.inputImagBuffer = this.device.createBuffer({
-      size: bufferSize,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-    });
+  const pipelineLayout = device.createPipelineLayout({
+    bindGroupLayouts: [bindGroupLayout],
+  });
 
-    this.outputRealBuffer = this.device.createBuffer({
-      size: bufferSize,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-    });
+  // Create compute pipelines
+  const bitReversePipeline = device.createComputePipeline({
+    layout: pipelineLayout,
+    compute: {
+      module: shaderModule,
+      entryPoint: "bitReversePass",
+    },
+  });
 
-    this.outputImagBuffer = this.device.createBuffer({
-      size: bufferSize,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-    });
+  const butterflyPipeline = device.createComputePipeline({
+    layout: pipelineLayout,
+    compute: {
+      module: shaderModule,
+      entryPoint: "butterflyPass",
+    },
+  });
 
-    this.readbackBuffer = this.device.createBuffer({
-      size: bufferSize * 2, // Both real and imag
-      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
-    });
-  }
+  // Create params buffer (16 bytes aligned)
+  const paramsBuffer = device.createBuffer({
+    size: 16, // 4 floats * 4 bytes
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  // Initialize buffers
+  const bufferSize = fftSize * 4; // f32 = 4 bytes
+
+  const inputRealBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+  });
+
+  const inputImagBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+  });
+
+  const outputRealBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+  });
+
+  const outputImagBuffer = device.createBuffer({
+    size: bufferSize,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+  });
+
+  const readbackBuffer = device.createBuffer({
+    size: bufferSize * 2, // Both real and imag
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+  });
 
   /**
    * Compute FFT on GPU
@@ -1090,121 +1072,123 @@ export class GPUFFTCompute {
    * @param input - Real-valued input signal (length must equal fftSize)
    * @returns Promise resolving to complex FFT output
    */
-  async compute(input: number[]): Promise<Complex[]> {
-    if (input.length !== this.fftSize) {
-      throw new Error(`Input size ${input.length} does not match FFT size ${this.fftSize}`);
+  const compute = async (input: number[]): Promise<Complex[]> => {
+    if (input.length !== fftSize) {
+      throw new Error(`Input size ${input.length} does not match FFT size ${fftSize}`);
     }
 
     // Upload input data (real part, imaginary part is zero)
     const realData = new Float32Array(input);
-    const imagData = new Float32Array(this.fftSize).fill(0);
+    const imagData = new Float32Array(fftSize).fill(0);
 
-    this.device.queue.writeBuffer(this.inputRealBuffer!, 0, realData);
-    this.device.queue.writeBuffer(this.inputImagBuffer!, 0, imagData);
+    device.queue.writeBuffer(inputRealBuffer, 0, realData);
+    device.queue.writeBuffer(inputImagBuffer, 0, imagData);
 
-    const commandEncoder = this.device.createCommandEncoder();
+    const commandEncoder = device.createCommandEncoder();
 
-    const numPasses = Math.log2(this.fftSize);
+    const numPasses = Math.log2(fftSize);
 
     // Pass 0: Bit-reversal
     {
-      const paramsData = new Float32Array([this.fftSize, 0, -1.0, 0]);
-      this.device.queue.writeBuffer(this.paramsBuffer, 0, paramsData);
+      const paramsData = new Float32Array([fftSize, 0, -1.0, 0]);
+      device.queue.writeBuffer(paramsBuffer, 0, paramsData);
 
-      const bindGroup = this.device.createBindGroup({
-        layout: this.bindGroupLayout,
+      const bindGroup = device.createBindGroup({
+        layout: bindGroupLayout,
         entries: [
-          { binding: 0, resource: { buffer: this.inputRealBuffer! } },
-          { binding: 1, resource: { buffer: this.inputImagBuffer! } },
-          { binding: 2, resource: { buffer: this.outputRealBuffer! } },
-          { binding: 3, resource: { buffer: this.outputImagBuffer! } },
-          { binding: 4, resource: { buffer: this.paramsBuffer } },
+          { binding: 0, resource: { buffer: inputRealBuffer } },
+          { binding: 1, resource: { buffer: inputImagBuffer } },
+          { binding: 2, resource: { buffer: outputRealBuffer } },
+          { binding: 3, resource: { buffer: outputImagBuffer } },
+          { binding: 4, resource: { buffer: paramsBuffer } },
         ],
       });
 
       const passEncoder = commandEncoder.beginComputePass();
-      passEncoder.setPipeline(this.bitReversePipeline);
+      passEncoder.setPipeline(bitReversePipeline);
       passEncoder.setBindGroup(0, bindGroup);
-      passEncoder.dispatchWorkgroups(Math.ceil(this.fftSize / 256));
+      passEncoder.dispatchWorkgroups(Math.ceil(fftSize / 256));
       passEncoder.end();
     }
 
     // Butterfly passes (ping-pong between buffers)
     for (let pass = 0; pass < numPasses; pass++) {
-      const paramsData = new Float32Array([this.fftSize, pass, -1.0, 0]);
-      this.device.queue.writeBuffer(this.paramsBuffer, 0, paramsData);
+      const paramsData = new Float32Array([fftSize, pass, -1.0, 0]);
+      device.queue.writeBuffer(paramsBuffer, 0, paramsData);
 
       const isEvenPass = pass % 2 === 0;
-      const inputReal = isEvenPass ? this.outputRealBuffer! : this.inputRealBuffer!;
-      const inputImag = isEvenPass ? this.outputImagBuffer! : this.inputImagBuffer!;
-      const outputReal = isEvenPass ? this.inputRealBuffer! : this.outputRealBuffer!;
-      const outputImag = isEvenPass ? this.inputImagBuffer! : this.outputImagBuffer!;
+      const inputReal = isEvenPass ? outputRealBuffer : inputRealBuffer;
+      const inputImag = isEvenPass ? outputImagBuffer : inputImagBuffer;
+      const outputReal = isEvenPass ? inputRealBuffer : outputRealBuffer;
+      const outputImag = isEvenPass ? inputImagBuffer : outputImagBuffer;
 
-      const bindGroup = this.device.createBindGroup({
-        layout: this.bindGroupLayout,
+      const bindGroup = device.createBindGroup({
+        layout: bindGroupLayout,
         entries: [
           { binding: 0, resource: { buffer: inputReal } },
           { binding: 1, resource: { buffer: inputImag } },
           { binding: 2, resource: { buffer: outputReal } },
           { binding: 3, resource: { buffer: outputImag } },
-          { binding: 4, resource: { buffer: this.paramsBuffer } },
+          { binding: 4, resource: { buffer: paramsBuffer } },
         ],
       });
 
       const passEncoder = commandEncoder.beginComputePass();
-      passEncoder.setPipeline(this.butterflyPipeline);
+      passEncoder.setPipeline(butterflyPipeline);
       passEncoder.setBindGroup(0, bindGroup);
-      passEncoder.dispatchWorkgroups(Math.ceil(this.fftSize / 256));
+      passEncoder.dispatchWorkgroups(Math.ceil(fftSize / 256));
       passEncoder.end();
     }
 
     // Copy results to readback buffer
-    const finalReal = numPasses % 2 === 0 ? this.outputRealBuffer! : this.inputRealBuffer!;
-    const finalImag = numPasses % 2 === 0 ? this.outputImagBuffer! : this.inputImagBuffer!;
+    const finalReal = numPasses % 2 === 0 ? outputRealBuffer : inputRealBuffer;
+    const finalImag = numPasses % 2 === 0 ? outputImagBuffer : inputImagBuffer;
 
     commandEncoder.copyBufferToBuffer(
       finalReal, 0,
-      this.readbackBuffer!, 0,
-      this.fftSize * 4
+      readbackBuffer, 0,
+      fftSize * 4
     );
     commandEncoder.copyBufferToBuffer(
       finalImag, 0,
-      this.readbackBuffer!, this.fftSize * 4,
-      this.fftSize * 4
+      readbackBuffer, fftSize * 4,
+      fftSize * 4
     );
 
-    this.device.queue.submit([commandEncoder.finish()]);
+    device.queue.submit([commandEncoder.finish()]);
 
     // Read back results
-    await this.readbackBuffer!.mapAsync(GPUMapMode.READ);
-    const mappedRange = this.readbackBuffer!.getMappedRange();
+    await readbackBuffer.mapAsync(GPUMapMode.READ);
+    const mappedRange = readbackBuffer.getMappedRange();
     const resultData = new Float32Array(mappedRange);
 
-    const result: Complex[] = new Array(this.fftSize);
-    for (let i = 0; i < this.fftSize; i++) {
+    const result: Complex[] = new Array(fftSize);
+    for (let i = 0; i < fftSize; i++) {
       result[i] = {
         re: resultData[i],
-        im: resultData[i + this.fftSize],
+        im: resultData[i + fftSize],
       };
     }
 
-    this.readbackBuffer!.unmap();
+    readbackBuffer.unmap();
 
     return result;
-  }
+  };
 
   /**
    * Destroy GPU resources
    */
-  destroy() {
-    this.inputRealBuffer?.destroy();
-    this.inputImagBuffer?.destroy();
-    this.outputRealBuffer?.destroy();
-    this.outputImagBuffer?.destroy();
-    this.paramsBuffer.destroy();
-    this.readbackBuffer?.destroy();
-  }
-}
+  const destroy = (): void => {
+    inputRealBuffer.destroy();
+    inputImagBuffer.destroy();
+    outputRealBuffer.destroy();
+    outputImagBuffer.destroy();
+    paramsBuffer.destroy();
+    readbackBuffer.destroy();
+  };
+
+  return { compute, destroy };
+};
 
 /**
  * Generate spectrogram using GPU-accelerated FFT
@@ -1230,7 +1214,7 @@ export async function generateSpectrogramGPU(
   const numFreqBins = fftSize / 2;
 
   // Create GPU FFT compute instance
-  const fftCompute = new GPUFFTCompute(device, fftSize);
+  const fftCompute = createGPUFFTCompute(device, fftSize);
 
   try {
     // Process signal in overlapping windows

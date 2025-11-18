@@ -3,6 +3,7 @@
 import { LineChart } from "@plexusui/components/charts/line-chart";
 import type { DataPoint } from "@plexusui/components/charts/line-chart";
 import { ComponentPreview } from "@/components/component-preview";
+import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
 import { useState, useEffect } from "react";
 import {
   useColorScheme,
@@ -598,12 +599,211 @@ useEffect(() => {
   );
 }
 
+const lineChartProps: ApiProp[] = [
+  {
+    name: "series",
+    type: "Series[]",
+    default: "required",
+    description: "Array of data series. Series: { name: string, data: Point[], color?: string, strokeWidth?: number }",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "showGrid",
+    type: "boolean",
+    default: "true",
+    description: "Show grid lines",
+  },
+  {
+    name: "showAxes",
+    type: "boolean",
+    default: "true",
+    description: "Show axis labels and ticks",
+  },
+  {
+    name: "showTooltip",
+    type: "boolean",
+    default: "false",
+    description: "Show interactive tooltip on hover",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+  },
+  {
+    name: "className",
+    type: "string",
+    default: '""',
+    description: "Additional CSS classes",
+  },
+];
+
+const lineChartRootProps: ApiProp[] = [
+  {
+    name: "series",
+    type: "Series[]",
+    default: "required",
+    description: "Array of data series to plot",
+  },
+  {
+    name: "xAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "X-axis configuration",
+  },
+  {
+    name: "yAxis",
+    type: "{ label?: string, domain?: [number, number] | 'auto', formatter?: (value: number) => string }",
+    default: "{}",
+    description: "Y-axis configuration",
+  },
+  {
+    name: "width",
+    type: "number",
+    default: "800",
+    description: "Chart width in pixels",
+  },
+  {
+    name: "height",
+    type: "number",
+    default: "400",
+    description: "Chart height in pixels",
+  },
+  {
+    name: "preferWebGPU",
+    type: "boolean",
+    default: "true",
+    description: "Prefer WebGPU rendering",
+  },
+  {
+    name: "children",
+    type: "ReactNode",
+    default: "undefined",
+    description: "Primitive components (Canvas, Axes, Tooltip)",
+  },
+];
+
+const lineChartPrimitiveProps: ApiProp[] = [
+  {
+    name: "LineChart.Canvas",
+    type: "component",
+    default: "-",
+    description: "Renders the line series. Props: showGrid?: boolean",
+  },
+  {
+    name: "LineChart.Axes",
+    type: "component",
+    default: "-",
+    description: "Renders x and y axis with labels and ticks",
+  },
+  {
+    name: "LineChart.Tooltip",
+    type: "component",
+    default: "-",
+    description: "Interactive tooltip showing data values on hover",
+  },
+];
+
+const seriesType: ApiProp[] = [
+  {
+    name: "name",
+    type: "string",
+    default: "required",
+    description: "Series name for legend and tooltip",
+  },
+  {
+    name: "data",
+    type: "Point[]",
+    default: "required",
+    description: "Array of data points. Point: { x: number, y: number }",
+  },
+  {
+    name: "color",
+    type: "string",
+    default: '"#3b82f6"',
+    description: "Line color (hex or rgb)",
+  },
+  {
+    name: "strokeWidth",
+    type: "number",
+    default: "3",
+    description: "Line thickness in pixels",
+  },
+];
+
 export function LineChartExamples() {
   return (
-    <div className="space-y-8">
-      <StreamingChart />
-      <WebGPUPerformanceMonitor />
-      <PrimitiveExample />
+    <div className="space-y-12">
+      {/* API Reference Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">API Reference</h2>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            LineChart component for time-series and multi-series data visualization with WebGPU acceleration
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">LineChart (All-in-One)</h3>
+          <ApiReferenceTable props={lineChartProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Series Type</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Configuration for each data series in the chart
+          </p>
+          <ApiReferenceTable props={seriesType} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">LineChart.Root (Composable)</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Root component for building custom layouts with primitives
+          </p>
+          <ApiReferenceTable props={lineChartRootProps} />
+        </div>
+
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Primitive Components</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Use with LineChart.Root for complete control over composition
+          </p>
+          <ApiReferenceTable props={lineChartPrimitiveProps} />
+        </div>
+      </div>
+
+      {/* Examples Section */}
+      <div className="space-y-8">
+        <h2 className="text-2xl font-bold">Examples</h2>
+        <StreamingChart />
+        <WebGPUPerformanceMonitor />
+        <PrimitiveExample />
+      </div>
     </div>
   );
 }
