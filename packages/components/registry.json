@@ -24,7 +24,7 @@
       "files": [
         "charts/line-chart.tsx",
         "charts/base-chart.tsx",
-        "charts/data-utils.ts"
+        "lib/data-utils.ts"
       ],
       "dependencies": [],
       "devDependencies": [
@@ -42,7 +42,7 @@
       "files": [
         "charts/scatter-chart.tsx",
         "charts/base-chart.tsx",
-        "charts/data-utils.ts"
+        "lib/data-utils.ts"
       ],
       "dependencies": [],
       "devDependencies": [
@@ -60,7 +60,7 @@
       "files": [
         "charts/bar-chart.tsx",
         "charts/base-chart.tsx",
-        "charts/data-utils.ts"
+        "lib/data-utils.ts"
       ],
       "dependencies": [],
       "devDependencies": [
@@ -78,7 +78,7 @@
       "files": [
         "charts/area-chart.tsx",
         "charts/base-chart.tsx",
-        "charts/data-utils.ts"
+        "lib/data-utils.ts"
       ],
       "dependencies": [],
       "devDependencies": [
@@ -96,7 +96,7 @@
       "files": [
         "charts/heatmap-chart.tsx",
         "charts/base-chart.tsx",
-        "charts/data-utils.ts"
+        "lib/data-utils.ts"
       ],
       "dependencies": [],
       "devDependencies": [
@@ -263,36 +263,6 @@
         "@webgpu/types"
       ],
       "registryDependencies": [],
-      "tier": "free"
-    },
-    "auto-dashboard": {
-      "name": "auto-dashboard",
-      "version": "0.1.0",
-      "displayName": "Auto Dashboard",
-      "category": "infrastructure",
-      "status": "beta",
-      "description": "AI-powered auto-generated dashboards from natural language queries. Connects data sources (WebSocket, Serial, HTTP) to charts automatically. Includes intent detection, alert execution engine, and real-time data processing. Use cases: Quick sensor monitoring setup, zero-code dashboard generation, predictive maintenance UIs, medical device monitoring.",
-      "files": [
-        "lib/auto-dashboard.tsx",
-        "lib/ai-query.ts",
-        "lib/data-connectors.ts",
-        "lib/data-utils.ts"
-      ],
-      "dependencies": [],
-      "devDependencies": [
-        "@webgpu/types"
-      ],
-      "registryDependencies": [
-        "line-chart",
-        "waterfall-chart",
-        "control-chart",
-        "gauge",
-        "heatmap-chart",
-        "radar-chart",
-        "attitude-indicator",
-        "status-grid",
-        "gantt"
-      ],
       "tier": "free"
     },
     "3d-model-viewer": {
