@@ -15,10 +15,14 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
   const [error, setError] = useState<string | null>(null);
   const [motionIntensity, setMotionIntensity] = useState(0);
   const [avgMotion, setAvgMotion] = useState(0);
-  const [motionHistory, setMotionHistory] = useState<Array<{ x: number; y: number }>>([]);
+  const [motionHistory, setMotionHistory] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
 
   // Heatmap data
-  const [heatmapData, setHeatmapData] = useState<Array<{ x: number; y: number; value: number }>>([]);
+  const [heatmapData, setHeatmapData] = useState<
+    Array<{ x: number; y: number; value: number }>
+  >([]);
 
   // Camera refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -31,7 +35,9 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
   const motionHistoryRef = useRef<number[]>([]);
   const lastHeatmapUpdateRef = useRef<number>(0);
   const smoothedMotionGridRef = useRef<number[][]>(
-    Array(20).fill(0).map(() => Array(20).fill(0))
+    Array(20)
+      .fill(0)
+      .map(() => Array(20).fill(0))
   );
 
   // Constants
@@ -70,44 +76,54 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       setHeatmapData(initialHeatmap);
 
       // Wait for refs to be available after state update
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // Set up video elements
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         try {
           await videoRef.current.play();
-          console.log('Hidden video playing');
+          console.log("Hidden video playing");
         } catch (e) {
-          console.error('Error playing hidden video:', e);
+          console.error("Error playing hidden video:", e);
         }
 
         // Wait for video to be ready then start detection
         videoRef.current.onloadedmetadata = () => {
-          console.log('Video loaded, starting motion detection');
-          console.log('Video dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+          console.log("Video loaded, starting motion detection");
+          console.log(
+            "Video dimensions:",
+            videoRef.current?.videoWidth,
+            "x",
+            videoRef.current?.videoHeight
+          );
           detectMotion();
         };
       } else {
-        console.error('videoRef.current is null');
+        console.error("videoRef.current is null");
       }
 
       if (displayVideoRef.current) {
         displayVideoRef.current.srcObject = stream;
         try {
           await displayVideoRef.current.play();
-          console.log('Display video playing', displayVideoRef.current.videoWidth, 'x', displayVideoRef.current.videoHeight);
+          console.log(
+            "Display video playing",
+            displayVideoRef.current.videoWidth,
+            "x",
+            displayVideoRef.current.videoHeight
+          );
         } catch (e) {
-          console.error('Error playing display video:', e);
+          console.error("Error playing display video:", e);
         }
       } else {
-        console.error('displayVideoRef.current is null - will retry');
+        console.error("displayVideoRef.current is null - will retry");
         // Retry after a short delay to let React render
         setTimeout(() => {
           if (displayVideoRef.current) {
             displayVideoRef.current.srcObject = stream;
             displayVideoRef.current.play();
-            console.log('Display video playing (delayed)');
+            console.log("Display video playing (delayed)");
           }
         }, 100);
       }
@@ -116,13 +132,15 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       let errorMessage = "Could not access camera. ";
 
       if (err.name === "NotAllowedError") {
-        errorMessage += "Camera permission was denied. Please allow camera access and try again.";
+        errorMessage +=
+          "Camera permission was denied. Please allow camera access and try again.";
       } else if (err.name === "NotFoundError") {
         errorMessage += "No camera found on this device.";
       } else if (err.name === "NotReadableError") {
         errorMessage += "Camera is already in use by another application.";
       } else {
-        errorMessage += "Please ensure you've granted permission and your camera is available.";
+        errorMessage +=
+          "Please ensure you've granted permission and your camera is available.";
       }
 
       setError(errorMessage);
@@ -156,17 +174,17 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) {
-      console.error('Video or canvas not available');
+      console.error("Video or canvas not available");
       return;
     }
 
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) {
-      console.error('Could not get canvas context');
+      console.error("Could not get canvas context");
       return;
     }
 
-    console.log('Motion detection started');
+    console.log("Motion detection started");
 
     const update = () => {
       if (!video || !canvas || !ctx) return;
@@ -178,8 +196,16 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       }
 
       // Set canvas size to match video
-      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-        console.log('Setting canvas size to:', video.videoWidth, 'x', video.videoHeight);
+      if (
+        canvas.width !== video.videoWidth ||
+        canvas.height !== video.videoHeight
+      ) {
+        console.log(
+          "Setting canvas size to:",
+          video.videoWidth,
+          "x",
+          video.videoHeight
+        );
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
       }
@@ -239,7 +265,8 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
 
               // Apply smoothing
               const smoothed =
-                smoothedMotionGridRef.current[gridY][gridX] * (1 - MOTION_SMOOTHING) +
+                smoothedMotionGridRef.current[gridY][gridX] *
+                  (1 - MOTION_SMOOTHING) +
                 cellMotion * MOTION_SMOOTHING;
               smoothedMotionGridRef.current[gridY][gridX] = smoothed;
 
@@ -281,7 +308,9 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
 
         // Keep only recent history
         if (motionHistoryRef.current.length > MAX_HISTORY_POINTS) {
-          motionHistoryRef.current = motionHistoryRef.current.slice(-MAX_HISTORY_POINTS);
+          motionHistoryRef.current = motionHistoryRef.current.slice(
+            -MAX_HISTORY_POINTS
+          );
         }
 
         // Update motion history chart
@@ -326,7 +355,9 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       <Card className="hover:border-zinc-700 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold mb-1">Real-Time Motion Detection</h3>
+            <h3 className="text-sm font-semibold mb-1">
+              Real-Time Motion Detection
+            </h3>
             <p className="text-xs text-gray-400">
               Camera-based motion heatmap with pixel-level analysis
             </p>
@@ -366,8 +397,12 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
           <Card className="hover:border-zinc-700">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-gray-500 mb-1">Motion Intensity</div>
-                <div className="text-2xl font-bold">{motionIntensity.toFixed(1)}%</div>
+                <div className="text-xs text-gray-500 mb-1">
+                  Motion Intensity
+                </div>
+                <div className="text-2xl font-bold">
+                  {motionIntensity.toFixed(1)}%
+                </div>
               </div>
               <Zap className="h-8 w-8 text-yellow-400" />
             </div>
@@ -377,7 +412,9 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs text-gray-500 mb-1">Average Motion</div>
-                <div className="text-2xl font-bold">{avgMotion.toFixed(1)}%</div>
+                <div className="text-2xl font-bold">
+                  {avgMotion.toFixed(1)}%
+                </div>
               </div>
               <Activity className="h-8 w-8 text-green-400" />
             </div>
@@ -386,8 +423,12 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
           <Card className="hover:border-zinc-700">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-gray-500 mb-1">Grid Resolution</div>
-                <div className="text-2xl font-bold">{GRID_SIZE}x{GRID_SIZE}</div>
+                <div className="text-xs text-gray-500 mb-1">
+                  Grid Resolution
+                </div>
+                <div className="text-2xl font-bold">
+                  {GRID_SIZE}x{GRID_SIZE}
+                </div>
               </div>
               <div className="h-8 w-8 flex items-center justify-center">
                 <div className="h-3 w-3 bg-cyan-500 rounded-full animate-pulse" />
@@ -402,8 +443,8 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
           <Camera className="h-16 w-16 text-cyan-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Start Motion Detection</h3>
           <p className="text-sm text-zinc-400 mb-4 max-w-lg mx-auto">
-            Click "Start Camera" to see real-time motion analysis. Move your hand,
-            wave, or walk around to see motion tracking in action!
+            Click "Start Camera" to see real-time motion analysis. Move your
+            hand, wave, or walk around to see motion tracking in action!
           </p>
           <ul className="text-xs text-zinc-500 space-y-1 max-w-md mx-auto">
             <li>✓ Real-time motion heatmap</li>
@@ -415,12 +456,7 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       )}
 
       {/* Hidden video and canvas elements */}
-      <video
-        ref={videoRef}
-        style={{ display: "none" }}
-        playsInline
-        muted
-      />
+      <video ref={videoRef} style={{ display: "none" }} playsInline muted />
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
       {/* Visualizations */}
@@ -429,7 +465,10 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
           {/* Live camera feed and motion heatmap */}
           <div className="grid gap-3 md:grid-cols-2 mb-4">
             <ChartCard title="Live Camera Feed" description="Your camera input">
-              <div className="relative bg-black rounded-lg overflow-hidden flex items-center justify-center" style={{ height: "300px" }}>
+              <div
+                className="relative bg-black rounded-lg overflow-hidden flex items-center justify-center"
+                style={{ height: "300px" }}
+              >
                 <video
                   ref={displayVideoRef}
                   className="max-w-full max-h-full"

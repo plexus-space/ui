@@ -233,6 +233,27 @@ export type {
   ChartCrosshairProps,
 } from "./interactions";
 
+// Chart annotations
+export {
+  ChartRuler,
+  ChartReferenceLine,
+  ChartReferenceLines,
+  ChartTextAnnotation,
+  ChartTextAnnotations,
+} from "./annotations";
+
+export type {
+  Point2D,
+  Measurement,
+  TextAnnotation,
+  ReferenceLine,
+  ChartRulerProps,
+  ChartReferenceLineProps,
+  ChartReferenceLinesProps,
+  ChartTextAnnotationProps,
+  ChartTextAnnotationsProps,
+} from "./annotations";
+
 // Chart minimap
 export { ChartMinimap, MinimapContainer } from "./chart-minimap";
 export type {

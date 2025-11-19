@@ -66,14 +66,11 @@ function springStep(
 /**
  * Hook to animate a single numeric value
  */
-export function useSpring(
-  target: number,
-  config: SpringConfig = {}
-): number {
+export function useSpring(target: number, config: SpringConfig = {}): number {
   const [current, setCurrent] = useState(target);
   const velocityRef = useRef(0);
   const targetRef = useRef(target);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number>(0);
 
   const finalConfig = { ...DEFAULT_SPRING, ...config };
 
@@ -104,9 +101,7 @@ export function useSpring(
     };
 
     // Start animation
-    rafRef.current = requestAnimationFrame(() =>
-      animate(performance.now())
-    );
+    rafRef.current = requestAnimationFrame(() => animate(performance.now()));
 
     return () => {
       if (rafRef.current) {
@@ -128,7 +123,7 @@ export function useAnimatedData<T extends { x: number; y: number }>(
 ): T[] {
   const [animatedData, setAnimatedData] = useState(data);
   const velocitiesRef = useRef<Map<string, number>>(new Map());
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number>(0);
   const targetDataRef = useRef(data);
 
   const finalConfig = { ...DEFAULT_SPRING, ...config };
@@ -182,16 +177,20 @@ export function useAnimatedData<T extends { x: number; y: number }>(
       });
     };
 
-    rafRef.current = requestAnimationFrame(() =>
-      animate(performance.now())
-    );
+    rafRef.current = requestAnimationFrame(() => animate(performance.now()));
 
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [data, enabled, finalConfig.stiffness, finalConfig.damping, finalConfig.mass]);
+  }, [
+    data,
+    enabled,
+    finalConfig.stiffness,
+    finalConfig.damping,
+    finalConfig.mass,
+  ]);
 
   return enabled ? animatedData : data;
 }
@@ -210,8 +209,7 @@ export const easing = {
   linear: (t: number) => t,
   easeInQuad: (t: number) => t * t,
   easeOutQuad: (t: number) => t * (2 - t),
-  easeInOutQuad: (t: number) =>
-    t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+  easeInOutQuad: (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
   easeInCubic: (t: number) => t * t * t,
   easeOutCubic: (t: number) => --t * t * t + 1,
   easeInOutCubic: (t: number) =>
@@ -228,8 +226,8 @@ export function useAnimatedValue(
 ): number {
   const [current, setCurrent] = useState(target);
   const startValueRef = useRef(target);
-  const startTimeRef = useRef<number>();
-  const rafRef = useRef<number>();
+  const startTimeRef = useRef<number>(0);
+  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     startValueRef.current = current;
@@ -271,7 +269,7 @@ export function useStaggeredSpring(
 ): number[] {
   const [values, setValues] = useState(targets);
   const velocitiesRef = useRef<number[]>(targets.map(() => 0));
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number>(0);
   const startTimesRef = useRef<number[]>(
     targets.map((_, i) => performance.now() + i * staggerDelay)
   );
@@ -307,13 +305,7 @@ export function useStaggeredSpring(
           }
 
           const velocity = velocitiesRef.current[i] || 0;
-          const result = springStep(
-            current,
-            target,
-            velocity,
-            finalConfig,
-            dt
-          );
+          const result = springStep(current, target, velocity, finalConfig, dt);
 
           velocitiesRef.current[i] = result.velocity;
 
@@ -330,16 +322,20 @@ export function useStaggeredSpring(
       }
     };
 
-    rafRef.current = requestAnimationFrame(() =>
-      animate(performance.now())
-    );
+    rafRef.current = requestAnimationFrame(() => animate(performance.now()));
 
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [targets, staggerDelay, finalConfig.stiffness, finalConfig.damping, finalConfig.mass]);
+  }, [
+    targets,
+    staggerDelay,
+    finalConfig.stiffness,
+    finalConfig.damping,
+    finalConfig.mass,
+  ]);
 
   return values;
 }

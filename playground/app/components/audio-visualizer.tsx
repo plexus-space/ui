@@ -4,7 +4,15 @@ import { LineChart } from "@plexusui/components/charts/line-chart";
 import { BarChart } from "@plexusui/components/charts/bar-chart";
 import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
 import { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, Volume2, Activity, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  Volume2,
+  Activity,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 interface AudioVisualizerProps {
@@ -19,7 +27,7 @@ interface AudioStats {
 
 interface AudioInsight {
   id: string;
-  type: 'info' | 'warning' | 'success';
+  type: "info" | "warning" | "success";
   message: string;
   timestamp: number;
 }
@@ -31,7 +39,9 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
   const [currentPeakFreq, setCurrentPeakFreq] = useState(0);
 
   // Audio Classification & Inference
-  const [audioType, setAudioType] = useState<'silence' | 'speech' | 'music' | 'noise'>('silence');
+  const [audioType, setAudioType] = useState<
+    "silence" | "speech" | "music" | "noise"
+  >("silence");
   const [bpm, setBpm] = useState(0);
   const [spectralCentroid, setSpectralCentroid] = useState(0);
   const [dynamicRange, setDynamicRange] = useState(0);
@@ -40,18 +50,22 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
 
   // Frequency Band Analysis
   const [frequencyBands, setFrequencyBands] = useState({
-    subBass: 0,    // 20-60 Hz
-    bass: 0,       // 60-250 Hz
-    lowMids: 0,    // 250-500 Hz
-    mids: 0,       // 500-2000 Hz
-    highMids: 0,   // 2000-4000 Hz
-    presence: 0,   // 4000-6000 Hz
+    subBass: 0, // 20-60 Hz
+    bass: 0, // 60-250 Hz
+    lowMids: 0, // 250-500 Hz
+    mids: 0, // 500-2000 Hz
+    highMids: 0, // 2000-4000 Hz
+    presence: 0, // 4000-6000 Hz
     brilliance: 0, // 6000-20000 Hz
   });
 
   // Historical data for aggregation
-  const [volumeHistory, setVolumeHistory] = useState<Array<{ x: number; y: number }>>([]);
-  const [peakFreqHistory, setPeakFreqHistory] = useState<Array<{ x: number; y: number }>>([]);
+  const [volumeHistory, setVolumeHistory] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
+  const [peakFreqHistory, setPeakFreqHistory] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
   const statsHistoryRef = useRef<AudioStats[]>([]);
   const beatHistoryRef = useRef<number[]>([]);
 
@@ -61,8 +75,12 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
   const [avgPeakFreq, setAvgPeakFreq] = useState(0);
 
   // Audio data states
-  const [waveformData, setWaveformData] = useState<Array<{ x: number; y: number }>>([]);
-  const [frequencyData, setFrequencyData] = useState<Array<{ x: string; y: number }>>([]);
+  const [waveformData, setWaveformData] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
+  const [frequencyData, setFrequencyData] = useState<
+    Array<{ x: string; y: number }>
+  >([]);
   const [spectrogramSignal, setSpectrogramSignal] = useState<number[]>([]);
 
   // Audio context refs
@@ -80,7 +98,7 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
   const SPECTROGRAM_HISTORY = 8000;
   const MAX_HISTORY_POINTS = 300;
 
-  const addInsight = (type: AudioInsight['type'], message: string) => {
+  const addInsight = (type: AudioInsight["type"], message: string) => {
     const insight: AudioInsight = {
       id: `${Date.now()}-${Math.random()}`,
       type,
@@ -124,7 +142,7 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       setPeakFreqHistory([]);
       setInsights([]);
 
-      addInsight('success', 'Audio monitoring started');
+      addInsight("success", "Audio monitoring started");
       visualize();
     } catch (err) {
       console.error("Error accessing microphone:", err);
@@ -149,7 +167,7 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
 
     setIsRecording(false);
     spectrogramBufferRef.current = [];
-    addInsight('info', 'Audio monitoring stopped');
+    addInsight("info", "Audio monitoring stopped");
   };
 
   const visualize = () => {
@@ -186,10 +204,10 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       setCurrentVolume(volume);
 
       // Detect clipping
-      const clipping = timeDataArray.some(v => v === 0 || v === 255);
+      const clipping = timeDataArray.some((v) => v === 0 || v === 255);
       if (clipping && !isClipping) {
         setIsClipping(true);
-        addInsight('warning', 'Audio clipping detected - reduce input volume');
+        addInsight("warning", "Audio clipping detected - reduce input volume");
       } else if (!clipping && isClipping) {
         setIsClipping(false);
       }
@@ -211,10 +229,14 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
         const startIdx = Math.floor((startHz * FFT_SIZE) / SAMPLE_RATE);
         const endIdx = Math.floor((endHz * FFT_SIZE) / SAMPLE_RATE);
         let sum = 0;
-        for (let i = startIdx; i < endIdx && i < frequencyDataArray.length; i++) {
+        for (
+          let i = startIdx;
+          i < endIdx && i < frequencyDataArray.length;
+          i++
+        ) {
           sum += frequencyDataArray[i];
         }
-        return sum / (endIdx - startIdx) / 255 * 100;
+        return (sum / (endIdx - startIdx) / 255) * 100;
       };
 
       const bands = {
@@ -230,7 +252,7 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
 
       // AUDIO CLASSIFICATION
       if (volume < 5) {
-        setAudioType('silence');
+        setAudioType("silence");
       } else {
         // Speech has strong presence in 300-3000Hz range
         const speechRange = (bands.lowMids + bands.mids) / 2;
@@ -240,19 +262,19 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
         const noiseIndicator = (bands.presence + bands.brilliance) / 2;
 
         if (speechRange > musicBalance && speechRange > 30) {
-          if (audioType !== 'speech') {
-            setAudioType('speech');
-            addInsight('info', 'Voice/speech detected');
+          if (audioType !== "speech") {
+            setAudioType("speech");
+            addInsight("info", "Voice/speech detected");
           }
         } else if (musicBalance > 25 && bands.bass > 20) {
-          if (audioType !== 'music') {
-            setAudioType('music');
-            addInsight('info', 'Music detected');
+          if (audioType !== "music") {
+            setAudioType("music");
+            addInsight("info", "Music detected");
           }
         } else if (noiseIndicator > 40) {
-          if (audioType !== 'noise') {
-            setAudioType('noise');
-            addInsight('warning', 'High noise detected');
+          if (audioType !== "noise") {
+            setAudioType("noise");
+            addInsight("warning", "High noise detected");
           }
         }
       }
@@ -280,15 +302,18 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
         beatHistoryRef.current.push(Date.now());
         // Keep only beats in last 10 seconds
         beatHistoryRef.current = beatHistoryRef.current.filter(
-          t => Date.now() - t < 10000
+          (t) => Date.now() - t < 10000
         );
 
         if (beatHistoryRef.current.length > 4) {
           const intervals: number[] = [];
           for (let i = 1; i < beatHistoryRef.current.length; i++) {
-            intervals.push(beatHistoryRef.current[i] - beatHistoryRef.current[i - 1]);
+            intervals.push(
+              beatHistoryRef.current[i] - beatHistoryRef.current[i - 1]
+            );
           }
-          const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+          const avgInterval =
+            intervals.reduce((a, b) => a + b, 0) / intervals.length;
           const estimatedBpm = Math.round(60000 / avgInterval);
           if (estimatedBpm > 40 && estimatedBpm < 200) {
             setBpm(estimatedBpm);
@@ -298,13 +323,13 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
 
       // Update frequency bars with band labels
       const frequencyBars: Array<{ x: string; y: number }> = [
-        { x: 'Sub\nBass', y: bands.subBass },
-        { x: 'Bass', y: bands.bass },
-        { x: 'Low\nMids', y: bands.lowMids },
-        { x: 'Mids', y: bands.mids },
-        { x: 'High\nMids', y: bands.highMids },
-        { x: 'Presence', y: bands.presence },
-        { x: 'Brilliance', y: bands.brilliance },
+        { x: "Sub\nBass", y: bands.subBass },
+        { x: "Bass", y: bands.bass },
+        { x: "Low\nMids", y: bands.lowMids },
+        { x: "Mids", y: bands.mids },
+        { x: "High\nMids", y: bands.highMids },
+        { x: "Presence", y: bands.presence },
+        { x: "Brilliance", y: bands.brilliance },
       ];
       setFrequencyData(frequencyBars);
 
@@ -317,7 +342,9 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       });
 
       if (statsHistoryRef.current.length > MAX_HISTORY_POINTS) {
-        statsHistoryRef.current = statsHistoryRef.current.slice(-MAX_HISTORY_POINTS);
+        statsHistoryRef.current = statsHistoryRef.current.slice(
+          -MAX_HISTORY_POINTS
+        );
       }
 
       const volHistory = statsHistoryRef.current.map((s) => ({
@@ -338,7 +365,9 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
 
         setAvgVolume(volumes.reduce((a, b) => a + b, 0) / volumes.length);
         setMaxVolume(Math.max(...volumes));
-        setAvgPeakFreq(frequencies.reduce((a, b) => a + b, 0) / frequencies.length);
+        setAvgPeakFreq(
+          frequencies.reduce((a, b) => a + b, 0) / frequencies.length
+        );
       }
 
       // Update spectrogram buffer
@@ -373,10 +402,14 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
 
   const getAudioTypeColor = () => {
     switch (audioType) {
-      case 'speech': return 'bg-blue-500';
-      case 'music': return 'bg-purple-500';
-      case 'noise': return 'bg-orange-500';
-      default: return 'bg-gray-500';
+      case "speech":
+        return "bg-blue-500";
+      case "music":
+        return "bg-purple-500";
+      case "noise":
+        return "bg-orange-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
@@ -386,9 +419,12 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       <Card className="hover:border-zinc-700 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold mb-1">Audio Observability Dashboard</h3>
+            <h3 className="text-sm font-semibold mb-1">
+              Audio Observability Dashboard
+            </h3>
             <p className="text-xs text-gray-400">
-              Real-time inference, classification, and actionable insights from audio data
+              Real-time inference, classification, and actionable insights from
+              audio data
             </p>
           </div>
           <button
@@ -424,15 +460,26 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       {isRecording && insights.length > 0 && (
         <div className="grid grid-cols-1 gap-2 mb-4">
           {insights.map((insight) => (
-            <Card key={insight.id} className={`hover:border-zinc-700 p-3 ${
-              insight.type === 'warning' ? 'border-orange-500/30' :
-              insight.type === 'success' ? 'border-green-500/30' :
-              'border-cyan-500/30'
-            }`}>
+            <Card
+              key={insight.id}
+              className={`hover:border-zinc-700 p-3 ${
+                insight.type === "warning"
+                  ? "border-orange-500/30"
+                  : insight.type === "success"
+                  ? "border-green-500/30"
+                  : "border-cyan-500/30"
+              }`}
+            >
               <div className="flex items-center gap-2">
-                {insight.type === 'warning' && <AlertTriangle className="h-4 w-4 text-orange-400" />}
-                {insight.type === 'success' && <CheckCircle2 className="h-4 w-4 text-green-400" />}
-                {insight.type === 'info' && <Activity className="h-4 w-4 text-cyan-400" />}
+                {insight.type === "warning" && (
+                  <AlertTriangle className="h-4 w-4 text-orange-400" />
+                )}
+                {insight.type === "success" && (
+                  <CheckCircle2 className="h-4 w-4 text-green-400" />
+                )}
+                {insight.type === "info" && (
+                  <Activity className="h-4 w-4 text-cyan-400" />
+                )}
                 <span className="text-xs">{insight.message}</span>
               </div>
             </Card>
@@ -446,7 +493,9 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
           <Card className="hover:border-zinc-700">
             <div className="text-center">
               <div className="text-xs text-gray-500 mb-2">Audio Type</div>
-              <div className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${getAudioTypeColor()}`}>
+              <div
+                className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${getAudioTypeColor()}`}
+              >
                 {audioType.toUpperCase()}
               </div>
             </div>
@@ -455,15 +504,19 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
           <Card className="hover:border-zinc-700">
             <div className="text-center">
               <div className="text-xs text-gray-500 mb-1">BPM</div>
-              <div className="text-2xl font-bold">{bpm || '--'}</div>
+              <div className="text-2xl font-bold">{bpm || "--"}</div>
               <div className="text-xs text-gray-400">beats/min</div>
             </div>
           </Card>
 
           <Card className="hover:border-zinc-700">
             <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">Spectral Centroid</div>
-              <div className="text-xl font-bold">{(spectralCentroid / 1000).toFixed(1)}</div>
+              <div className="text-xs text-gray-500 mb-1">
+                Spectral Centroid
+              </div>
+              <div className="text-xl font-bold">
+                {(spectralCentroid / 1000).toFixed(1)}
+              </div>
               <div className="text-xs text-gray-400">kHz (brightness)</div>
             </div>
           </Card>
@@ -471,16 +524,26 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
           <Card className="hover:border-zinc-700">
             <div className="text-center">
               <div className="text-xs text-gray-500 mb-1">Dynamic Range</div>
-              <div className="text-2xl font-bold">{dynamicRange.toFixed(0)}</div>
+              <div className="text-2xl font-bold">
+                {dynamicRange.toFixed(0)}
+              </div>
               <div className="text-xs text-gray-400">dB</div>
             </div>
           </Card>
 
-          <Card className={`hover:border-zinc-700 ${isClipping ? 'border-red-500/50 bg-red-500/5' : ''}`}>
+          <Card
+            className={`hover:border-zinc-700 ${
+              isClipping ? "border-red-500/50 bg-red-500/5" : ""
+            }`}
+          >
             <div className="text-center">
               <div className="text-xs text-gray-500 mb-1">Clipping</div>
-              <div className={`text-2xl font-bold ${isClipping ? 'text-red-400' : 'text-green-400'}`}>
-                {isClipping ? 'YES' : 'NO'}
+              <div
+                className={`text-2xl font-bold ${
+                  isClipping ? "text-red-400" : "text-green-400"
+                }`}
+              >
+                {isClipping ? "YES" : "NO"}
               </div>
               <div className="text-xs text-gray-400">distortion</div>
             </div>
@@ -491,17 +554,36 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       {!isRecording && (
         <div className="p-8 bg-zinc-900/50 rounded-lg border border-zinc-800 text-center mb-4">
           <Activity className="h-16 w-16 text-cyan-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Start Audio Observability</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            Start Audio Observability
+          </h3>
           <p className="text-sm text-zinc-400 mb-4 max-w-lg mx-auto">
-            This isn't just visualization - it's real-time audio intelligence. Talk, play music, or make sounds to see:
+            This isn't just visualization - it's real-time audio intelligence.
+            Talk, play music, or make sounds to see:
           </p>
           <ul className="text-xs text-zinc-500 space-y-1 max-w-md mx-auto mb-4">
-            <li>✓ <strong>Audio Classification</strong> - Speech, music, or noise detection</li>
-            <li>✓ <strong>BPM Detection</strong> - Real-time tempo tracking</li>
-            <li>✓ <strong>Frequency Band Analysis</strong> - Sub-bass to brilliance breakdown</li>
-            <li>✓ <strong>Spectral Features</strong> - Centroid, dynamic range, brightness</li>
-            <li>✓ <strong>Anomaly Detection</strong> - Clipping, silence, and quality alerts</li>
-            <li>✓ <strong>Actionable Insights</strong> - Real-time recommendations</li>
+            <li>
+              ✓ <strong>Audio Classification</strong> - Speech, music, or noise
+              detection
+            </li>
+            <li>
+              ✓ <strong>BPM Detection</strong> - Real-time tempo tracking
+            </li>
+            <li>
+              ✓ <strong>Frequency Band Analysis</strong> - Sub-bass to
+              brilliance breakdown
+            </li>
+            <li>
+              ✓ <strong>Spectral Features</strong> - Centroid, dynamic range,
+              brightness
+            </li>
+            <li>
+              ✓ <strong>Anomaly Detection</strong> - Clipping, silence, and
+              quality alerts
+            </li>
+            <li>
+              ✓ <strong>Actionable Insights</strong> - Real-time recommendations
+            </li>
           </ul>
           <div className="inline-block px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-md text-cyan-400 text-xs">
             This is observability, not just visualization
@@ -514,10 +596,7 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
         <>
           {/* Waveform and Frequency Band Analysis */}
           <div className="grid gap-3 md:grid-cols-2 mb-4">
-            <ChartCard
-              title="Live Waveform"
-              description="Time domain signal"
-            >
+            <ChartCard title="Live Waveform" description="Time domain signal">
               <LineChart
                 series={[
                   {

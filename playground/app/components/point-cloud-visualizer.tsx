@@ -3,7 +3,14 @@
 import { PointCloudViewer } from "@plexusui/components/charts/point-cloud-viewer";
 import { LineChart } from "@plexusui/components/charts/line-chart";
 import { useState, useEffect, useRef } from "react";
-import { Camera, AlertTriangle, CheckCircle2, TrendingUp, Users, Box } from "lucide-react";
+import {
+  Camera,
+  AlertTriangle,
+  CheckCircle2,
+  TrendingUp,
+  Users,
+  Box,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 interface PointCloudVisualizerProps {
@@ -12,7 +19,7 @@ interface PointCloudVisualizerProps {
 
 interface PointCloudInsight {
   id: string;
-  type: 'info' | 'warning' | 'success';
+  type: "info" | "warning" | "success";
   message: string;
 }
 
@@ -24,7 +31,7 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number>(0);
   const streamRef = useRef<MediaStream | null>(null);
 
   // Point cloud data
@@ -45,20 +52,22 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
   const [edgeDensity, setEdgeDensity] = useState(0);
   const [faceCount, setFaceCount] = useState(0);
   const [sceneComplexity, setSceneComplexity] = useState(0);
-  const [depthDistribution, setDepthDistribution] = useState<Array<{ x: number; y: number }>>([]);
+  const [depthDistribution, setDepthDistribution] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
 
   const startCamera = async () => {
     try {
       setError(null);
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480, facingMode: 'user' },
+        video: { width: 640, height: 480, facingMode: "user" },
       });
 
       streamRef.current = stream;
       setIsActive(true);
 
       // Wait for refs to be available
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -66,8 +75,8 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
         processFrame();
       }
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setError('Could not access camera. Please grant camera permissions.');
+      console.error("Error accessing camera:", err);
+      setError("Could not access camera. Please grant camera permissions.");
     }
   };
 
@@ -76,7 +85,7 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
       cancelAnimationFrame(animationFrameRef.current);
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
     setIsActive(false);
@@ -106,7 +115,7 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
       return;
     }
 
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     canvas.width = video.videoWidth;
@@ -141,13 +150,20 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
       };
 
       const gx =
-        -1 * getPixel(x - 1, y - 1) + 1 * getPixel(x + 1, y - 1) +
-        -2 * getPixel(x - 1, y) + 2 * getPixel(x + 1, y) +
-        -1 * getPixel(x - 1, y + 1) + 1 * getPixel(x + 1, y + 1);
+        -1 * getPixel(x - 1, y - 1) +
+        1 * getPixel(x + 1, y - 1) +
+        -2 * getPixel(x - 1, y) +
+        2 * getPixel(x + 1, y) +
+        -1 * getPixel(x - 1, y + 1) +
+        1 * getPixel(x + 1, y + 1);
 
       const gy =
-        -1 * getPixel(x - 1, y - 1) - 2 * getPixel(x, y - 1) - 1 * getPixel(x + 1, y - 1) +
-        1 * getPixel(x - 1, y + 1) + 2 * getPixel(x, y + 1) + 1 * getPixel(x + 1, y + 1);
+        -1 * getPixel(x - 1, y - 1) -
+        2 * getPixel(x, y - 1) -
+        1 * getPixel(x + 1, y - 1) +
+        1 * getPixel(x - 1, y + 1) +
+        2 * getPixel(x, y + 1) +
+        1 * getPixel(x + 1, y + 1);
 
       return Math.sqrt(gx * gx + gy * gy);
     };
@@ -160,7 +176,7 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
       const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
 
       // Skin tone boundaries in YCbCr
-      return (y > 80 && cb > 85 && cb < 135 && cr > 135 && cr < 180);
+      return y > 80 && cb > 85 && cb < 135 && cr > 135 && cr < 180;
     };
 
     for (let y = 0; y < HEIGHT; y += SAMPLE_RATE) {
@@ -181,7 +197,7 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
         const brightnessDepth = brightness * 0.3;
 
         // Weighted depth combination
-        let depth = (edgeDepth * 0.5 + colorDepth * 0.3 + brightnessDepth * 0.2);
+        let depth = edgeDepth * 0.5 + colorDepth * 0.3 + brightnessDepth * 0.2;
 
         // Count skin pixels for face estimation
         if (isSkinTone(r, g, b)) {
@@ -210,7 +226,8 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
     const totalPoints = points.length / 3;
     const minDepth = Math.min(...depthValues);
     const maxDepth = Math.max(...depthValues);
-    const avgDepthVal = depthValues.reduce((a, b) => a + b, 0) / depthValues.length;
+    const avgDepthVal =
+      depthValues.reduce((a, b) => a + b, 0) / depthValues.length;
     const edgeDensityVal = (totalEdges / totalPoints) * 100;
     const complexityScore = Math.min(100, edgeDensityVal * 2);
 
@@ -234,29 +251,33 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
 
     // Generate insights
     newInsights.push({
-      id: '1',
-      type: 'success',
+      id: "1",
+      type: "success",
       message: `Point cloud generated - ${totalPoints.toLocaleString()} vertices from camera feed`,
     });
 
     if (estimatedFaces > 0) {
       newInsights.push({
-        id: '2',
-        type: 'info',
-        message: `${estimatedFaces} face(s) detected at estimated distance ${avgDepthVal.toFixed(1)}cm`,
+        id: "2",
+        type: "info",
+        message: `${estimatedFaces} face(s) detected at estimated distance ${avgDepthVal.toFixed(
+          1
+        )}cm`,
       });
     }
 
     if (edgeDensityVal > 15) {
       newInsights.push({
-        id: '3',
-        type: 'info',
-        message: `High edge density (${edgeDensityVal.toFixed(1)}%) indicates complex scene geometry`,
+        id: "3",
+        type: "info",
+        message: `High edge density (${edgeDensityVal.toFixed(
+          1
+        )}%) indicates complex scene geometry`,
       });
     } else if (edgeDensityVal < 5) {
       newInsights.push({
-        id: '4',
-        type: 'warning',
+        id: "4",
+        type: "warning",
         message: `Low edge density - scene appears flat or uniform`,
       });
     }
@@ -264,15 +285,19 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
     const depthVariation = maxDepth - minDepth;
     if (depthVariation < 30) {
       newInsights.push({
-        id: '5',
-        type: 'info',
-        message: `Low depth variation (${depthVariation.toFixed(1)}cm) - planar surface detected`,
+        id: "5",
+        type: "info",
+        message: `Low depth variation (${depthVariation.toFixed(
+          1
+        )}cm) - planar surface detected`,
       });
     } else {
       newInsights.push({
-        id: '6',
-        type: 'success',
-        message: `Good depth range (${depthVariation.toFixed(1)}cm) - 3D structure visible`,
+        id: "6",
+        type: "success",
+        message: `Good depth range (${depthVariation.toFixed(
+          1
+        )}cm) - 3D structure visible`,
       });
     }
 
@@ -283,7 +308,7 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
       intensities: new Float32Array(intensities),
     };
 
-    console.log('Generated point cloud:', {
+    console.log("Generated point cloud:", {
       pointCount: totalPoints,
       positionsLength: cloudData.positions.length,
       colorsLength: cloudData.colors.length,
@@ -313,16 +338,19 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
   return (
     <div className={className}>
       {/* Hidden video and canvas */}
-      <video ref={videoRef} style={{ display: 'none' }} playsInline />
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <video ref={videoRef} style={{ display: "none" }} playsInline />
+      <canvas ref={canvasRef} style={{ display: "none" }} />
 
       {/* Controls */}
       <Card className="hover:border-zinc-700 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold mb-1">Camera-to-Point-Cloud</h3>
+            <h3 className="text-sm font-semibold mb-1">
+              Camera-to-Point-Cloud
+            </h3>
             <p className="text-xs text-gray-400">
-              Real-time 3D reconstruction with depth estimation and scene analysis
+              Real-time 3D reconstruction with depth estimation and scene
+              analysis
             </p>
           </div>
           <button
@@ -334,7 +362,7 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
             }`}
           >
             <Camera className="h-4 w-4" />
-            {isActive ? 'Stop Camera' : 'Start Camera'}
+            {isActive ? "Stop Camera" : "Start Camera"}
           </button>
         </div>
 
@@ -352,21 +380,21 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
             <Card
               key={insight.id}
               className={`hover:border-zinc-700 p-3 ${
-                insight.type === 'warning'
-                  ? 'border-orange-500/30'
-                  : insight.type === 'success'
-                  ? 'border-green-500/30'
-                  : 'border-cyan-500/30'
+                insight.type === "warning"
+                  ? "border-orange-500/30"
+                  : insight.type === "success"
+                  ? "border-green-500/30"
+                  : "border-cyan-500/30"
               }`}
             >
               <div className="flex items-center gap-2">
-                {insight.type === 'warning' && (
+                {insight.type === "warning" && (
                   <AlertTriangle className="h-4 w-4 text-orange-400" />
                 )}
-                {insight.type === 'success' && (
+                {insight.type === "success" && (
                   <CheckCircle2 className="h-4 w-4 text-green-400" />
                 )}
-                {insight.type === 'info' && (
+                {insight.type === "info" && (
                   <TrendingUp className="h-4 w-4 text-cyan-400" />
                 )}
                 <span className="text-xs">{insight.message}</span>
@@ -382,7 +410,9 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
           <Card className="hover:border-zinc-700">
             <div className="text-center">
               <div className="text-xs text-gray-500 mb-1">Total Points</div>
-              <div className="text-2xl font-bold">{pointCount.toLocaleString()}</div>
+              <div className="text-2xl font-bold">
+                {pointCount.toLocaleString()}
+              </div>
               <div className="text-xs text-gray-400">vertices</div>
             </div>
           </Card>
@@ -390,9 +420,7 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
           <Card className="hover:border-zinc-700">
             <div className="text-center">
               <div className="text-xs text-gray-500 mb-1">Avg Depth</div>
-              <div className="text-xl font-bold">
-                {avgDepth.toFixed(1)}cm
-              </div>
+              <div className="text-xl font-bold">{avgDepth.toFixed(1)}cm</div>
               <div className="text-xs text-gray-400">estimated</div>
             </div>
           </Card>
@@ -405,10 +433,18 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
             </div>
           </Card>
 
-          <Card className={`hover:border-zinc-700 ${faceCount > 0 ? 'border-cyan-500/50 bg-cyan-500/5' : ''}`}>
+          <Card
+            className={`hover:border-zinc-700 ${
+              faceCount > 0 ? "border-cyan-500/50 bg-cyan-500/5" : ""
+            }`}
+          >
             <div className="text-center">
               <div className="text-xs text-gray-500 mb-1">Faces Detected</div>
-              <div className={`text-2xl font-bold ${faceCount > 0 ? 'text-cyan-400' : 'text-gray-400'}`}>
+              <div
+                className={`text-2xl font-bold ${
+                  faceCount > 0 ? "text-cyan-400" : "text-gray-400"
+                }`}
+              >
                 {faceCount}
               </div>
               <div className="text-xs text-gray-400">
@@ -420,7 +456,9 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
           <Card className="hover:border-zinc-700">
             <div className="text-center">
               <div className="text-xs text-gray-500 mb-1">Scene Complexity</div>
-              <div className="text-xl font-bold">{sceneComplexity.toFixed(0)}</div>
+              <div className="text-xl font-bold">
+                {sceneComplexity.toFixed(0)}
+              </div>
               <div className="text-xs text-gray-400">score</div>
             </div>
           </Card>
@@ -435,9 +473,12 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
             <Card className="hover:border-zinc-700 md:col-span-2">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="text-xs text-gray-500 mb-1">Live 3D Point Cloud</h3>
+                  <h3 className="text-xs text-gray-500 mb-1">
+                    Live 3D Point Cloud
+                  </h3>
                   <p className="text-xs text-gray-400">
-                    Drag to orbit • Scroll to zoom • Real-time camera reconstruction
+                    Drag to orbit • Scroll to zoom • Real-time camera
+                    reconstruction
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -451,13 +492,9 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
                   colorMode="rgb"
                   pointSize={3}
                   height={500}
-                  enableOctree={true}
                   showGrid
                   backgroundColor="#000000"
-                  camera={{
-                    position: [0, 0, 50],
-                    fov: 60,
-                  }}
+                  cameraPosition={[0, 0, 50]}
                 />
               </div>
             </Card>
@@ -465,11 +502,14 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
             {/* Depth Distribution */}
             <Card className="hover:border-zinc-700 md:col-span-2">
               <div className="mb-2">
-                <h3 className="text-xs text-gray-500">Depth Distribution Analysis</h3>
+                <h3 className="text-xs text-gray-500">
+                  Depth Distribution Analysis
+                </h3>
               </div>
               <div className="space-y-3">
                 <p className="text-xs text-gray-400">
-                  Estimated depth histogram using edge detection and color analysis
+                  Estimated depth histogram using edge detection and color
+                  analysis
                 </p>
                 <LineChart
                   series={[
@@ -500,7 +540,8 @@ export function PointCloudVisualizer({ className }: PointCloudVisualizerProps) {
             Start Camera Point Cloud
           </h3>
           <p className="text-sm text-zinc-400 mb-4 max-w-lg mx-auto">
-            Convert your camera feed into a real-time 3D point cloud with intelligent depth estimation and scene analysis.
+            Convert your camera feed into a real-time 3D point cloud with
+            intelligent depth estimation and scene analysis.
           </p>
           <ul className="text-xs text-zinc-500 space-y-1 max-w-md mx-auto">
             <li>✓ Real-time depth estimation using edge detection</li>

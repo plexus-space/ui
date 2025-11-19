@@ -102,7 +102,7 @@ export function OrientationVisualizer({
 
     // Check if we're getting valid data
     if (event.beta === null || event.gamma === null) {
-      console.log('No orientation data available');
+      console.log("No orientation data available");
       return;
     }
 
