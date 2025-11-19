@@ -125,25 +125,6 @@
       "registryDependencies": [],
       "tier": "free"
     },
-    "control-chart": {
-      "name": "control-chart",
-      "version": "0.1.0",
-      "displayName": "Control Chart (SPC)",
-      "category": "statistical",
-      "status": "stable",
-      "description": "Statistical Process Control charts with Western Electric rules detection. Displays control limits (UCL/LCL), warning limits, and zones (A/B/C). Automatic violation detection for rules 1-4. Use cases: Manufacturing quality control, process monitoring, Levey-Jennings charts (medical labs), SPC analysis, out-of-control detection.",
-      "files": [
-        "charts/control-chart.tsx",
-        "charts/line-chart.tsx",
-        "charts/base-chart.tsx"
-      ],
-      "dependencies": [],
-      "devDependencies": [
-        "@webgpu/types"
-      ],
-      "registryDependencies": [],
-      "tier": "free"
-    },
     "gauge": {
       "name": "gauge",
       "version": "0.1.0",
@@ -230,23 +211,51 @@
       "registryDependencies": [],
       "tier": "free"
     },
-    "waterfall-chart": {
-      "name": "waterfall-chart",
-      "version": "0.1.0",
-      "displayName": "Waterfall Chart",
-      "category": "visualization",
+    "chart-annotations": {
+      "name": "chart-annotations",
+      "version": "1.0.0",
+      "displayName": "Chart Annotations",
+      "category": "helpers",
       "status": "stable",
-      "description": "Frequency-time analysis with FFT computation for real-time signal monitoring. WebGPU-accelerated rendering of spectrograms. Use cases: RF spectrum analysis (aerospace communications), EEG frequency bands (medical devices), audio spectrograms, vibration analysis (predictive maintenance), sonar/radar displays.",
+      "description": "Minimal text annotation system for labeling chart data. Click to add, inline editing, compact design that doesn't obscure your data. Perfect for data labeling workflows in robotics, medicine, and ML training.",
       "files": [
-        "charts/waterfall-chart.tsx",
-        "charts/base-chart.tsx",
-        "lib/data-utils.ts",
-        "lib/color-scales.ts"
+        "charts/annotations.tsx",
+        "charts/base-chart.tsx"
       ],
       "dependencies": [],
-      "devDependencies": [
-        "@webgpu/types"
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "chart-region": {
+      "name": "chart-region",
+      "version": "1.0.0",
+      "displayName": "Chart Region",
+      "category": "helpers",
+      "status": "stable",
+      "description": "Mark time ranges or segments with shaded vertical regions. Perfect for highlighting flight phases, operational modes, time windows, or any span of data on X-axis. Uses data coordinates so regions stay locked during streaming.",
+      "files": [
+        "charts/annotations.tsx",
+        "charts/base-chart.tsx"
       ],
+      "dependencies": [],
+      "devDependencies": [],
+      "registryDependencies": [],
+      "tier": "free"
+    },
+    "chart-ruler": {
+      "name": "chart-ruler",
+      "version": "1.0.0",
+      "displayName": "Chart Ruler",
+      "category": "helpers",
+      "status": "stable",
+      "description": "Interactive measurement tool for calculating distances and deltas between points. Click and drag to measure ΔX, ΔY, and Euclidean distance. Perfect for analyzing rates of change, time differences, or amplitude changes in telemetry data.",
+      "files": [
+        "charts/annotations.tsx",
+        "charts/base-chart.tsx"
+      ],
+      "dependencies": [],
+      "devDependencies": [],
       "registryDependencies": [],
       "tier": "free"
     },

@@ -18,7 +18,7 @@
  *
  * 2. **Component Layer** (Chart Primitives)
  *    - LineChart, BarChart, ScatterChart, AreaChart
- *    - HeatmapChart, WaterfallChart, Histogram, ControlChart
+ *    - HeatmapChart, WaterfallChart, Histogram
  *    - Gauge, RadarChart, AttitudeIndicator
  *    - DataGrid, GanttChart, ModelViewer
  *
@@ -119,17 +119,6 @@ export type {
 
 export { HistogramChart } from "./histogram-chart";
 export type { HistogramChartProps } from "./histogram-chart";
-
-export {
-  ControlChart,
-  calculateControlLimits,
-  generateSPCData,
-} from "./control-chart";
-export type {
-  ControlChartProps,
-  ControlLimits,
-  ControlViolation,
-} from "./control-chart";
 
 export { Gauge } from "./gauge";
 export type { Zone, GaugeProps } from "./gauge";
@@ -233,25 +222,21 @@ export type {
   ChartCrosshairProps,
 } from "./interactions";
 
-// Chart annotations
+// Chart annotations and helpers
 export {
-  ChartRuler,
+  ChartAnnotations,
   ChartReferenceLine,
-  ChartReferenceLines,
-  ChartTextAnnotation,
-  ChartTextAnnotations,
+  ChartRegion,
+  ChartRuler,
 } from "./annotations";
 
 export type {
-  Point2D,
-  Measurement,
-  TextAnnotation,
-  ReferenceLine,
-  ChartRulerProps,
+  Annotation,
+  ChartAnnotationsProps,
   ChartReferenceLineProps,
-  ChartReferenceLinesProps,
-  ChartTextAnnotationProps,
-  ChartTextAnnotationsProps,
+  ChartRegionProps,
+  ChartRulerProps,
+  Measurement,
 } from "./annotations";
 
 // Chart minimap

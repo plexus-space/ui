@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { AttitudeIndicator } from "@plexusui/components/charts/attitude-indicator";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -332,214 +330,6 @@ function DroneMonitor() {
 }
 
 // ============================================================================
-// Spacecraft Attitude Control
-// ============================================================================
-
-function SpacecraftAttitudeControl() {
-  const [pitch, setPitch] = useState(0);
-  const [roll, setRoll] = useState(0);
-  const [yaw, setYaw] = useState(0);
-  const [rcsActive, setRcsActive] = useState(false);
-  const [targetPitch, setTargetPitch] = useState(0);
-  const [targetRoll, setTargetRoll] = useState(0);
-
-  useEffect(() => {
-    if (!rcsActive) return;
-
-    const interval = setInterval(() => {
-      setPitch((p) => {
-        const diff = targetPitch - p;
-        return Math.abs(diff) < 0.5 ? targetPitch : p + diff * 0.05;
-      });
-      setRoll((r) => {
-        const diff = targetRoll - r;
-        return Math.abs(diff) < 0.5 ? targetRoll : r + diff * 0.05;
-      });
-      setYaw((y) => (y + 0.1) % 360);
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [rcsActive, targetPitch, targetRoll]);
-
-  return (
-    <ComponentPreview
-      title="Spacecraft Attitude Control"
-      description="Orbital vehicle orientation with RCS thruster control - Used in satellite operations"
-      code={`import { AttitudeIndicator } from "@/components/plexusui/charts/attitude-indicator";
-
-function SpacecraftControl() {
-  return (
-    <AttitudeIndicator
-      pitch={pitch}
-      roll={roll}
-      skyColor="#000000"
-      groundColor="#1a1a2e"
-      horizonColor="#00ffff"
-    />
-  );
-}`}
-      preview={
-        <div className="w-full space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-normal text-muted-foreground">
-                  Spacecraft Orientation
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex justify-center">
-                <AttitudeIndicator
-                  pitch={pitch}
-                  roll={roll}
-                  width={400}
-                  height={400}
-                  showPitchLadder
-                  showBankIndicator
-                  pitchStep={10}
-                  skyColor="#000000"
-                  groundColor="#1a1a2e"
-                  horizonColor="#00ffff"
-                />
-              </CardContent>
-            </Card>
-
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">RCS Controls</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label
-                        htmlFor="target-pitch"
-                        className="text-xs font-medium"
-                      >
-                        Target Pitch
-                      </Label>
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {targetPitch > 0 && "+"}
-                        {targetPitch}°
-                      </Badge>
-                    </div>
-                    <Slider
-                      id="target-pitch"
-                      min={-45}
-                      max={45}
-                      step={5}
-                      value={[targetPitch]}
-                      onValueChange={(value) => setTargetPitch(value[0])}
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label
-                        htmlFor="target-roll"
-                        className="text-xs font-medium"
-                      >
-                        Target Roll
-                      </Label>
-                      <Badge variant="outline" className="font-mono text-xs">
-                        {targetRoll > 0 && "+"}
-                        {targetRoll}°
-                      </Badge>
-                    </div>
-                    <Slider
-                      id="target-roll"
-                      min={-45}
-                      max={45}
-                      step={5}
-                      value={[targetRoll]}
-                      onValueChange={(value) => setTargetRoll(value[0])}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Current Attitude</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1 text-center">
-                      <Label className="text-xs text-muted-foreground">
-                        Pitch
-                      </Label>
-                      <div className="text-lg font-mono font-bold">
-                        {pitch > 0 && "+"}
-                        {pitch.toFixed(1)}°
-                      </div>
-                    </div>
-                    <div className="space-y-1 text-center">
-                      <Label className="text-xs text-muted-foreground">
-                        Roll
-                      </Label>
-                      <div className="text-lg font-mono font-bold">
-                        {roll > 0 && "+"}
-                        {roll.toFixed(1)}°
-                      </div>
-                    </div>
-                    <div className="space-y-1 text-center">
-                      <Label className="text-xs text-muted-foreground">
-                        Yaw
-                      </Label>
-                      <div className="text-lg font-mono font-bold">
-                        {yaw.toFixed(0)}°
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6 space-y-3">
-                  <Button
-                    variant={rcsActive ? "default" : "outline"}
-                    className="w-full"
-                    onClick={() => setRcsActive(!rcsActive)}
-                  >
-                    {rcsActive ? "🔥 RCS ACTIVE" : "RCS STANDBY"}
-                  </Button>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setTargetPitch(0);
-                        setTargetRoll(0);
-                      }}
-                    >
-                      Zero
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setPitch(0);
-                        setRoll(0);
-                        setYaw(0);
-                        setTargetPitch(0);
-                        setTargetRoll(0);
-                        setRcsActive(false);
-                      }}
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      }
-    />
-  );
-}
-
-// ============================================================================
 // Surgical Robot Monitor
 // ============================================================================
 
@@ -817,13 +607,15 @@ const attitudeIndicatorProps: ApiProp[] = [
     name: "roll",
     type: "number",
     default: "0",
-    description: "Roll angle in degrees (-180 to 180). Positive is right wing down",
+    description:
+      "Roll angle in degrees (-180 to 180). Positive is right wing down",
   },
   {
     name: "yaw",
     type: "number",
     default: "undefined",
-    description: "Yaw/heading angle in degrees (0-360). Shows heading indicator if provided",
+    description:
+      "Yaw/heading angle in degrees (0-360). Shows heading indicator if provided",
   },
   {
     name: "size",
@@ -871,7 +663,8 @@ const attitudeIndicatorProps: ApiProp[] = [
     name: "preferWebGPU",
     type: "boolean",
     default: "true",
-    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+    description:
+      "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
   },
   {
     name: "className",
@@ -934,7 +727,8 @@ const attitudeIndicatorRootProps: ApiProp[] = [
     name: "children",
     type: "ReactNode",
     default: "undefined",
-    description: "Primitive components (Horizon, Aircraft, RollScale, HeadingIndicator)",
+    description:
+      "Primitive components (Horizon, Aircraft, RollScale, HeadingIndicator)",
   },
 ];
 
@@ -943,7 +737,8 @@ const attitudeIndicatorPrimitiveProps: ApiProp[] = [
     name: "AttitudeIndicator.Horizon",
     type: "component",
     default: "-",
-    description: "Renders the horizon line with pitch markers. Props: showDegreeMarkers?: boolean",
+    description:
+      "Renders the horizon line with pitch markers. Props: showDegreeMarkers?: boolean",
   },
   {
     name: "AttitudeIndicator.Aircraft",
@@ -972,32 +767,34 @@ const attitudeIndicatorPrimitiveProps: ApiProp[] = [
 export function AttitudeIndicatorExamples() {
   return (
     <div className="space-y-12">
-      {/* Examples Section */}
       <div className="space-y-8">
         <h2 className="text-2xl font-bold">Examples</h2>
         <BasicExample />
         <DroneFlightSimulation />
-        <SpacecraftAttitudeControl />
         <SurgicalRobotMonitor />
         <PrimitiveExample />
       </div>
 
-      {/* API Reference Section */}
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            AttitudeIndicator component for displaying aircraft/vehicle orientation (pitch, roll, yaw)
+            AttitudeIndicator component for displaying aircraft/vehicle
+            orientation (pitch, roll, yaw)
           </p>
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">AttitudeIndicator (All-in-One)</h3>
+          <h3 className="text-lg font-semibold">
+            AttitudeIndicator (All-in-One)
+          </h3>
           <ApiReferenceTable props={attitudeIndicatorProps} />
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">AttitudeIndicator.Root (Composable)</h3>
+          <h3 className="text-lg font-semibold">
+            AttitudeIndicator.Root (Composable)
+          </h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Root component for building custom layouts with primitives
           </p>
@@ -1007,7 +804,8 @@ export function AttitudeIndicatorExamples() {
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Primitive Components</h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Use with AttitudeIndicator.Root for complete control over composition
+            Use with AttitudeIndicator.Root for complete control over
+            composition
           </p>
           <ApiReferenceTable props={attitudeIndicatorPrimitiveProps} />
         </div>

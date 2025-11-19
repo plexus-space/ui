@@ -11,11 +11,9 @@ export const TopNav = () => {
       <div className="flex items-center gap-6">
         <Link href="/" className="flex items-center gap-2">
           <SimpleLogo className="w-5 h-5" />
+          Plexus
         </Link>
         <nav className="flex items-center gap-6 text-sm">
-          <Link href="/" className="hover:text-foreground/80 transition-colors">
-            Plexus
-          </Link>
           <Link
             href="/components"
             className="hover:text-foreground/80 transition-colors"
