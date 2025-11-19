@@ -71,7 +71,8 @@ Browse `/examples/*` for individual component demos:
 - `attitude-indicator.tsx` - Aviation attitude display
 - `point-cloud-viewer.tsx` - 3D LIDAR visualization
 - `waterfall-chart.tsx` - Time-frequency analysis
-- `control-chart.tsx` - Statistical process control
+- `chart-annotations.tsx` - Interactive text labels and annotations
+- `chart-ruler.tsx` - Measurement tool with ΔX/ΔY display
 - `gantt.tsx` - Timeline scheduling
 - `eeg-brain-interface.tsx` - EEG frequency analysis
 - And many more!

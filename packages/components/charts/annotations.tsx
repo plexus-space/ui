@@ -130,7 +130,7 @@ function AnnotationItem({
           style={{
             backgroundColor: color,
             color: "#fff",
-            ringColor: "#fff",
+            borderColor: "#fff",
             cursor: isEditing ? "text" : "pointer",
           }}
           onClick={(e) => {
@@ -256,9 +256,7 @@ export function ChartAnnotations({
   };
 
   const handleUpdate = (id: string, text: string) => {
-    onChange(
-      annotations.map((a) => (a.id === id ? { ...a, text } : a))
-    );
+    onChange(annotations.map((a) => (a.id === id ? { ...a, text } : a)));
     setEditingId("");
   };
 
@@ -277,7 +275,7 @@ export function ChartAnnotations({
           style={{
             zIndex: 25,
             cursor: "crosshair",
-            pointerEvents: "auto"
+            pointerEvents: "auto",
           }}
         />
       )}
@@ -421,10 +419,10 @@ export function ChartReferenceLine({
                 ? "translate(0, -50%)"
                 : "translate(-50%, -50%)"
               : labelPosition === "end"
-                ? "translate(-50%, -100%)"
-                : labelPosition === "start"
-                ? "translate(-50%, 0)"
-                : "translate(-50%, -50%)",
+              ? "translate(-50%, -100%)"
+              : labelPosition === "start"
+              ? "translate(-50%, 0)"
+              : "translate(-50%, -50%)",
             backgroundColor: color,
             color: "#fff",
             opacity: 0.9,
@@ -747,7 +745,9 @@ export function ChartRuler({
               whiteSpace: "pre-line",
             }}
           >
-            {`ΔX: ${(currentPoint.dataX - startPoint.dataX).toFixed(2)}\nΔY: ${(currentPoint.dataY - startPoint.dataY).toFixed(2)}`}
+            {`ΔX: ${(currentPoint.dataX - startPoint.dataX).toFixed(2)}\nΔY: ${(
+              currentPoint.dataY - startPoint.dataY
+            ).toFixed(2)}`}
           </div>
         </>
       )}
