@@ -233,7 +233,7 @@
     "waterfall-chart": {
       "name": "waterfall-chart",
       "version": "0.1.0",
-      "displayName": "Waterfall / Spectrogram Chart",
+      "displayName": "Waterfall Chart",
       "category": "visualization",
       "status": "stable",
       "description": "Frequency-time analysis with FFT computation for real-time signal monitoring. WebGPU-accelerated rendering of spectrograms. Use cases: RF spectrum analysis (aerospace communications), EEG frequency bands (medical devices), audio spectrograms, vibration analysis (predictive maintenance), sonar/radar displays.",

@@ -7,7 +7,10 @@ import type {
   RadarDataPoint,
 } from "@plexusui/components/charts/radar-chart";
 import { ComponentPreview } from "@/components/component-preview";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import {
   useColorScheme,
   useMultiColors,
@@ -357,7 +360,8 @@ const radarChartProps: ApiProp[] = [
     name: "series",
     type: "RadarSeries[]",
     default: "required",
-    description: "Array of radar data series. RadarSeries: { angle: number, distance: number, intensity?: number }[]",
+    description:
+      "Array of radar data series. RadarSeries: { angle: number, distance: number, intensity?: number }[]",
   },
   {
     name: "rings",
@@ -417,7 +421,8 @@ const radarChartProps: ApiProp[] = [
     name: "preferWebGPU",
     type: "boolean",
     default: "true",
-    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+    description:
+      "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
   },
   {
     name: "className",
@@ -548,7 +553,8 @@ export function RadarChartExamples() {
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            RadarChart component for polar coordinate visualization - ideal for sonar, tracking, and directional data
+            RadarChart component for polar coordinate visualization - ideal for
+            sonar, tracking, and directional data
           </p>
         </div>
 
@@ -566,7 +572,7 @@ export function RadarChartExamples() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">RadarChart.Root (Composable)</h3>
+          <h3 className="text-lg font-semibold">RadarChart.Root</h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Root component for building custom layouts with primitives
           </p>

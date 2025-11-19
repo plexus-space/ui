@@ -233,7 +233,6 @@ function TerrainExample() {
   data={terrainData}
   colorMode="height"
   pointSize={0.3}
-  showGrid
   height={500}
 />`}
       preview={
@@ -242,9 +241,8 @@ function TerrainExample() {
             data={data}
             colorMode="height"
             pointSize={0.3}
-            showGrid
             height={500}
-            backgroundColor="#0f172a"
+            backgroundColor="black"
           />
         </div>
       }
@@ -265,7 +263,6 @@ function BuildingScanExample() {
   data={buildingScanData}
   colorMode="classification"
   pointSize={0.15}
-  showGrid
   height={500}
 />`}
       preview={
@@ -274,7 +271,6 @@ function BuildingScanExample() {
             data={data}
             colorMode="classification"
             pointSize={0.15}
-            showGrid
             height={500}
             backgroundColor="#0a0a0a"
           />
@@ -520,7 +516,6 @@ const handleFileChange = async (e) => {
               data={pointCloud}
               colorMode="height"
               pointSize={0.2}
-              showGrid
               height={500}
               backgroundColor="#0a0a0a"
             />
@@ -840,42 +835,6 @@ export function PointCloudViewerExamples() {
             Use for custom composition and full control
           </p>
           <ApiReferenceTable props={primitiveComponents} />
-        </div>
-      </div>
-
-      {/* Use Cases Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Use Cases</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 border border-zinc-800 rounded-lg">
-            <h3 className="font-semibold mb-2">LIDAR & Aerial Mapping</h3>
-            <p className="text-sm text-zinc-400">
-              Terrain mapping, building scans, topographic surveys, forestry
-              analysis
-            </p>
-          </div>
-          <div className="p-4 border border-zinc-800 rounded-lg">
-            <h3 className="font-semibold mb-2">Industrial Inspection</h3>
-            <p className="text-sm text-zinc-400">
-              3D scanning for quality control, reverse engineering, dimensional
-              analysis
-            </p>
-          </div>
-          <div className="p-4 border border-zinc-800 rounded-lg">
-            <h3 className="font-semibold mb-2">Medical Imaging</h3>
-            <p className="text-sm text-zinc-400">
-              CT/MRI 3D reconstructions, surgical planning, anatomical
-              visualization
-            </p>
-          </div>
-          <div className="p-4 border border-zinc-800 rounded-lg">
-            <h3 className="font-semibold mb-2">
-              Robotics & Autonomous Systems
-            </h3>
-            <p className="text-sm text-zinc-400">
-              SLAM, depth sensor visualization, obstacle detection, navigation
-            </p>
-          </div>
         </div>
       </div>
     </div>

@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { DataPoint } from "@plexusui/components/charts/scatter-chart";
 import { ComponentPreview } from "@/components/component-preview";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import {
   useColorScheme,
   useMultiColors,
@@ -14,32 +17,8 @@ import { ScatterChart } from "@plexusui/components/charts/scatter-chart";
 // Example Data
 // ============================================================================
 
-const performanceData: DataPoint[] = Array.from({ length: 100 }, (_, i) => ({
-  x: Math.random() * 100,
-  y: Math.random() * 100,
-  size: Math.random() * 2 + 0.5,
-}));
-
-const clusterData: DataPoint[] = [
-  // Cluster 1 (top-right)
-  ...Array.from({ length: 30 }, () => ({
-    x: 70 + Math.random() * 20,
-    y: 70 + Math.random() * 20,
-    size: 1.2,
-  })),
-  // Cluster 2 (bottom-left)
-  ...Array.from({ length: 30 }, () => ({
-    x: 20 + Math.random() * 20,
-    y: 20 + Math.random() * 20,
-    size: 1.0,
-  })),
-  // Cluster 3 (center)
-  ...Array.from({ length: 40 }, () => ({
-    x: 45 + Math.random() * 10,
-    y: 45 + Math.random() * 10,
-    size: 0.8,
-  })),
-];
+// Note: These need to be inside components with useMemo to prevent re-generation
+// Keeping them here for now but they should be moved to component-level
 
 // ============================================================================
 // Example Components
@@ -47,6 +26,30 @@ const clusterData: DataPoint[] = [
 
 function MultiSeriesScatterChart() {
   const colors = useMultiColors(3);
+
+  const clusterData = useMemo(
+    () => [
+      // Cluster 1 (top-right)
+      ...Array.from({ length: 30 }, () => ({
+        x: 70 + Math.random() * 20,
+        y: 70 + Math.random() * 20,
+        size: 1.2,
+      })),
+      // Cluster 2 (bottom-left)
+      ...Array.from({ length: 30 }, () => ({
+        x: 20 + Math.random() * 20,
+        y: 20 + Math.random() * 20,
+        size: 1.0,
+      })),
+      // Cluster 3 (center)
+      ...Array.from({ length: 40 }, () => ({
+        x: 45 + Math.random() * 10,
+        y: 45 + Math.random() * 10,
+        size: 0.8,
+      })),
+    ],
+    []
+  );
 
   return (
     <ComponentPreview
@@ -108,6 +111,16 @@ function MultiSeriesScatterChart() {
 
 function PrimitiveScatterChart() {
   const { color } = useColorScheme();
+
+  const performanceData = useMemo(
+    () =>
+      Array.from({ length: 100 }, () => ({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 2 + 0.5,
+      })),
+    []
+  );
 
   return (
     <ComponentPreview
@@ -338,7 +351,8 @@ const scatterChartProps: ApiProp[] = [
     name: "series",
     type: "Series[]",
     default: "required",
-    description: "Array of data series. Series: { name: string, data: Point[], color?: string, size?: number, opacity?: number }",
+    description:
+      "Array of data series. Series: { name: string, data: Point[], color?: string, size?: number, opacity?: number }",
   },
   {
     name: "xAxis",
@@ -386,7 +400,8 @@ const scatterChartProps: ApiProp[] = [
     name: "preferWebGPU",
     type: "boolean",
     default: "true",
-    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+    description:
+      "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
   },
   {
     name: "className",
@@ -407,7 +422,8 @@ const scatterSeriesType: ApiProp[] = [
     name: "data",
     type: "Point[]",
     default: "required",
-    description: "Array of data points. Point: { x: number, y: number, size?: number }",
+    description:
+      "Array of data points. Point: { x: number, y: number, size?: number }",
   },
   {
     name: "color",
@@ -515,7 +531,8 @@ export function ScatterChartExamples() {
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            ScatterChart component for visualizing correlations and distributions in 2D space
+            ScatterChart component for visualizing correlations and
+            distributions in 2D space
           </p>
         </div>
 
@@ -533,7 +550,7 @@ export function ScatterChartExamples() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">ScatterChart.Root (Composable)</h3>
+          <h3 className="text-lg font-semibold">ScatterChart.Root</h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Root component for building custom layouts with primitives
           </p>

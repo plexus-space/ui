@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useEffect, useMemo } from "react";
+import { createContext, useContext, useRef, useEffect, useMemo, useState } from "react";
 import {
   createWebGLRenderer,
   createWebGPURenderer,
@@ -41,8 +41,8 @@ export interface LineChartProps {
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   showGrid?: boolean;
   showAxes?: boolean;
   showTooltip?: boolean;
@@ -475,6 +475,21 @@ function createWebGPULineRenderer(
     width: null as GPUBuffer | null,
   };
 
+  // Persistent buffer pool for series rendering (reused across frames)
+  type SeriesBufferSet = {
+    position: GPUBuffer;
+    color: GPUBuffer;
+    normal: GPUBuffer;
+    width: GPUBuffer;
+    sizes: {
+      position: number;
+      color: number;
+      normal: number;
+      width: number;
+    };
+  };
+  const seriesBufferPool: SeriesBufferSet[] = [];
+
   const renderer = createWebGPURenderer<LineRendererProps>({
     canvas,
     device,
@@ -758,8 +773,8 @@ function createWebGPULineRenderer(
         }
       }
 
-      // Draw lines
-      // NOTE: Create buffers per series to avoid overwriting data in multi-series scenarios
+      // Draw lines with buffer pooling
+      let seriesIndex = 0;
       for (const s of series) {
         if (s.data.length < 2) {
           continue;
@@ -775,53 +790,114 @@ function createWebGPULineRenderer(
           lineWidth
         );
 
-        // Create buffers per series (cannot reuse across series in same frame)
-        const positionBuffer = device.createBuffer({
-          size: geometry.positions.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
+        const requiredSizes = {
+          position: geometry.positions.length * 4,
+          color: geometry.colors.length * 4,
+          normal: geometry.normals.length * 4,
+          width: geometry.widths.length * 4,
+        };
+
+        // Get or create buffer set for this series
+        let bufferSet = seriesBufferPool[seriesIndex];
+
+        if (!bufferSet) {
+          // Create new buffer set
+          bufferSet = {
+            position: device.createBuffer({
+              size: requiredSizes.position,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            color: device.createBuffer({
+              size: requiredSizes.color,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            normal: device.createBuffer({
+              size: requiredSizes.normal,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            width: device.createBuffer({
+              size: requiredSizes.width,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            sizes: requiredSizes,
+          };
+          seriesBufferPool[seriesIndex] = bufferSet;
+        } else {
+          // Resize buffers if needed
+          if (bufferSet.sizes.position < requiredSizes.position) {
+            bufferSet.position.destroy();
+            bufferSet.position = device.createBuffer({
+              size: requiredSizes.position,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.position = requiredSizes.position;
+          }
+          if (bufferSet.sizes.color < requiredSizes.color) {
+            bufferSet.color.destroy();
+            bufferSet.color = device.createBuffer({
+              size: requiredSizes.color,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.color = requiredSizes.color;
+          }
+          if (bufferSet.sizes.normal < requiredSizes.normal) {
+            bufferSet.normal.destroy();
+            bufferSet.normal = device.createBuffer({
+              size: requiredSizes.normal,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.normal = requiredSizes.normal;
+          }
+          if (bufferSet.sizes.width < requiredSizes.width) {
+            bufferSet.width.destroy();
+            bufferSet.width = device.createBuffer({
+              size: requiredSizes.width,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.width = requiredSizes.width;
+          }
+        }
+
+        // Write data to buffers (reusing existing buffers)
         device.queue.writeBuffer(
-          positionBuffer,
+          bufferSet.position,
           0,
           new Float32Array(geometry.positions)
         );
-
-        const colorBuffer = device.createBuffer({
-          size: geometry.colors.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
         device.queue.writeBuffer(
-          colorBuffer,
+          bufferSet.color,
           0,
           new Float32Array(geometry.colors)
         );
-
-        const normalBuffer = device.createBuffer({
-          size: geometry.normals.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
         device.queue.writeBuffer(
-          normalBuffer,
+          bufferSet.normal,
           0,
           new Float32Array(geometry.normals)
         );
-
-        const widthBuffer = device.createBuffer({
-          size: geometry.widths.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
         device.queue.writeBuffer(
-          widthBuffer,
+          bufferSet.width,
           0,
           new Float32Array(geometry.widths)
         );
 
-        passEncoder.setVertexBuffer(0, positionBuffer);
-        passEncoder.setVertexBuffer(1, colorBuffer);
-        passEncoder.setVertexBuffer(2, normalBuffer);
-        passEncoder.setVertexBuffer(3, widthBuffer);
+        passEncoder.setVertexBuffer(0, bufferSet.position);
+        passEncoder.setVertexBuffer(1, bufferSet.color);
+        passEncoder.setVertexBuffer(2, bufferSet.normal);
+        passEncoder.setVertexBuffer(3, bufferSet.width);
 
         passEncoder.draw(geometry.positions.length / 2);
+        seriesIndex++;
+      }
+
+      // Clean up excess buffers if series count decreased
+      while (seriesBufferPool.length > seriesIndex) {
+        const removed = seriesBufferPool.pop();
+        if (removed) {
+          removed.position.destroy();
+          removed.color.destroy();
+          removed.normal.destroy();
+          removed.width.destroy();
+        }
       }
 
       passEncoder.end();
@@ -834,6 +910,14 @@ function createWebGPULineRenderer(
       gridBuffers.color?.destroy();
       gridBuffers.normal?.destroy();
       gridBuffers.width?.destroy();
+      // Clean up series buffer pool
+      for (const bufferSet of seriesBufferPool) {
+        bufferSet.position.destroy();
+        bufferSet.color.destroy();
+        bufferSet.normal.destroy();
+        bufferSet.width.destroy();
+      }
+      seriesBufferPool.length = 0;
     },
   });
 
@@ -865,8 +949,8 @@ function Root({
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   preferWebGPU?: boolean;
   className?: string;
   children?: React.ReactNode;
@@ -905,6 +989,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   const rendererRef = useRef<
     WebGLRenderer<LineRendererProps> | WebGPURenderer<LineRendererProps> | null
   >(null);
+  const [rendererReady, setRendererReady] = useState(false);
 
   // Initialize renderer once
   useEffect(() => {
@@ -918,6 +1003,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     canvas.style.height = `${ctx.height}px`;
 
     let mounted = true;
+    setRendererReady(false);
 
     async function initRenderer() {
       if (!canvas) return;
@@ -936,6 +1022,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
             rendererRef.current = renderer;
             ctx.setRenderMode("webgpu");
+            setRendererReady(true);
             return;
           }
         }
@@ -953,6 +1040,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
         rendererRef.current = renderer;
         ctx.setRenderMode("webgl");
+        setRendererReady(true);
       } catch (error) {
         console.error("WebGL failed:", error);
       }
@@ -962,6 +1050,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
     return () => {
       mounted = false;
+      setRendererReady(false);
       if (rendererRef.current) {
         rendererRef.current.destroy();
         rendererRef.current = null;
@@ -1041,6 +1130,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     ctx.renderMode,
     ctx.canvasRef,
     showGrid,
+    rendererReady,
   ]);
 
   return (
@@ -1470,8 +1560,8 @@ export interface LineChartRootProps {
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   preferWebGPU?: boolean;
   className?: string;
   children?: React.ReactNode;

@@ -257,7 +257,6 @@ export function ChartBrush({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Check if within chart bounds
     if (
       x < ctx.margin.left ||
       x > ctx.width - ctx.margin.right ||
@@ -279,7 +278,6 @@ export function ChartBrush({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Clamp to chart bounds
     const clampedX = Math.max(
       ctx.margin.left,
       Math.min(ctx.width - ctx.margin.right, x)
@@ -290,8 +288,6 @@ export function ChartBrush({
     );
 
     setBrushEnd({ x: clampedX, y: clampedY });
-
-    // Call onBrushing callback
     if (onBrushing) {
       const start = convertToDataCoords(brushStart.x, brushStart.y);
       const end = convertToDataCoords(clampedX, clampedY);
@@ -315,7 +311,6 @@ export function ChartBrush({
 
     setIsDragging(false);
 
-    // Convert to data coordinates
     const start = convertToDataCoords(brushStart.x, brushStart.y);
     const end = convertToDataCoords(brushEnd.x, brushEnd.y);
 
@@ -328,7 +323,6 @@ export function ChartBrush({
 
     onBrushEnd?.(selection);
 
-    // Clear brush
     setBrushStart(null);
     setBrushEnd(null);
   };
@@ -612,6 +606,280 @@ export function ChartCrosshair({
         )}
       </div>
     </>
+  );
+}
+
+// ============================================================================
+// Brush Selector Component (Draggable Timeline Selection)
+// ============================================================================
+
+export interface ChartBrushSelectorProps {
+  /**
+   * Start of selection range (in data coordinates)
+   */
+  start: number;
+
+  /**
+   * End of selection range (in data coordinates)
+   */
+  end: number;
+
+  /**
+   * Minimum value of full data range
+   */
+  fullMin: number;
+
+  /**
+   * Maximum value of full data range
+   */
+  fullMax: number;
+
+  /**
+   * Callback when selection changes
+   */
+  onSelectionChange: (newStart: number, newEnd: number) => void;
+
+  /**
+   * Format function for displaying dates
+   */
+  formatLabel?: (value: number) => string;
+
+  /**
+   * Selection color
+   */
+  color?: string;
+
+  /**
+   * Container class name (used for calculating positions)
+   */
+  containerClass?: string;
+}
+
+/**
+ * Draggable brush selector for timeline navigation
+ * Similar to video editing crop tools
+ *
+ * @example
+ * ```tsx
+ * <BarChart.Root series={minimapSeries}>
+ *   <BarChart.Canvas />
+ *   <ChartBrushSelector
+ *     start={visibleRange.start}
+ *     end={visibleRange.end}
+ *     fullMin={fullTimeRange.min}
+ *     fullMax={fullTimeRange.max}
+ *     onSelectionChange={(start, end) =>
+ *       setBrushSelection({ xStart: start, xEnd: end })
+ *     }
+ *   />
+ * </BarChart.Root>
+ * ```
+ */
+export function ChartBrushSelector({
+  start,
+  end,
+  fullMin,
+  fullMax,
+  onSelectionChange,
+  formatLabel,
+  color = "#3b82f6",
+  containerClass = "minimap-container",
+}: ChartBrushSelectorProps) {
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [isResizingLeft, setIsResizingLeft] = React.useState(false);
+  const [isResizingRight, setIsResizingRight] = React.useState(false);
+  const [dragStart, setDragStart] = React.useState({
+    x: 0,
+    startVal: 0,
+    endVal: 0,
+  });
+
+  const rangeWidth = fullMax - fullMin;
+  const leftPercent = ((start - fullMin) / rangeWidth) * 100;
+  const widthPercent = ((end - start) / rangeWidth) * 100;
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('ChartBrushSelector render:', {
+      start,
+      end,
+      fullMin,
+      fullMax,
+      leftPercent: leftPercent.toFixed(2) + '%',
+      widthPercent: widthPercent.toFixed(2) + '%',
+      containerClass,
+      selectionBox: {
+        leftPosition: leftPercent + '%',
+        width: widthPercent + '%'
+      }
+    });
+  }, [start, end, fullMin, fullMax, leftPercent, widthPercent, containerClass]);
+
+  const handleMouseDown = (
+    e: React.MouseEvent,
+    type: "left" | "right" | "body"
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (type === "left") {
+      setIsResizingLeft(true);
+    } else if (type === "right") {
+      setIsResizingRight(true);
+    } else {
+      setIsDragging(true);
+    }
+
+    setDragStart({ x: e.clientX, startVal: start, endVal: end });
+  };
+
+  React.useEffect(() => {
+    if (!isDragging && !isResizingLeft && !isResizingRight) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const container = document.querySelector(
+        `.${containerClass}`
+      ) as HTMLElement;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const containerWidth = rect.width;
+      const deltaX = e.clientX - dragStart.x;
+      const deltaValue = (deltaX / containerWidth) * rangeWidth;
+
+      if (isDragging) {
+        // Move entire selection
+        const duration = dragStart.endVal - dragStart.startVal;
+        let newStart = dragStart.startVal + deltaValue;
+        let newEnd = dragStart.endVal + deltaValue;
+
+        // Clamp to bounds
+        if (newStart < fullMin) {
+          newStart = fullMin;
+          newEnd = fullMin + duration;
+        }
+        if (newEnd > fullMax) {
+          newEnd = fullMax;
+          newStart = fullMax - duration;
+        }
+
+        onSelectionChange(newStart, newEnd);
+      } else if (isResizingLeft) {
+        // Resize from left
+        let newStart = dragStart.startVal + deltaValue;
+        newStart = Math.max(
+          fullMin,
+          Math.min(newStart, dragStart.endVal - rangeWidth * 0.01)
+        ); // Min 1% width
+        onSelectionChange(newStart, dragStart.endVal);
+      } else if (isResizingRight) {
+        // Resize from right
+        let newEnd = dragStart.endVal + deltaValue;
+        newEnd = Math.min(
+          fullMax,
+          Math.max(newEnd, dragStart.startVal + rangeWidth * 0.01)
+        ); // Min 1% width
+        onSelectionChange(dragStart.startVal, newEnd);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizingLeft(false);
+      setIsResizingRight(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [
+    isDragging,
+    isResizingLeft,
+    isResizingRight,
+    dragStart,
+    rangeWidth,
+    fullMin,
+    fullMax,
+    onSelectionChange,
+    containerClass,
+  ]);
+
+  return (
+    <div className="absolute inset-0" style={{ zIndex: 100 }}>
+      {/* Dimmed overlay on left */}
+      <div
+        className="absolute inset-y-0 bg-black/50"
+        style={{ left: 0, width: `${leftPercent}%`, pointerEvents: 'none' }}
+      />
+
+      {/* Dimmed overlay on right */}
+      <div
+        className="absolute inset-y-0 bg-black/50"
+        style={{ left: `${leftPercent + widthPercent}%`, right: 0, pointerEvents: 'none' }}
+      />
+
+      {/* Selection box */}
+      <div
+        className={`absolute inset-y-0 group ${
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        }`}
+        style={{
+          left: `${leftPercent}%`,
+          width: `${widthPercent}%`,
+          zIndex: 101,
+          pointerEvents: 'auto'
+        }}
+        onMouseDown={(e) => handleMouseDown(e, "body")}
+      >
+        {/* Border with rounded corners */}
+        <div
+          className="absolute inset-0 border-4 rounded-lg pointer-events-none"
+          style={{ borderColor: color }}
+        />
+
+        {/* Left handle */}
+        <div
+          className="absolute left-0 inset-y-0 w-8 cursor-ew-resize flex items-center justify-center"
+          onMouseDown={(e) => handleMouseDown(e, "left")}
+          style={{
+            zIndex: 103,
+            pointerEvents: 'auto',
+            marginLeft: '-16px' // Half of w-8 to center on edge
+          }}
+        >
+          {/* White circular handle */}
+          <div
+            className="w-6 h-12 bg-white rounded-full border-2 border-gray-400 hover:scale-110 transition-transform shadow-lg"
+            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
+          />
+        </div>
+
+        {/* Right handle */}
+        <div
+          className="absolute right-0 inset-y-0 w-8 cursor-ew-resize flex items-center justify-center"
+          onMouseDown={(e) => handleMouseDown(e, "right")}
+          style={{
+            zIndex: 103,
+            pointerEvents: 'auto',
+            marginRight: '-16px' // Half of w-8 to center on edge
+          }}
+        >
+          {/* White circular handle */}
+          <div
+            className="w-6 h-12 bg-white rounded-full border-2 border-gray-400 hover:scale-110 transition-transform shadow-lg"
+            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
+          />
+        </div>
+
+
+        {/* Center position indicator (vertical dashed line) */}
+        <div className="absolute left-1/2 inset-y-0 w-px border-l-2 border-dashed border-white/40 pointer-events-none" />
+      </div>
+    </div>
   );
 }
 

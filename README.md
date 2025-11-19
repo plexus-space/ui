@@ -1,51 +1,33 @@
 # Plexus UI
 
-> The foundation for all future human-computer interaction for physical systems.
+> GPU-accelerated component library for physical systems.
 
-A primitive-first, WebGPU-accelerated component library for physical systems.
+A primitive-first, WebGPU-accelerated component library for real-time visualization of physical systems.
 
 ## Why Plexus UI?
 
-**For Physical Systems:** Standard web UI libraries optimize for forms, dashboards, and CRUD apps. Plexus UI is built for real-time physical system visualization: medical devices, aircraft HUDs, autonomous vehicle perception, and defense systems.
+**For Physical Systems:** Standard web UI libraries optimize for forms, dashboards, and CRUD apps. Plexus UI is built for real-time physical system visualization: medical devices, aircraft HUDs, robotics, and industrial monitoring.
 
 **GPU-Accelerated:** WebGPU and WebGL2 rendering pipelines for smooth 60fps visualization. Handle 100k+ data points in real-time. Zero-copy buffer updates for streaming sensor data.
 
-**Primitive-First Architecture:** You get the core WebGPU primitives and control the data pipeline. Maximum performance for deep-tech use cases. No black-box abstractions.
+**Primitive-First Architecture:** You get the core rendering primitives and control the data pipeline. Maximum performance for deep-tech use cases. No black-box abstractions.
 
-## Installation
+---
 
-```bash
-npx @plexusui/cli init
-```
-
-### Add Components
+## Quick Start
 
 ```bash
-npx @plexusui/cli add auto-dashboard
-npx @plexusui/cli add waterfall-chart
-npx @plexusui/cli add control-chart
+# Clone and install
+git clone https://github.com/annschulte/plexus-ui.git
+cd plexus-ui
+npm install
+
+# Run playground with demos
+cd playground
+npm run dev
 ```
 
-### Use Natural Language
-
-```tsx
-import { AutoDashboard } from "@/components/lib/auto-dashboard";
-
-export default function Dashboard() {
-  return (
-    <AutoDashboard
-      query="Show me vibration FFT with bearing fault detection"
-      dataSource={{
-        type: "websocket",
-        url: "ws://localhost:8080/sensors",
-      }}
-      onAlert={(alert) => console.log(alert)}
-    />
-  );
-}
-```
-
-**That's it.** The dashboard auto-generates, connects to your data, and starts detecting anomalies.
+Open http://localhost:3000 to see live demos.
 
 ---
 
@@ -53,152 +35,244 @@ export default function Dashboard() {
 
 ### 🎨 16 GPU-Accelerated Components
 
-```bash
-# Time series & signals
-npx @plexusui/cli add line-chart
-npx @plexusui/cli add waterfall-chart
-npx @plexusui/cli add control-chart
+**Time Series & Signals:**
+- Line Chart - Multi-series, streaming, 100k+ points
+- Waterfall/Spectrogram - Time-frequency analysis with FFT
+- Control Chart (SPC) - Statistical process control
 
-# Statistical & quality
-npx @plexusui/cli add histogram
-npx @plexusui/cli add scatter-plot
-npx @plexusui/cli add heatmap-chart
+**Statistical & Quality:**
+- Histogram - Auto-binning, normal curve overlay
+- Scatter Chart - Point clouds, variable sizes
+- Heatmap - 2D grids, thermal imaging
 
-# Aerospace & defense
-npx @plexusui/cli add attitude-indicator
-npx @plexusui/cli add compass-rose
-npx @plexusui/cli add 3d-model-viewer
+**Aerospace & Defense:**
+- Attitude Indicator - Aviation artificial horizon
+- Radar Chart - Polar display, ATC-style
+- 3D Model Viewer - STL/OBJ/GLTF with thermal overlay
 
-# Industrial & monitoring
-npx @plexusui/cli add gauge
-npx @plexusui/cli add status-grid
-npx @plexusui/cli add gantt
-```
+**Industrial & Monitoring:**
+- Gauge - Circular/semi-circular with zones
+- Status Grid - KPI dashboard with sparklines
+- Gantt Chart - Timeline scheduling
 
 **All components:**
 
-- Render 100k+ points at 60fps
-- Zero-copy buffer updates
-- Automatic axis scaling
-- Dark mode support
-- TypeScript + React
+- ✅ Render 100k+ points at 60fps
+- ✅ Zero-copy buffer updates
+- ✅ Automatic axis scaling
+- ✅ Dark mode support
+- ✅ TypeScript + React
 
-### 🤖 AI-Powered Dashboard Generation
+### 🔌 Real-Time Data Connectors
+
+**Connect to Raspberry Pi sensors in 2 clicks:**
 
 ```tsx
-// Describe your dashboard in plain English
-<AutoDashboard
-  query="Monitor motor temperature, vibration, and speed with alerts if temperature exceeds 80°C"
-  dataSource={{ type: "serial", port: "/dev/ttyUSB0", baudRate: 115200 }}
+import { useRaspberryPi } from '@plexusui/components/lib/connectors';
+import { LineChart } from '@plexusui/components/charts';
+
+function SensorDashboard() {
+  // Step 1: Connect to your Pi
+  const { data, status } = useRaspberryPi('raspberrypi.local');
+
+  // Step 2: Visualize
+  return <LineChart series={[{ name: 'Temperature', data: data?.temperature }]} />;
+}
+```
+
+**What's included:**
+
+- ✅ **WebSocketConnector** - Real-time streaming (WebSocket)
+- ✅ **HTTPConnector** - Polling REST APIs
+- ✅ **RaspberryPiConnector** - Super-simple Pi integration
+- ✅ **React Hooks** - `useRaspberryPi`, `useWebSocket`, `useHTTP`
+- ✅ **Auto-reconnect** - Built-in connection management
+- ✅ **TypeScript** - Fully typed data streams
+
+**Coming soon:**
+
+- 🚧 **MAVLinkConnector** - Drones (PX4, ArduPilot)
+- 🚧 **SerialConnector** - USB/Serial devices (Arduino, embedded)
+- 🚧 **MQTTConnector** - IoT telemetry
+
+**[→ Full Documentation](./packages/components/lib/connectors/README.md)**
+
+### 🎬 Smooth Animations
+
+**Spring-based animations for data transitions (no dependencies):**
+
+```tsx
+import { useAnimatedData } from '@plexusui/components/lib/animations';
+import { LineChart } from '@plexusui/components/charts';
+
+function AnimatedChart() {
+  const [rawData, setRawData] = useState(sensorData);
+
+  // Smooth spring animation on data updates
+  const animatedData = useAnimatedData(rawData, {
+    stiffness: 170,
+    damping: 26
+  });
+
+  return <LineChart series={[{ name: 'Sensor', data: animatedData }]} />;
+}
+```
+
+**What's included:**
+
+- ✅ **useSpring** - Animate single values
+- ✅ **useAnimatedData** - Animate entire datasets
+- ✅ **useStaggeredSpring** - Staggered animations
+- ✅ **Custom easing** - Linear, quad, cubic, custom functions
+- ✅ **Zero dependencies** - Pure TypeScript/React
+
+### 📦 Bundle Optimization
+
+**3D components are code-split by default:**
+
+```tsx
+// ✅ Good: Only loads 2D charts (~50KB)
+import { LineChart, BarChart } from '@plexusui/components/charts';
+
+// ✅ Good: Only loads Three.js when needed
+import { PointCloudViewer } from '@plexusui/components/charts/3d';
+
+// ❌ Bad: Loads everything including Three.js (~500KB)
+// (This is now prevented - 3D components are in separate entry)
+```
+
+**Bundle sizes:**
+
+- 2D Charts only: ~50-80KB gzipped
+- 3D Charts: +~400KB (Three.js)
+- Connectors: +~5KB
+
+---
+
+## Component Examples
+
+### Line Chart - Streaming ECG
+
+```tsx
+import { LineChart } from "@plexusui/components/charts/line-chart";
+
+<LineChart
+  series={[
+    {
+      name: "Heart Rate",
+      color: "#ef4444",
+      data: heartRateData, // Array of {x, y} points
+    },
+  ]}
+  width={800}
+  height={400}
+  showGrid
+  showAxes
+  timeAxis
+  yAxis={{ domain: [50, 110], label: "BPM" }}
 />
 ```
 
-Plexus UI automatically:
-
-- ✅ Parses your intent (temperature, vibration, speed)
-- ✅ Selects appropriate charts (line, gauge, status)
-- ✅ Generates responsive layout
-- ✅ Connects to your data source
-- ✅ Sets up alert rules (temp > 80°C)
-
-### 🔌 Universal Data Connectors
-
-Connect to any data source:
+### Gauge - Temperature Monitor
 
 ```tsx
-// WebSocket (most common)
-dataSource={{ type: "websocket", url: "ws://localhost:8080" }}
+import { Gauge } from "@plexusui/components/charts/gauge";
 
-// Serial / USB (embedded systems)
-dataSource={{ type: "serial", port: "/dev/ttyUSB0", baudRate: 115200 }}
-
-// HTTP Polling (REST APIs)
-dataSource={{ type: "http", url: "https://api.example.com/sensors", interval: 1000 }}
-
-// Server-Sent Events (SSE)
-dataSource={{ type: "sse", url: "https://api.example.com/stream" }}
-
-// Simulation (demos)
-dataSource={{ type: "simulation", generator: () => ({ value: Math.random() }) }}
+<Gauge
+  value={temperature}
+  min={-20}
+  max={50}
+  label="Temperature"
+  unit="°C"
+  variant="semi-circular"
+  zones={[
+    { from: -20, to: 0, color: "#3b82f6" },
+    { from: 0, to: 15, color: "#06b6d4" },
+    { from: 15, to: 25, color: "#10b981" },
+    { from: 25, to: 50, color: "#ef4444" },
+  ]}
+  width={400}
+  height={300}
+/>
 ```
 
-All connectors support:
-
-- Automatic reconnection
-- Backpressure handling
-- Error recovery
-- Connection status indicators
-
-### 🧠 Built-In Intelligence (Free Tier)
-
-#### Rules Engine
+### Waterfall Chart - FFT Analysis
 
 ```tsx
-import { SimpleRulesEngine } from "@/components/lib/rules-engine";
+import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
 
-const engine = new SimpleRulesEngine();
+<WaterfallChart
+  data={fftData}
+  width={800}
+  height={600}
+  colormap="viridis"
+  xLabel="Frequency (Hz)"
+  yLabel="Time"
+  showColorbar
+/>
+```
 
-engine.addRule({
-  id: "high-temp",
-  metricId: "temperature",
-  condition: "greater_than",
-  threshold: 80,
-  severity: "critical",
-  message: "Motor overheating",
+### Attitude Indicator - Aviation Display
+
+```tsx
+import { AttitudeIndicator } from "@plexusui/components/charts/attitude-indicator";
+
+<AttitudeIndicator
+  pitch={pitchDegrees}
+  roll={rollDegrees}
+  showSlipSkid
+  width={400}
+  height={400}
+/>
+```
+
+### Chart Minimap - Navigate Large Datasets
+
+```tsx
+import {
+  ChartMinimap,
+  MinimapContainer,
+  LineChart,
+  BarChart
+} from "@plexusui/components/charts";
+
+const [visibleRange, setVisibleRange] = useState({
+  start: oneYearAgo,
+  end: now
 });
 
-engine.evaluate({ temperature: 85 });
-// → { triggered: true, severity: "critical", message: "Motor overheating" }
+<MinimapContainer
+  gap={20}
+  minimap={
+    <ChartMinimap
+      series={fullDataset}
+      visibleRange={visibleRange}
+      fullRange={{ min: dataStart, max: dataEnd }}
+      onRangeChange={(start, end) => setVisibleRange({ start, end })}
+      ChartComponent={LineChart.Root}
+      CanvasComponent={LineChart.Canvas}
+      formatLabel={(timestamp) => new Date(timestamp).toLocaleDateString()}
+      height={100}
+      maxPoints={500}
+      downsampleMethod="minmax"
+    />
+  }
+>
+  <BarChart
+    series={filteredData}
+    width="100%"
+    height={400}
+    showTooltip
+  />
+</MinimapContainer>
 ```
 
-**Free features:**
-
-- Threshold rules (>, <, =, between, outside)
-- Multiple metrics
-- Custom severity levels
-- Alert throttling
-
-#### Anomaly Detection
-
-```tsx
-import { StatisticalAnomalyDetector } from "@/components/lib/anomaly-detection";
-
-const detector = new StatisticalAnomalyDetector();
-
-detector.addDataPoint({ temperature: 85 });
-// → { type: "spike", severity: "high", confidence: 0.95 }
-```
-
-**Free features:**
-
-- Spike detection (Z-score)
-- Drift detection (sliding window)
-- Flatline detection (sensor failures)
-- Statistical confidence scores
-
-#### Root Cause Analysis
-
-```tsx
-import { BasicRootCauseAnalyzer } from "@/components/lib/root-cause-analysis";
-
-const analyzer = new BasicRootCauseAnalyzer();
-
-const rootCause = analyzer.analyze(
-  { type: "spike", metricId: "vibration" },
-  { temperature: 85, speed: 3600, vibration: 12 }
-);
-// → {
-//   primary: { cause: "bearing_fault", confidence: 0.85 },
-//   recommendation: "Inspect bearing for wear. Check lubrication."
-// }
-```
-
-**Free features:**
-
-- Temporal correlation
-- Domain-specific patterns (bearing faults, sensor failures)
-- Confidence scoring
-- Actionable recommendations
+**Features:**
+- Automatic downsampling (LTTB or MinMax algorithms)
+- Draggable range selector with handles
+- Works with any chart type (Line, Bar, Scatter, etc.)
+- Date/value labels on selection boundaries
+- Smooth 60fps interaction
 
 ---
 
@@ -208,89 +282,62 @@ const rootCause = analyzer.analyze(
 
 **Predictive Maintenance Dashboard**
 
-- Vibration FFT analysis (bearing fault detection)
-- Temperature trends with anomaly alerts
-- Motor speed monitoring
-- Automated failure diagnosis
+- Vibration FFT analysis
+- Temperature trends monitoring
+- Motor speed tracking
+- Real-time alerts
 
-```tsx
-<AutoDashboard
-  query="Monitor CNC machine vibration with bearing fault detection and temperature alerts"
-  dataSource={{ type: "websocket", url: "ws://factory.local:8080/cnc-01" }}
-/>
-```
+Components: Line Chart, Waterfall Chart, Gauges, Status Grid
 
 ### ✈️ Aerospace
 
 **Flight Test Monitoring**
 
 - Attitude indicator (pitch/roll/yaw)
-- Airspeed, altitude, vertical speed
-- Engine parameters (EGT, RPM, fuel flow)
+- Airspeed, altitude displays
+- Engine parameters
 - G-force visualization
 
-```tsx
-<AutoDashboard
-  query="Show aircraft attitude, airspeed, altitude, and engine parameters"
-  dataSource={{ type: "serial", port: "/dev/ttyUSB0", baudRate: 115200 }}
-/>
-```
+Components: Attitude Indicator, Gauges, Line Charts
 
 ### 🤖 Robotics
 
 **Robot Telemetry Dashboard**
 
 - Joint positions and velocities
-- Battery voltage and current
-- IMU data (accelerometer, gyroscope)
-- 3D robot model with real-time pose
+- Battery monitoring
+- IMU data visualization
+- Sensor arrays
 
-```tsx
-<AutoDashboard
-  query="Display robot joint positions, battery status, and 3D model"
-  dataSource={{ type: "websocket", url: "ws://robot.local:9090" }}
-/>
-```
+Components: Bar Charts, Line Charts, Heatmaps, Status Grid
 
 ### 🏥 Medical Devices
 
 **Patient Monitoring**
 
-- ECG waveform (real-time)
+- ECG waveform streaming
 - Heart rate, SpO2, blood pressure
-- Alert rules for abnormal vitals
-- Historical trend analysis
+- Vital signs tracking
+- Historical trends
 
-```tsx
-<AutoDashboard
-  query="Monitor ECG, heart rate, SpO2 with alerts for abnormal values"
-  dataSource={{ type: "websocket", url: "ws://monitor.local:3000" }}
-/>
-```
+Components: Line Charts, Gauges, Status Grid
 
 ### 🚗 Automotive
 
-**Vehicle CAN Bus Dashboard**
+**Vehicle Diagnostics**
 
-- Engine RPM, coolant temp, throttle position
+- Engine RPM, temperature
 - Battery voltage, fuel level
-- Error code detection
-- OBD-II diagnostics
+- CAN bus data visualization
+- Error monitoring
 
-```tsx
-<AutoDashboard
-  query="Show engine RPM, temperature, battery voltage from CAN bus"
-  dataSource={{ type: "serial", port: "/dev/ttyUSB0", baudRate: 500000 }}
-/>
-```
+Components: Gauges, Bar Charts, Line Charts
 
 ---
 
 ## Architecture
 
-Plexus UI is built on three layers:
-
-### 1. GPU Rendering (WebGPU + WebGL2)
+### GPU Rendering (WebGPU + WebGL2)
 
 All charts use dual rendering:
 
@@ -299,42 +346,108 @@ All charts use dual rendering:
 - Zero-copy buffer updates for streaming data
 - Instanced rendering for 100k+ points
 
-### 2. React Components (shadcn-style)
+### React Components
+
+Components are designed to be copied into your project:
 
 ```tsx
-// Copy components into your project
-npx @plexusui/cli add waterfall-chart
+import { LineChart } from "@plexusui/components/charts/line-chart";
+import { Gauge } from "@plexusui/components/charts/gauge";
+import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
 
-// Import and use
-import { WaterfallChart } from "@/components/charts/waterfall-chart"
-
-<WaterfallChart
-  data={fftData}
-  width={800}
-  height={600}
-  colormap="viridis"
-/>
+// Use them in your app
+<LineChart series={data} width={800} height={400} />
 ```
 
-**No NPM dependencies.** Components are copied into your codebase for full control.
+**Benefits:**
+- Full control over the code
+- No NPM dependency issues
+- Customize as needed
+- Copy only what you use
 
-### 3. Intelligence Layer
+### Technology Stack
 
-```tsx
-// All intelligence features work standalone
-import {
-  SimpleRulesEngine,
-  StatisticalAnomalyDetector,
-  BasicRootCauseAnalyzer,
-} from "@/components/lib";
+- **Framework**: Next.js 15 + React 19
+- **Styling**: Tailwind CSS + Radix UI
+- **Rendering**: Three.js + react-three-fiber
+- **Language**: TypeScript
+- **Build**: Turborepo monorepo
 
-// Or use the integrated auto-dashboard
-import { AutoDashboard } from "@/components/lib/auto-dashboard";
+---
+
+## Project Structure
+
 ```
+plexus-ui/
+├── packages/
+│   ├── components/          # All chart components
+│   │   ├── charts/          # Individual chart components
+│   │   └── lib/             # Utilities, connectors, color scales
+│   └── cli/                 # CLI tool (coming soon)
+│
+└── playground/              # Interactive demos
+    ├── app/                 # Next.js app with 4 dashboards
+    ├── examples/            # 17 individual component examples
+    └── components/          # Demo UI components
+```
+
+---
+
+## Playground Demos
+
+The playground includes 6 interactive dashboards showcasing real-time streaming data:
+
+1. **Live Audio** - Real-time microphone input with GPU-accelerated FFT spectrogram, frequency analysis, and statistical aggregation
+2. **Motion Detection** - Camera-based motion heatmap with 20x20 grid tracking and historical analysis
+3. **Device Tilt** - Real-time gyroscope/accelerometer data visualized with aviation attitude indicator
+4. **Health Monitoring** - ECG, EEG, vital signs simulation
+5. **Robotics** - Motor speeds, battery cells, sensor arrays
+6. **Energy Management** - Power consumption, solar generation
+
+Plus 17 individual component examples in `/examples/*`.
+
+---
+
+## Component Library
+
+### Available Components (16 total)
+
+**Charts:**
+- Line Chart
+- Scatter Chart
+- Bar Chart
+- Area Chart
+- Histogram Chart
+- Control Chart (SPC)
+- Heatmap Chart
+- Radar Chart
+- Waterfall/Spectrogram Chart
+
+**Instruments:**
+- Gauge
+- Attitude Indicator
+
+**Data Display:**
+- Status Grid
+- Data Grid
+- Gantt Chart
+
+**3D Visualization:**
+- 3D Model Viewer
+- Point Cloud Viewer
+
+### Shared Utilities
+
+- Color scales (viridis, plasma, inferno, turbo, etc.)
+- Data utilities (LTTB downsampling, FFT, binning)
+- Point cloud loaders (XYZ, PCD, LAS)
+- Timezone utilities
+
+---
 
 ## Contributing
 
-We love contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+We love contributions!
 
 **Quick ways to contribute:**
 
@@ -343,6 +456,7 @@ We love contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 - 💡 Request features via [Discussions](https://github.com/annschulte/plexus-ui/discussions)
 - 📝 Improve documentation
 - 🎨 Build example dashboards
+- 🔧 Submit PRs for bug fixes or new components
 
 ---
 
@@ -357,6 +471,25 @@ MIT License - see [LICENSE](./LICENSE) for details.
 **Share your project!** Open a PR to add your project here.
 
 <!-- Coming soon: showcase of real-world projects -->
+
+---
+
+## Roadmap
+
+**Next up:**
+
+- 🚧 CLI tool for easy component installation
+- 🚧 More data connectors (WebSocket, MAVLink, Serial)
+- 🚧 Additional chart types (polar, sankey, treemap)
+- 🚧 Mobile/touch optimization
+- 🚧 Accessibility improvements
+
+**Future:**
+
+- Plugin system for custom renderers
+- Theme customization UI
+- Real-time collaboration features
+- Cloud deployment templates
 
 ---
 

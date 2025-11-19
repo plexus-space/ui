@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { DataGrid } from "@plexusui/components/charts/data-grid";
 import { ComponentPreview } from "@/components/component-preview";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 
 // ============================================================================
 // Example 1: Real-time Telemetry Table
@@ -608,7 +611,8 @@ const dataGridProps: ApiProp[] = [
     name: "columns",
     type: "Column<T>[]",
     default: "required",
-    description: "Column definitions. Column: { key: keyof T, header: string, width?: number, align?: 'left'|'center'|'right', formatter?: (value) => ReactNode }",
+    description:
+      "Column definitions. Column: { key: keyof T, header: string, width?: number, align?: 'left'|'center'|'right', formatter?: (value) => ReactNode }",
   },
   {
     name: "sortable",
@@ -752,7 +756,8 @@ const dataGridRootProps: ApiProp[] = [
     name: "children",
     type: "ReactNode",
     default: "undefined",
-    description: "Primitive components (Table, Header, Body, Footer, Pagination)",
+    description:
+      "Primitive components (Table, Header, Body, Footer, Pagination)",
   },
 ];
 
@@ -761,7 +766,8 @@ const dataGridPrimitiveProps: ApiProp[] = [
     name: "DataGrid.Table",
     type: "component",
     default: "-",
-    description: "Table container. Props: striped?: boolean, hoverable?: boolean, compact?: boolean",
+    description:
+      "Table container. Props: striped?: boolean, hoverable?: boolean, compact?: boolean",
   },
   {
     name: "DataGrid.Header",
@@ -810,7 +816,8 @@ export function DataGridExamples() {
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            DataGrid component for displaying tabular data with sorting, filtering, and pagination
+            DataGrid component for displaying tabular data with sorting,
+            filtering, and pagination
           </p>
         </div>
 
@@ -828,7 +835,7 @@ export function DataGridExamples() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">DataGrid.Root (Composable)</h3>
+          <h3 className="text-lg font-semibold">DataGrid.Root </h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Root component for building custom layouts with primitives
           </p>

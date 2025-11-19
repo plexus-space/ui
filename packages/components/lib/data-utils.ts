@@ -740,12 +740,29 @@ export function fft(input: number[]): Complex[] {
  */
 export type WindowFunction = "hann" | "hamming" | "blackman" | "none";
 
+export interface WindowResult {
+  windowed: number[];
+  windowCorrection: number; // Normalization factor for power spectrum
+}
+
 export function applyWindow(
   data: number[],
   windowType: WindowFunction = "hann"
 ): number[] {
+  const result = applyWindowWithCorrection(data, windowType);
+  return result.windowed;
+}
+
+/**
+ * Apply window function with correction factor for accurate power spectrum
+ */
+export function applyWindowWithCorrection(
+  data: number[],
+  windowType: WindowFunction = "hann"
+): WindowResult {
   const n = data.length;
   const windowed = new Array(n);
+  let sumSquared = 0;
 
   for (let i = 0; i < n; i++) {
     let w = 1;
@@ -769,21 +786,53 @@ export function applyWindow(
     }
 
     windowed[i] = data[i] * w;
+    sumSquared += w * w;
   }
 
-  return windowed;
+  // Window correction factor for power spectrum
+  // This compensates for energy loss due to windowing
+  const windowCorrection = sumSquared / n;
+
+  return { windowed, windowCorrection };
 }
 
 /**
  * Convert FFT output to power spectrum (magnitude squared)
+ *
+ * @param fftOutput - Complex FFT output
+ * @param windowCorrection - Window normalization factor (default 1.0)
+ * @returns One-sided power spectrum (positive frequencies only)
  */
-export function fftToPowerSpectrum(fftOutput: Complex[]): number[] {
+export function fftToPowerSpectrum(
+  fftOutput: Complex[],
+  windowCorrection = 1.0
+): number[] {
   const n = fftOutput.length;
   const spectrum = new Array(Math.floor(n / 2)); // Only positive frequencies
 
+  // For spectrograms, we want relative power with good dynamic range
+  // Normalization strategy:
+  // - Compensate for window energy loss (windowCorrection)
+  // - Do NOT divide by N for visualization (preserves dynamic range)
+  // - The dB conversion handles the scaling naturally
+  //
+  // Note: For absolute power spectral density (PSD), you'd divide by N
+  // But for spectrograms, this washes out dynamic range
+  const normFactor = windowCorrection;
+
   for (let i = 0; i < spectrum.length; i++) {
     const mag = complexMagnitude(fftOutput[i]);
-    spectrum[i] = mag * mag; // Power = magnitude squared
+
+    // Calculate power with light normalization
+    let power = (mag * mag) / normFactor;
+
+    // Factor of 2 for one-sided spectrum (all bins except DC and Nyquist)
+    // This accounts for the power in negative frequencies
+    if (i > 0 && i < spectrum.length - 1) {
+      power *= 2;
+    }
+
+    spectrum[i] = power;
   }
 
   return spectrum;
@@ -836,14 +885,20 @@ export function generateSpectrogram(
     // Extract window
     const window = signal.slice(timeIndex, timeIndex + fftSize);
 
-    // Apply window function
-    const windowed = applyWindow(window, windowType);
+    // Apply window function with correction factor
+    const { windowed, windowCorrection } = applyWindowWithCorrection(
+      window,
+      windowType
+    );
 
     // Compute FFT
     const fftOutput = fft(windowed);
 
-    // Convert to power spectrum
-    const powerSpectrum = fftToPowerSpectrum(fftOutput);
+    // Convert to power spectrum with window correction
+    const powerSpectrum = fftToPowerSpectrum(
+      fftOutput,
+      windowCorrection
+    );
 
     // Add data points for each frequency bin
     for (let freqBin = 0; freqBin < numFreqBins; freqBin++) {
@@ -936,18 +991,23 @@ fn bitReversePass(@builtin(global_invocation_id) global_id: vec3<u32>) {
   let bits = u32(log2(f32(params.fftSize)));
   let reversed_idx = bitReverse(idx, bits);
 
-  // Only swap if idx < reversed_idx to avoid double-swapping
-  if (idx < reversed_idx) {
-    let temp_real = input_real[idx];
-    let temp_imag = input_imag[idx];
-    output_real[idx] = input_real[reversed_idx];
-    output_imag[idx] = input_imag[reversed_idx];
-    output_real[reversed_idx] = temp_real;
-    output_imag[reversed_idx] = temp_imag;
-  } else if (idx == reversed_idx) {
-    output_real[idx] = input_real[idx];
-    output_imag[idx] = input_imag[idx];
+  // Swap elements to bit-reversed positions
+  // Only swap if idx <= reversed_idx to avoid double-swapping
+  if (idx <= reversed_idx) {
+    if (idx == reversed_idx) {
+      // Element maps to itself (e.g., 0 -> 0, or middle element)
+      output_real[idx] = input_real[idx];
+      output_imag[idx] = input_imag[idx];
+    } else {
+      // Swap pair: idx <-> reversed_idx
+      // Write both elements in one thread to ensure atomicity
+      output_real[idx] = input_real[reversed_idx];
+      output_imag[idx] = input_imag[reversed_idx];
+      output_real[reversed_idx] = input_real[idx];
+      output_imag[reversed_idx] = input_imag[idx];
+    }
   }
+  // If idx > reversed_idx, this pair was already handled by another thread
 }
 
 @compute @workgroup_size(256)
@@ -1264,14 +1324,20 @@ export async function generateSpectrogramGPU(
       // Extract window
       const window = signal.slice(timeIndex, timeIndex + fftSize);
 
-      // Apply window function
-      const windowed = applyWindow(window, windowType);
+      // Apply window function with correction factor
+      const { windowed, windowCorrection } = applyWindowWithCorrection(
+        window,
+        windowType
+      );
 
       // Compute FFT on GPU
       const fftOutput = await fftCompute.compute(windowed);
 
-      // Convert to power spectrum
-      const powerSpectrum = fftToPowerSpectrum(fftOutput);
+      // Convert to power spectrum with window correction
+      const powerSpectrum = fftToPowerSpectrum(
+        fftOutput,
+        windowCorrection
+      );
 
       // Add data points for each frequency bin
       for (let freqBin = 0; freqBin < numFreqBins; freqBin++) {

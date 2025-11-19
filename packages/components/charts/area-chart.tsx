@@ -528,6 +528,18 @@ function createWebGPUAreaRenderer(
     color: null as GPUBuffer | null,
   };
 
+  // Persistent buffer pools for series rendering (reused across frames)
+  type SeriesBufferSet = {
+    position: GPUBuffer;
+    color: GPUBuffer;
+    sizes: {
+      position: number;
+      color: number;
+    };
+  };
+  const areaBufferPool: SeriesBufferSet[] = []; // For area fills
+  const lineBufferPool: SeriesBufferSet[] = []; // For stroke lines
+
   const renderer = createWebGPURenderer<AreaRendererProps>({
     canvas,
     device,
@@ -630,8 +642,8 @@ function createWebGPUAreaRenderer(
 
       const cumulativeY = new Map<number, number>();
 
-      // Draw areas
-      // NOTE: Create buffers per series to avoid overwriting data in multi-series scenarios
+      // Draw areas with buffer pooling
+      let areaIndex = 0;
       for (const s of series) {
         if (s.data.length < 2) continue;
 
@@ -654,30 +666,64 @@ function createWebGPUAreaRenderer(
         );
 
         if (areaGeometry.positions.length > 0) {
-          // Create buffers per series (cannot reuse across series in same frame)
-          const positionBuffer = device.createBuffer({
-            size: areaGeometry.positions.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
+          const requiredSizes = {
+            position: areaGeometry.positions.length * 4,
+            color: areaGeometry.colors.length * 4,
+          };
+
+          // Get or create buffer set for this area
+          let bufferSet = areaBufferPool[areaIndex];
+
+          if (!bufferSet) {
+            // Create new buffer set
+            bufferSet = {
+              position: device.createBuffer({
+                size: requiredSizes.position,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+              }),
+              color: device.createBuffer({
+                size: requiredSizes.color,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+              }),
+              sizes: requiredSizes,
+            };
+            areaBufferPool[areaIndex] = bufferSet;
+          } else {
+            // Resize buffers if needed
+            if (bufferSet.sizes.position < requiredSizes.position) {
+              bufferSet.position.destroy();
+              bufferSet.position = device.createBuffer({
+                size: requiredSizes.position,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+              });
+              bufferSet.sizes.position = requiredSizes.position;
+            }
+            if (bufferSet.sizes.color < requiredSizes.color) {
+              bufferSet.color.destroy();
+              bufferSet.color = device.createBuffer({
+                size: requiredSizes.color,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+              });
+              bufferSet.sizes.color = requiredSizes.color;
+            }
+          }
+
+          // Write data to buffers (reusing existing buffers)
           device.queue.writeBuffer(
-            positionBuffer,
+            bufferSet.position,
             0,
             new Float32Array(areaGeometry.positions)
           );
-
-          const colorBuffer = device.createBuffer({
-            size: areaGeometry.colors.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
           device.queue.writeBuffer(
-            colorBuffer,
+            bufferSet.color,
             0,
             new Float32Array(areaGeometry.colors)
           );
 
-          passEncoder.setVertexBuffer(0, positionBuffer);
-          passEncoder.setVertexBuffer(1, colorBuffer);
+          passEncoder.setVertexBuffer(0, bufferSet.position);
+          passEncoder.setVertexBuffer(1, bufferSet.color);
           passEncoder.draw(areaGeometry.positions.length / 2);
+          areaIndex++;
         }
 
         if (stacked) {
@@ -688,8 +734,17 @@ function createWebGPUAreaRenderer(
         }
       }
 
-      // Draw lines
-      // NOTE: Create buffers per series to avoid overwriting data in multi-series scenarios
+      // Clean up excess area buffers if series count decreased
+      while (areaBufferPool.length > areaIndex) {
+        const removed = areaBufferPool.pop();
+        if (removed) {
+          removed.position.destroy();
+          removed.color.destroy();
+        }
+      }
+
+      // Draw lines with buffer pooling
+      let lineIndex = 0;
       for (const s of series) {
         if (s.data.length < 2) continue;
 
@@ -705,30 +760,73 @@ function createWebGPUAreaRenderer(
         );
 
         if (lineGeometry.positions.length > 0) {
-          // Create buffers per series (cannot reuse across series in same frame)
-          const positionBuffer = device.createBuffer({
-            size: lineGeometry.positions.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
+          const requiredSizes = {
+            position: lineGeometry.positions.length * 4,
+            color: lineGeometry.colors.length * 4,
+          };
+
+          // Get or create buffer set for this line
+          let bufferSet = lineBufferPool[lineIndex];
+
+          if (!bufferSet) {
+            // Create new buffer set
+            bufferSet = {
+              position: device.createBuffer({
+                size: requiredSizes.position,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+              }),
+              color: device.createBuffer({
+                size: requiredSizes.color,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+              }),
+              sizes: requiredSizes,
+            };
+            lineBufferPool[lineIndex] = bufferSet;
+          } else {
+            // Resize buffers if needed
+            if (bufferSet.sizes.position < requiredSizes.position) {
+              bufferSet.position.destroy();
+              bufferSet.position = device.createBuffer({
+                size: requiredSizes.position,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+              });
+              bufferSet.sizes.position = requiredSizes.position;
+            }
+            if (bufferSet.sizes.color < requiredSizes.color) {
+              bufferSet.color.destroy();
+              bufferSet.color = device.createBuffer({
+                size: requiredSizes.color,
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+              });
+              bufferSet.sizes.color = requiredSizes.color;
+            }
+          }
+
+          // Write data to buffers (reusing existing buffers)
           device.queue.writeBuffer(
-            positionBuffer,
+            bufferSet.position,
             0,
             new Float32Array(lineGeometry.positions)
           );
-
-          const colorBuffer = device.createBuffer({
-            size: lineGeometry.colors.length * 4,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-          });
           device.queue.writeBuffer(
-            colorBuffer,
+            bufferSet.color,
             0,
             new Float32Array(lineGeometry.colors)
           );
 
-          passEncoder.setVertexBuffer(0, positionBuffer);
-          passEncoder.setVertexBuffer(1, colorBuffer);
+          passEncoder.setVertexBuffer(0, bufferSet.position);
+          passEncoder.setVertexBuffer(1, bufferSet.color);
           passEncoder.draw(lineGeometry.positions.length / 2);
+          lineIndex++;
+        }
+      }
+
+      // Clean up excess line buffers if series count decreased
+      while (lineBufferPool.length > lineIndex) {
+        const removed = lineBufferPool.pop();
+        if (removed) {
+          removed.position.destroy();
+          removed.color.destroy();
         }
       }
 
@@ -740,6 +838,18 @@ function createWebGPUAreaRenderer(
       // Clean up grid buffers
       gridBuffers.position?.destroy();
       gridBuffers.color?.destroy();
+      // Clean up area buffer pool
+      for (const bufferSet of areaBufferPool) {
+        bufferSet.position.destroy();
+        bufferSet.color.destroy();
+      }
+      areaBufferPool.length = 0;
+      // Clean up line buffer pool
+      for (const bufferSet of lineBufferPool) {
+        bufferSet.position.destroy();
+        bufferSet.color.destroy();
+      }
+      lineBufferPool.length = 0;
     },
   });
 

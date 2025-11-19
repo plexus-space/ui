@@ -14,7 +14,7 @@ import {
   type WebGPURenderer,
   useBaseChart,
 } from "./base-chart";
-import { createContext, useContext, useRef, useEffect, useMemo } from "react";
+import { createContext, useContext, useRef, useEffect, useMemo, useState } from "react";
 
 // ============================================================================
 // Scatter Chart Types
@@ -45,8 +45,8 @@ export interface ScatterChartProps {
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   showGrid?: boolean;
   showAxes?: boolean;
   showTooltip?: boolean;
@@ -481,6 +481,19 @@ function createWebGPUScatterRenderer(
     pointCoord: null as GPUBuffer | null,
   };
 
+  // Persistent buffer pool for series rendering (reused across frames)
+  type SeriesBufferSet = {
+    position: GPUBuffer;
+    color: GPUBuffer;
+    pointCoord: GPUBuffer;
+    sizes: {
+      position: number;
+      color: number;
+      pointCoord: number;
+    };
+  };
+  const seriesBufferPool: SeriesBufferSet[] = [];
+
   const renderer = createWebGPURenderer<ScatterRendererProps>({
     canvas,
     device,
@@ -732,8 +745,8 @@ function createWebGPUScatterRenderer(
         }
       }
 
-      // Draw scatter points
-      // NOTE: Create buffers per series to avoid overwriting data in multi-series scenarios
+      // Draw scatter points with buffer pooling
+      let seriesIndex = 0;
       for (const s of series) {
         if (s.data.length === 0) continue;
 
@@ -749,42 +762,94 @@ function createWebGPUScatterRenderer(
           opacity
         );
 
-        // Create buffers per series (cannot reuse across series in same frame)
-        const positionBuffer = device.createBuffer({
-          size: geometry.positions.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
+        const requiredSizes = {
+          position: geometry.positions.length * 4,
+          color: geometry.colors.length * 4,
+          pointCoord: geometry.pointCoords.length * 4,
+        };
+
+        // Get or create buffer set for this series
+        let bufferSet = seriesBufferPool[seriesIndex];
+
+        if (!bufferSet) {
+          // Create new buffer set
+          bufferSet = {
+            position: device.createBuffer({
+              size: requiredSizes.position,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            color: device.createBuffer({
+              size: requiredSizes.color,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            pointCoord: device.createBuffer({
+              size: requiredSizes.pointCoord,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            sizes: requiredSizes,
+          };
+          seriesBufferPool[seriesIndex] = bufferSet;
+        } else {
+          // Resize buffers if needed
+          if (bufferSet.sizes.position < requiredSizes.position) {
+            bufferSet.position.destroy();
+            bufferSet.position = device.createBuffer({
+              size: requiredSizes.position,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.position = requiredSizes.position;
+          }
+          if (bufferSet.sizes.color < requiredSizes.color) {
+            bufferSet.color.destroy();
+            bufferSet.color = device.createBuffer({
+              size: requiredSizes.color,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.color = requiredSizes.color;
+          }
+          if (bufferSet.sizes.pointCoord < requiredSizes.pointCoord) {
+            bufferSet.pointCoord.destroy();
+            bufferSet.pointCoord = device.createBuffer({
+              size: requiredSizes.pointCoord,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.pointCoord = requiredSizes.pointCoord;
+          }
+        }
+
+        // Write data to buffers (reusing existing buffers)
         device.queue.writeBuffer(
-          positionBuffer,
+          bufferSet.position,
           0,
           new Float32Array(geometry.positions)
         );
-
-        const colorBuffer = device.createBuffer({
-          size: geometry.colors.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
         device.queue.writeBuffer(
-          colorBuffer,
+          bufferSet.color,
           0,
           new Float32Array(geometry.colors)
         );
-
-        const pointCoordBuffer = device.createBuffer({
-          size: geometry.pointCoords.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
         device.queue.writeBuffer(
-          pointCoordBuffer,
+          bufferSet.pointCoord,
           0,
           new Float32Array(geometry.pointCoords)
         );
 
-        passEncoder.setVertexBuffer(0, positionBuffer);
-        passEncoder.setVertexBuffer(1, colorBuffer);
-        passEncoder.setVertexBuffer(2, pointCoordBuffer);
+        passEncoder.setVertexBuffer(0, bufferSet.position);
+        passEncoder.setVertexBuffer(1, bufferSet.color);
+        passEncoder.setVertexBuffer(2, bufferSet.pointCoord);
 
         passEncoder.draw(geometry.positions.length / 2);
+        seriesIndex++;
+      }
+
+      // Clean up excess buffers if series count decreased
+      while (seriesBufferPool.length > seriesIndex) {
+        const removed = seriesBufferPool.pop();
+        if (removed) {
+          removed.position.destroy();
+          removed.color.destroy();
+          removed.pointCoord.destroy();
+        }
       }
 
       passEncoder.end();
@@ -796,6 +861,13 @@ function createWebGPUScatterRenderer(
       gridBuffers.position?.destroy();
       gridBuffers.color?.destroy();
       gridBuffers.pointCoord?.destroy();
+      // Clean up series buffer pool
+      for (const bufferSet of seriesBufferPool) {
+        bufferSet.position.destroy();
+        bufferSet.color.destroy();
+        bufferSet.pointCoord.destroy();
+      }
+      seriesBufferPool.length = 0;
     },
   });
 
@@ -827,8 +899,8 @@ function Root({
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   preferWebGPU?: boolean;
   className?: string;
   children?: React.ReactNode;
@@ -870,6 +942,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     | null
   >(null);
   const mountedRef = useRef(true);
+  const [rendererReady, setRendererReady] = useState(false);
 
   // Initialize renderer once
   useEffect(() => {
@@ -883,6 +956,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     canvas.style.height = `${ctx.height}px`;
 
     mountedRef.current = true;
+    setRendererReady(false);
 
     async function initRenderer() {
       if (!canvas || rendererRef.current) return;
@@ -901,6 +975,32 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
             rendererRef.current = renderer;
             ctx.setRenderMode("webgpu");
+            setRendererReady(true);
+
+            // Force immediate render after initialization
+            requestAnimationFrame(() => {
+              if (rendererRef.current && mountedRef.current) {
+                const dpr = ctx.devicePixelRatio;
+                const renderProps: ScatterRendererProps = {
+                  canvas,
+                  series: ctx.series,
+                  xDomain: ctx.xDomain,
+                  yDomain: ctx.yDomain,
+                  xTicks: ctx.xTicks,
+                  yTicks: ctx.yTicks,
+                  width: ctx.width * dpr,
+                  height: ctx.height * dpr,
+                  margin: {
+                    top: ctx.margin.top * dpr,
+                    right: ctx.margin.right * dpr,
+                    bottom: ctx.margin.bottom * dpr,
+                    left: ctx.margin.left * dpr,
+                  },
+                  showGrid,
+                };
+                rendererRef.current.render(renderProps);
+              }
+            });
             return;
           }
         }
@@ -918,6 +1018,32 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
         rendererRef.current = renderer;
         ctx.setRenderMode("webgl");
+        setRendererReady(true);
+
+        // Force immediate render after initialization
+        requestAnimationFrame(() => {
+          if (rendererRef.current && mountedRef.current) {
+            const dpr = ctx.devicePixelRatio;
+            const renderProps: ScatterRendererProps = {
+              canvas,
+              series: ctx.series,
+              xDomain: ctx.xDomain,
+              yDomain: ctx.yDomain,
+              xTicks: ctx.xTicks,
+              yTicks: ctx.yTicks,
+              width: ctx.width * dpr,
+              height: ctx.height * dpr,
+              margin: {
+                top: ctx.margin.top * dpr,
+                right: ctx.margin.right * dpr,
+                bottom: ctx.margin.bottom * dpr,
+                left: ctx.margin.left * dpr,
+              },
+              showGrid,
+            };
+            rendererRef.current.render(renderProps);
+          }
+        });
       } catch (error) {
         console.error("WebGL failed:", error);
       }
@@ -927,6 +1053,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
     return () => {
       mountedRef.current = false;
+      setRendererReady(false);
       if (rendererRef.current) {
         rendererRef.current.destroy();
         rendererRef.current = null;
@@ -945,7 +1072,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   useEffect(() => {
     const canvas = ctx.canvasRef.current;
     const renderer = rendererRef.current;
-    if (!canvas || !renderer) return;
+    if (!canvas || !renderer || !rendererReady) return;
 
     const dpr = ctx.devicePixelRatio;
 
@@ -987,6 +1114,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     ctx.devicePixelRatio,
     showGrid,
     ctx.canvasRef,
+    rendererReady,
   ]);
 
   return (
@@ -1187,8 +1315,8 @@ export interface ScatterChartRootProps {
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   preferWebGPU?: boolean;
   className?: string;
   children?: React.ReactNode;

@@ -174,59 +174,18 @@ export type {
   WindowFunction,
 } from "./waterfall-chart";
 
-export { ModelViewer } from "./3d-model-viewer";
-export type { ModelViewerProps } from "./3d-model-viewer";
-
-export { PointCloudViewer } from "./point-cloud-viewer";
-export type {
-  PointCloudViewerProps,
-  PointCloudData,
-  ColorMode,
-} from "./point-cloud-viewer";
-
-export {
-  PointCloudInteractions,
-  PointSelection,
-  BoundingBox3D,
-  MeasurementTool,
-  SegmentationBrush,
-  PlaneFit,
-} from "./point-cloud-interactions";
-export type {
-  Point3D,
-  BoundingBox3D as BoundingBox3DType,
-  Measurement,
-  PlaneData,
-  SegmentationRegion,
-  PointSelectionProps,
-  BoundingBox3DProps,
-  MeasurementToolProps,
-  SegmentationBrushProps,
-  PlaneFitProps,
-  PointCloudInteractionsProps,
-} from "./point-cloud-interactions";
-
-// Point cloud utilities
-export {
-  loadPointCloud,
-  loadXYZ,
-  loadPCD,
-  loadLAS,
-  subsamplePointCloud,
-  detectFormat,
-} from "../lib/point-cloud-loaders";
-
-export {
-  buildOctree,
-  selectNodesLOD,
-  mergeNodeData,
-  getLeafNodes,
-  getTotalPoints,
-  getMaxDepth,
-  type OctreeNode,
-  type OctreeOptions,
-  type LODOptions,
-} from "../lib/point-cloud-octree";
+// ============================================================================
+// 3D Components (Three.js)
+// ============================================================================
+//
+// NOTE: 3D components are now in a separate entry point to optimize bundle size.
+// Import them from "@plexusui/components/charts/3d" instead:
+//
+//   import { PointCloudViewer, ModelViewer } from "@plexusui/components/charts/3d";
+//
+// This prevents Three.js from being included in your main bundle if you're
+// only using 2D charts.
+// ============================================================================
 
 // Base chart infrastructure (reusable for all chart types)
 export {
@@ -259,6 +218,7 @@ export {
   ChartInteractions,
   ChartClick,
   ChartBrush,
+  ChartBrushSelector,
   ChartCrosshair,
 } from "./interactions";
 
@@ -269,8 +229,17 @@ export type {
   ChartInteractionsProps,
   ChartClickProps,
   ChartBrushProps,
+  ChartBrushSelectorProps,
   ChartCrosshairProps,
 } from "./interactions";
+
+// Chart minimap
+export { ChartMinimap, MinimapContainer } from "./chart-minimap";
+export type {
+  ChartMinimapProps,
+  MinimapContainerProps,
+  MinimapSeries,
+} from "./chart-minimap";
 
 // Data utilities
 export {

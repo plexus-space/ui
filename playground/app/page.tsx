@@ -8,6 +8,10 @@ import { useState, useEffect } from "react";
 import { Activity, Zap, Cpu, TrendingUp, TrendingDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
+import { AudioVisualizer } from "./components/audio-visualizer";
+import { CameraVisualizer } from "./components/camera-visualizer";
+import { OrientationVisualizer } from "./components/orientation-visualizer";
+import { PointCloudVisualizer } from "./components/point-cloud-visualizer";
 
 // ============================================================================
 // DASHBOARD 1: HEALTH MONITORING
@@ -443,20 +447,35 @@ export default function Home() {
       <div>
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="py-12">
-            <h1 className="text-4xl font-bold mb-3">
+            <h1 className="text-4xl mb-3">
               Simplifying human-computer interaction for hardware.
             </h1>
             <p className="text-sm text-gray-400 max-w-3xl mx-auto">
-              A primitive-first, WebGPU-accelerated component library for
-              physical systems.
+              Observability made Simple. Unified visibility and optimization
+              across all physical systems.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <Tabs defaultValue="health" className="w-full">
+      <div className="max-w-7xl mx-auto px-4 py-4 justify-center items-center">
+        <Tabs
+          defaultValue="audio"
+          className="w-full justify-center items-center flex flex-col"
+        >
           <TabsList className="mb-6">
+            <TabsTrigger value="audio" className="text-xs">
+              Live Audio
+            </TabsTrigger>
+            <TabsTrigger value="camera" className="text-xs">
+              Motion Detection
+            </TabsTrigger>
+            <TabsTrigger value="orientation" className="text-xs">
+              Device Tilt
+            </TabsTrigger>
+            <TabsTrigger value="pointcloud" className="text-xs">
+              3D Point Cloud
+            </TabsTrigger>
             <TabsTrigger value="health" className="text-xs">
               Health Monitoring
             </TabsTrigger>
@@ -468,8 +487,23 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Health Dashboard */}
-          <TabsContent value="health" className="space-y-4">
+          <TabsContent value="audio" className="space-y-4 w-full">
+            <AudioVisualizer />
+          </TabsContent>
+
+          <TabsContent value="camera" className="space-y-4 w-full">
+            <CameraVisualizer />
+          </TabsContent>
+
+          <TabsContent value="orientation" className="space-y-4 w-full">
+            <OrientationVisualizer />
+          </TabsContent>
+
+          <TabsContent value="pointcloud" className="space-y-4 w-full">
+            <PointCloudVisualizer />
+          </TabsContent>
+
+          <TabsContent value="health" className="space-y-4 w-full">
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
               <MetricCard
                 icon={Activity}

@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { Gauge } from "@plexusui/components/charts/gauge";
 import { ComponentPreview } from "@/components/component-preview";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import { useColorScheme } from "@/components/color-scheme-provider";
 
 // ============================================================================
@@ -324,7 +327,8 @@ const gaugeProps: ApiProp[] = [
     name: "zones",
     type: "Zone[]",
     default: "undefined",
-    description: "Color zones for different value ranges. Zone: { from: number, to: number, color: string }",
+    description:
+      "Color zones for different value ranges. Zone: { from: number, to: number, color: string }",
   },
   {
     name: "needleColor",
@@ -372,7 +376,8 @@ const gaugeProps: ApiProp[] = [
     name: "preferWebGPU",
     type: "boolean",
     default: "true",
-    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+    description:
+      "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
   },
   {
     name: "className",
@@ -519,7 +524,8 @@ export function GaugeExamples() {
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            Gauge component for displaying single values with visual indicators and colored zones
+            Gauge component for displaying single values with visual indicators
+            and colored zones
           </p>
         </div>
 
@@ -537,7 +543,7 @@ export function GaugeExamples() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Gauge.Root (Composable)</h3>
+          <h3 className="text-lg font-semibold">Gauge.Root</h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Root component for building custom layouts with primitives
           </p>

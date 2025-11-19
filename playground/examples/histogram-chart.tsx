@@ -7,7 +7,10 @@ import {
   generateExponentialData,
 } from "@plexusui/components/charts/histogram-chart";
 import { ComponentPreview } from "@/components/component-preview";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import {
   useColorScheme,
   useMultiColors,
@@ -345,7 +348,8 @@ const histogramChartProps: ApiProp[] = [
     name: "bins",
     type: "number | 'auto' | 'sturges' | 'scott' | 'freedman-diaconis'",
     default: '"auto"',
-    description: "Number of bins or binning algorithm. 'auto' uses Freedman-Diaconis rule",
+    description:
+      "Number of bins or binning algorithm. 'auto' uses Freedman-Diaconis rule",
   },
   {
     name: "xAxis",
@@ -417,7 +421,8 @@ const histogramChartProps: ApiProp[] = [
     name: "preferWebGPU",
     type: "boolean",
     default: "true",
-    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+    description:
+      "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
   },
   {
     name: "className",
@@ -507,7 +512,8 @@ const histogramChartPrimitiveProps: ApiProp[] = [
     name: "HistogramChart.Overlay",
     type: "component",
     default: "-",
-    description: "Renders statistical overlays like density curves, mean, and median lines",
+    description:
+      "Renders statistical overlays like density curves, mean, and median lines",
   },
 ];
 
@@ -555,7 +561,8 @@ export function HistogramChartExamples() {
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            HistogramChart component for visualizing data distributions and frequency analysis
+            HistogramChart component for visualizing data distributions and
+            frequency analysis
           </p>
         </div>
 
@@ -565,7 +572,7 @@ export function HistogramChartExamples() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">HistogramChart.Root (Composable)</h3>
+          <h3 className="text-lg font-semibold">HistogramChart.Root </h3>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Root component for building custom layouts with primitives
           </p>

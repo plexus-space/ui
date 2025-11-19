@@ -15,7 +15,7 @@ import {
   type WebGPURenderer,
   useBaseChart,
 } from "./base-chart";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 
 // ============================================================================
 // Bar Chart Types
@@ -45,8 +45,8 @@ export interface BarChartProps {
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   showGrid?: boolean;
   showAxes?: boolean;
   showTooltip?: boolean;
@@ -199,20 +199,24 @@ function createBarGeometry(
       const y1 = yScale(point.y);
       const width = effectiveBarWidth;
 
+      // Ensure y coordinates are in correct order (y0 at bottom, y1 at top)
+      const yTop = Math.min(y0, y1);
+      const yBottom = Math.max(y0, y1);
+
       // Two triangles for rectangle
       positions.push(
         x,
-        y0,
+        yBottom,
         x + width,
-        y0,
+        yBottom,
         x,
-        y1,
+        yTop,
         x + width,
-        y0,
+        yBottom,
         x + width,
-        y1,
+        yTop,
         x,
-        y1
+        yTop
       );
     } else {
       const centerY = yScale(categoryValue);
@@ -224,18 +228,22 @@ function createBarGeometry(
       const x1 = xScale(point.y);
       const height = effectiveBarWidth;
 
+      // Ensure x coordinates are in correct order (left to right)
+      const xLeft = Math.min(x0, x1);
+      const xRight = Math.max(x0, x1);
+
       positions.push(
-        x0,
+        xLeft,
         y,
-        x1,
+        xRight,
         y,
-        x0,
+        xLeft,
         y + height,
-        x1,
+        xRight,
         y,
-        x1,
+        xRight,
         y + height,
-        x0,
+        xLeft,
         y + height
       );
     }
@@ -298,8 +306,8 @@ function createWebGLBarRenderer(
 
       const baseValue =
         orientation === "vertical"
-          ? Math.max(yDomain[0], 0)
-          : Math.max(xDomain[0], 0);
+          ? yDomain[0]
+          : xDomain[0];
 
       series.forEach((s, seriesIndex) => {
         if (s.data.length === 0) return;
@@ -380,6 +388,17 @@ function createWebGPUBarRenderer(
     layout: bindGroupLayout,
     entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
+
+  // Persistent buffer pool for series rendering (reused across frames)
+  type SeriesBufferSet = {
+    position: GPUBuffer;
+    color: GPUBuffer;
+    sizes: {
+      position: number;
+      color: number;
+    };
+  };
+  const seriesBufferPool: SeriesBufferSet[] = [];
 
   const renderer = createWebGPURenderer<BarRendererProps>({
     canvas,
@@ -493,9 +512,11 @@ function createWebGPUBarRenderer(
 
       const baseValue =
         orientation === "vertical"
-          ? Math.max(yDomain[0], 0)
-          : Math.max(xDomain[0], 0);
+          ? yDomain[0]
+          : xDomain[0];
 
+      // Draw bars with buffer pooling
+      let barIndex = 0;
       for (const [seriesIndex, s] of series.entries()) {
         if (s.data.length === 0) continue;
 
@@ -514,31 +535,74 @@ function createWebGPUBarRenderer(
           baseValue
         );
 
-        // Create buffers per series (cannot reuse across series in same frame)
-        const positionBuffer = device.createBuffer({
-          size: geometry.positions.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
+        const requiredSizes = {
+          position: geometry.positions.length * 4,
+          color: geometry.colors.length * 4,
+        };
+
+        // Get or create buffer set for this series
+        let bufferSet = seriesBufferPool[barIndex];
+
+        if (!bufferSet) {
+          // Create new buffer set
+          bufferSet = {
+            position: device.createBuffer({
+              size: requiredSizes.position,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            color: device.createBuffer({
+              size: requiredSizes.color,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            }),
+            sizes: requiredSizes,
+          };
+          seriesBufferPool[barIndex] = bufferSet;
+        } else {
+          // Resize buffers if needed
+          if (bufferSet.sizes.position < requiredSizes.position) {
+            bufferSet.position.destroy();
+            bufferSet.position = device.createBuffer({
+              size: requiredSizes.position,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.position = requiredSizes.position;
+          }
+          if (bufferSet.sizes.color < requiredSizes.color) {
+            bufferSet.color.destroy();
+            bufferSet.color = device.createBuffer({
+              size: requiredSizes.color,
+              usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+            });
+            bufferSet.sizes.color = requiredSizes.color;
+          }
+        }
+
+        // Write data to buffers (reusing existing buffers)
         device.queue.writeBuffer(
-          positionBuffer,
+          bufferSet.position,
           0,
           new Float32Array(geometry.positions)
         );
-
-        const colorBuffer = device.createBuffer({
-          size: geometry.colors.length * 4,
-          usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
         device.queue.writeBuffer(
-          colorBuffer,
+          bufferSet.color,
           0,
           new Float32Array(geometry.colors)
         );
 
-        passEncoder.setVertexBuffer(0, positionBuffer);
-        passEncoder.setVertexBuffer(1, colorBuffer);
+        passEncoder.setVertexBuffer(0, bufferSet.position);
+        passEncoder.setVertexBuffer(1, bufferSet.color);
 
         passEncoder.draw(geometry.positions.length / 2);
+        barIndex++;
+      }
+
+      // Clean up excess buffers if series count decreased
+      while (seriesBufferPool.length > barIndex) {
+        const removed = seriesBufferPool.pop();
+        if (removed) {
+          removed.position.destroy();
+          removed.color.destroy();
+        }
       }
 
       passEncoder.end();
@@ -546,6 +610,12 @@ function createWebGPUBarRenderer(
     },
     onDestroy: () => {
       uniformBuffer.destroy();
+      // Clean up series buffer pool
+      for (const bufferSet of seriesBufferPool) {
+        bufferSet.position.destroy();
+        bufferSet.color.destroy();
+      }
+      seriesBufferPool.length = 0;
     },
   });
 
@@ -581,8 +651,8 @@ function Root({
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   preferWebGPU?: boolean;
   orientation?: "vertical" | "horizontal";
   barWidth?: number;
@@ -627,11 +697,16 @@ function Root({
       return barWidthProp;
     }
 
+    // Only calculate responsive barWidth if dimensions are numeric
+    // If width/height are strings (e.g., "100%"), use a reasonable default
+    const numericWidth = typeof width === "number" ? width : 800;
+    const numericHeight = typeof height === "number" ? height : 400;
+
     const margin = { top: 20, right: 20, bottom: 50, left: 60 };
     const availableSpace =
       orientation === "vertical"
-        ? width - margin.left - margin.right
-        : height - margin.top - margin.bottom;
+        ? numericWidth - margin.left - margin.right
+        : numericHeight - margin.top - margin.bottom;
 
     const numCategories = categoryMap.size;
     const totalGapSpace = barGap * (numCategories - 1);
@@ -667,13 +742,19 @@ function Root({
     orientation === "vertical"
       ? [-0.5, categoryMap.size - 0.5] // Categories
       : yAxis.domain === "auto" || !yAxis.domain
-      ? getDomain(numericPoints, (p) => p.y)
+      ? (() => {
+          const [, max] = getDomain(numericPoints, (p) => p.y);
+          return [0, max]; // Force min to 0 for bar charts
+        })()
       : yAxis.domain;
 
   const yDomain: [number, number] =
     orientation === "vertical"
       ? yAxis.domain === "auto" || !yAxis.domain
-        ? getDomain(numericPoints, (p) => p.y)
+        ? (() => {
+            const [, max] = getDomain(numericPoints, (p) => p.y);
+            return [0, max]; // Force min to 0 for bar charts
+          })()
         : yAxis.domain
       : [-0.5, categoryMap.size - 0.5];
 
@@ -729,7 +810,10 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   const rendererRef = React.useRef<
     WebGLRenderer<BarRendererProps> | WebGPURenderer<BarRendererProps> | null
   >(null);
+  const mountedRef = React.useRef(true);
+  const [rendererReady, setRendererReady] = useState(false);
 
+  // Initialize renderer once
   React.useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
@@ -740,10 +824,11 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     canvas.style.width = `${ctx.width}px`;
     canvas.style.height = `${ctx.height}px`;
 
-    let mounted = true;
+    mountedRef.current = true;
+    setRendererReady(false);
 
     async function initRenderer() {
-      if (!canvas) return;
+      if (!canvas || rendererRef.current) return;
 
       try {
         if (ctx.preferWebGPU && "gpu" in navigator) {
@@ -752,15 +837,68 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
             const device = await adapter.requestDevice();
             const renderer = createWebGPUBarRenderer(canvas, device);
 
-            if (!mounted) {
+            if (!mountedRef.current) {
               renderer.destroy();
               return;
             }
 
             rendererRef.current = renderer;
             ctx.setRenderMode("webgpu");
+            setRendererReady(true);
 
-            await renderer.render({
+            // Force immediate render after initialization
+            requestAnimationFrame(() => {
+              if (rendererRef.current && mountedRef.current) {
+                const dpr = ctx.devicePixelRatio;
+                const renderProps: BarRendererProps = {
+                  canvas,
+                  series: ctx.series,
+                  xDomain: ctx.xDomain,
+                  yDomain: ctx.yDomain,
+                  xTicks: ctx.xTicks,
+                  yTicks: ctx.yTicks,
+                  width: ctx.width * dpr,
+                  height: ctx.height * dpr,
+                  margin: {
+                    top: ctx.margin.top * dpr,
+                    right: ctx.margin.right * dpr,
+                    bottom: ctx.margin.bottom * dpr,
+                    left: ctx.margin.left * dpr,
+                  },
+                  showGrid,
+                  orientation: ctx.orientation,
+                  barWidth: ctx.barWidth * dpr,
+                  barGap: ctx.barGap * dpr,
+                  grouped: ctx.grouped,
+                  categoryMap: ctx.categoryMap,
+                };
+                rendererRef.current.render(renderProps);
+              }
+            });
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn("WebGPU failed, falling back to WebGL:", error);
+      }
+
+      try {
+        const renderer = createWebGLBarRenderer(canvas);
+
+        if (!mountedRef.current) {
+          renderer.destroy();
+          return;
+        }
+
+        rendererRef.current = renderer;
+        ctx.setRenderMode("webgl");
+        setRendererReady(true);
+
+        // Force immediate render after initialization
+        requestAnimationFrame(() => {
+          if (rendererRef.current && mountedRef.current) {
+            const dpr = ctx.devicePixelRatio;
+            const renderProps: BarRendererProps = {
               canvas,
               series: ctx.series,
               xDomain: ctx.xDomain,
@@ -781,46 +919,9 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
               barGap: ctx.barGap * dpr,
               grouped: ctx.grouped,
               categoryMap: ctx.categoryMap,
-            });
-            return;
+            };
+            rendererRef.current.render(renderProps);
           }
-        }
-      } catch (error) {
-        console.warn("WebGPU failed, falling back to WebGL:", error);
-      }
-
-      try {
-        const renderer = createWebGLBarRenderer(canvas);
-
-        if (!mounted) {
-          renderer.destroy();
-          return;
-        }
-
-        rendererRef.current = renderer;
-        ctx.setRenderMode("webgl");
-
-        renderer.render({
-          canvas,
-          series: ctx.series,
-          xDomain: ctx.xDomain,
-          yDomain: ctx.yDomain,
-          xTicks: ctx.xTicks,
-          yTicks: ctx.yTicks,
-          width: ctx.width * dpr,
-          height: ctx.height * dpr,
-          margin: {
-            top: ctx.margin.top * dpr,
-            right: ctx.margin.right * dpr,
-            bottom: ctx.margin.bottom * dpr,
-            left: ctx.margin.left * dpr,
-          },
-          showGrid,
-          orientation: ctx.orientation,
-          barWidth: ctx.barWidth * dpr,
-          barGap: ctx.barGap * dpr,
-          grouped: ctx.grouped,
-          categoryMap: ctx.categoryMap,
         });
       } catch (error) {
         console.error("WebGL failed:", error);
@@ -830,13 +931,78 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     initRenderer();
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
+      setRendererReady(false);
       if (rendererRef.current) {
         rendererRef.current.destroy();
         rendererRef.current = null;
       }
     };
-  }, [ctx, showGrid]);
+  }, [
+    ctx.canvasRef,
+    ctx.width,
+    ctx.height,
+    ctx.devicePixelRatio,
+    ctx.preferWebGPU,
+    ctx.setRenderMode,
+  ]);
+
+  // Render on data/config changes
+  React.useEffect(() => {
+    const canvas = ctx.canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer || !rendererReady) return;
+
+    const dpr = ctx.devicePixelRatio;
+
+    const renderProps: BarRendererProps = {
+      canvas,
+      series: ctx.series,
+      xDomain: ctx.xDomain,
+      yDomain: ctx.yDomain,
+      xTicks: ctx.xTicks,
+      yTicks: ctx.yTicks,
+      width: ctx.width * dpr,
+      height: ctx.height * dpr,
+      margin: {
+        top: ctx.margin.top * dpr,
+        right: ctx.margin.right * dpr,
+        bottom: ctx.margin.bottom * dpr,
+        left: ctx.margin.left * dpr,
+      },
+      showGrid,
+      orientation: ctx.orientation,
+      barWidth: ctx.barWidth * dpr,
+      barGap: ctx.barGap * dpr,
+      grouped: ctx.grouped,
+      categoryMap: ctx.categoryMap,
+    };
+
+    const renderResult = renderer.render(renderProps);
+    if (renderResult && "then" in renderResult) {
+      // WebGPU renderer (async)
+    } else {
+      // WebGL renderer (sync)
+    }
+  }, [
+    ctx.series,
+    ctx.xDomain,
+    ctx.yDomain,
+    ctx.xTicks,
+    ctx.yTicks,
+    ctx.width,
+    ctx.height,
+    ctx.margin,
+    ctx.devicePixelRatio,
+    showGrid,
+    ctx.orientation,
+    ctx.barWidth,
+    ctx.barGap,
+    ctx.grouped,
+    ctx.categoryMap,
+    ctx.canvasRef,
+    rendererReady,
+  ]);
 
   return (
     <canvas
@@ -881,8 +1047,8 @@ function Tooltip() {
     // Calculate base value based on orientation
     const baseValue =
       ctx.orientation === "vertical"
-        ? Math.max(ctx.yDomain[0], 0)
-        : Math.max(ctx.xDomain[0], 0);
+        ? ctx.yDomain[0]
+        : ctx.xDomain[0];
 
     ctx.series.forEach((s, seriesIdx) => {
       s.data.forEach((point, pointIdx) => {
@@ -1066,8 +1232,8 @@ export interface BarChartRootProps {
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   preferWebGPU?: boolean;
   orientation?: "vertical" | "horizontal";
   barWidth?: number;
