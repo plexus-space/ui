@@ -33,28 +33,6 @@ Open http://localhost:3000 to see live demos.
 
 ## Features
 
-### 🎨 16 GPU-Accelerated Components
-
-**Time Series & Signals:**
-- Line Chart - Multi-series, streaming, 100k+ points
-- Waterfall/Spectrogram - Time-frequency analysis with FFT
-- Control Chart (SPC) - Statistical process control
-
-**Statistical & Quality:**
-- Histogram - Auto-binning, normal curve overlay
-- Scatter Chart - Point clouds, variable sizes
-- Heatmap - 2D grids, thermal imaging
-
-**Aerospace & Defense:**
-- Attitude Indicator - Aviation artificial horizon
-- Radar Chart - Polar display, ATC-style
-- 3D Model Viewer - STL/OBJ/GLTF with thermal overlay
-
-**Industrial & Monitoring:**
-- Gauge - Circular/semi-circular with zones
-- Status Grid - KPI dashboard with sparklines
-- Gantt Chart - Timeline scheduling
-
 **All components:**
 
 - ✅ Render 100k+ points at 60fps
@@ -68,15 +46,17 @@ Open http://localhost:3000 to see live demos.
 **Connect to Raspberry Pi sensors in 2 clicks:**
 
 ```tsx
-import { useRaspberryPi } from '@plexusui/components/lib/connectors';
-import { LineChart } from '@plexusui/components/charts';
+import { useRaspberryPi } from "@plexusui/components/lib/connectors";
+import { LineChart } from "@plexusui/components/charts";
 
 function SensorDashboard() {
   // Step 1: Connect to your Pi
-  const { data, status } = useRaspberryPi('raspberrypi.local');
+  const { data, status } = useRaspberryPi("raspberrypi.local");
 
   // Step 2: Visualize
-  return <LineChart series={[{ name: 'Temperature', data: data?.temperature }]} />;
+  return (
+    <LineChart series={[{ name: "Temperature", data: data?.temperature }]} />
+  );
 }
 ```
 
@@ -102,8 +82,8 @@ function SensorDashboard() {
 **Spring-based animations for data transitions (no dependencies):**
 
 ```tsx
-import { useAnimatedData } from '@plexusui/components/lib/animations';
-import { LineChart } from '@plexusui/components/charts';
+import { useAnimatedData } from "@plexusui/components/lib/animations";
+import { LineChart } from "@plexusui/components/charts";
 
 function AnimatedChart() {
   const [rawData, setRawData] = useState(sensorData);
@@ -111,10 +91,10 @@ function AnimatedChart() {
   // Smooth spring animation on data updates
   const animatedData = useAnimatedData(rawData, {
     stiffness: 170,
-    damping: 26
+    damping: 26,
   });
 
-  return <LineChart series={[{ name: 'Sensor', data: animatedData }]} />;
+  return <LineChart series={[{ name: "Sensor", data: animatedData }]} />;
 }
 ```
 
@@ -132,10 +112,10 @@ function AnimatedChart() {
 
 ```tsx
 // ✅ Good: Only loads 2D charts (~50KB)
-import { LineChart, BarChart } from '@plexusui/components/charts';
+import { LineChart, BarChart } from "@plexusui/components/charts";
 
 // ✅ Good: Only loads Three.js when needed
-import { PointCloudViewer } from '@plexusui/components/charts/3d';
+import { PointCloudViewer } from "@plexusui/components/charts/3d";
 
 // ❌ Bad: Loads everything including Three.js (~500KB)
 // (This is now prevented - 3D components are in separate entry)
@@ -170,7 +150,7 @@ import { LineChart } from "@plexusui/components/charts/line-chart";
   showAxes
   timeAxis
   yAxis={{ domain: [50, 110], label: "BPM" }}
-/>
+/>;
 ```
 
 ### Gauge - Temperature Monitor
@@ -193,7 +173,7 @@ import { Gauge } from "@plexusui/components/charts/gauge";
   ]}
   width={400}
   height={300}
-/>
+/>;
 ```
 
 ### Waterfall Chart - FFT Analysis
@@ -209,7 +189,7 @@ import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
   xLabel="Frequency (Hz)"
   yLabel="Time"
   showColorbar
-/>
+/>;
 ```
 
 ### Attitude Indicator - Aviation Display
@@ -223,7 +203,7 @@ import { AttitudeIndicator } from "@plexusui/components/charts/attitude-indicato
   showSlipSkid
   width={400}
   height={400}
-/>
+/>;
 ```
 
 ### Chart Minimap - Navigate Large Datasets
@@ -233,12 +213,12 @@ import {
   ChartMinimap,
   MinimapContainer,
   LineChart,
-  BarChart
+  BarChart,
 } from "@plexusui/components/charts";
 
 const [visibleRange, setVisibleRange] = useState({
   start: oneYearAgo,
-  end: now
+  end: now,
 });
 
 <MinimapContainer
@@ -258,16 +238,12 @@ const [visibleRange, setVisibleRange] = useState({
     />
   }
 >
-  <BarChart
-    series={filteredData}
-    width="100%"
-    height={400}
-    showTooltip
-  />
-</MinimapContainer>
+  <BarChart series={filteredData} width="100%" height={400} showTooltip />
+</MinimapContainer>;
 ```
 
 **Features:**
+
 - Automatic downsampling (LTTB or MinMax algorithms)
 - Draggable range selector with handles
 - Works with any chart type (Line, Bar, Scatter, etc.)
@@ -287,7 +263,7 @@ const [visibleRange, setVisibleRange] = useState({
 - Motor speed tracking
 - Real-time alerts
 
-Components: Line Chart, Waterfall Chart, Gauges, Status Grid
+Components: Line Chart, Waterfall Chart, Gauges
 
 ### ✈️ Aerospace
 
@@ -309,7 +285,7 @@ Components: Attitude Indicator, Gauges, Line Charts
 - IMU data visualization
 - Sensor arrays
 
-Components: Bar Charts, Line Charts, Heatmaps, Status Grid
+Components: Bar Charts, Line Charts, Heatmaps
 
 ### 🏥 Medical Devices
 
@@ -320,7 +296,7 @@ Components: Bar Charts, Line Charts, Heatmaps, Status Grid
 - Vital signs tracking
 - Historical trends
 
-Components: Line Charts, Gauges, Status Grid
+Components: Line Charts, Gauges
 
 ### 🚗 Automotive
 
@@ -356,10 +332,11 @@ import { Gauge } from "@plexusui/components/charts/gauge";
 import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
 
 // Use them in your app
-<LineChart series={data} width={800} height={400} />
+<LineChart series={data} width={800} height={400} />;
 ```
 
 **Benefits:**
+
 - Full control over the code
 - No NPM dependency issues
 - Customize as needed
@@ -413,26 +390,28 @@ Plus 17 individual component examples in `/examples/*`.
 ### Available Components (16 total)
 
 **Charts:**
+
 - Line Chart
 - Scatter Chart
 - Bar Chart
 - Area Chart
 - Histogram Chart
-- Control Chart (SPC)
 - Heatmap Chart
 - Radar Chart
 - Waterfall/Spectrogram Chart
 
 **Instruments:**
+
 - Gauge
 - Attitude Indicator
 
 **Data Display:**
-- Status Grid
+
 - Data Grid
 - Gantt Chart
 
 **3D Visualization:**
+
 - 3D Model Viewer
 - Point Cloud Viewer
 
