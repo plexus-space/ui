@@ -67,6 +67,7 @@ const [annotations, setAnnotations] = useState<Annotation[]>([]);
             </div>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => setEnabled(!enabled)}
                 className={`px-3 py-1 text-xs rounded ${
                   enabled
@@ -78,6 +79,7 @@ const [annotations, setAnnotations] = useState<Annotation[]>([]);
               </button>
               {annotations.length > 0 && (
                 <button
+                  type="button"
                   onClick={() => setAnnotations([])}
                   className="px-3 py-1 text-xs rounded bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
                 >
@@ -160,6 +162,7 @@ useEffect(() => {
             </div>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => setIsStreaming(!isStreaming)}
                 className={`px-3 py-1 text-xs rounded ${
                   isStreaming
@@ -171,6 +174,7 @@ useEffect(() => {
               </button>
               {annotations.length > 0 && (
                 <button
+                  type="button"
                   onClick={() => setAnnotations([])}
                   className="px-3 py-1 text-xs rounded bg-zinc-800 text-zinc-400"
                 >
@@ -248,7 +252,6 @@ export function ChartAnnotationsExamples() {
       </div>
 
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
         <BasicExample />
         <StreamingDataExample />
       </div>

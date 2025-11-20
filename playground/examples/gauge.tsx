@@ -511,15 +511,12 @@ const gaugePrimitiveProps: ApiProp[] = [
 export function GaugeExamples() {
   return (
     <div className="space-y-12">
-      {/* Examples Section */}
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
         <EngineRPMGauge />
         <FuelLevelGauge />
         <PrimitiveGaugeExample />
       </div>
 
-      {/* API Reference Section */}
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>

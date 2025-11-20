@@ -1,10 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  LineChart,
-  ChartRegion,
-} from "@plexusui/components/charts";
+import { LineChart, ChartRegion } from "@plexusui/components/charts";
 import { ComponentPreview } from "@/components/component-preview";
 import {
   ApiReferenceTable,
@@ -287,7 +284,6 @@ export function ChartRegionExamples() {
       </div>
 
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
         <BasicExample />
         <FlightPhasesExample />
         <CustomOpacityExample />

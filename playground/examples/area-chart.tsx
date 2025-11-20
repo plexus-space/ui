@@ -3,7 +3,10 @@
 import { AreaChart } from "@plexusui/components/charts/area-chart";
 import type { DataPoint } from "@plexusui/components/charts/area-chart";
 import { ComponentPreview } from "@/components/component-preview";
-import { ApiReferenceTable, type ApiProp } from "@/components/api-reference-table";
+import {
+  ApiReferenceTable,
+  type ApiProp,
+} from "@/components/api-reference-table";
 import { useState, useEffect } from "react";
 import {
   useColorScheme,
@@ -265,7 +268,8 @@ const areaChartProps: ApiProp[] = [
     name: "series",
     type: "Series[]",
     default: "required",
-    description: "Array of data series. Series: { name: string, data: Point[], color?: string, fillOpacity?: number, strokeWidth?: number }",
+    description:
+      "Array of data series. Series: { name: string, data: Point[], color?: string, fillOpacity?: number, strokeWidth?: number }",
   },
   {
     name: "xAxis",
@@ -313,7 +317,8 @@ const areaChartProps: ApiProp[] = [
     name: "preferWebGPU",
     type: "boolean",
     default: "true",
-    description: "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
+    description:
+      "Prefer WebGPU rendering over WebGL. Falls back automatically if unavailable",
   },
   {
     name: "className",
@@ -429,9 +434,7 @@ const areaChartPrimitiveProps: ApiProp[] = [
 export function AreaChartExamples() {
   return (
     <div className="space-y-12">
-      {/* Examples Section */}
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
         <BasicAreaChart />
         <MultiSeriesAreaChart />
         <StreamingAreaChart />
@@ -443,7 +446,8 @@ export function AreaChartExamples() {
         <div>
           <h2 className="text-2xl font-bold mb-2">API Reference</h2>
           <p className="text-zinc-600 dark:text-zinc-400">
-            AreaChart component for visualizing trends and cumulative data with filled areas
+            AreaChart component for visualizing trends and cumulative data with
+            filled areas
           </p>
         </div>
 

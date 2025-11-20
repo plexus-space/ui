@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/a11y/useButtonType: <explanation> */
+/** biome-ignore-all lint/a11y/noSvgWithoutTitle: <explanation> */
 "use client";
 
 import { useState, useMemo } from "react";
@@ -796,7 +798,6 @@ export function PointCloudViewerExamples() {
     <div className="space-y-12">
       {/* Examples Section */}
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
         <TerrainExample />
         <BuildingScanExample />
         <ColoredSphereExample />

@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
 "use client";
 
 import { BarChart } from "@plexusui/components/charts/bar-chart";
@@ -430,30 +431,49 @@ function SimpleMinimap({
   visibleRange: { start: number; end: number };
   onRangeChange: (start: number, end: number) => void;
 }) {
-  const [dragMode, setDragMode] = React.useState<'pan' | 'resize-left' | 'resize-right' | null>(null);
-  const [dragStart, setDragStart] = React.useState({ x: 0, startVal: 0, endVal: 0 });
+  const [dragMode, setDragMode] = React.useState<
+    "pan" | "resize-left" | "resize-right" | null
+  >(null);
+  const [dragStart, setDragStart] = React.useState({
+    x: 0,
+    startVal: 0,
+    endVal: 0,
+  });
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const rangeWidth = fullRange.max - fullRange.min;
   const leftPercent = ((visibleRange.start - fullRange.min) / rangeWidth) * 100;
-  const widthPercent = ((visibleRange.end - visibleRange.start) / rangeWidth) * 100;
+  const widthPercent =
+    ((visibleRange.end - visibleRange.start) / rangeWidth) * 100;
 
   const handlePanStart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setDragMode('pan');
-    setDragStart({ x: e.clientX, startVal: visibleRange.start, endVal: visibleRange.end });
+    setDragMode("pan");
+    setDragStart({
+      x: e.clientX,
+      startVal: visibleRange.start,
+      endVal: visibleRange.end,
+    });
   };
 
   const handleResizeLeftStart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setDragMode('resize-left');
-    setDragStart({ x: e.clientX, startVal: visibleRange.start, endVal: visibleRange.end });
+    setDragMode("resize-left");
+    setDragStart({
+      x: e.clientX,
+      startVal: visibleRange.start,
+      endVal: visibleRange.end,
+    });
   };
 
   const handleResizeRightStart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setDragMode('resize-right');
-    setDragStart({ x: e.clientX, startVal: visibleRange.start, endVal: visibleRange.end });
+    setDragMode("resize-right");
+    setDragStart({
+      x: e.clientX,
+      startVal: visibleRange.start,
+      endVal: visibleRange.end,
+    });
   };
 
   React.useEffect(() => {
@@ -470,7 +490,7 @@ function SimpleMinimap({
       let newStart = visibleRange.start;
       let newEnd = visibleRange.end;
 
-      if (dragMode === 'pan') {
+      if (dragMode === "pan") {
         const duration = dragStart.endVal - dragStart.startVal;
         newStart = dragStart.startVal + deltaValue;
         newEnd = dragStart.endVal + deltaValue;
@@ -484,12 +504,18 @@ function SimpleMinimap({
           newEnd = fullRange.max;
           newStart = fullRange.max - duration;
         }
-      } else if (dragMode === 'resize-left') {
-        newStart = Math.max(fullRange.min, Math.min(dragStart.startVal + deltaValue, dragStart.endVal - 86400000)); // Min 1 day
+      } else if (dragMode === "resize-left") {
+        newStart = Math.max(
+          fullRange.min,
+          Math.min(dragStart.startVal + deltaValue, dragStart.endVal - 86400000)
+        ); // Min 1 day
         newEnd = dragStart.endVal;
-      } else if (dragMode === 'resize-right') {
+      } else if (dragMode === "resize-right") {
         newStart = dragStart.startVal;
-        newEnd = Math.min(fullRange.max, Math.max(dragStart.endVal + deltaValue, dragStart.startVal + 86400000)); // Min 1 day
+        newEnd = Math.min(
+          fullRange.max,
+          Math.max(dragStart.endVal + deltaValue, dragStart.startVal + 86400000)
+        ); // Min 1 day
       }
 
       onRangeChange(newStart, newEnd);
@@ -497,19 +523,30 @@ function SimpleMinimap({
 
     const handleMouseUp = () => setDragMode(null);
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [dragMode, dragStart, rangeWidth, fullRange, onRangeChange, visibleRange]);
 
   return (
-    <div ref={containerRef} className="relative" style={{ height: 60, width: '100%', overflow: 'hidden' }}>
+    <div
+      ref={containerRef}
+      className="relative"
+      style={{ height: 60, width: "100%", overflow: "hidden" }}
+    >
       {/* Bar chart with negative margins to eliminate padding */}
-      <div style={{ marginLeft: -60, marginRight: -20, marginTop: -20, marginBottom: -50 }}>
+      <div
+        style={{
+          marginLeft: -60,
+          marginRight: -20,
+          marginTop: -20,
+          marginBottom: -50,
+        }}
+      >
         <BarChart.Root
           series={series}
           xAxis={{ domain: [fullRange.min, fullRange.max] as [number, number] }}
@@ -524,7 +561,10 @@ function SimpleMinimap({
       </div>
 
       {/* Overlay */}
-      <div className="absolute inset-0" style={{ pointerEvents: 'none', zIndex: 10 }}>
+      <div
+        className="absolute inset-0"
+        style={{ pointerEvents: "none", zIndex: 10 }}
+      >
         {/* Left dimmed area */}
         <div
           className="absolute inset-y-0 bg-black/60"
@@ -541,20 +581,20 @@ function SimpleMinimap({
           style={{
             left: `${leftPercent}%`,
             width: `${widthPercent}%`,
-            pointerEvents: 'auto',
+            pointerEvents: "auto",
           }}
           onMouseDown={handlePanStart}
         >
           {/* Left handle */}
           <div
             className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-10 bg-white border-2 border-blue-500 rounded cursor-ew-resize hover:bg-blue-50"
-            style={{ pointerEvents: 'auto' }}
+            style={{ pointerEvents: "auto" }}
             onMouseDown={handleResizeLeftStart}
           />
-          {/* Right handle */}
+
           <div
             className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-3 h-10 bg-white border-2 border-blue-500 rounded cursor-ew-resize hover:bg-blue-50"
-            style={{ pointerEvents: 'auto' }}
+            style={{ pointerEvents: "auto" }}
             onMouseDown={handleResizeRightStart}
           />
         </div>
@@ -588,7 +628,7 @@ function TimeSeriesWithMinimap() {
   // State for visible range (initialize to show ~50% of data in the middle)
   const [visibleRange, setVisibleRange] = useState({
     start: new Date(2023, 11, 1).getTime(),
-    end: new Date(2024, 11, 27).getTime()
+    end: new Date(2024, 11, 27).getTime(),
   });
 
   // Sync visible range with actual data range on mount - show middle 50%
@@ -599,7 +639,7 @@ function TimeSeriesWithMinimap() {
 
       setVisibleRange({
         start: fullTimeRange.min + quarterRange,
-        end: fullTimeRange.max - quarterRange
+        end: fullTimeRange.max - quarterRange,
       });
     }
   }, [fullTimeRange.min, fullTimeRange.max]);
@@ -616,12 +656,15 @@ function TimeSeriesWithMinimap() {
       color: colors[idx],
     }));
 
-    console.log('Filtered data:', filtered.map(s => ({
-      name: s.name,
-      points: s.data.length,
-      firstPoint: s.data[0],
-      lastPoint: s.data[s.data.length - 1]
-    })));
+    console.log(
+      "Filtered data:",
+      filtered.map((s) => ({
+        name: s.name,
+        points: s.data.length,
+        firstPoint: s.data[0],
+        lastPoint: s.data[s.data.length - 1],
+      }))
+    );
 
     return filtered;
   }, [limitedSeries, limitedCategories, colors, visibleRange]);
@@ -643,7 +686,6 @@ function TimeSeriesWithMinimap() {
       year: "numeric",
     });
   };
-
 
   return (
     <ComponentPreview
@@ -718,7 +760,10 @@ const [visibleRange, setVisibleRange] = useState({
               barWidth={8}
               xAxis={{
                 label: "Date",
-                domain: [visibleRange.start, visibleRange.end] as [number, number],
+                domain: [visibleRange.start, visibleRange.end] as [
+                  number,
+                  number
+                ],
                 formatter: (val: number) => formatDate(val),
               }}
               yAxis={{ label: "Messages" }}
@@ -932,9 +977,7 @@ const barChartPrimitiveProps: ApiProp[] = [
 export function BarChartExamples() {
   return (
     <div className="space-y-12">
-      {/* Examples Section */}
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
         <BasicBarChart />
         <GroupedBarChart />
         <HorizontalBarChart />

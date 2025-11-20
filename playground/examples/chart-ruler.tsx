@@ -69,6 +69,7 @@ const [enabled, setEnabled] = useState(true);
             </div>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => setRulerEnabled(!rulerEnabled)}
                 className={`px-3 py-1 text-xs rounded ${
                   rulerEnabled
@@ -80,6 +81,7 @@ const [enabled, setEnabled] = useState(true);
               </button>
               {measurements.length > 0 && (
                 <button
+                  type="button"
                   onClick={() => setMeasurements([])}
                   className="px-3 py-1 text-xs rounded bg-zinc-800 text-zinc-400"
                 >
@@ -116,7 +118,11 @@ const [enabled, setEnabled] = useState(true);
               <div className="space-y-1 text-xs font-mono text-zinc-400">
                 {measurements.slice(-3).map((m, i) => (
                   <div key={i}>
-                    {`#${measurements.length - 2 + i}: ΔX=${m.deltaX.toFixed(2)}, ΔY=${m.deltaY.toFixed(2)}, Distance=${m.distance.toFixed(2)}`}
+                    {`#${measurements.length - 2 + i}: ΔX=${m.deltaX.toFixed(
+                      2
+                    )}, ΔY=${m.deltaY.toFixed(
+                      2
+                    )}, Distance=${m.distance.toFixed(2)}`}
                   </div>
                 ))}
               </div>
@@ -243,10 +249,12 @@ const exportData = () => {
         <div className="w-full space-y-4">
           <div className="flex items-center justify-between bg-zinc-900 px-4 py-2 rounded-lg">
             <div className="text-xs text-zinc-400">
-              {measurements.length} measurement{measurements.length !== 1 ? "s" : ""} recorded
+              {measurements.length} measurement
+              {measurements.length !== 1 ? "s" : ""} recorded
             </div>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => {
                   const csv =
                     "deltaX,deltaY,distance\n" +
@@ -262,6 +270,7 @@ const exportData = () => {
                 Export CSV
               </button>
               <button
+                type="button"
                 onClick={() => setMeasurements([])}
                 className="px-3 py-1 text-xs rounded bg-zinc-800 text-zinc-400"
                 disabled={measurements.length === 0}
@@ -365,7 +374,6 @@ export function ChartRulerExamples() {
       </div>
 
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold">Examples</h2>
         <BasicExample />
         <RateOfChangeExample />
         <MultiMeasurementExample />
