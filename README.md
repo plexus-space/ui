@@ -176,22 +176,6 @@ import { Gauge } from "@plexusui/components/charts/gauge";
 />;
 ```
 
-### Waterfall Chart - FFT Analysis
-
-```tsx
-import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
-
-<WaterfallChart
-  data={fftData}
-  width={800}
-  height={600}
-  colormap="viridis"
-  xLabel="Frequency (Hz)"
-  yLabel="Time"
-  showColorbar
-/>;
-```
-
 ### Attitude Indicator - Aviation Display
 
 ```tsx
@@ -263,7 +247,7 @@ const [visibleRange, setVisibleRange] = useState({
 - Motor speed tracking
 - Real-time alerts
 
-Components: Line Chart, Waterfall Chart, Gauges
+Components: Line Chart, Gauges
 
 ### ✈️ Aerospace
 
@@ -329,8 +313,6 @@ Components are designed to be copied into your project:
 ```tsx
 import { LineChart } from "@plexusui/components/charts/line-chart";
 import { Gauge } from "@plexusui/components/charts/gauge";
-import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
-
 // Use them in your app
 <LineChart series={data} width={800} height={400} />;
 ```
@@ -398,7 +380,6 @@ Plus 17 individual component examples in `/examples/*`.
 - Histogram Chart
 - Heatmap Chart
 - Radar Chart
-- Waterfall/Spectrogram Chart
 
 **Instruments:**
 

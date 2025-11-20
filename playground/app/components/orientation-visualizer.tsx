@@ -208,6 +208,7 @@ export function OrientationVisualizer({
             </p>
           </div>
           <button
+            type="button"
             onClick={isActive ? stopOrientation : startOrientation}
             className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center gap-2 text-sm ${
               isActive

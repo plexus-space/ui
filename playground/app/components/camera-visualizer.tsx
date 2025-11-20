@@ -155,7 +155,9 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
 
     // Stop camera stream
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach((track) => {
+        track.stop();
+      });
     }
 
     // Clear video elements
@@ -363,6 +365,7 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
             </p>
           </div>
           <button
+            type="button"
             onClick={isActive ? stopCamera : startCamera}
             className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center gap-2 text-sm ${
               isActive

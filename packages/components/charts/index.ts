@@ -18,7 +18,7 @@
  *
  * 2. **Component Layer** (Chart Primitives)
  *    - LineChart, BarChart, ScatterChart, AreaChart
- *    - HeatmapChart, WaterfallChart, Histogram
+ *    - HeatmapChart, Histogram
  *    - Gauge, RadarChart, AttitudeIndicator
  *    - DataGrid, GanttChart, ModelViewer
  *
@@ -156,13 +156,6 @@ export type {
   GanttChartControlsProps,
 } from "./gantt";
 
-export { WaterfallChart } from "./waterfall-chart";
-export type {
-  WaterfallChartProps,
-  SpectrogramPoint,
-  WindowFunction,
-} from "./waterfall-chart";
-
 // ============================================================================
 // 3D Components (Three.js)
 // ============================================================================
@@ -263,14 +256,6 @@ export {
   createHistogramBins,
   calculateBinCount,
   calculateNormalCurve,
-  // FFT utilities for waterfall/spectrogram charts
-  fft,
-  applyWindow,
-  fftToPowerSpectrum,
-  powerToDb,
-  generateSpectrogram,
-  nextPowerOf2,
-  zeroPad,
   type BinMethod,
   type HistogramBin,
   type Complex,

@@ -2,14 +2,11 @@
 
 import { LineChart } from "@plexusui/components/charts/line-chart";
 import { BarChart } from "@plexusui/components/charts/bar-chart";
-import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
 import { useState, useEffect, useRef } from "react";
 import {
   Mic,
   MicOff,
-  Volume2,
   Activity,
-  TrendingUp,
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
@@ -35,8 +32,6 @@ interface AudioInsight {
 export function AudioVisualizer({ className }: AudioVisualizerProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentVolume, setCurrentVolume] = useState(0);
-  const [currentPeakFreq, setCurrentPeakFreq] = useState(0);
 
   // Audio Classification & Inference
   const [audioType, setAudioType] = useState<
@@ -48,18 +43,6 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
   const [isClipping, setIsClipping] = useState(false);
   const [insights, setInsights] = useState<AudioInsight[]>([]);
 
-  // Frequency Band Analysis
-  const [frequencyBands, setFrequencyBands] = useState({
-    subBass: 0, // 20-60 Hz
-    bass: 0, // 60-250 Hz
-    lowMids: 0, // 250-500 Hz
-    mids: 0, // 500-2000 Hz
-    highMids: 0, // 2000-4000 Hz
-    presence: 0, // 4000-6000 Hz
-    brilliance: 0, // 6000-20000 Hz
-  });
-
-  // Historical data for aggregation
   const [volumeHistory, setVolumeHistory] = useState<
     Array<{ x: number; y: number }>
   >([]);
@@ -69,33 +52,23 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
   const statsHistoryRef = useRef<AudioStats[]>([]);
   const beatHistoryRef = useRef<number[]>([]);
 
-  // Aggregated stats
-  const [avgVolume, setAvgVolume] = useState(0);
-  const [maxVolume, setMaxVolume] = useState(0);
-  const [avgPeakFreq, setAvgPeakFreq] = useState(0);
-
-  // Audio data states
   const [waveformData, setWaveformData] = useState<
     Array<{ x: number; y: number }>
   >([]);
   const [frequencyData, setFrequencyData] = useState<
     Array<{ x: string; y: number }>
   >([]);
-  const [spectrogramSignal, setSpectrogramSignal] = useState<number[]>([]);
-
   // Audio context refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const spectrogramBufferRef = useRef<number[]>([]);
   const startTimeRef = useRef<number>(0);
 
   // Constants
   const FFT_SIZE = 2048;
   const SAMPLE_RATE = 48000;
   const WAVEFORM_POINTS = 200;
-  const SPECTROGRAM_HISTORY = 8000;
   const MAX_HISTORY_POINTS = 300;
 
   const addInsight = (type: AudioInsight["type"], message: string) => {
@@ -162,11 +135,12 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
     }
 
     if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach((track) => track.stop());
+      micStreamRef.current.getTracks().forEach((track) => {
+        track.stop();
+      });
     }
 
     setIsRecording(false);
-    spectrogramBufferRef.current = [];
     addInsight("info", "Audio monitoring stopped");
   };
 
@@ -201,7 +175,6 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       }
       const rms = Math.sqrt(sum / timeDataArray.length);
       const volume = Math.min(100, rms * 200);
-      setCurrentVolume(volume);
 
       // Detect clipping
       const clipping = timeDataArray.some((v) => v === 0 || v === 255);
@@ -222,7 +195,6 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
         }
       }
       const peakFreq = (maxFreqIndex * SAMPLE_RATE) / (2 * FFT_SIZE);
-      setCurrentPeakFreq(peakFreq);
 
       // FREQUENCY BAND ANALYSIS
       const getBandEnergy = (startHz: number, endHz: number): number => {
@@ -248,7 +220,6 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
         presence: getBandEnergy(4000, 6000),
         brilliance: getBandEnergy(6000, 20000),
       };
-      setFrequencyBands(bands);
 
       // AUDIO CLASSIFICATION
       if (volume < 5) {
@@ -358,33 +329,6 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       setVolumeHistory(volHistory);
       setPeakFreqHistory(freqHistory);
 
-      // Calculate aggregated stats
-      if (statsHistoryRef.current.length > 0) {
-        const volumes = statsHistoryRef.current.map((s) => s.volume);
-        const frequencies = statsHistoryRef.current.map((s) => s.peakFrequency);
-
-        setAvgVolume(volumes.reduce((a, b) => a + b, 0) / volumes.length);
-        setMaxVolume(Math.max(...volumes));
-        setAvgPeakFreq(
-          frequencies.reduce((a, b) => a + b, 0) / frequencies.length
-        );
-      }
-
-      // Update spectrogram buffer
-      const newSamples: number[] = [];
-      for (let i = 0; i < timeDataArray.length; i++) {
-        newSamples.push((timeDataArray[i] - 128) / 128);
-      }
-
-      spectrogramBufferRef.current.push(...newSamples);
-      if (spectrogramBufferRef.current.length > SPECTROGRAM_HISTORY) {
-        spectrogramBufferRef.current = spectrogramBufferRef.current.slice(
-          spectrogramBufferRef.current.length - SPECTROGRAM_HISTORY
-        );
-      }
-
-      setSpectrogramSignal([...spectrogramBufferRef.current]);
-
       animationFrameRef.current = requestAnimationFrame(updateVisualization);
     };
 
@@ -428,6 +372,7 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
             </p>
           </div>
           <button
+            type="button"
             onClick={isRecording ? stopRecording : startRecording}
             className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center gap-2 text-sm ${
               isRecording
@@ -679,28 +624,6 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
                 />
               </ChartCard>
             </div>
-          )}
-
-          {/* Spectrogram */}
-          {spectrogramSignal.length >= 512 && (
-            <ChartCard
-              title="GPU-Accelerated Spectrogram"
-              description="Time-frequency representation for pattern recognition"
-            >
-              <WaterfallChart
-                signal={spectrogramSignal}
-                sampleRate={SAMPLE_RATE}
-                fftSize={512}
-                hopSize={256}
-                windowFunction="hann"
-                useDb={true}
-                width={1150}
-                height={350}
-                showAxes
-                useGPUFFT={false}
-                frequencyRange={[0, 8000]}
-              />
-            </ChartCard>
           )}
         </>
       )}

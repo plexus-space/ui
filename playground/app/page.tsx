@@ -1,28 +1,39 @@
 "use client";
 
 import { LineChart } from "@plexusui/components/charts/line-chart";
-import { BarChart } from "@plexusui/components/charts/bar-chart";
 import { Gauge } from "@plexusui/components/charts/gauge";
 import { HeatmapChart } from "@plexusui/components/charts/heatmap-chart";
 import { useState, useEffect } from "react";
-import { Activity, Zap, Cpu, TrendingUp, TrendingDown } from "lucide-react";
+import { Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { AudioVisualizer } from "./components/audio-visualizer";
 import { CameraVisualizer } from "./components/camera-visualizer";
 import { OrientationVisualizer } from "./components/orientation-visualizer";
-import { PointCloudVisualizer } from "./components/point-cloud-visualizer";
+import { MedicalScanViewer } from "./components/medical-scan-viewer";
+import { ECGAnalysis } from "./components/ecg-analysis";
+import { SensorIntegration } from "./components/sensor-integration";
 
 // ============================================================================
-// DASHBOARD 1: HEALTH MONITORING
+// CRITICAL CARE PATIENT MONITORING - Supporting Components
 // ============================================================================
 
-function HealthHeartRate() {
+function VitalSignsTrends() {
   const [data, setData] = useState(() => [
     {
       name: "Heart Rate",
       color: "#ef4444",
-      data: Array.from({ length: 100 }, (_, i) => ({ x: i, y: 72 })),
+      data: Array.from({ length: 50 }, (_, i) => ({ x: i, y: 72 })),
+    },
+    {
+      name: "SpO₂",
+      color: "#3b82f6",
+      data: Array.from({ length: 50 }, (_, i) => ({ x: i, y: 98 })),
+    },
+    {
+      name: "Resp Rate",
+      color: "#8b5cf6",
+      data: Array.from({ length: 50 }, (_, i) => ({ x: i, y: 16 })),
     },
   ]);
 
@@ -34,14 +45,21 @@ function HealthHeartRate() {
           newData.shift();
           const lastX = newData[newData.length - 1].x;
           const lastY = newData[newData.length - 1].y;
-          newData.push({
-            x: lastX + 1,
-            y: Math.max(60, Math.min(100, lastY + (Math.random() - 0.5) * 3)),
-          });
+
+          let newY: number;
+          if (series.name === "Heart Rate") {
+            newY = Math.max(60, Math.min(100, lastY + (Math.random() - 0.5) * 2));
+          } else if (series.name === "SpO₂") {
+            newY = Math.max(94, Math.min(100, lastY + (Math.random() - 0.5) * 0.5));
+          } else {
+            newY = Math.max(12, Math.min(22, lastY + (Math.random() - 0.5) * 1));
+          }
+
+          newData.push({ x: lastX + 1, y: newY });
           return { ...series, data: newData };
         })
       );
-    }, 100);
+    }, 500);
     return () => clearInterval(interval);
   }, []);
 
@@ -53,218 +71,20 @@ function HealthHeartRate() {
       showGrid
       showAxes
       showTooltip
-      yAxis={{ domain: [50, 110], label: "BPM" }}
     />
   );
 }
 
-function HealthEEG() {
-  const [data, setData] = useState(() => [
-    {
-      name: "Alpha",
-      color: "#3b82f6",
-      data: Array.from({ length: 100 }, (_, i) => ({ x: i, y: 8 })),
-    },
-    {
-      name: "Beta",
-      color: "#8b5cf6",
-      data: Array.from({ length: 100 }, (_, i) => ({ x: i, y: 4 })),
-    },
-    {
-      name: "Theta",
-      color: "#ec4899",
-      data: Array.from({ length: 100 }, (_, i) => ({ x: i, y: 0 })),
-    },
-  ]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setData((prev) =>
-        prev.map((series) => {
-          const newData = [...series.data];
-          newData.shift();
-          const lastX = newData[newData.length - 1].x;
-          const offset =
-            series.name === "Alpha" ? 8 : series.name === "Beta" ? 4 : 0;
-          newData.push({
-            x: lastX + 1,
-            y:
-              offset +
-              Math.sin(lastX * 0.1) * 1.5 +
-              (Math.random() - 0.5) * 0.5,
-          });
-          return { ...series, data: newData };
-        })
-      );
-    }, 80);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <LineChart
-      series={data}
-      width={550}
-      height={250}
-      showGrid
-      showAxes
-      showTooltip
-      yAxis={{ label: "μV" }}
-    />
-  );
-}
-
-function HealthVitals() {
-  const [temp, setTemp] = useState(37.2);
-  const [spo2, setSpo2] = useState(98);
-  const [bp, setBp] = useState(120);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTemp((prev) =>
-        Math.max(36.5, Math.min(38, prev + (Math.random() - 0.5) * 0.15))
-      );
-      setSpo2((prev) =>
-        Math.max(95, Math.min(100, prev + (Math.random() - 0.5) * 0.8))
-      );
-      setBp((prev) =>
-        Math.max(110, Math.min(140, prev + (Math.random() - 0.5) * 3))
-      );
-    }, 600);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="grid grid-cols-3 gap-4">
-      <Gauge
-        value={temp}
-        min={35}
-        max={40}
-        label="Body Temp"
-        unit="°C"
-        width={160}
-        height={160}
-      />
-      <Gauge
-        value={spo2}
-        min={80}
-        max={100}
-        label="SpO₂"
-        unit="%"
-        width={160}
-        height={160}
-      />
-      <Gauge
-        value={bp}
-        min={80}
-        max={160}
-        label="Blood Pressure"
-        unit="mmHg"
-        width={160}
-        height={160}
-      />
-    </div>
-  );
-}
-
-// ============================================================================
-// DASHBOARD 2: ROBOTICS
-// ============================================================================
-
-function RobotMotorSpeeds() {
-  const [data, setData] = useState(() => [
-    {
-      name: "Motors",
-      data: [
-        { x: "M1", y: 1200 },
-        { x: "M2", y: 1450 },
-        { x: "M3", y: 980 },
-        { x: "M4", y: 1320 },
-        { x: "M5", y: 1150 },
-        { x: "M6", y: 1380 },
-      ],
-      color: "#3b82f6",
-    },
-  ]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setData((prev) =>
-        prev.map((series) => ({
-          ...series,
-          data: series.data.map((d) => ({
-            ...d,
-            y: Math.max(800, Math.min(2000, d.y + (Math.random() - 0.5) * 100)),
-          })),
-        }))
-      );
-    }, 300);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <BarChart
-      series={data}
-      width={550}
-      height={250}
-      showGrid
-      showAxes
-      yAxis={{ label: "RPM" }}
-    />
-  );
-}
-
-function RobotBattery() {
-  const [data, setData] = useState(() => [
-    {
-      name: "Cells",
-      data: [
-        { x: "Cell 1", y: 4.15 },
-        { x: "Cell 2", y: 4.12 },
-        { x: "Cell 3", y: 4.18 },
-        { x: "Cell 4", y: 4.1 },
-        { x: "Cell 5", y: 4.16 },
-        { x: "Cell 6", y: 4.14 },
-      ],
-      color: "#10b981",
-    },
-  ]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setData((prev) =>
-        prev.map((series) => ({
-          ...series,
-          data: series.data.map((d) => ({
-            ...d,
-            y: Math.max(
-              3.8,
-              Math.min(4.2, d.y + (Math.random() - 0.51) * 0.02)
-            ),
-          })),
-        }))
-      );
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <BarChart
-      series={data}
-      width={550}
-      height={250}
-      showGrid
-      showAxes
-      yAxis={{ domain: [3.5, 4.5], label: "Volts" }}
-    />
-  );
-}
-
-function RobotSensors() {
+function PatientMonitoringGrid() {
   const [data, setData] = useState(() => {
     const initial = [];
-    for (let x = 0; x < 10; x++) {
-      for (let y = 0; y < 10; y++) {
-        initial.push({ x, y, value: Math.random() * 100 });
+    for (let y = 0; y < 5; y++) {
+      for (let x = 0; x < 5; x++) {
+        initial.push({
+          x,
+          y,
+          value: 75 + (Math.random() - 0.5) * 30,
+        });
       }
     }
     return initial;
@@ -275,163 +95,80 @@ function RobotSensors() {
       setData((prev) =>
         prev.map((cell) => ({
           ...cell,
-          value: Math.max(
-            0,
-            Math.min(100, cell.value + (Math.random() - 0.5) * 15)
-          ),
+          value: Math.max(40, Math.min(100, cell.value + (Math.random() - 0.5) * 8)),
         }))
-      );
-    }, 300);
-    return () => clearInterval(interval);
-  }, []);
-
-  return <HeatmapChart data={data} width={550} height={260} cellGap={2} />;
-}
-
-// ============================================================================
-// DASHBOARD 3: ENERGY
-// ============================================================================
-
-function EnergyConsumption() {
-  const [data, setData] = useState(() => [
-    {
-      name: "Grid",
-      color: "#3b82f6",
-      data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: 45 })),
-    },
-    {
-      name: "Solar",
-      color: "#f59e0b",
-      data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: 25 })),
-    },
-    {
-      name: "Battery",
-      color: "#10b981",
-      data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: 15 })),
-    },
-  ]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setData((prev) =>
-        prev.map((series) => {
-          const newData = [...series.data];
-          newData.shift();
-          const lastX = newData[newData.length - 1].x;
-          const base =
-            series.name === "Grid" ? 45 : series.name === "Solar" ? 25 : 15;
-          newData.push({
-            x: lastX + 1,
-            y: Math.max(0, Math.min(100, base + (Math.random() - 0.5) * 10)),
-          });
-          return { ...series, data: newData };
-        })
-      );
-    }, 200);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <LineChart
-      series={data}
-      width={550}
-      height={250}
-      showGrid
-      showAxes
-      showTooltip
-      yAxis={{ domain: [0, 100], label: "kW" }}
-    />
-  );
-}
-
-function EnergyGeneration() {
-  const [data, setData] = useState(() => [
-    {
-      name: "Output",
-      data: [
-        { x: "00:00", y: 0 },
-        { x: "06:00", y: 15 },
-        { x: "12:00", y: 45 },
-        { x: "18:00", y: 20 },
-        { x: "24:00", y: 0 },
-      ],
-      color: "#f59e0b",
-    },
-  ]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setData((prev) =>
-        prev.map((series) => ({
-          ...series,
-          data: series.data.map((d, i) => {
-            const base = [0, 15, 45, 20, 0][i];
-            return { ...d, y: Math.max(0, base + (Math.random() - 0.5) * 5) };
-          }),
-        }))
-      );
-    }, 800);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <BarChart
-      series={data}
-      width={550}
-      height={250}
-      showGrid
-      showAxes
-      yAxis={{ label: "kW" }}
-    />
-  );
-}
-
-function EnergyStorage() {
-  const [charge, setCharge] = useState(78);
-  const [load, setLoad] = useState(65);
-  const [efficiency, setEfficiency] = useState(92);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCharge((prev) => Math.max(60, Math.min(100, prev - 0.05)));
-      setLoad((prev) =>
-        Math.max(40, Math.min(100, prev + (Math.random() - 0.5) * 8))
-      );
-      setEfficiency((prev) =>
-        Math.max(85, Math.min(98, prev + (Math.random() - 0.5) * 1))
       );
     }, 400);
     return () => clearInterval(interval);
   }, []);
 
+  return <HeatmapChart data={data} width={550} height={280} cellGap={4} />;
+}
+
+function VitalSignsGauges() {
+  const [hr, setHr] = useState(72);
+  const [spo2, setSpo2] = useState(98);
+  const [temp, setTemp] = useState(37.2);
+  const [bp, setBp] = useState(120);
+  const [rr, setRr] = useState(16);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHr((prev) => Math.max(60, Math.min(100, prev + (Math.random() - 0.5) * 2)));
+      setSpo2((prev) => Math.max(94, Math.min(100, prev + (Math.random() - 0.5) * 0.5)));
+      setTemp((prev) => Math.max(36.5, Math.min(38.5, prev + (Math.random() - 0.5) * 0.1)));
+      setBp((prev) => Math.max(100, Math.min(150, prev + (Math.random() - 0.5) * 3)));
+      setRr((prev) => Math.max(12, Math.min(22, prev + (Math.random() - 0.5) * 1)));
+    }, 600);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-5 gap-3">
       <Gauge
-        value={charge}
-        min={0}
-        max={100}
-        label="Battery Charge"
-        unit="%"
-        width={160}
-        height={160}
+        value={hr}
+        min={40}
+        max={120}
+        label="Heart Rate"
+        unit="BPM"
+        width={140}
+        height={140}
       />
       <Gauge
-        value={load}
-        min={0}
+        value={spo2}
+        min={85}
         max={100}
-        label="System Load"
+        label="SpO₂"
         unit="%"
-        width={160}
-        height={160}
+        width={140}
+        height={140}
       />
       <Gauge
-        value={efficiency}
-        min={0}
-        max={100}
-        label="Efficiency"
-        unit="%"
-        width={160}
-        height={160}
+        value={temp}
+        min={35}
+        max={40}
+        label="Temperature"
+        unit="°C"
+        width={140}
+        height={140}
+      />
+      <Gauge
+        value={bp}
+        min={80}
+        max={180}
+        label="Blood Pressure"
+        unit="mmHg"
+        width={140}
+        height={140}
+      />
+      <Gauge
+        value={rr}
+        min={8}
+        max={30}
+        label="Resp Rate"
+        unit="/min"
+        width={140}
+        height={140}
       />
     </div>
   );
@@ -460,10 +197,13 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 py-4 justify-center items-center">
         <Tabs
-          defaultValue="audio"
+          defaultValue="medical"
           className="w-full justify-center items-center flex flex-col"
         >
           <TabsList className="mb-6">
+            <TabsTrigger value="medical" className="text-xs">
+              3D Medical Imaging
+            </TabsTrigger>
             <TabsTrigger value="audio" className="text-xs">
               Live Audio
             </TabsTrigger>
@@ -472,18 +212,6 @@ export default function Home() {
             </TabsTrigger>
             <TabsTrigger value="orientation" className="text-xs">
               Device Tilt
-            </TabsTrigger>
-            <TabsTrigger value="pointcloud" className="text-xs">
-              3D Point Cloud
-            </TabsTrigger>
-            <TabsTrigger value="health" className="text-xs">
-              Health Monitoring
-            </TabsTrigger>
-            <TabsTrigger value="robotics" className="text-xs">
-              Robotics
-            </TabsTrigger>
-            <TabsTrigger value="energy" className="text-xs">
-              Energy Management
             </TabsTrigger>
           </TabsList>
 
@@ -499,12 +227,9 @@ export default function Home() {
             <OrientationVisualizer />
           </TabsContent>
 
-          <TabsContent value="pointcloud" className="space-y-4 w-full">
-            <PointCloudVisualizer />
-          </TabsContent>
-
-          <TabsContent value="health" className="space-y-4 w-full">
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <TabsContent value="medical" className="space-y-4 w-full">
+            {/* Top Metrics Row */}
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
               <MetricCard
                 icon={Activity}
                 title="Heart Rate"
@@ -515,7 +240,7 @@ export default function Home() {
               <MetricCard
                 icon={Activity}
                 title="Blood Pressure"
-                value="120/80"
+                value="120/80 mmHg"
                 change="+0%"
                 trend="neutral"
               />
@@ -533,141 +258,57 @@ export default function Home() {
                 change="0%"
                 trend="neutral"
               />
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <ChartCard
-                title="ECG Monitor"
-                description="Real-time heart rate streaming"
-              >
-                <HealthHeartRate />
-              </ChartCard>
-              <ChartCard
-                title="EEG Brainwaves"
-                description="Alpha, beta, theta waves"
-              >
-                <HealthEEG />
-              </ChartCard>
-            </div>
-
-            <ChartCard
-              title="Vital Signs"
-              description="Temperature, oxygen saturation, blood pressure"
-            >
-              <HealthVitals />
-            </ChartCard>
-          </TabsContent>
-
-          {/* Robotics Dashboard */}
-          <TabsContent value="robotics" className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <MetricCard
-                icon={Cpu}
-                title="Active Motors"
-                value="6/6"
-                change="0%"
-                trend="neutral"
-              />
-              <MetricCard
-                icon={Zap}
-                title="Avg RPM"
-                value="1,247"
-                change="+5%"
-                trend="up"
-              />
               <MetricCard
                 icon={Activity}
-                title="Battery"
-                value="82%"
-                change="-2%"
-                trend="down"
-              />
-              <MetricCard
-                icon={Activity}
-                title="Sensor Health"
-                value="100%"
-                change="0%"
+                title="Resp Rate"
+                value="16/min"
+                change="+0%"
                 trend="neutral"
               />
             </div>
 
+            {/* Main 3D + ECG Row */}
             <div className="grid gap-3 md:grid-cols-2">
               <ChartCard
-                title="Motor Speeds"
-                description="6 motors RPM monitoring"
+                title="3D Brain Scan (CT/MRI)"
+                description="Interactive point cloud visualization • Color-mapped by tissue density"
               >
-                <RobotMotorSpeeds />
+                <MedicalScanViewer />
               </ChartCard>
               <ChartCard
-                title="Battery Cells"
-                description="Individual cell voltages"
+                title="ECG with Frequency Analysis"
+                description="Real-time cardiac monitoring with spectral decomposition"
               >
-                <RobotBattery />
+                <ECGAnalysis />
               </ChartCard>
             </div>
 
+            {/* Vital Signs Trends */}
             <ChartCard
-              title="Pressure Sensor Array"
-              description="100 sensors, 10x10 grid"
+              title="24-Hour Vital Signs Trends"
+              description="Multi-parameter trending: Heart rate, SpO₂, and respiratory rate"
             >
-              <RobotSensors />
+              <VitalSignsTrends />
             </ChartCard>
-          </TabsContent>
 
-          {/* Energy Dashboard */}
-          <TabsContent value="energy" className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <MetricCard
-                icon={Zap}
-                title="Total Load"
-                value="85 kW"
-                change="+8%"
-                trend="up"
-              />
-              <MetricCard
-                icon={Activity}
-                title="Solar Gen"
-                value="25 kW"
-                change="+12%"
-                trend="up"
-              />
-              <MetricCard
-                icon={Activity}
-                title="Battery"
-                value="78%"
-                change="-5%"
-                trend="down"
-              />
-              <MetricCard
-                icon={TrendingUp}
-                title="Efficiency"
-                value="92%"
-                change="+3%"
-                trend="up"
-              />
-            </div>
-
+            {/* Bottom Row: Gauges + Patient Grid */}
             <div className="grid gap-3 md:grid-cols-2">
               <ChartCard
-                title="Power Consumption"
-                description="Grid, solar, battery sources"
+                title="Current Vital Signs"
+                description="Live patient vitals with normal range indicators"
               >
-                <EnergyConsumption />
+                <VitalSignsGauges />
               </ChartCard>
               <ChartCard
-                title="Solar Generation"
-                description="24-hour output cycle"
+                title="Multi-Patient Monitoring"
+                description="Real-time status heatmap: 5 patients × 5 vital parameters"
               >
-                <EnergyGeneration />
+                <PatientMonitoringGrid />
               </ChartCard>
             </div>
 
-            <ChartCard
-              title="Energy Storage"
-              description="Battery charge, system load, efficiency"
-            >
-              <EnergyStorage />
-            </ChartCard>
+            {/* Optional Real Sensor Integration */}
+            <SensorIntegration />
           </TabsContent>
         </Tabs>
       </div>
@@ -682,7 +323,7 @@ function MetricCard({
   change,
   trend,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   value: string;
   change: string;

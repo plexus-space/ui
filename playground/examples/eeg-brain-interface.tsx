@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { WaterfallChart } from "@plexusui/components/charts/waterfall-chart";
 import { LineChart } from "@plexusui/components/charts/line-chart";
 import { HeatmapChart } from "@plexusui/components/charts/heatmap-chart";
 import type { DataPoint } from "@plexusui/components/charts/heatmap-chart";
@@ -244,9 +243,6 @@ function EEGMonitoringDashboard() {
     [channelData]
   );
 
-  // Selected channel signal for waterfall
-  const selectedSignal = channelData[selectedChannel] || channelData[0];
-
   return (
     <ComponentPreview
       title="EEG Brain-Computer Interface - Medical Device Monitoring"
@@ -262,13 +258,6 @@ const channelData = Array.from({ length: 8 }, () =>
 
 // Medical-grade monitoring dashboard
 <div className="grid grid-cols-2 gap-4">
-  {/* Frequency band analysis */}
-  <WaterfallChart
-    signal={channelData[0]}
-    sampleRate={256}
-    fftSize={256}
-    frequencyRange={[0.5, 50]} // Brain wave range
-  />
 
   {/* Multi-channel raw EEG */}
   <LineChart
@@ -366,26 +355,6 @@ const channelData = Array.from({ length: 8 }, () =>
                   </select>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="w-full h-[400px]">
-                  <WaterfallChart
-                    signal={selectedSignal}
-                    sampleRate={SAMPLE_RATE}
-                    fftSize={256}
-                    hopSize={64}
-                    windowFunction="hann"
-                    useDb={true}
-                    frequencyRange={[0.5, 50]}
-                    xAxis={{ label: "Time" }}
-                    yAxis={{ label: "Frequency (Hz)" }}
-                    width={500}
-                    height={400}
-                    showAxes
-                    showTooltip
-                    preferWebGPU
-                  />
-                </div>
-              </CardContent>
             </Card>
 
             {/* Spatial Activity Map */}
