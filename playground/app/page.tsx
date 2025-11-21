@@ -2,11 +2,10 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { AudioVisualizer } from "./components/audio-visualizer";
-import { CameraVisualizer } from "./components/camera-visualizer";
-import { OrientationVisualizer } from "./components/orientation-visualizer";
-import { SkateboardTelemetry } from "./components/skateboard-telemetry";
-import { useColorScheme } from "@/components/color-scheme-provider";
+import { AudioVisualizer } from "@/components/audio-visualizer";
+import { CameraVisualizer } from "@/components/camera-visualizer";
+import { OrientationVisualizer } from "@/components/orientation-visualizer";
+import { SkateboardTelemetry } from "@/components/skateboard-telemetry";
 import { Button } from "@/components/ui/button";
 
 // ============================================================================

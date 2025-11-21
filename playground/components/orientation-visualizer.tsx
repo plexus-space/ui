@@ -243,7 +243,9 @@ export function OrientationVisualizer({
           <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
             <div className="space-y-1">
               <div className="text-xs font-medium text-zinc-500">Pitch (β)</div>
-              <div className="text-3xl font-semibold tabular-nums">{pitch.toFixed(1)}°</div>
+              <div className="text-3xl font-semibold tabular-nums">
+                {pitch.toFixed(1)}°
+              </div>
               <div className="text-xs text-zinc-600">
                 {pitch > 0 ? "Nose Up" : pitch < 0 ? "Nose Down" : "Level"}
               </div>
@@ -253,7 +255,9 @@ export function OrientationVisualizer({
           <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
             <div className="space-y-1">
               <div className="text-xs font-medium text-zinc-500">Roll (γ)</div>
-              <div className="text-3xl font-semibold tabular-nums">{roll.toFixed(1)}°</div>
+              <div className="text-3xl font-semibold tabular-nums">
+                {roll.toFixed(1)}°
+              </div>
               <div className="text-xs text-zinc-600">
                 {roll > 0 ? "Right Tilt" : roll < 0 ? "Left Tilt" : "Level"}
               </div>
@@ -262,8 +266,12 @@ export function OrientationVisualizer({
 
           <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
             <div className="space-y-1">
-              <div className="text-xs font-medium text-zinc-500">Heading (α)</div>
-              <div className="text-3xl font-semibold tabular-nums">{heading.toFixed(0)}°</div>
+              <div className="text-xs font-medium text-zinc-500">
+                Heading (α)
+              </div>
+              <div className="text-3xl font-semibold tabular-nums">
+                {heading.toFixed(0)}°
+              </div>
               <div className="text-xs text-zinc-600">
                 {heading >= 337.5 || heading < 22.5
                   ? "N"
@@ -305,13 +313,16 @@ export function OrientationVisualizer({
             Device Orientation Tracking
           </h3>
           <p className="text-sm text-zinc-500 mb-6 max-w-lg mx-auto leading-relaxed">
-            Real-time gyroscope and accelerometer visualization with aviation-style attitude indicator
+            Real-time gyroscope and accelerometer visualization with
+            aviation-style attitude indicator
           </p>
           <div className="grid grid-cols-2 gap-3 max-w-md mx-auto text-left">
             <div className="flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
               <div className="text-xs text-zinc-400">
-                <div className="font-medium text-zinc-300">Attitude Indicator</div>
+                <div className="font-medium text-zinc-300">
+                  Attitude Indicator
+                </div>
                 Aviation-style horizon
               </div>
             </div>

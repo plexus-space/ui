@@ -69,21 +69,27 @@ export function SensorIntegration() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {enableAudio && (
                 <div className="border border-zinc-800 rounded-lg p-3 bg-zinc-900">
-                  <div className="text-xs text-gray-400 mb-2">Live Audio Input</div>
+                  <div className="text-xs text-gray-400 mb-2">
+                    Live Audio Input
+                  </div>
                   <AudioVisualizer />
                 </div>
               )}
 
               {enableCamera && (
                 <div className="border border-zinc-800 rounded-lg p-3 bg-zinc-900">
-                  <div className="text-xs text-gray-400 mb-2">Live Camera Feed</div>
+                  <div className="text-xs text-gray-400 mb-2">
+                    Live Camera Feed
+                  </div>
                   <CameraVisualizer />
                 </div>
               )}
 
               {enableOrientation && (
                 <div className="border border-zinc-800 rounded-lg p-3 bg-zinc-900">
-                  <div className="text-xs text-gray-400 mb-2">Device Orientation</div>
+                  <div className="text-xs text-gray-400 mb-2">
+                    Device Orientation
+                  </div>
                   <OrientationVisualizer />
                 </div>
               )}
