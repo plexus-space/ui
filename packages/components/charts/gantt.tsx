@@ -159,8 +159,15 @@ export interface GanttChartRootProps {
 // Context
 // ============================================================================
 
+interface TaskGroup {
+  name: string;
+  tasks: Task[];
+  description?: string;
+}
+
 interface GanttContext {
   tasks: Task[];
+  taskGroups: TaskGroup[];
   timezone: string;
   rowHeight: number;
   startTime: Date;
@@ -368,14 +375,14 @@ const TimelineHeader = React.memo(
 TimelineHeader.displayName = "TimelineHeader";
 
 interface TaskRowProps {
-  task: Task;
+  taskGroup: TaskGroup;
   index: number;
   leftPanelWidth: number;
   variant: "default" | "compact" | "detailed";
 }
 
 const TaskRow = React.memo(
-  ({ task, index, leftPanelWidth, variant }: TaskRowProps) => {
+  ({ taskGroup, index, leftPanelWidth, variant }: TaskRowProps) => {
     const {
       rowHeight,
       xScale,
@@ -387,24 +394,20 @@ const TaskRow = React.memo(
     } = useGantt();
 
     const y = 40 + index * rowHeight;
-    const start = normalizeDate(task.start);
-    const end = normalizeDate(task.end);
-    const x1 = xScale(start);
-    const x2 = xScale(end);
-    const barWidth = Math.max(x2 - x1, 4);
-    const color = getTaskColor(task);
-    const isHovered = hoveredTask === task.id;
-    const durationMinutes = differenceInMinutes(end, start);
+    const isAnyHovered = taskGroup.tasks.some(
+      (task) => hoveredTask === task.id
+    );
 
     return (
       <g>
+        {/* Row background */}
         <rect
           x={0}
           y={y}
           width={leftPanelWidth}
           height={rowHeight}
           fill="currentColor"
-          opacity={isHovered ? 0.03 : 0}
+          opacity={isAnyHovered ? 0.03 : 0}
         />
         <line
           x1={0}
@@ -415,6 +418,7 @@ const TaskRow = React.memo(
           strokeWidth={1}
           opacity={0.05}
         />
+        {/* Row label */}
         <text
           x={12}
           y={y + rowHeight / 2 + 4}
@@ -423,10 +427,10 @@ const TaskRow = React.memo(
           fill="currentColor"
           opacity={0.9}
         >
-          {task.name}
+          {taskGroup.name}
         </text>
 
-        {variant === "detailed" && task.description && (
+        {variant === "detailed" && taskGroup.description && (
           <text
             x={12}
             y={y + rowHeight / 2 + 18}
@@ -434,125 +438,152 @@ const TaskRow = React.memo(
             fill="currentColor"
             opacity={0.5}
           >
-            {task.description}
+            {taskGroup.description}
           </text>
         )}
 
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: SVG group with hover state for tooltip display */}
-        <g
-          onMouseEnter={() => setHoveredTask(task.id)}
-          onMouseLeave={() => setHoveredTask(null)}
-        >
-          <rect
-            x={x1}
-            y={y + rowHeight * 0.35}
-            width={barWidth}
-            height={rowHeight * 0.3}
-            rx={3}
-            fill={color}
-            opacity={0.2}
-          />
+        {/* Render all tasks in this group */}
+        {taskGroup.tasks.map((task) => {
+          const start = normalizeDate(task.start);
+          const end = normalizeDate(task.end);
+          const x1 = xScale(start);
+          const x2 = xScale(end);
+          const barWidth = Math.max(x2 - x1, 4);
+          const color = getTaskColor(task);
+          const isHovered = hoveredTask === task.id;
+          const durationMinutes = differenceInMinutes(end, start);
 
-          <rect
-            x={x1}
-            y={y + rowHeight * 0.35}
-            width={barWidth}
-            height={rowHeight * 0.3}
-            rx={3}
-            fill={color}
-            opacity={0.8}
-          />
-
-          {/* Bar border */}
-          <rect
-            x={x1}
-            y={y + rowHeight * 0.35}
-            width={barWidth}
-            height={rowHeight * 0.3}
-            rx={3}
-            fill="none"
-            stroke={color}
-            strokeWidth={isHovered ? 2 : 1}
-          />
-
-          {/* Interactive overlay */}
-          {onTaskClick && (
-            <foreignObject
-              x={x1}
-              y={y + rowHeight * 0.35}
-              width={barWidth}
-              height={rowHeight * 0.3}
+          return (
+            // biome-ignore lint/a11y/noStaticElementInteractions: SVG group with hover state for tooltip display
+            <g
+              key={task.id}
+              onMouseEnter={() => setHoveredTask(task.id)}
+              onMouseLeave={() => setHoveredTask(null)}
             >
-              <button
-                type="button"
-                onClick={() => onTaskClick(task)}
-                aria-label={`${task.name} task`}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  background: "transparent",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                  borderRadius: "3px",
-                }}
-              />
-            </foreignObject>
-          )}
-
-          {/* Duration label */}
-          {barWidth > 40 && (
-            <text
-              x={x1 + 6}
-              y={y + rowHeight / 2 + 3}
-              fontSize={10}
-              fontWeight={500}
-              fill="white"
-            >
-              {durationMinutes}m
-            </text>
-          )}
-
-          {/* Tooltip on hover */}
-          {isHovered && (
-            <g>
-              {/* Tooltip background with dark fill */}
               <rect
-                x={x1 - 4}
-                y={y - 40}
-                width={Math.max(barWidth + 8, 200)}
-                height={36}
-                rx={6}
-                fill="#000000"
-                opacity={0.9}
-                stroke="rgba(255, 255, 255, 0.2)"
-                strokeWidth={1}
+                x={x1}
+                y={y + rowHeight * 0.35}
+                width={barWidth}
+                height={rowHeight * 0.3}
+                rx={3}
+                fill={color}
+                opacity={0.2}
               />
-              {/* Task name */}
-              <text
-                x={x1 + 4}
-                y={y - 24}
-                fontSize={11}
-                fontWeight={600}
-                fill="#ffffff"
-              >
-                {task.name}
-              </text>
-              {/* Time and duration */}
-              <text
-                x={x1 + 4}
-                y={y - 12}
-                fontSize={10}
-                fill="#ffffff"
+
+              <rect
+                x={x1}
+                y={y + rowHeight * 0.35}
+                width={barWidth}
+                height={rowHeight * 0.3}
+                rx={3}
+                fill={color}
                 opacity={0.8}
-              >
-                {formatTimeInZone(start, timezone, use12HourFormat)} →{" "}
-                {formatTimeInZone(end, timezone, use12HourFormat)} (
-                {durationMinutes}m)
-              </text>
+              />
+
+              {/* Bar border */}
+              <rect
+                x={x1}
+                y={y + rowHeight * 0.35}
+                width={barWidth}
+                height={rowHeight * 0.3}
+                rx={3}
+                fill="none"
+                stroke={color}
+                strokeWidth={isHovered ? 2 : 1}
+              />
+
+              {/* Interactive overlay */}
+              {onTaskClick && (
+                <foreignObject
+                  x={x1}
+                  y={y + rowHeight * 0.35}
+                  width={barWidth}
+                  height={rowHeight * 0.3}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onTaskClick(task)}
+                    aria-label={`${task.name} task`}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      borderRadius: "3px",
+                    }}
+                  />
+                </foreignObject>
+              )}
+
+              {/* Duration label */}
+              {barWidth > 40 && (
+                <text
+                  x={x1 + 6}
+                  y={y + rowHeight / 2 + 3}
+                  fontSize={10}
+                  fontWeight={500}
+                  fill="white"
+                >
+                  {durationMinutes}m
+                </text>
+              )}
+
+              {/* Tooltip on hover */}
+              {isHovered && (
+                <g>
+                  {/* Tooltip background with dark fill */}
+                  <rect
+                    x={x1 - 4}
+                    y={y - 40}
+                    width={Math.max(barWidth + 8, 200)}
+                    height={task.description ? 48 : 36}
+                    rx={6}
+                    fill="#000000"
+                    opacity={0.9}
+                    stroke="rgba(255, 255, 255, 0.2)"
+                    strokeWidth={1}
+                  />
+                  {/* Task name */}
+                  <text
+                    x={x1 + 4}
+                    y={y - 24}
+                    fontSize={11}
+                    fontWeight={600}
+                    fill="#ffffff"
+                  >
+                    {task.name}
+                  </text>
+                  {/* Time and duration */}
+                  <text
+                    x={x1 + 4}
+                    y={y - 12}
+                    fontSize={10}
+                    fill="#ffffff"
+                    opacity={0.8}
+                  >
+                    {formatTimeInZone(start, timezone, use12HourFormat)} →{" "}
+                    {formatTimeInZone(end, timezone, use12HourFormat)} (
+                    {durationMinutes}m)
+                  </text>
+                  {/* Task-specific description in tooltip */}
+                  {task.description && (
+                    <text
+                      x={x1 + 4}
+                      y={y}
+                      fontSize={9}
+                      fill="#ffffff"
+                      opacity={0.7}
+                    >
+                      {task.description}
+                    </text>
+                  )}
+                </g>
+              )}
             </g>
-          )}
-        </g>
+          );
+        })}
       </g>
     );
   }
@@ -567,7 +598,7 @@ interface GridLinesProps {
 
 const GridLines = React.memo(
   ({ leftPanelWidth, totalHeight }: GridLinesProps) => {
-    const { startTime, endTime, xScale, tasks, rowHeight, extendedWidth } =
+    const { startTime, endTime, xScale, taskGroups, rowHeight, extendedWidth } =
       useGantt();
 
     // Generate 15-minute intervals
@@ -607,7 +638,7 @@ const GridLines = React.memo(
         })}
 
         {/* Horizontal row divider lines */}
-        {tasks.map((_, i) => {
+        {taskGroups.map((_, i) => {
           const y = 40 + (i + 1) * rowHeight;
           return (
             <line
@@ -706,10 +737,28 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
     // Use containerWidth instead of fixed width
     const width = containerWidth;
 
+    // Group tasks by name
+    const taskGroups = React.useMemo(() => {
+      const groups = new Map<string, TaskGroup>();
+
+      for (const task of tasks) {
+        if (!groups.has(task.name)) {
+          groups.set(task.name, {
+            name: task.name,
+            tasks: [],
+            description: task.description,
+          });
+        }
+        groups.get(task.name)!.tasks.push(task);
+      }
+
+      return Array.from(groups.values());
+    }, [tasks]);
+
     // Layout
     const leftPanelWidth =
       variant === "detailed" ? 240 : variant === "compact" ? 160 : 200;
-    const totalHeight = 40 + tasks.length * rowHeight;
+    const totalHeight = 40 + taskGroups.length * rowHeight;
 
     // Apply zoom to time window
     const effectiveTimeWindowHours = timeWindowHours / zoomLevel;
@@ -766,6 +815,7 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
     const contextValue: GanttContext = React.useMemo(
       () => ({
         tasks,
+        taskGroups,
         timezone,
         rowHeight,
         startTime,
@@ -790,6 +840,7 @@ const GanttChartRoot = React.forwardRef<HTMLDivElement, GanttChartRootProps>(
       }),
       [
         tasks,
+        taskGroups,
         timezone,
         rowHeight,
         startTime,
@@ -1110,14 +1161,14 @@ export type GanttChartTasksProps = React.SVGProps<SVGGElement>;
  */
 const GanttChartTasks = React.forwardRef<SVGGElement, GanttChartTasksProps>(
   ({ className, children, ...props }, ref) => {
-    const { tasks, leftPanelWidth, variant } = useGantt();
+    const { taskGroups, leftPanelWidth, variant } = useGantt();
 
     return (
       <g ref={ref} className={cn("gantt-chart-tasks", className)} {...props}>
-        {tasks.map((task, i) => (
+        {taskGroups.map((taskGroup, i) => (
           <TaskRow
-            key={task.id}
-            task={task}
+            key={taskGroup.name}
+            taskGroup={taskGroup}
             index={i}
             leftPanelWidth={leftPanelWidth}
             variant={variant}
@@ -1208,7 +1259,8 @@ const GanttChartLeftPanel = React.forwardRef<
   HTMLDivElement,
   GanttChartLeftPanelProps
 >(({ className, style, children, ...props }, ref) => {
-  const { leftPanelWidth, totalHeight, tasks, rowHeight, variant } = useGantt();
+  const { leftPanelWidth, totalHeight, taskGroups, rowHeight, variant } =
+    useGantt();
 
   return (
     <div
@@ -1263,11 +1315,11 @@ const GanttChartLeftPanel = React.forwardRef<
           CONTACT
         </text>
 
-        {/* Task names */}
-        {tasks.map((task, i) => {
+        {/* Task group names */}
+        {taskGroups.map((taskGroup, i) => {
           const y = 40 + i * rowHeight;
           return (
-            <g key={task.id}>
+            <g key={taskGroup.name}>
               <rect
                 x={0}
                 y={y}
@@ -1293,10 +1345,10 @@ const GanttChartLeftPanel = React.forwardRef<
                 fill="currentColor"
                 opacity={0.9}
               >
-                {task.name}
+                {taskGroup.name}
               </text>
 
-              {variant === "detailed" && task.description && (
+              {variant === "detailed" && taskGroup.description && (
                 <text
                   x={12}
                   y={y + rowHeight / 2 + 18}
@@ -1304,7 +1356,7 @@ const GanttChartLeftPanel = React.forwardRef<
                   fill="currentColor"
                   opacity={0.5}
                 >
-                  {task.description}
+                  {taskGroup.description}
                 </text>
               )}
             </g>

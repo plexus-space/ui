@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, createContext, useContext } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  createContext,
+  useContext,
+  useState,
+} from "react";
 import {
   createWebGLRenderer,
   createWebGPURenderer,
@@ -1013,7 +1020,9 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   const rendererRef = useRef<
     WebGLRenderer<AreaRendererProps> | WebGPURenderer<AreaRendererProps> | null
   >(null);
+  const [rendererReady, setRendererReady] = useState(false);
 
+  // Initialize renderer once
   useEffect(() => {
     const canvas = ctx.canvasRef.current;
     if (!canvas) return;
@@ -1025,6 +1034,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     canvas.style.height = `${ctx.height}px`;
 
     let mounted = true;
+    setRendererReady(false);
 
     async function initRenderer() {
       if (!canvas) return;
@@ -1043,25 +1053,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
             rendererRef.current = renderer;
             ctx.setRenderMode("webgpu");
-
-            await renderer.render({
-              canvas,
-              series: ctx.series,
-              xDomain: ctx.xDomain,
-              yDomain: ctx.yDomain,
-              xTicks: ctx.xTicks,
-              yTicks: ctx.yTicks,
-              width: ctx.width * dpr,
-              height: ctx.height * dpr,
-              margin: {
-                top: ctx.margin.top * dpr,
-                right: ctx.margin.right * dpr,
-                bottom: ctx.margin.bottom * dpr,
-                left: ctx.margin.left * dpr,
-              },
-              showGrid,
-              stacked: ctx.stacked,
-            });
+            setRendererReady(true);
             return;
           }
         }
@@ -1079,25 +1071,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
         rendererRef.current = renderer;
         ctx.setRenderMode("webgl");
-
-        renderer.render({
-          canvas,
-          series: ctx.series,
-          xDomain: ctx.xDomain,
-          yDomain: ctx.yDomain,
-          xTicks: ctx.xTicks,
-          yTicks: ctx.yTicks,
-          width: ctx.width * dpr,
-          height: ctx.height * dpr,
-          margin: {
-            top: ctx.margin.top * dpr,
-            right: ctx.margin.right * dpr,
-            bottom: ctx.margin.bottom * dpr,
-            left: ctx.margin.left * dpr,
-          },
-          showGrid,
-          stacked: ctx.stacked,
-        });
+        setRendererReady(true);
       } catch (error) {
         console.error("WebGL failed:", error);
       }
@@ -1107,12 +1081,90 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
 
     return () => {
       mounted = false;
+      setRendererReady(false);
       if (rendererRef.current) {
         rendererRef.current.destroy();
         rendererRef.current = null;
       }
     };
-  }, [ctx, showGrid]);
+  }, [
+    ctx.preferWebGPU,
+    ctx.width,
+    ctx.height,
+    ctx.devicePixelRatio,
+    ctx.canvasRef,
+    ctx.setRenderMode,
+  ]);
+
+  // Render when data changes
+  useEffect(() => {
+    const canvas = ctx.canvasRef.current;
+    const renderer = rendererRef.current;
+    if (!canvas || !renderer || !ctx.renderMode || !rendererReady) return;
+
+    const dpr = ctx.devicePixelRatio;
+    let rafId: number | null = null;
+    let rendering = false;
+
+    async function render() {
+      if (rendering) return;
+      rendering = true;
+
+      const currentRenderer = rendererRef.current;
+      const currentCanvas = ctx.canvasRef.current;
+      if (!currentRenderer || !currentCanvas) {
+        rendering = false;
+        return;
+      }
+
+      const renderProps = {
+        canvas: currentCanvas,
+        series: ctx.series,
+        xDomain: ctx.xDomain,
+        yDomain: ctx.yDomain,
+        xTicks: ctx.xTicks,
+        yTicks: ctx.yTicks,
+        width: ctx.width * dpr,
+        height: ctx.height * dpr,
+        margin: {
+          top: ctx.margin.top * dpr,
+          right: ctx.margin.right * dpr,
+          bottom: ctx.margin.bottom * dpr,
+          left: ctx.margin.left * dpr,
+        },
+        showGrid,
+        stacked: ctx.stacked,
+      };
+
+      await currentRenderer.render(renderProps);
+
+      rendering = false;
+    }
+
+    // Use RAF to sync with browser repaint
+    rafId = requestAnimationFrame(() => render());
+
+    return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
+  }, [
+    ctx.series,
+    ctx.xDomain,
+    ctx.yDomain,
+    ctx.xTicks,
+    ctx.yTicks,
+    ctx.width,
+    ctx.height,
+    ctx.margin,
+    ctx.devicePixelRatio,
+    ctx.renderMode,
+    ctx.canvasRef,
+    ctx.stacked,
+    showGrid,
+    rendererReady,
+  ]);
 
   return (
     <canvas

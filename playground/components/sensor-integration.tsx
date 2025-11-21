@@ -15,6 +15,7 @@ export function SensorIntegration() {
   return (
     <div className="border border-zinc-800 rounded-lg overflow-hidden">
       <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-4 py-3 flex items-center justify-between bg-zinc-900 hover:bg-zinc-800 transition-colors"
       >
