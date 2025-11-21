@@ -231,12 +231,15 @@ export function ChartMinimap<T = Point>({
 
   // Debug logging
   React.useEffect(() => {
-    console.log('ChartMinimap - downsampledSeries:', downsampledSeries.map(s => ({
-      name: s.name,
-      pointCount: s.data.length,
-      firstPoint: s.data[0],
-      lastPoint: s.data[s.data.length - 1]
-    })));
+    console.log(
+      "ChartMinimap - downsampledSeries:",
+      downsampledSeries.map((s) => ({
+        name: s.name,
+        pointCount: s.data.length,
+        firstPoint: s.data[0],
+        lastPoint: s.data[s.data.length - 1],
+      }))
+    );
   }, [downsampledSeries]);
 
   // Calculate appropriate axis configuration for minimap
@@ -254,7 +257,11 @@ export function ChartMinimap<T = Point>({
     const yMin = Math.min(...allYValues);
     const yMax = Math.max(...allYValues);
 
-    console.log('ChartMinimap - yDomain:', { yMin, yMax, allYValues: allYValues.length });
+    console.log("ChartMinimap - yDomain:", {
+      yMin,
+      yMax,
+      allYValues: allYValues.length,
+    });
 
     return {
       label: undefined, // No label in minimap
@@ -273,7 +280,9 @@ export function ChartMinimap<T = Point>({
         preferWebGPU={true}
         {...chartProps}
       >
-        {CanvasComponent && <CanvasComponent showGrid={false} {...canvasProps} />}
+        {CanvasComponent && (
+          <CanvasComponent showGrid={false} {...canvasProps} />
+        )}
         {showAxes && AxesComponent && <AxesComponent />}
         <ChartBrushSelector
           start={visibleRange.start}

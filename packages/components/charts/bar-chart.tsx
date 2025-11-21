@@ -304,10 +304,7 @@ function createWebGLBarRenderer(
         ((y - yDomain[0]) / (yDomain[1] - yDomain[0])) * innerHeight;
       const yScaleFlipped = (y: number) => innerHeight - yScale(y);
 
-      const baseValue =
-        orientation === "vertical"
-          ? yDomain[0]
-          : xDomain[0];
+      const baseValue = orientation === "vertical" ? yDomain[0] : xDomain[0];
 
       series.forEach((s, seriesIndex) => {
         if (s.data.length === 0) return;
@@ -510,10 +507,7 @@ function createWebGPUBarRenderer(
       passEncoder.setPipeline(pipeline);
       passEncoder.setBindGroup(0, bindGroup);
 
-      const baseValue =
-        orientation === "vertical"
-          ? yDomain[0]
-          : xDomain[0];
+      const baseValue = orientation === "vertical" ? yDomain[0] : xDomain[0];
 
       // Draw bars with buffer pooling
       let barIndex = 0;
@@ -1046,9 +1040,7 @@ function Tooltip() {
 
     // Calculate base value based on orientation
     const baseValue =
-      ctx.orientation === "vertical"
-        ? ctx.yDomain[0]
-        : ctx.xDomain[0];
+      ctx.orientation === "vertical" ? ctx.yDomain[0] : ctx.xDomain[0];
 
     ctx.series.forEach((s, seriesIdx) => {
       s.data.forEach((point, pointIdx) => {

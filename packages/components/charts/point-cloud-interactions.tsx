@@ -94,7 +94,6 @@ export function PointSelection({
 }: PointSelectionProps) {
   const { camera, raycaster, scene } = useThree();
   const [selectedPoints, setSelectedPoints] = useState<Point3D[]>([]);
-  const [hoverPoint, setHoverPoint] = useState<Point3D | null>(null);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -155,17 +154,6 @@ export function PointSelection({
           />
         </mesh>
       ))}
-      {hoverPoint && (
-        <mesh position={[hoverPoint.x, hoverPoint.y, hoverPoint.z]}>
-          <sphereGeometry args={[markerSize * 0.5, 8, 8]} />
-          <meshBasicMaterial
-            color="#ffffff"
-            transparent
-            opacity={0.3}
-            depthTest={false}
-          />
-        </mesh>
-      )}
     </>
   );
 }
@@ -386,7 +374,7 @@ export function MeasurementTool({
 }: MeasurementToolProps) {
   const { camera, raycaster, scene } = useThree();
   const [points, setPoints] = useState<Point3D[]>([]);
-  const [distance, setDistance] = useState<number>(0);
+  const [_distance, _setDistance] = useState<number>(0);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -417,7 +405,7 @@ export function MeasurementTool({
               newPoints[1].z
             );
             const dist = p1.distanceTo(p2);
-            setDistance(dist);
+            _setDistance(dist);
 
             const measurement: Measurement = {
               points: newPoints,
@@ -430,7 +418,7 @@ export function MeasurementTool({
             // Reset for next measurement
             setTimeout(() => {
               setPoints([]);
-              setDistance(0);
+              _setDistance(0);
             }, 3000);
           }
 
@@ -868,7 +856,7 @@ export function PointCloudInteractions({
   onSegmentComplete,
   onPlaneFit,
 }: PointCloudInteractionsProps) {
-  const [activeInteraction, setActiveInteraction] = useState(mode);
+  const [_activeInteraction, setActiveInteraction] = useState(mode);
 
   useEffect(() => {
     setActiveInteraction(mode);

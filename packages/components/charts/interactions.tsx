@@ -700,18 +700,18 @@ export function ChartBrushSelector({
 
   // Debug logging
   React.useEffect(() => {
-    console.log('ChartBrushSelector render:', {
+    console.log("ChartBrushSelector render:", {
       start,
       end,
       fullMin,
       fullMax,
-      leftPercent: leftPercent.toFixed(2) + '%',
-      widthPercent: widthPercent.toFixed(2) + '%',
+      leftPercent: leftPercent.toFixed(2) + "%",
+      widthPercent: widthPercent.toFixed(2) + "%",
       containerClass,
       selectionBox: {
-        leftPosition: leftPercent + '%',
-        width: widthPercent + '%'
-      }
+        leftPosition: leftPercent + "%",
+        width: widthPercent + "%",
+      },
     });
   }, [start, end, fullMin, fullMax, leftPercent, widthPercent, containerClass]);
 
@@ -813,13 +813,17 @@ export function ChartBrushSelector({
       {/* Dimmed overlay on left */}
       <div
         className="absolute inset-y-0 bg-black/50"
-        style={{ left: 0, width: `${leftPercent}%`, pointerEvents: 'none' }}
+        style={{ left: 0, width: `${leftPercent}%`, pointerEvents: "none" }}
       />
 
       {/* Dimmed overlay on right */}
       <div
         className="absolute inset-y-0 bg-black/50"
-        style={{ left: `${leftPercent + widthPercent}%`, right: 0, pointerEvents: 'none' }}
+        style={{
+          left: `${leftPercent + widthPercent}%`,
+          right: 0,
+          pointerEvents: "none",
+        }}
       />
 
       {/* Selection box */}
@@ -831,7 +835,7 @@ export function ChartBrushSelector({
           left: `${leftPercent}%`,
           width: `${widthPercent}%`,
           zIndex: 101,
-          pointerEvents: 'auto'
+          pointerEvents: "auto",
         }}
         onMouseDown={(e) => handleMouseDown(e, "body")}
       >
@@ -847,14 +851,14 @@ export function ChartBrushSelector({
           onMouseDown={(e) => handleMouseDown(e, "left")}
           style={{
             zIndex: 103,
-            pointerEvents: 'auto',
-            marginLeft: '-16px' // Half of w-8 to center on edge
+            pointerEvents: "auto",
+            marginLeft: "-16px", // Half of w-8 to center on edge
           }}
         >
           {/* White circular handle */}
           <div
             className="w-6 h-12 bg-white rounded-full border-2 border-gray-400 hover:scale-110 transition-transform shadow-lg"
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
           />
         </div>
 
@@ -864,17 +868,16 @@ export function ChartBrushSelector({
           onMouseDown={(e) => handleMouseDown(e, "right")}
           style={{
             zIndex: 103,
-            pointerEvents: 'auto',
-            marginRight: '-16px' // Half of w-8 to center on edge
+            pointerEvents: "auto",
+            marginRight: "-16px", // Half of w-8 to center on edge
           }}
         >
           {/* White circular handle */}
           <div
             className="w-6 h-12 bg-white rounded-full border-2 border-gray-400 hover:scale-110 transition-transform shadow-lg"
-            style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
           />
         </div>
-
 
         {/* Center position indicator (vertical dashed line) */}
         <div className="absolute left-1/2 inset-y-0 w-px border-l-2 border-dashed border-white/40 pointer-events-none" />

@@ -14,7 +14,14 @@ import {
   type WebGPURenderer,
   useBaseChart,
 } from "./base-chart";
-import { createContext, useContext, useRef, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 // ============================================================================
 // Scatter Chart Types

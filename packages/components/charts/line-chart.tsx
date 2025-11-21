@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useRef, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   createWebGLRenderer,
   createWebGPURenderer,
@@ -23,30 +30,105 @@ import {
 export type DataPoint = Point;
 
 export interface Series {
+  /**
+   * Display name for this data series
+   * @required
+   */
   name: string;
+
+  /**
+   * Array of data points (x, y coordinates)
+   * @required
+   */
   data: Point[];
+
+  /**
+   * Line color
+   * Supports any valid CSS color value
+   * @default "#3b82f6"
+   */
   color?: string;
+
+  /**
+   * Line stroke width in pixels
+   * @default 3
+   */
   strokeWidth?: number;
 }
 
 export interface LineChartProps {
+  /**
+   * Array of data series to display
+   * @required
+   */
   series: Series[];
+
+  /**
+   * X-axis configuration
+   */
   xAxis?: {
+    /** Axis label text */
     label?: string;
+    /** Value domain [min, max] or "auto" for automatic */
     domain?: [number, number] | "auto";
+    /** Custom value formatter function */
     formatter?: (value: number) => string;
   };
+
+  /**
+   * Y-axis configuration
+   */
   yAxis?: {
+    /** Axis label text */
     label?: string;
+    /** Value domain [min, max] or "auto" for automatic */
     domain?: [number, number] | "auto";
+    /** Custom value formatter function */
     formatter?: (value: number) => string;
   };
+
+  /**
+   * Chart width
+   * Supports fixed pixel values or responsive units (e.g., "100%", "50vw")
+   * @default 800
+   */
   width?: number | string;
+
+  /**
+   * Chart height
+   * Supports fixed pixel values or responsive units (e.g., "100%", "50vh")
+   * @default 400
+   */
   height?: number | string;
+
+  /**
+   * Display grid lines
+   * @default true
+   */
   showGrid?: boolean;
+
+  /**
+   * Display axes with labels and ticks
+   * @default true
+   */
   showAxes?: boolean;
+
+  /**
+   * Enable interactive tooltip on hover
+   * @default false
+   */
   showTooltip?: boolean;
+
+  /**
+   * Additional CSS classes to apply to the container
+   */
   className?: string;
+
+  /**
+   * Prefer WebGPU over WebGL for rendering
+   * Falls back to WebGL if WebGPU is not available
+   * @default true
+   */
   preferWebGPU?: boolean;
 }
 

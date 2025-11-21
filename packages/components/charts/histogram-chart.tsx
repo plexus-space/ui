@@ -221,7 +221,7 @@ export function HistogramChart({
 
   // Render using BarChart with calculated bar width
   // We use orientation="vertical" and set barWidth to match bin width
-  const chartWidth = width - 80; // Account for margins
+  const chartWidth = typeof width === "string" ? parseInt(width) : width - 80; // Account for margins
   const xRange = autoDomain[1] - autoDomain[0];
   const pixelsPerUnit = chartWidth / xRange;
   const calculatedBarWidth = binWidth * pixelsPerUnit * 0.95; // 95% to add tiny gap
@@ -271,8 +271,8 @@ export function HistogramChart({
                 : xAxis.domain
             }
             yDomain={yDomain}
-            width={width}
-            height={height}
+            width={typeof width === "string" ? parseInt(width) : width}
+            height={typeof height === "string" ? parseInt(height) : height}
             color={normalCurveColor}
           />
         </svg>

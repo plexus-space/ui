@@ -8,7 +8,6 @@ import {
   useRef,
   useMemo,
   useState,
-  useEffect,
   Suspense,
   type ReactNode,
 } from "react";
@@ -371,7 +370,7 @@ function PointCloud() {
   });
 
   // Create geometry and colors
-  const { geometry, colors } = useMemo(() => {
+  const { geometry } = useMemo(() => {
     const activeData = enableLOD ? lodData : data;
     const geometry = new THREE.BufferGeometry();
 
@@ -416,8 +415,7 @@ function PointCloud() {
 // ============================================================================
 
 function Scene() {
-  const { data, showGrid, showAxes, cameraPosition } =
-    usePointCloudViewerData();
+  const { data, showGrid, showAxes } = usePointCloudViewerData();
 
   // Calculate bounds for proper camera positioning
   const bounds = useMemo(() => {
@@ -427,16 +425,6 @@ function Scene() {
         : new Float32Array(data.positions);
     return calculateBounds(positions);
   }, [data.positions]);
-
-  // Auto-calculate camera position if not provided
-  const effectiveCameraPosition = useMemo(() => {
-    if (cameraPosition) return cameraPosition;
-
-    // Position camera at 1.5x the diagonal distance from center
-    const diagonal = bounds.size.length();
-    const distance = diagonal * 1.5;
-    return [distance, distance, distance] as [number, number, number];
-  }, [cameraPosition, bounds]);
 
   return (
     <>
