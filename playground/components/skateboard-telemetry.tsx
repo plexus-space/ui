@@ -9,7 +9,12 @@ import { RadarChart } from "@plexusui/components/charts/radar-chart";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Activity, Wifi, WifiOff, Zap } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Activity, Wifi, WifiOff, Zap, Gauge } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const Skatepark3D = dynamic(() => import("./skatepark-3d"), { ssr: false });
 
 interface SensorData {
   timestamp: number;
@@ -45,12 +50,21 @@ const DISPLAY_UPDATE_INTERVAL = 50; // 20Hz for numbers
 const CHART_UPDATE_INTERVAL = 100; // 10Hz for charts
 
 export function SkateboardTelemetry() {
+  const [demoMode, setDemoMode] = useState(true);
   const [piHost, setPiHost] = useState("localhost");
   const [piPort, setPiPort] = useState("8080");
   const [isConnected, setIsConnected] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [currentData, setCurrentData] = useState<SensorData | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const demoIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const demoTimeRef = useRef(0);
+  const demoStateRef = useRef({
+    trickInProgress: false,
+    trickStartTime: 0,
+    currentTrick: "",
+    isAirborne: false,
+  });
 
   // Historical data for charts
   const [pitchHistory, setPitchHistory] = useState<
@@ -79,11 +93,327 @@ export function SkateboardTelemetry() {
   >([]);
   const lastPositionUpdateRef = useRef(0);
 
+  // Velocity tracking for speed chart
+  const [velocityHistory, setVelocityHistory] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
+  const [currentSpeed, setCurrentSpeed] = useState(0);
+
+  // Gyroscope history for 3D visualization
+  const [gyroXHistory, setGyroXHistory] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
+  const [gyroYHistory, setGyroYHistory] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
+  const [gyroZHistory, setGyroZHistory] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
+
   // Display smoothing - update display less frequently than data arrival
   const [displayData, setDisplayData] = useState<SensorData | null>(null);
   const lastDisplayUpdateRef = useRef(0);
   const lastChartUpdateRef = useRef(0);
   const dataBufferRef = useRef<SensorData | null>(null);
+
+  // Generate realistic demo sensor data
+  const generateDemoData = useCallback((): SensorData => {
+    const time = demoTimeRef.current;
+    const state = demoStateRef.current;
+
+    // Simulate various skateboarding scenarios
+    const scenarios = [
+      { type: "cruising", duration: 5000, probability: 0.4 },
+      { type: "trick", duration: 2000, probability: 0.3 },
+      { type: "sharp_turn", duration: 1000, probability: 0.2 },
+      { type: "ramp", duration: 1500, probability: 0.1 },
+    ];
+
+    let pitch = 0,
+      roll = 0,
+      heading = 0;
+    let gyro_x = 0,
+      gyro_y = 0,
+      gyro_z = 0;
+    let accel_x = 0,
+      accel_y = 1,
+      accel_z = 0; // Default 1g downward
+    let g_force = 1;
+    let trick = undefined;
+    let airtime = undefined;
+    let is_airborne = false;
+
+    // Determine current scenario
+    if (!state.trickInProgress && Math.random() > 0.98) {
+      // Start a new trick/event
+      const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      state.trickInProgress = true;
+      state.trickStartTime = time;
+      state.currentTrick = scenario.type;
+    }
+
+    if (state.trickInProgress) {
+      const elapsed = time - state.trickStartTime;
+      const progress = elapsed / 2000; // 2 second tricks
+
+      switch (state.currentTrick) {
+        case "trick":
+          // Simulate ollie or kickflip
+          if (progress < 0.3) {
+            // Crouch phase
+            pitch = -15 + Math.random() * 5;
+            accel_z = 1.5 + Math.random() * 0.3;
+            g_force = 1.5;
+          } else if (progress < 0.6) {
+            // Airborne phase
+            pitch = 25 + Math.sin(progress * Math.PI * 4) * 30;
+            roll = Math.sin(progress * Math.PI * 6) * 45;
+            gyro_x = Math.sin(progress * Math.PI * 8) * 400;
+            gyro_y = Math.sin(progress * Math.PI * 6) * 300;
+            gyro_z = Math.sin(progress * Math.PI * 4) * 200;
+            accel_z = 0.2 + Math.random() * 0.1; // Low g during airborne
+            g_force = 0.3;
+            is_airborne = true;
+            airtime = elapsed - 600;
+            trick = Math.random() > 0.5 ? "Kickflip" : "Ollie";
+            state.isAirborne = true;
+          } else {
+            // Landing phase
+            pitch = -5 + Math.random() * 3;
+            roll = Math.random() * 5 - 2.5;
+            accel_z = 2.5 + Math.random() * 1.5;
+            g_force = 3.5 + Math.random() * 1.5;
+            if (state.isAirborne) {
+              trick = state.currentTrick === "trick" ? "Kickflip" : "Ollie";
+              airtime = 600;
+              state.isAirborne = false;
+            }
+          }
+          if (progress > 1) state.trickInProgress = false;
+          break;
+
+        case "sharp_turn":
+          roll = Math.sin(progress * Math.PI) * 50;
+          gyro_z = Math.cos(progress * Math.PI) * 300;
+          heading = (heading + 5) % 360;
+          g_force = 1.2 + Math.abs(Math.sin(progress * Math.PI)) * 0.8;
+          if (progress > 1) state.trickInProgress = false;
+          break;
+
+        case "ramp":
+          if (progress < 0.5) {
+            // Going up
+            pitch = progress * 80;
+            accel_y = 1.5 + progress * 0.5;
+            g_force = 1.5 + progress * 0.5;
+          } else {
+            // Coming down
+            pitch = (1 - progress) * 80;
+            accel_y = 2 - (progress - 0.5) * 2;
+            g_force = 2 - (progress - 0.5);
+          }
+          if (progress > 1) state.trickInProgress = false;
+          break;
+
+        default:
+          // Cruising
+          pitch = Math.sin(time / 1000) * 5;
+          roll = Math.sin(time / 1500) * 3;
+          heading = (heading + 0.1) % 360;
+          g_force = 1 + Math.random() * 0.1;
+          if (progress > 1) state.trickInProgress = false;
+      }
+    } else {
+      // Normal cruising
+      pitch = Math.sin(time / 2000) * 8;
+      roll = Math.sin(time / 2500) * 5;
+      heading = (time / 100) % 360;
+      gyro_x = Math.sin(time / 1000) * 50 + (Math.random() - 0.5) * 20;
+      gyro_y = Math.sin(time / 1200) * 40 + (Math.random() - 0.5) * 15;
+      gyro_z = Math.sin(time / 1500) * 30 + (Math.random() - 0.5) * 10;
+      accel_x = Math.sin(time / 1000) * 0.3 + (Math.random() - 0.5) * 0.1;
+      accel_y = 1 + (Math.random() - 0.5) * 0.1;
+      accel_z = (Math.random() - 0.5) * 0.1;
+      g_force = 1 + Math.random() * 0.2;
+    }
+
+    demoTimeRef.current += 50;
+
+    return {
+      timestamp: Date.now(),
+      pitch,
+      roll,
+      heading,
+      gyro_x,
+      gyro_y,
+      gyro_z,
+      accel_x,
+      accel_y,
+      accel_z,
+      temperature: 25 + Math.random() * 5,
+      g_force,
+      trick,
+      airtime,
+      is_airborne,
+      sensor_type: "MPU6050 (Demo Mode)",
+      anomalies: g_force > 5 ? ["High G-Force Detected"] : undefined,
+    };
+  }, []);
+
+  // Start demo mode
+  useEffect(() => {
+    if (demoMode) {
+      setIsConnected(true);
+      setConnectionError(null);
+
+      demoIntervalRef.current = setInterval(() => {
+        const data = generateDemoData();
+        dataBufferRef.current = data;
+        setCurrentData(data);
+
+        const now = Date.now();
+
+        // Throttle display updates
+        if (now - lastDisplayUpdateRef.current > DISPLAY_UPDATE_INTERVAL) {
+          setDisplayData(data);
+          lastDisplayUpdateRef.current = now;
+        }
+
+        // Calculate total acceleration magnitude
+        const totalAccel = Math.sqrt(
+          data.accel_x ** 2 + data.accel_y ** 2 + data.accel_z ** 2
+        );
+        setTotalAcceleration(totalAccel);
+
+        // Calculate speed from acceleration
+        const speed = Math.sqrt(data.accel_x ** 2 + data.accel_y ** 2) * 10;
+        setCurrentSpeed(speed);
+
+        // Throttle chart updates
+        if (now - lastChartUpdateRef.current > CHART_UPDATE_INTERVAL) {
+          const timestamp = now;
+
+          setPitchHistory((prev) => {
+            const updated = [...prev, { x: timestamp, y: data.pitch }];
+            return updated.slice(-MAX_HISTORY_POINTS);
+          });
+
+          setRollHistory((prev) => {
+            const updated = [...prev, { x: timestamp, y: data.roll }];
+            return updated.slice(-MAX_HISTORY_POINTS);
+          });
+
+          setGForceHistory((prev) => {
+            const updated = [...prev, { x: timestamp, y: data.g_force }];
+            return updated.slice(-MAX_HISTORY_POINTS);
+          });
+
+          setVelocityHistory((prev) => {
+            const updated = [...prev, { x: timestamp, y: speed }];
+            return updated.slice(-MAX_HISTORY_POINTS);
+          });
+
+          setGyroXHistory((prev) => {
+            const updated = [...prev, { x: timestamp, y: data.gyro_x }];
+            return updated.slice(-MAX_HISTORY_POINTS);
+          });
+
+          setGyroYHistory((prev) => {
+            const updated = [...prev, { x: timestamp, y: data.gyro_y }];
+            return updated.slice(-MAX_HISTORY_POINTS);
+          });
+
+          setGyroZHistory((prev) => {
+            const updated = [...prev, { x: timestamp, y: data.gyro_z }];
+            return updated.slice(-MAX_HISTORY_POINTS);
+          });
+
+          lastChartUpdateRef.current = now;
+        }
+
+        // Position estimation
+        const POSITION_UPDATE_INTERVAL = 100;
+        if (now - lastPositionUpdateRef.current > POSITION_UPDATE_INTERVAL) {
+          const dt = (now - lastPositionUpdateRef.current) / 1000;
+          const headingRad = (data.heading * Math.PI) / 180;
+
+          const accelWorldX =
+            data.accel_x * Math.cos(headingRad) -
+            data.accel_y * Math.sin(headingRad);
+          const accelWorldY =
+            data.accel_x * Math.sin(headingRad) +
+            data.accel_y * Math.cos(headingRad);
+
+          velocityRef.current = {
+            x: velocityRef.current.x + accelWorldX * dt * 0.5,
+            y: velocityRef.current.y + accelWorldY * dt * 0.5,
+          };
+
+          setEstimatedPosition((prev) => {
+            const newX = prev.x + velocityRef.current.x * dt;
+            const newY = prev.y + velocityRef.current.y * dt;
+
+            const distance = Math.sqrt(newX ** 2 + newY ** 2);
+            const angle = (Math.atan2(newY, newX) * 180) / Math.PI + 180;
+
+            setPositionHistory((prevHistory) => {
+              const updated = [
+                ...prevHistory,
+                {
+                  angle,
+                  distance: Math.min(distance / 50, 1),
+                  timestamp: now,
+                },
+              ];
+              return updated.slice(-10);
+            });
+
+            return { x: newX, y: newY };
+          });
+
+          lastPositionUpdateRef.current = now;
+        }
+
+        // Track tricks
+        if (data.trick) {
+          setTrickCount((prev) => prev + 1);
+
+          const trickEvent: TrickEvent = {
+            id: `trick-${now}`,
+            name: data.trick,
+            timestamp: now,
+            airtime: data.airtime || 0,
+            maxG: data.g_force,
+            landed: data.g_force < 6,
+          };
+
+          setTrickHistory((prev) => {
+            const updated = [...prev, trickEvent];
+            return updated.slice(-20);
+          });
+        }
+
+        if (data.g_force > maxGForce) {
+          setMaxGForce(data.g_force);
+        }
+      }, 50);
+
+      return () => {
+        if (demoIntervalRef.current) {
+          clearInterval(demoIntervalRef.current);
+        }
+      };
+    } else {
+      // Clean up demo mode
+      if (demoIntervalRef.current) {
+        clearInterval(demoIntervalRef.current);
+        demoIntervalRef.current = null;
+      }
+      setIsConnected(false);
+      setCurrentData(null);
+      setDisplayData(null);
+    }
+  }, [demoMode, generateDemoData, maxGForce]);
 
   const connectWebSocket = useCallback(() => {
     if (socket) {
@@ -139,6 +469,30 @@ export function SkateboardTelemetry() {
 
             setGForceHistory((prev) => {
               const updated = [...prev, { x: timestamp, y: data.g_force }];
+              return updated.slice(-MAX_HISTORY_POINTS);
+            });
+
+            // Calculate speed from acceleration
+            const speed = Math.sqrt(data.accel_x ** 2 + data.accel_y ** 2) * 10;
+            setCurrentSpeed(speed);
+
+            setVelocityHistory((prev) => {
+              const updated = [...prev, { x: timestamp, y: speed }];
+              return updated.slice(-MAX_HISTORY_POINTS);
+            });
+
+            setGyroXHistory((prev) => {
+              const updated = [...prev, { x: timestamp, y: data.gyro_x }];
+              return updated.slice(-MAX_HISTORY_POINTS);
+            });
+
+            setGyroYHistory((prev) => {
+              const updated = [...prev, { x: timestamp, y: data.gyro_y }];
+              return updated.slice(-MAX_HISTORY_POINTS);
+            });
+
+            setGyroZHistory((prev) => {
+              const updated = [...prev, { x: timestamp, y: data.gyro_z }];
               return updated.slice(-MAX_HISTORY_POINTS);
             });
 
@@ -263,6 +617,27 @@ export function SkateboardTelemetry() {
     <div className="space-y-4">
       <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
         <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 border-r border-zinc-700 pr-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="demo-mode"
+                checked={demoMode}
+                onCheckedChange={(checked) => {
+                  setDemoMode(checked);
+                  if (socket && checked) {
+                    disconnect();
+                  }
+                }}
+              />
+              <Label
+                htmlFor="demo-mode"
+                className="text-xs font-medium text-zinc-300 cursor-pointer"
+              >
+                Demo Mode
+              </Label>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             {isConnected ? (
               <Wifi className="h-3.5 w-3.5 text-green-400" />
@@ -274,43 +649,47 @@ export function SkateboardTelemetry() {
             </span>
           </div>
 
-          <Input
-            placeholder="Raspberry Pi hostname"
-            value={piHost}
-            onChange={(e) => setPiHost(e.target.value)}
-            className="w-56 h-8 text-xs border-zinc-700"
-            disabled={isConnected}
-          />
+          {!demoMode && (
+            <>
+              <Input
+                placeholder="Raspberry Pi hostname"
+                value={piHost}
+                onChange={(e) => setPiHost(e.target.value)}
+                className="w-56 h-8 text-xs border-zinc-700"
+                disabled={isConnected}
+              />
 
-          <Input
-            placeholder="Port"
-            value={piPort}
-            onChange={(e) => setPiPort(e.target.value)}
-            className="w-20 h-8 text-xs border-zinc-700"
-            disabled={isConnected}
-          />
+              <Input
+                placeholder="Port"
+                value={piPort}
+                onChange={(e) => setPiPort(e.target.value)}
+                className="w-20 h-8 text-xs border-zinc-700"
+                disabled={isConnected}
+              />
 
-          {!isConnected ? (
-            <Button
-              onClick={connectWebSocket}
-              size="sm"
-              className="h-8 text-xs bg-blue-500 hover:bg-blue-600"
-            >
-              Connect
-            </Button>
-          ) : (
-            <Button
-              onClick={disconnect}
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs border-zinc-700"
-            >
-              Disconnect
-            </Button>
-          )}
+              {!isConnected ? (
+                <Button
+                  onClick={connectWebSocket}
+                  size="sm"
+                  className="h-8 text-xs bg-blue-500 hover:bg-blue-600"
+                >
+                  Connect
+                </Button>
+              ) : (
+                <Button
+                  onClick={disconnect}
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs border-zinc-700"
+                >
+                  Disconnect
+                </Button>
+              )}
 
-          {connectionError && (
-            <span className="text-xs text-red-400">{connectionError}</span>
+              {connectionError && (
+                <span className="text-xs text-red-400">{connectionError}</span>
+              )}
+            </>
           )}
 
           {currentData && (
@@ -324,7 +703,7 @@ export function SkateboardTelemetry() {
         </div>
       </Card>
 
-      {!isConnected ? (
+      {!isConnected && !demoMode ? (
         <div className="p-12  rounded-xl border text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 mb-4">
             <Activity className="h-8 w-8 text-blue-400" />
@@ -334,7 +713,8 @@ export function SkateboardTelemetry() {
           </h3>
           <p className="text-sm text-zinc-500 mb-4 max-w-lg mx-auto leading-relaxed">
             Enter your Raspberry Pi hostname or IP address and connect to see
-            real-time skateboard sensor data
+            real-time skateboard sensor data, or enable Demo Mode to see
+            simulated data
           </p>
           <div className="inline-flex items-center gap-4 text-xs text-zinc-600">
             <div>
@@ -351,14 +731,20 @@ export function SkateboardTelemetry() {
             </div>
           </div>
         </div>
-      ) : (
+      ) : isConnected ? (
         <>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-3">
             <StatCard
               icon={Zap}
               title="Max G-Force"
               value={`${maxGForce.toFixed(1)}G`}
               subtitle={`Tricks detected: ${trickCount}`}
+            />
+            <StatCard
+              icon={Gauge}
+              title="Current Speed"
+              value={`${currentSpeed.toFixed(1)} km/h`}
+              subtitle={`Estimated velocity`}
             />
             <StatCard
               icon={Activity}
@@ -584,6 +970,103 @@ export function SkateboardTelemetry() {
             )}
           </ChartCard>
 
+          {/* Speed Tracking */}
+          <ChartCard
+            title="Speed Tracker"
+            description="Estimated skateboard velocity over time"
+          >
+            {velocityHistory.length > 10 ? (
+              <div className="w-full overflow-hidden space-y-2">
+                <div className="relative flex items-center justify-center">
+                  <LineChart
+                    series={[
+                      {
+                        name: "Speed",
+                        data: velocityHistory,
+                        color: "#8b5cf6",
+                        strokeWidth: 3,
+                      },
+                    ]}
+                    width={750}
+                    height={250}
+                    xAxis={{ label: "Time" }}
+                    yAxis={{ label: "Speed (km/h)" }}
+                    showGrid
+                    showAxes
+                    showTooltip
+                  />
+                </div>
+                <div className="text-xs text-gray-500 text-center">
+                  Velocity estimated from accelerometer data
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] text-gray-500">
+                Collecting data... ({velocityHistory.length}/10 samples)
+              </div>
+            )}
+          </ChartCard>
+
+          {/* Gyroscope Data */}
+          <ChartCard
+            title="Gyroscope Angular Velocity"
+            description="Real-time rotation rates around X, Y, Z axes (degrees per second)"
+          >
+            {gyroXHistory.length > 10 ? (
+              <div className="w-full overflow-hidden space-y-2">
+                <div className="relative flex items-center justify-center">
+                  <LineChart
+                    series={[
+                      {
+                        name: "Gyro X (Roll Rate)",
+                        data: gyroXHistory,
+                        color: "#ef4444",
+                        strokeWidth: 2,
+                      },
+                      {
+                        name: "Gyro Y (Pitch Rate)",
+                        data: gyroYHistory,
+                        color: "#10b981",
+                        strokeWidth: 2,
+                      },
+                      {
+                        name: "Gyro Z (Yaw Rate)",
+                        data: gyroZHistory,
+                        color: "#3b82f6",
+                        strokeWidth: 2,
+                      },
+                    ]}
+                    width={750}
+                    height={250}
+                    xAxis={{ label: "Time" }}
+                    yAxis={{ label: "Angular Velocity (°/s)" }}
+                    showGrid
+                    showAxes
+                    showTooltip
+                  />
+                </div>
+                <div className="flex items-center justify-center gap-4 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span className="text-gray-400">X-axis (Roll)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="text-gray-400">Y-axis (Pitch)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span className="text-gray-400">Z-axis (Yaw)</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] text-gray-500">
+                Collecting data... ({gyroXHistory.length}/10 samples)
+              </div>
+            )}
+          </ChartCard>
+
           {/* Trick Timeline */}
           {trickHistory.length > 0 && (
             <ChartCard
@@ -663,8 +1146,25 @@ export function SkateboardTelemetry() {
               </div>
             </ChartCard>
           )}
+
+          {/* 3D Skatepark Visualization */}
+          {demoMode && displayData && (
+            <ChartCard
+              title="3D Skatepark"
+              description="Real-time 3D visualization of skateboard orientation and movement"
+            >
+              <div className="w-full h-[500px]">
+                <Skatepark3D
+                  pitch={displayData.pitch}
+                  roll={displayData.roll}
+                  heading={displayData.heading}
+                  isAirborne={displayData.is_airborne || false}
+                />
+              </div>
+            </ChartCard>
+          )}
         </>
-      )}
+      ) : null}
     </div>
   );
 }
