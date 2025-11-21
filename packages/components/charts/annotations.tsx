@@ -3,6 +3,9 @@
  *
  * Minimal text annotation tool for labeling data.
  */
+/** biome-ignore-all lint/a11y/noSvgWithoutTitle: <explanation> */
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
+/** biome-ignore-all lint/a11y/useKeyWithClickEvents: <explanation> */
 "use client";
 
 import * as React from "react";
@@ -158,6 +161,7 @@ function AnnotationItem({
           {/* Delete button */}
           {isHovered && !isEditing && (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete(annotation.id);
@@ -552,6 +556,11 @@ export interface ChartRulerProps {
   onMeasure?: (measurement: Measurement) => void;
 
   /**
+   * Array of completed measurements to render on the chart
+   */
+  measurements?: Measurement[];
+
+  /**
    * Ruler color
    */
   color?: string;
@@ -560,12 +569,19 @@ export interface ChartRulerProps {
    * Enable ruler mode
    */
   enabled?: boolean;
+
+  /**
+   * Show measurement values on completed measurements
+   */
+  showValues?: boolean;
 }
 
 export function ChartRuler({
   onMeasure,
+  measurements = [],
   color = "#f59e0b",
   enabled = true,
+  showValues = true,
 }: ChartRulerProps) {
   const ctx = useBaseChart();
   const [startPoint, setStartPoint] = React.useState<{
@@ -598,6 +614,24 @@ export function ChartRuler({
           (ctx.yDomain[1] - ctx.yDomain[0]);
 
       return { dataX, dataY };
+    },
+    [ctx]
+  );
+
+  const dataToScreen = React.useCallback(
+    (dataX: number, dataY: number) => {
+      const innerWidth = ctx.width - ctx.margin.left - ctx.margin.right;
+      const innerHeight = ctx.height - ctx.margin.top - ctx.margin.bottom;
+
+      const normalizedX =
+        (dataX - ctx.xDomain[0]) / (ctx.xDomain[1] - ctx.xDomain[0]);
+      const normalizedY =
+        (dataY - ctx.yDomain[0]) / (ctx.yDomain[1] - ctx.yDomain[0]);
+
+      const x = ctx.margin.left + normalizedX * innerWidth;
+      const y = ctx.height - ctx.margin.bottom - normalizedY * innerHeight;
+
+      return { x, y };
     },
     [ctx]
   );
@@ -695,12 +729,81 @@ export function ChartRuler({
         }}
       />
 
-      {/* Measurement line */}
+      {/* Completed measurements */}
+      {measurements.length > 0 && (
+        <svg
+          className="absolute inset-0 pointer-events-none"
+          style={{ zIndex: 30 }}
+          width={ctx.width}
+          height={ctx.height}
+        >
+          {measurements.map((m, i) => {
+            const start = dataToScreen(m.startX, m.startY);
+            const end = dataToScreen(m.endX, m.endY);
+            const midX = (start.x + end.x) / 2;
+            const midY = (start.y + end.y) / 2;
+
+            return (
+              <g key={i}>
+                {/* Line */}
+                <line
+                  x1={start.x}
+                  y1={start.y}
+                  x2={end.x}
+                  y2={end.y}
+                  stroke={color}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  opacity={0.6}
+                />
+                {/* Start point */}
+                <circle
+                  cx={start.x}
+                  cy={start.y}
+                  r={3}
+                  fill={color}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                  opacity={0.8}
+                />
+                {/* End point */}
+                <circle
+                  cx={end.x}
+                  cy={end.y}
+                  r={3}
+                  fill={color}
+                  stroke="#fff"
+                  strokeWidth={1.5}
+                  opacity={0.8}
+                />
+                {/* Label */}
+                {showValues && (
+                  <text
+                    x={midX}
+                    y={midY - 10}
+                    textAnchor="middle"
+                    fill={color}
+                    fontSize="10"
+                    fontFamily="monospace"
+                    opacity={0.8}
+                  >
+                    {`ΔX:${m.deltaX.toFixed(1)} ΔY:${m.deltaY.toFixed(1)}`}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      )}
+
+      {/* Current measurement line (while dragging) */}
       {isDragging && startPoint && currentPoint && (
         <>
           <svg
             className="absolute inset-0 pointer-events-none"
             style={{ zIndex: 35 }}
+            width={ctx.width}
+            height={ctx.height}
           >
             {/* Line */}
             <line

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { SimpleLogo } from "./logo";
+import { Logo } from "./logo";
 import { ThemeToggle } from "./theme-toggle";
 import { ColorSchemeToggle } from "./color-scheme-toggle";
 import Link from "next/link";
@@ -10,12 +10,11 @@ export const TopNav = () => {
     <div className="flex-shrink-0 flex flex-row w-full items-center justify-between gap-4 px-6 h-14 bg-background">
       <div className="flex items-center gap-6">
         <Link href="/" className="flex items-center gap-2">
-          <SimpleLogo className="w-5 h-5" />
-          Plexus
+          <Logo />
         </Link>
         <nav className="flex items-center gap-6 text-sm">
           <Link
-            href="/components"
+            href="/line-chart"
             className="hover:text-foreground/80 transition-colors"
           >
             Components

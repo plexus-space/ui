@@ -12,6 +12,7 @@ import {
   ApiReferenceTable,
   type ApiProp,
 } from "@/components/api-reference-table";
+import { useColorScheme } from "@/components/color-scheme-provider";
 
 /**
  * Generate sample telemetry data
@@ -30,6 +31,7 @@ function generateTelemetryData(points: number) {
 }
 
 function BasicExample() {
+  const { color } = useColorScheme();
   const data = React.useMemo(() => generateTelemetryData(100), []);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [rulerEnabled, setRulerEnabled] = useState(false);
@@ -60,9 +62,7 @@ const [enabled, setEnabled] = useState(true);
           <div className="flex items-center justify-between bg-zinc-900 px-4 py-2 rounded-lg">
             <div className="text-xs text-zinc-400">
               {rulerEnabled ? (
-                <span className="text-orange-400">
-                  📏 Ruler mode - Click and drag to measure
-                </span>
+                <span>Ruler mode - Click and drag to measure</span>
               ) : (
                 <span>Ruler disabled</span>
               )}
@@ -73,8 +73,8 @@ const [enabled, setEnabled] = useState(true);
                 onClick={() => setRulerEnabled(!rulerEnabled)}
                 className={`px-3 py-1 text-xs rounded ${
                   rulerEnabled
-                    ? "bg-orange-600 text-white"
-                    : "bg-zinc-800 text-zinc-400"
+                    ? `bg-[${color}] text-white`
+                    : `bg-zinc-800 text-zinc-400`
                 }`}
               >
                 {rulerEnabled ? "Disable Ruler" : "Enable Ruler"}
@@ -92,7 +92,7 @@ const [enabled, setEnabled] = useState(true);
           </div>
 
           <LineChart.Root
-            series={[{ name: "Signal", data, color: "#8b5cf6" }]}
+            series={[{ name: "Signal", data, color: color }]}
             width={800}
             height={400}
             xAxis={{ label: "Time (s)" }}
@@ -103,10 +103,11 @@ const [enabled, setEnabled] = useState(true);
 
             <ChartRuler
               enabled={rulerEnabled}
+              measurements={measurements}
               onMeasure={(m) => {
                 setMeasurements((prev) => [...prev, m]);
               }}
-              color="#f59e0b"
+              color={color}
             />
           </LineChart.Root>
 
@@ -172,6 +173,7 @@ const [measurement, setMeasurement] = useState<Measurement | null>(null);
 
             <ChartRuler
               enabled={true}
+              measurements={lastMeasurement ? [lastMeasurement] : []}
               onMeasure={(m) => {
                 setLastMeasurement(m);
               }}
@@ -292,6 +294,7 @@ const exportData = () => {
 
             <ChartRuler
               enabled={true}
+              measurements={measurements}
               onMeasure={(m) => {
                 setMeasurements((prev) => [...prev, m]);
               }}

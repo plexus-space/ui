@@ -959,11 +959,11 @@ function Root({
 
   const xDomain: [number, number] =
     xAxis.domain === "auto" || !xAxis.domain
-      ? getDomain(allPoints, (p) => p.x)
+      ? getDomain(allPoints, (p) => p.x, 0)
       : xAxis.domain;
   const yDomain: [number, number] =
     yAxis.domain === "auto" || !yAxis.domain
-      ? getDomain(allPoints, (p) => p.y)
+      ? getDomain(allPoints, (p) => p.y, 0)
       : yAxis.domain;
 
   return (

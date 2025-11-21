@@ -16,6 +16,7 @@ Open http://localhost:3000
 The playground showcases 6 dashboards with **real-time streaming data**:
 
 ### 1. Live Audio 🎵 (Real Streaming Data!)
+
 - **Microphone input** - Real-time audio from your device
 - **GPU-accelerated FFT spectrogram** - Time-frequency analysis
 - **Frequency spectrum** - Live frequency content visualization
@@ -23,6 +24,7 @@ The playground showcases 6 dashboards with **real-time streaming data**:
 - **No API keys required** - just click "Start Microphone"!
 
 ### 2. Motion Detection 📹 (Real Camera Data!)
+
 - **Camera-based motion heatmap** - 20x20 grid analysis
 - **Pixel-level motion tracking** - Frame-by-frame comparison
 - **Real-time intensity metrics** - Current and average motion
@@ -30,6 +32,7 @@ The playground showcases 6 dashboards with **real-time streaming data**:
 - **No setup required** - works with your webcam!
 
 ### 3. Device Tilt ✈️ (Real Gyroscope Data!)
+
 - **Aviation attitude indicator** - Artificial horizon display
 - **Real-time pitch and roll** - Device orientation tracking
 - **Gyroscope/accelerometer data** - Hardware sensor integration
@@ -37,18 +40,21 @@ The playground showcases 6 dashboards with **real-time streaming data**:
 - **Mobile-first** - Best experienced on smartphones/tablets!
 
 ### 4. Health Monitoring
+
 - Real-time ECG simulation
 - EEG brainwave patterns (alpha, beta, theta)
 - Vital signs (temperature, SpO₂, blood pressure)
 - Streaming line charts
 
 ### 5. Robotics
+
 - 6-motor speed monitoring
 - Battery cell voltage tracking
 - 100-sensor pressure array heatmap
 - Real-time bar charts
 
 ### 6. Energy Management
+
 - Power consumption by source (grid, solar, battery)
 - Solar generation 24-hour cycle
 - Energy storage metrics
@@ -108,8 +114,6 @@ Use the Plexus UI CLI:
 
 ```bash
 npx @plexusui/cli add line-chart
-npx @plexusui/cli add gauge
-npx @plexusui/cli add waterfall-chart
 ```
 
 Components are copied into your project (not NPM dependencies).

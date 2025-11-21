@@ -45,17 +45,83 @@ import {
 // ============================================================================
 
 export interface AttitudeIndicatorProps {
-  pitch?: number; // Degrees (-90 to +90, positive = nose up)
-  roll?: number; // Degrees (-180 to +180, positive = right wing down)
-  width?: number;
-  height?: number;
+  /**
+   * Pitch angle in degrees (-90 to +90)
+   * Positive values indicate nose up, negative values indicate nose down
+   * @default 0
+   */
+  pitch?: number;
+
+  /**
+   * Roll angle in degrees (-180 to +180)
+   * Positive values indicate right wing down, negative values indicate left wing down
+   * @default 0
+   */
+  roll?: number;
+
+  /**
+   * Width of the indicator
+   * Supports fixed pixel values or responsive units (e.g., "100%", "50vw")
+   * @default 400
+   */
+  width?: number | string;
+
+  /**
+   * Height of the indicator
+   * Supports fixed pixel values or responsive units (e.g., "100%", "50vh")
+   * @default 400
+   */
+  height?: number | string;
+
+  /**
+   * Display pitch ladder with degree markings
+   * @default true
+   */
   showPitchLadder?: boolean;
+
+  /**
+   * Display bank angle indicator arc
+   * @default true
+   */
   showBankIndicator?: boolean;
-  pitchStep?: number; // Degrees between pitch ladder marks
+
+  /**
+   * Degrees between each pitch ladder mark
+   * @default 10
+   */
+  pitchStep?: number;
+
+  /**
+   * Sky hemisphere color
+   * Supports any valid CSS color value
+   * @default "transparent"
+   */
   skyColor?: string;
+
+  /**
+   * Ground hemisphere color
+   * Supports any valid CSS color value
+   * @default "#19191c"
+   */
   groundColor?: string;
+
+  /**
+   * Horizon line color
+   * Supports any valid CSS color value
+   * @default "#9ca3af"
+   */
   horizonColor?: string;
+
+  /**
+   * Additional CSS classes to apply to the container
+   */
   className?: string;
+
+  /**
+   * Prefer WebGPU over WebGL for rendering
+   * Falls back to WebGL if WebGPU is not available
+   * @default false
+   */
   preferWebGPU?: boolean;
 }
 
@@ -480,24 +546,28 @@ function createWebGLAttitudeRenderer(
       const pixelsPerDegree = radius / 45;
       const verticalOffset = pitch * pixelsPerDegree;
 
-      // Calculate horizon line position after rotation
-      const horizonSize = radius * 3;
+      // Calculate horizon size - make it large enough to cover entire canvas when rotated
+      // Use a very large multiplier to ensure no gaps at any rotation angle
+      const canvasDiagonal = Math.sqrt(width * width + height * height);
+      const horizonSize = canvasDiagonal * 3; // 3x diagonal ensures full coverage
 
-      // Sky (blue, upper half)
-      const skyRgb = hexToRgb(skyColor);
-      const skyGeom = createRotatedRectangle(
-        centerX,
-        centerY - horizonSize / 2 - verticalOffset,
-        horizonSize,
-        horizonSize,
-        rollRad,
-        skyRgb,
-        1
-      );
-      allPositions.push(...skyGeom.positions);
-      allColors.push(...skyGeom.colors);
+      // Sky (upper half)
+      if (skyColor !== "transparent") {
+        const skyRgb = hexToRgb(skyColor);
+        const skyGeom = createRotatedRectangle(
+          centerX,
+          centerY - horizonSize / 2 - verticalOffset,
+          horizonSize,
+          horizonSize,
+          rollRad,
+          skyRgb,
+          1
+        );
+        allPositions.push(...skyGeom.positions);
+        allColors.push(...skyGeom.colors);
+      }
 
-      // Ground (brown, lower half)
+      // Ground (lower half)
       const groundRgb = hexToRgb(groundColor);
       const groundGeom = createRotatedRectangle(
         centerX,
@@ -716,23 +786,28 @@ async function createWebGPUAttitudeRenderer(
       const pixelsPerDegree = radius / 45;
       const verticalOffset = pitch * pixelsPerDegree;
 
-      const horizonSize = radius * 3;
+      // Calculate horizon size - make it large enough to cover entire canvas when rotated
+      // Use a very large multiplier to ensure no gaps at any rotation angle
+      const canvasDiagonal = Math.sqrt(width * width + height * height);
+      const horizonSize = canvasDiagonal * 3; // 3x diagonal ensures full coverage
 
-      // Sky (blue, upper half)
-      const skyRgb = hexToRgb(skyColor);
-      const skyGeom = createRotatedRectangle(
-        centerX,
-        centerY - horizonSize / 2 - verticalOffset,
-        horizonSize,
-        horizonSize,
-        rollRad,
-        skyRgb,
-        1
-      );
-      allPositions.push(...skyGeom.positions);
-      allColors.push(...skyGeom.colors);
+      // Sky (upper half)
+      if (skyColor !== "transparent") {
+        const skyRgb = hexToRgb(skyColor);
+        const skyGeom = createRotatedRectangle(
+          centerX,
+          centerY - horizonSize / 2 - verticalOffset,
+          horizonSize,
+          horizonSize,
+          rollRad,
+          skyRgb,
+          1
+        );
+        allPositions.push(...skyGeom.positions);
+        allColors.push(...skyGeom.colors);
+      }
 
-      // Ground (brown, lower half)
+      // Ground (lower half)
       const groundRgb = hexToRgb(groundColor);
       const groundGeom = createRotatedRectangle(
         centerX,
@@ -911,9 +986,9 @@ function Root({
   showPitchLadder = true,
   showBankIndicator = true,
   pitchStep = 10,
-  skyColor = "#0088ff",
-  groundColor = "#8b4513",
-  horizonColor = "#ffffff",
+  skyColor = "transparent",
+  groundColor = "#19191c",
+  horizonColor = "#9ca3af",
   preferWebGPU = false,
   className,
 }: RootProps) {
@@ -1066,7 +1141,6 @@ export function AttitudeIndicator(props: AttitudeIndicatorProps) {
   return (
     <Root {...props}>
       <Canvas />
-      <ValueDisplay />
     </Root>
   );
 }

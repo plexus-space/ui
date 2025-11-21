@@ -137,10 +137,10 @@ export interface DataGridProps {
   columns: Column[];
   /** Row data (array of objects) */
   data: Record<string, unknown>[];
-  /** Grid width in pixels */
-  width?: number;
-  /** Grid height in pixels */
-  height?: number;
+  /** Grid width (supports responsive values like "100%" or fixed pixels) */
+  width?: number | string;
+  /** Grid height (supports responsive values like "100%" or fixed pixels) */
+  height?: number | string;
   /** Row height in pixels */
   rowHeight?: number;
   /** Header height in pixels */

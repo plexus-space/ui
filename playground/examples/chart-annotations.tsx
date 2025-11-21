@@ -12,6 +12,7 @@ import {
   ApiReferenceTable,
   type ApiProp,
 } from "@/components/api-reference-table";
+import { useColorScheme } from "@/components/color-scheme-provider";
 
 /**
  * Generate sample telemetry data
@@ -30,6 +31,7 @@ function generateTelemetryData(points: number) {
 }
 
 function BasicExample() {
+  const { color } = useColorScheme();
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [enabled, setEnabled] = useState(true);
 
@@ -57,13 +59,9 @@ const [annotations, setAnnotations] = useState<Annotation[]>([]);
         <div className="w-full space-y-4">
           <div className="flex items-center justify-between bg-zinc-900 px-4 py-2 rounded-lg">
             <div className="text-xs text-zinc-400">
-              {enabled ? (
-                <span className="text-green-400">
-                  ✓ Annotation mode enabled - Click to add labels
-                </span>
-              ) : (
-                <span>Annotation mode disabled</span>
-              )}
+              {enabled
+                ? "Annotation mode enabled - Click to add labels"
+                : "Annotation mode disabled"}
             </div>
             <div className="flex gap-2">
               <button
@@ -71,7 +69,7 @@ const [annotations, setAnnotations] = useState<Annotation[]>([]);
                 onClick={() => setEnabled(!enabled)}
                 className={`px-3 py-1 text-xs rounded ${
                   enabled
-                    ? "bg-green-600 text-white"
+                    ? `bg-[${color}] text-white`
                     : "bg-zinc-800 text-zinc-400"
                 }`}
               >
@@ -90,7 +88,7 @@ const [annotations, setAnnotations] = useState<Annotation[]>([]);
           </div>
 
           <LineChart.Root
-            series={[{ name: "Temperature", data, color: "#3b82f6" }]}
+            series={[{ name: "Temperature", data, color: color }]}
             width={800}
             height={400}
             xAxis={{ label: "Time (s)" }}
@@ -102,7 +100,7 @@ const [annotations, setAnnotations] = useState<Annotation[]>([]);
               annotations={annotations}
               onChange={setAnnotations}
               enabled={enabled}
-              color="#6366f1"
+              color={"#18181b"}
             />
           </LineChart.Root>
         </div>
@@ -112,6 +110,7 @@ const [annotations, setAnnotations] = useState<Annotation[]>([]);
 }
 
 function StreamingDataExample() {
+  const { color } = useColorScheme();
   const [data, setData] = useState(() => generateTelemetryData(50));
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -164,10 +163,10 @@ useEffect(() => {
               <button
                 type="button"
                 onClick={() => setIsStreaming(!isStreaming)}
-                className={`px-3 py-1 text-xs rounded ${
+                className={`cursor-pointer px-3 py-1 text-xs rounded ${
                   isStreaming
-                    ? "bg-red-600 text-white"
-                    : "bg-green-600 text-white"
+                    ? `bg-[${color}] text-white`
+                    : `bg-zinc-800 text-zinc-400`
                 }`}
               >
                 {isStreaming ? "Pause" : "Start Stream"}
@@ -185,7 +184,7 @@ useEffect(() => {
           </div>
 
           <LineChart.Root
-            series={[{ name: "Live Data", data, color: "#10b981" }]}
+            series={[{ name: "Live Data", data, color: color }]}
             width={800}
             height={400}
             xAxis={{ label: "Time (s)" }}
@@ -197,7 +196,7 @@ useEffect(() => {
               annotations={annotations}
               onChange={setAnnotations}
               enabled={!isStreaming}
-              color="#f59e0b"
+              color="#18181b"
             />
           </LineChart.Root>
 

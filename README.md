@@ -153,29 +153,6 @@ import { LineChart } from "@plexusui/components/charts/line-chart";
 />;
 ```
 
-### Gauge - Temperature Monitor
-
-```tsx
-import { Gauge } from "@plexusui/components/charts/gauge";
-
-<Gauge
-  value={temperature}
-  min={-20}
-  max={50}
-  label="Temperature"
-  unit="°C"
-  variant="semi-circular"
-  zones={[
-    { from: -20, to: 0, color: "#3b82f6" },
-    { from: 0, to: 15, color: "#06b6d4" },
-    { from: 15, to: 25, color: "#10b981" },
-    { from: 25, to: 50, color: "#ef4444" },
-  ]}
-  width={400}
-  height={300}
-/>;
-```
-
 ### Attitude Indicator - Aviation Display
 
 ```tsx
@@ -247,7 +224,7 @@ const [visibleRange, setVisibleRange] = useState({
 - Motor speed tracking
 - Real-time alerts
 
-Components: Line Chart, Gauges
+Components: Line Chart,
 
 ### ✈️ Aerospace
 
@@ -258,7 +235,7 @@ Components: Line Chart, Gauges
 - Engine parameters
 - G-force visualization
 
-Components: Attitude Indicator, Gauges, Line Charts
+Components: Attitude Indicator, Line Charts
 
 ### 🤖 Robotics
 
@@ -280,7 +257,7 @@ Components: Bar Charts, Line Charts, Heatmaps
 - Vital signs tracking
 - Historical trends
 
-Components: Line Charts, Gauges
+Components: Line Charts,
 
 ### 🚗 Automotive
 
@@ -291,7 +268,7 @@ Components: Line Charts, Gauges
 - CAN bus data visualization
 - Error monitoring
 
-Components: Gauges, Bar Charts, Line Charts
+Components: Bar Charts, Line Charts
 
 ---
 
@@ -312,7 +289,6 @@ Components are designed to be copied into your project:
 
 ```tsx
 import { LineChart } from "@plexusui/components/charts/line-chart";
-import { Gauge } from "@plexusui/components/charts/gauge";
 // Use them in your app
 <LineChart series={data} width={800} height={400} />;
 ```
@@ -383,7 +359,6 @@ Plus 17 individual component examples in `/examples/*`.
 
 **Instruments:**
 
-- Gauge
 - Attitude Indicator
 
 **Data Display:**

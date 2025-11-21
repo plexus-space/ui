@@ -34,7 +34,7 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
   const [error, setError] = useState<string | null>(null);
 
   // Audio Classification & Inference
-  const [audioType, setAudioType] = useState<
+  const [_audioType, setAudioType] = useState<
     "silence" | "speech" | "music" | "noise"
   >("silence");
   const [bpm, setBpm] = useState(0);
@@ -224,30 +224,6 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
       // AUDIO CLASSIFICATION
       if (volume < 5) {
         setAudioType("silence");
-      } else {
-        // Speech has strong presence in 300-3000Hz range
-        const speechRange = (bands.lowMids + bands.mids) / 2;
-        // Music has more balanced spectrum
-        const musicBalance = (bands.bass + bands.mids + bands.highMids) / 3;
-        // Noise has high energy in high frequencies
-        const noiseIndicator = (bands.presence + bands.brilliance) / 2;
-
-        if (speechRange > musicBalance && speechRange > 30) {
-          if (audioType !== "speech") {
-            setAudioType("speech");
-            addInsight("info", "Voice/speech detected");
-          }
-        } else if (musicBalance > 25 && bands.bass > 20) {
-          if (audioType !== "music") {
-            setAudioType("music");
-            addInsight("info", "Music detected");
-          }
-        } else if (noiseIndicator > 40) {
-          if (audioType !== "noise") {
-            setAudioType("noise");
-            addInsight("warning", "High noise detected");
-          }
-        }
       }
 
       // SPECTRAL CENTROID (brightness of sound)
@@ -344,58 +320,45 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getAudioTypeColor = () => {
-    switch (audioType) {
-      case "speech":
-        return "bg-blue-500";
-      case "music":
-        return "bg-purple-500";
-      case "noise":
-        return "bg-orange-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   return (
     <div className={className}>
       {/* Controls */}
-      <Card className="hover:border-zinc-700 mb-4">
+      <Card className="border-zinc-800 hover:border-zinc-700 transition-colors mb-4 p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold mb-1">
-              Audio Observability Dashboard
-            </h3>
-            <p className="text-xs text-gray-400">
-              Real-time inference, classification, and actionable insights from
-              audio data
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Activity className="h-4 w-4 text-zinc-400" />
+              <h3 className="text-sm font-medium">Live Audio Analysis</h3>
+            </div>
+            <p className="text-xs text-zinc-500">
+              Real-time audio classification and spectral analysis
             </p>
           </div>
           <button
             type="button"
             onClick={isRecording ? stopRecording : startRecording}
-            className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center gap-2 text-sm ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-xs ${
               isRecording
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : "bg-cyan-500 text-white hover:bg-cyan-600"
+                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                : "bg-blue-500 text-white hover:bg-blue-600"
             }`}
           >
             {isRecording ? (
               <>
-                <MicOff className="h-4 w-4" />
-                Stop Monitoring
+                <MicOff className="h-3.5 w-3.5" />
+                Stop
               </>
             ) : (
               <>
-                <Mic className="h-4 w-4" />
-                Start Monitoring
+                <Mic className="h-3.5 w-3.5" />
+                Start
               </>
             )}
           </button>
         </div>
 
         {error && (
-          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-400 text-xs">
+          <div className="mt-3 p-2.5 bg-red-500/5 border border-red-500/10 rounded-lg text-red-400 text-xs">
             {error}
           </div>
         )}
@@ -407,25 +370,25 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
           {insights.map((insight) => (
             <Card
               key={insight.id}
-              className={`hover:border-zinc-700 p-3 ${
+              className={`p-3 transition-colors ${
                 insight.type === "warning"
-                  ? "border-orange-500/30"
+                  ? "border-orange-500/20 bg-orange-500/5"
                   : insight.type === "success"
-                  ? "border-green-500/30"
-                  : "border-cyan-500/30"
+                  ? "border-green-500/20 bg-green-500/5"
+                  : "border-blue-500/20 bg-blue-500/5"
               }`}
             >
               <div className="flex items-center gap-2">
                 {insight.type === "warning" && (
-                  <AlertTriangle className="h-4 w-4 text-orange-400" />
+                  <AlertTriangle className="h-3.5 w-3.5 text-orange-400" />
                 )}
                 {insight.type === "success" && (
-                  <CheckCircle2 className="h-4 w-4 text-green-400" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
                 )}
                 {insight.type === "info" && (
-                  <Activity className="h-4 w-4 text-cyan-400" />
+                  <Activity className="h-3.5 w-3.5 text-blue-400" />
                 )}
-                <span className="text-xs">{insight.message}</span>
+                <span className="text-xs text-zinc-300">{insight.message}</span>
               </div>
             </Card>
           ))}
@@ -434,104 +397,106 @@ export function AudioVisualizer({ className }: AudioVisualizerProps) {
 
       {/* Inference Stats */}
       {isRecording && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-          <Card className="hover:border-zinc-700">
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-2">Audio Type</div>
-              <div
-                className={`inline-block px-3 py-1 rounded-full text-white text-xs font-bold ${getAudioTypeColor()}`}
-              >
-                {audioType.toUpperCase()}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-zinc-500">BPM</div>
+              <div className="text-3xl font-semibold tabular-nums">
+                {bpm || "--"}
               </div>
+              <div className="text-xs text-zinc-600">beats/min</div>
             </div>
           </Card>
 
-          <Card className="hover:border-zinc-700">
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">BPM</div>
-              <div className="text-2xl font-bold">{bpm || "--"}</div>
-              <div className="text-xs text-gray-400">beats/min</div>
-            </div>
-          </Card>
-
-          <Card className="hover:border-zinc-700">
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">
-                Spectral Centroid
-              </div>
-              <div className="text-xl font-bold">
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-zinc-500">Centroid</div>
+              <div className="text-3xl font-semibold tabular-nums">
                 {(spectralCentroid / 1000).toFixed(1)}
               </div>
-              <div className="text-xs text-gray-400">kHz (brightness)</div>
+              <div className="text-xs text-zinc-600">kHz brightness</div>
             </div>
           </Card>
 
-          <Card className="hover:border-zinc-700">
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">Dynamic Range</div>
-              <div className="text-2xl font-bold">
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-zinc-500">
+                Dynamic Range
+              </div>
+              <div className="text-3xl font-semibold tabular-nums">
                 {dynamicRange.toFixed(0)}
               </div>
-              <div className="text-xs text-gray-400">dB</div>
+              <div className="text-xs text-zinc-600">dB</div>
             </div>
           </Card>
 
           <Card
-            className={`hover:border-zinc-700 ${
-              isClipping ? "border-red-500/50 bg-red-500/5" : ""
+            className={`transition-colors p-4 ${
+              isClipping
+                ? "border-red-500/30 bg-red-500/5"
+                : "border-zinc-800 hover:border-zinc-700"
             }`}
           >
-            <div className="text-center">
-              <div className="text-xs text-gray-500 mb-1">Clipping</div>
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-zinc-500">Status</div>
               <div
-                className={`text-2xl font-bold ${
+                className={`text-3xl font-semibold ${
                   isClipping ? "text-red-400" : "text-green-400"
                 }`}
               >
-                {isClipping ? "YES" : "NO"}
+                {isClipping ? "CLIP" : "OK"}
               </div>
-              <div className="text-xs text-gray-400">distortion</div>
+              <div className="text-xs text-zinc-600">signal quality</div>
             </div>
           </Card>
         </div>
       )}
 
       {!isRecording && (
-        <div className="p-8 bg-zinc-900/50 rounded-lg border border-zinc-800 text-center mb-4">
-          <Activity className="h-16 w-16 text-cyan-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            Start Audio Observability
+        <div className="p-12 bg-zinc-950/30 rounded-xl border border-zinc-800/50 text-center mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 mb-4">
+            <Activity className="h-8 w-8 text-blue-400" />
+          </div>
+          <h3 className="text-base font-medium mb-2">
+            Real-time Audio Intelligence
           </h3>
-          <p className="text-sm text-zinc-400 mb-4 max-w-lg mx-auto">
-            This isn't just visualization - it's real-time audio intelligence.
-            Talk, play music, or make sounds to see:
+          <p className="text-sm text-zinc-500 mb-6 max-w-lg mx-auto leading-relaxed">
+            Advanced audio analysis with classification, BPM detection,
+            frequency band breakdown, and quality monitoring
           </p>
-          <ul className="text-xs text-zinc-500 space-y-1 max-w-md mx-auto mb-4">
-            <li>
-              ✓ <strong>Audio Classification</strong> - Speech, music, or noise
-              detection
-            </li>
-            <li>
-              ✓ <strong>BPM Detection</strong> - Real-time tempo tracking
-            </li>
-            <li>
-              ✓ <strong>Frequency Band Analysis</strong> - Sub-bass to
-              brilliance breakdown
-            </li>
-            <li>
-              ✓ <strong>Spectral Features</strong> - Centroid, dynamic range,
-              brightness
-            </li>
-            <li>
-              ✓ <strong>Anomaly Detection</strong> - Clipping, silence, and
-              quality alerts
-            </li>
-            <li>
-              ✓ <strong>Actionable Insights</strong> - Real-time recommendations
-            </li>
-          </ul>
-          <div className="inline-block px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-md text-cyan-400 text-xs">
-            This is observability, not just visualization
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto text-left">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">Classification</div>
+                Speech, music, noise detection
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">BPM Tracking</div>
+                Real-time tempo analysis
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">
+                  Spectral Analysis
+                </div>
+                7-band frequency breakdown
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">
+                  Quality Monitoring
+                </div>
+                Clipping and anomaly detection
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -641,14 +606,12 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="hover:border-zinc-700">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs text-gray-500">{title}</h3>
+    <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+      <div className="mb-3">
+        <h3 className="text-xs font-medium text-zinc-400 mb-1">{title}</h3>
+        <p className="text-xs text-zinc-600">{description}</p>
       </div>
-      <div className="space-y-3">
-        <p className="text-xs text-gray-400">{description}</p>
-        <div>{children}</div>
-      </div>
+      <div>{children}</div>
     </Card>
   );
 }

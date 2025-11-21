@@ -3,7 +3,7 @@
 import { HeatmapChart } from "@plexusui/components/charts/heatmap-chart";
 import { LineChart } from "@plexusui/components/charts/line-chart";
 import { useState, useEffect, useRef } from "react";
-import { Camera, CameraOff, Activity, Zap } from "lucide-react";
+import { Camera, CameraOff, Activity, Zap, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 interface CameraVisualizerProps {
@@ -60,8 +60,6 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       });
 
       streamRef.current = stream;
-
-      setIsActive(true);
       startTimeRef.current = Date.now();
       motionHistoryRef.current = [];
       setMotionHistory([]);
@@ -75,58 +73,8 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       }
       setHeatmapData(initialHeatmap);
 
-      // Wait for refs to be available after state update
-      await new Promise((resolve) => setTimeout(resolve, 0));
-
-      // Set up video elements
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        try {
-          await videoRef.current.play();
-          console.log("Hidden video playing");
-        } catch (e) {
-          console.error("Error playing hidden video:", e);
-        }
-
-        // Wait for video to be ready then start detection
-        videoRef.current.onloadedmetadata = () => {
-          console.log("Video loaded, starting motion detection");
-          console.log(
-            "Video dimensions:",
-            videoRef.current?.videoWidth,
-            "x",
-            videoRef.current?.videoHeight
-          );
-          detectMotion();
-        };
-      } else {
-        console.error("videoRef.current is null");
-      }
-
-      if (displayVideoRef.current) {
-        displayVideoRef.current.srcObject = stream;
-        try {
-          await displayVideoRef.current.play();
-          console.log(
-            "Display video playing",
-            displayVideoRef.current.videoWidth,
-            "x",
-            displayVideoRef.current.videoHeight
-          );
-        } catch (e) {
-          console.error("Error playing display video:", e);
-        }
-      } else {
-        console.error("displayVideoRef.current is null - will retry");
-        // Retry after a short delay to let React render
-        setTimeout(() => {
-          if (displayVideoRef.current) {
-            displayVideoRef.current.srcObject = stream;
-            displayVideoRef.current.play();
-            console.log("Display video playing (delayed)");
-          }
-        }, 100);
-      }
+      // Set active state - this will trigger useEffect to setup video elements
+      setIsActive(true);
     } catch (err: any) {
       console.error("Error accessing camera:", err);
       let errorMessage = "Could not access camera. ";
@@ -144,6 +92,7 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       }
 
       setError(errorMessage);
+      setIsActive(false);
     }
   };
 
@@ -341,6 +290,41 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
     update();
   };
 
+  // Setup video elements when camera becomes active
+  useEffect(() => {
+    if (!isActive || !streamRef.current) return;
+
+    const stream = streamRef.current;
+    const setupVideos = async () => {
+      // Setup hidden video for motion detection
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+
+          // Wait for video to be ready then start detection
+          videoRef.current.onloadedmetadata = () => {
+            detectMotion();
+          };
+        } catch (e) {
+          console.error("Error playing hidden video:", e);
+        }
+      }
+
+      // Setup display video
+      if (displayVideoRef.current) {
+        displayVideoRef.current.srcObject = stream;
+        try {
+          await displayVideoRef.current.play();
+        } catch (e) {
+          console.error("Error playing display video:", e);
+        }
+      }
+    };
+
+    setupVideos();
+  }, [isActive]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -354,41 +338,42 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
   return (
     <div className={className}>
       {/* Controls */}
-      <Card className="hover:border-zinc-700 mb-4">
+      <Card className="border-zinc-800 hover:border-zinc-700 transition-colors mb-4 p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold mb-1">
-              Real-Time Motion Detection
-            </h3>
-            <p className="text-xs text-gray-400">
-              Camera-based motion heatmap with pixel-level analysis
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Camera className="h-4 w-4 text-zinc-400" />
+              <h3 className="text-sm font-medium">Motion Detection</h3>
+            </div>
+            <p className="text-xs text-zinc-500">
+              Real-time camera analysis with motion heatmap
             </p>
           </div>
           <button
             type="button"
             onClick={isActive ? stopCamera : startCamera}
-            className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center gap-2 text-sm ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-xs ${
               isActive
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : "bg-cyan-500 text-white hover:bg-cyan-600"
+                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                : "bg-blue-500 text-white hover:bg-blue-600"
             }`}
           >
             {isActive ? (
               <>
-                <CameraOff className="h-4 w-4" />
-                Stop Camera
+                <CameraOff className="h-3.5 w-3.5" />
+                Stop
               </>
             ) : (
               <>
-                <Camera className="h-4 w-4" />
-                Start Camera
+                <Camera className="h-3.5 w-3.5" />
+                Start
               </>
             )}
           </button>
         </div>
 
         {error && (
-          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-400 text-xs">
+          <div className="mt-3 p-2.5 bg-red-500/5 border border-red-500/10 rounded-lg text-red-400 text-xs">
             {error}
           </div>
         )}
@@ -397,44 +382,40 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       {/* Stats Cards */}
       {isActive && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-          <Card className="hover:border-zinc-700">
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">
-                  Motion Intensity
-                </div>
-                <div className="text-2xl font-bold">
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-zinc-500">Current</div>
+                <div className="text-3xl font-semibold tabular-nums">
                   {motionIntensity.toFixed(1)}%
                 </div>
               </div>
-              <Zap className="h-8 w-8 text-yellow-400" />
+              <Zap className="h-6 w-6 text-yellow-400" />
             </div>
           </Card>
 
-          <Card className="hover:border-zinc-700">
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Average Motion</div>
-                <div className="text-2xl font-bold">
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-zinc-500">Average</div>
+                <div className="text-3xl font-semibold tabular-nums">
                   {avgMotion.toFixed(1)}%
                 </div>
               </div>
-              <Activity className="h-8 w-8 text-green-400" />
+              <Activity className="h-6 w-6 text-green-400" />
             </div>
           </Card>
 
-          <Card className="hover:border-zinc-700">
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">
-                  Grid Resolution
-                </div>
-                <div className="text-2xl font-bold">
-                  {GRID_SIZE}x{GRID_SIZE}
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-zinc-500">Grid</div>
+                <div className="text-3xl font-semibold tabular-nums">
+                  {GRID_SIZE}×{GRID_SIZE}
                 </div>
               </div>
-              <div className="h-8 w-8 flex items-center justify-center">
-                <div className="h-3 w-3 bg-cyan-500 rounded-full animate-pulse" />
+              <div className="h-6 w-6 flex items-center justify-center">
+                <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse" />
               </div>
             </div>
           </Card>
@@ -442,19 +423,46 @@ export function CameraVisualizer({ className }: CameraVisualizerProps) {
       )}
 
       {!isActive && (
-        <div className="p-8 bg-zinc-900/50 rounded-lg border border-zinc-800 text-center mb-4">
-          <Camera className="h-16 w-16 text-cyan-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Start Motion Detection</h3>
-          <p className="text-sm text-zinc-400 mb-4 max-w-lg mx-auto">
-            Click "Start Camera" to see real-time motion analysis. Move your
-            hand, wave, or walk around to see motion tracking in action!
+        <div className="p-12 bg-zinc-950/30 rounded-xl border border-zinc-800/50 text-center mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 mb-4">
+            <Camera className="h-8 w-8 text-blue-400" />
+          </div>
+          <h3 className="text-base font-medium mb-2">
+            Real-time Motion Analysis
+          </h3>
+          <p className="text-sm text-zinc-500 mb-6 max-w-lg mx-auto leading-relaxed">
+            Advanced camera-based motion detection with pixel-level analysis and heatmap visualization
           </p>
-          <ul className="text-xs text-zinc-500 space-y-1 max-w-md mx-auto">
-            <li>✓ Real-time motion heatmap</li>
-            <li>✓ 20x20 grid analysis</li>
-            <li>✓ Pixel-level motion detection</li>
-            <li>✓ Historical motion tracking</li>
-          </ul>
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto text-left">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">Motion Heatmap</div>
+                20×20 grid visualization
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">Pixel Analysis</div>
+                Frame-by-frame detection
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">Live Feed</div>
+                Real-time camera view
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">History Tracking</div>
+                Motion timeline charts
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -537,14 +545,12 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="hover:border-zinc-700">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs text-gray-500">{title}</h3>
+    <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+      <div className="mb-3">
+        <h3 className="text-xs font-medium text-zinc-400 mb-1">{title}</h3>
+        <p className="text-xs text-zinc-600">{description}</p>
       </div>
-      <div className="space-y-3">
-        <p className="text-xs text-gray-400">{description}</p>
-        <div>{children}</div>
-      </div>
+      <div>{children}</div>
     </Card>
   );
 }

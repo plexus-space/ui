@@ -48,31 +48,130 @@ import {
 // ============================================================================
 
 export interface RadarDataPoint {
-  angle: number; // in degrees (0-360)
-  distance: number; // normalized 0-1
+  /**
+   * Angular position in degrees (0-360)
+   * 0° is North, increases clockwise
+   */
+  angle: number;
+
+  /**
+   * Distance from center (normalized 0-1)
+   * 0 = center, 1 = outer edge
+   */
+  distance: number;
+
+  /**
+   * Optional label for this data point
+   */
   label?: string;
-  intensity?: number; // 0-1 for color intensity
+
+  /**
+   * Color intensity for this point (0-1)
+   * @default 1
+   */
+  intensity?: number;
 }
 
 export interface RadarSeries {
+  /**
+   * Display name for this data series
+   * @required
+   */
   name: string;
+
+  /**
+   * Array of data points for this series
+   * @required
+   */
   data: RadarDataPoint[];
+
+  /**
+   * Color for this series
+   * Supports any valid CSS color value
+   * @default "#3b82f6"
+   */
   color?: string;
+
+  /**
+   * Display trail effect for moving targets
+   * @default false
+   */
   showTrail?: boolean;
+
+  /**
+   * Length of trail in number of points
+   * @default 5
+   */
   trailLength?: number;
 }
 
 export interface RadarChartProps {
+  /**
+   * Array of data series to display on the radar
+   * @required
+   */
   series: RadarSeries[];
+
+  /**
+   * Number of concentric rings (distance markers)
+   * @default 4
+   */
   rings?: number;
+
+  /**
+   * Number of radial sectors (angular divisions)
+   * @default 12
+   */
   sectors?: number;
+
+  /**
+   * Enable animated radar sweep effect
+   * @default true
+   */
   showSweep?: boolean;
+
+  /**
+   * Radar sweep rotation speed (degrees per second)
+   * @default 2
+   */
   sweepSpeed?: number;
+
+  /**
+   * Display grid lines (rings and sectors)
+   * @default true
+   */
   showGrid?: boolean;
+
+  /**
+   * Display cardinal direction labels (N, E, S, W)
+   * @default true
+   */
   showLabels?: boolean;
-  width?: number;
-  height?: number;
+
+  /**
+   * Width of the radar chart
+   * Supports fixed pixel values or responsive units (e.g., "100%", "50vw")
+   * @default 500
+   */
+  width?: number | string;
+
+  /**
+   * Height of the radar chart
+   * Supports fixed pixel values or responsive units (e.g., "100%", "50vh")
+   * @default 500
+   */
+  height?: number | string;
+
+  /**
+   * Additional CSS classes to apply to the container
+   */
   className?: string;
+
+  /**
+   * Prefer WebGPU over WebGL for rendering
+   * Falls back to WebGL if WebGPU is not available
+   * @default false
+   */
   preferWebGPU?: boolean;
 }
 
@@ -263,7 +362,7 @@ function createSweepGeometry(
     const y = centerY + radius * Math.sin(a);
 
     positions.push(centerX, centerY, x, y);
-    colors.push(...color, 0, ...color, alpha * 0.3);
+    colors.push(...color, 0, ...color, alpha * 0.8); // Increased opacity from 0.3 to 0.8
   }
 
   return { positions, colors };
@@ -329,7 +428,8 @@ function createWebGLRadarRenderer(
       const lineColors: number[] = [];
 
       // Draw concentric rings
-      const gridColor = hexToRgb("#334155");
+      // Use brighter colors with higher opacity for better visibility
+      const gridColor = hexToRgb("#64748b"); // Lighter slate color
       for (let i = 1; i <= rings; i++) {
         const r = (radius * i) / rings;
         const { positions, colors } = createCircleGeometry(
@@ -337,7 +437,7 @@ function createWebGLRadarRenderer(
           centerY,
           r,
           gridColor,
-          0.3
+          0.6 // Increased opacity
         );
         linePositions.push(...positions);
         lineColors.push(...colors);
@@ -350,7 +450,7 @@ function createWebGLRadarRenderer(
         const y = centerY + radius * Math.sin(angle);
 
         linePositions.push(centerX, centerY, x, y);
-        lineColors.push(...gridColor, 0.3, ...gridColor, 0.3);
+        lineColors.push(...gridColor, 0.6, ...gridColor, 0.6); // Increased opacity
       }
 
       // Draw sweep
@@ -563,7 +663,8 @@ async function createWebGPURadarRenderer(
       const lineColors: number[] = [];
 
       // Draw concentric rings
-      const gridColor = hexToRgb("#334155");
+      // Use brighter colors with higher opacity for better visibility
+      const gridColor = hexToRgb("#64748b"); // Lighter slate color
       for (let i = 1; i <= rings; i++) {
         const r = (radius * i) / rings;
         const { positions, colors } = createCircleGeometry(
@@ -571,7 +672,7 @@ async function createWebGPURadarRenderer(
           centerY,
           r,
           gridColor,
-          0.3
+          0.6 // Increased opacity
         );
         linePositions.push(...positions);
         lineColors.push(...colors);
@@ -584,7 +685,7 @@ async function createWebGPURadarRenderer(
         const y = centerY + radius * Math.sin(angle);
 
         linePositions.push(centerX, centerY, x, y);
-        lineColors.push(...gridColor, 0.3, ...gridColor, 0.3);
+        lineColors.push(...gridColor, 0.6, ...gridColor, 0.6); // Increased opacity
       }
 
       // Draw sweep

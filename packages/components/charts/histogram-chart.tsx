@@ -58,8 +58,8 @@ export interface HistogramChartProps {
   /**
    * Chart dimensions
    */
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
 
   /**
    * Axis configuration

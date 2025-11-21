@@ -19,7 +19,7 @@
  * 2. **Component Layer** (Chart Primitives)
  *    - LineChart, BarChart, ScatterChart, AreaChart
  *    - HeatmapChart, Histogram
- *    - Gauge, RadarChart, AttitudeIndicator
+ *    - RadarChart, AttitudeIndicator
  *    - DataGrid, GanttChart, ModelViewer
  *
  * 3. **Utility Layer** (`data-utils`, `interactions`)
@@ -119,9 +119,6 @@ export type {
 
 export { HistogramChart } from "./histogram-chart";
 export type { HistogramChartProps } from "./histogram-chart";
-
-export { Gauge } from "./gauge";
-export type { Zone, GaugeProps } from "./gauge";
 
 export { RadarChart } from "./radar-chart";
 export type {

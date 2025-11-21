@@ -39,9 +39,6 @@ function AttitudeDemo() {
       roll={roll}
       width={400}
       height={400}
-      showPitchLadder={true}
-      showBankIndicator={true}
-      pitchStep={10}
     />
   );
 }`}
@@ -53,9 +50,6 @@ function AttitudeDemo() {
               roll={roll}
               width={400}
               height={400}
-              showPitchLadder={true}
-              showBankIndicator={true}
-              pitchStep={10}
             />
           </div>
 
@@ -226,9 +220,6 @@ function DroneMonitor() {
                   roll={roll}
                   width={400}
                   height={400}
-                  showPitchLadder
-                  showBankIndicator
-                  pitchStep={10}
                 />
               </CardContent>
             </Card>
@@ -366,10 +357,8 @@ function SurgicalMonitor() {
     <AttitudeIndicator
       pitch={pitch}
       roll={roll}
-      pitchStep={5}
-      skyColor="#e0f2fe"
-      groundColor="#f8fafc"
-      horizonColor="#0ea5e9"
+      width={400}
+      height={400}
     />
   );
 }`}
@@ -388,12 +377,6 @@ function SurgicalMonitor() {
                   roll={roll}
                   width={400}
                   height={400}
-                  showPitchLadder
-                  showBankIndicator
-                  pitchStep={5}
-                  skyColor="#e0f2fe"
-                  groundColor="#f8fafc"
-                  horizonColor="#0ea5e9"
                 />
               </CardContent>
             </Card>
@@ -514,35 +497,23 @@ function CustomIndicator() {
       roll={roll}
       width={400}
       height={400}
-      skyColor="#1e3a8a"
-      groundColor="#92400e"
     >
       <AttitudeIndicator.Canvas />
-      <AttitudeIndicator.ValueDisplay />
     </AttitudeIndicator.Root>
   );
 }`}
       preview={
         <div className="w-full space-y-6">
-          <Card>
-            <CardContent className="flex justify-center pt-6">
-              <AttitudeIndicator.Root
-                pitch={pitch}
-                roll={roll}
-                width={400}
-                height={400}
-                showPitchLadder
-                showBankIndicator
-                pitchStep={10}
-                skyColor="#1e3a8a"
-                groundColor="#92400e"
-                preferWebGPU
-              >
-                <AttitudeIndicator.Canvas />
-                <AttitudeIndicator.ValueDisplay />
-              </AttitudeIndicator.Root>
-            </CardContent>
-          </Card>
+          <div className="flex justify-center">
+            <AttitudeIndicator.Root
+              pitch={pitch}
+              roll={roll}
+              width={400}
+              height={400}
+            >
+              <AttitudeIndicator.Canvas />
+            </AttitudeIndicator.Root>
+          </div>
 
           <Card>
             <CardHeader>
@@ -650,13 +621,13 @@ const attitudeIndicatorProps: ApiProp[] = [
   {
     name: "skyColor",
     type: "string",
-    default: '"#4a90e2"',
+    default: '"transparent"',
     description: "Color of the sky (upper half)",
   },
   {
     name: "groundColor",
     type: "string",
-    default: '"#8b6914"',
+    default: '"#6b7280"',
     description: "Color of the ground (lower half)",
   },
   {
@@ -708,13 +679,13 @@ const attitudeIndicatorRootProps: ApiProp[] = [
   {
     name: "skyColor",
     type: "string",
-    default: '"#4a90e2"',
+    default: '"transparent"',
     description: "Sky color",
   },
   {
     name: "groundColor",
     type: "string",
-    default: '"#8b6914"',
+    default: '"#6b7280"',
     description: "Ground color",
   },
   {

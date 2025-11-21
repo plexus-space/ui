@@ -3,7 +3,7 @@
 import { AttitudeIndicator } from "@plexusui/components/charts/attitude-indicator";
 import { LineChart } from "@plexusui/components/charts/line-chart";
 import { useState, useEffect, useRef } from "react";
-import { Smartphone, Navigation, TrendingUp } from "lucide-react";
+import { Smartphone, Navigation, TrendingUp, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 interface OrientationVisualizerProps {
@@ -196,42 +196,42 @@ export function OrientationVisualizer({
   return (
     <div className={className}>
       {/* Controls */}
-      <Card className="hover:border-zinc-700 mb-4">
+      <Card className="border-zinc-800 hover:border-zinc-700 transition-colors mb-4 p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold mb-1">
-              Device Orientation & Attitude
-            </h3>
-            <p className="text-xs text-gray-400">
-              Real-time gyroscope/accelerometer visualization with aviation
-              attitude indicator
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <Smartphone className="h-4 w-4 text-zinc-400" />
+              <h3 className="text-sm font-medium">Device Orientation</h3>
+            </div>
+            <p className="text-xs text-zinc-500">
+              Real-time gyroscope and accelerometer tracking
             </p>
           </div>
           <button
             type="button"
             onClick={isActive ? stopOrientation : startOrientation}
-            className={`px-6 py-2 rounded-md font-medium transition-colors flex items-center gap-2 text-sm ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 text-xs ${
               isActive
-                ? "bg-red-500 text-white hover:bg-red-600"
-                : "bg-cyan-500 text-white hover:bg-cyan-600"
+                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                : "bg-blue-500 text-white hover:bg-blue-600"
             }`}
           >
             {isActive ? (
               <>
-                <Smartphone className="h-4 w-4" />
+                <Smartphone className="h-3.5 w-3.5" />
                 Stop
               </>
             ) : (
               <>
-                <Smartphone className="h-4 w-4" />
-                Start Sensors
+                <Smartphone className="h-3.5 w-3.5" />
+                Start
               </>
             )}
           </button>
         </div>
 
         {error && (
-          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-400 text-xs">
+          <div className="mt-3 p-2.5 bg-red-500/5 border border-red-500/10 rounded-lg text-red-400 text-xs">
             {error}
           </div>
         )}
@@ -239,93 +239,104 @@ export function OrientationVisualizer({
 
       {/* Stats Cards */}
       {isActive && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-          <Card className="hover:border-zinc-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Pitch (β)</div>
-                <div className="text-2xl font-bold">{pitch.toFixed(1)}°</div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {pitch > 0 ? "Nose Up" : pitch < 0 ? "Nose Down" : "Level"}
-                </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-zinc-500">Pitch (β)</div>
+              <div className="text-3xl font-semibold tabular-nums">{pitch.toFixed(1)}°</div>
+              <div className="text-xs text-zinc-600">
+                {pitch > 0 ? "Nose Up" : pitch < 0 ? "Nose Down" : "Level"}
               </div>
-              <TrendingUp className="h-8 w-8 text-blue-400" />
             </div>
           </Card>
 
-          <Card className="hover:border-zinc-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Roll (γ)</div>
-                <div className="text-2xl font-bold">{roll.toFixed(1)}°</div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {roll > 0 ? "Right Tilt" : roll < 0 ? "Left Tilt" : "Level"}
-                </div>
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-zinc-500">Roll (γ)</div>
+              <div className="text-3xl font-semibold tabular-nums">{roll.toFixed(1)}°</div>
+              <div className="text-xs text-zinc-600">
+                {roll > 0 ? "Right Tilt" : roll < 0 ? "Left Tilt" : "Level"}
               </div>
-              <Navigation className="h-8 w-8 text-green-400" />
             </div>
           </Card>
 
-          <Card className="hover:border-zinc-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Heading (α)</div>
-                <div className="text-2xl font-bold">{heading.toFixed(0)}°</div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {heading >= 337.5 || heading < 22.5
-                    ? "N"
-                    : heading >= 22.5 && heading < 67.5
-                    ? "NE"
-                    : heading >= 67.5 && heading < 112.5
-                    ? "E"
-                    : heading >= 112.5 && heading < 157.5
-                    ? "SE"
-                    : heading >= 157.5 && heading < 202.5
-                    ? "S"
-                    : heading >= 202.5 && heading < 247.5
-                    ? "SW"
-                    : heading >= 247.5 && heading < 292.5
-                    ? "W"
-                    : "NW"}
-                </div>
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-zinc-500">Heading (α)</div>
+              <div className="text-3xl font-semibold tabular-nums">{heading.toFixed(0)}°</div>
+              <div className="text-xs text-zinc-600">
+                {heading >= 337.5 || heading < 22.5
+                  ? "N"
+                  : heading >= 22.5 && heading < 67.5
+                  ? "NE"
+                  : heading >= 67.5 && heading < 112.5
+                  ? "E"
+                  : heading >= 112.5 && heading < 157.5
+                  ? "SE"
+                  : heading >= 157.5 && heading < 202.5
+                  ? "S"
+                  : heading >= 202.5 && heading < 247.5
+                  ? "SW"
+                  : heading >= 247.5 && heading < 292.5
+                  ? "W"
+                  : "NW"}
               </div>
-              <Smartphone className="h-8 w-8 text-purple-400" />
             </div>
           </Card>
 
-          <Card className="hover:border-zinc-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">Avg Pitch/Roll</div>
-                <div className="text-lg font-bold">
-                  {avgPitch.toFixed(1)}° / {avgRoll.toFixed(1)}°
-                </div>
+          <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-zinc-500">Average</div>
+              <div className="text-2xl font-semibold tabular-nums">
+                {avgPitch.toFixed(1)}° / {avgRoll.toFixed(1)}°
               </div>
-              <div className="h-8 w-8 flex items-center justify-center">
-                <div className="h-3 w-3 bg-cyan-500 rounded-full animate-pulse" />
-              </div>
+              <div className="text-xs text-zinc-600">Pitch / Roll</div>
             </div>
           </Card>
         </div>
       )}
 
       {!isActive && (
-        <div className="p-8 bg-zinc-900/50 rounded-lg border border-zinc-800 text-center mb-4">
-          <Smartphone className="h-16 w-16 text-cyan-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            Start Device Orientation
+        <div className="p-12 bg-zinc-950/30 rounded-xl border border-zinc-800/50 text-center mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/20 mb-4">
+            <Smartphone className="h-8 w-8 text-blue-400" />
+          </div>
+          <h3 className="text-base font-medium mb-2">
+            Device Orientation Tracking
           </h3>
-          <p className="text-sm text-zinc-400 mb-4 max-w-lg mx-auto">
-            Click "Start Sensors" to visualize your device's orientation in
-            real-time. Tilt your phone/tablet to see the attitude indicator
-            respond!
+          <p className="text-sm text-zinc-500 mb-6 max-w-lg mx-auto leading-relaxed">
+            Real-time gyroscope and accelerometer visualization with aviation-style attitude indicator
           </p>
-          <ul className="text-xs text-zinc-500 space-y-1 max-w-md mx-auto">
-            <li>✓ Real-time attitude indicator</li>
-            <li>✓ Pitch, roll, and heading tracking</li>
-            <li>✓ Aviation-style artificial horizon</li>
-            <li>✓ Historical orientation data</li>
-          </ul>
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto text-left">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">Attitude Indicator</div>
+                Aviation-style horizon
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">3-Axis Tracking</div>
+                Pitch, roll, and heading
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">Live Sensors</div>
+                Gyroscope & accelerometer
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-zinc-400">
+                <div className="font-medium text-zinc-300">History Charts</div>
+                Orientation over time
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -434,14 +445,12 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="hover:border-zinc-700">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-xs text-gray-500">{title}</h3>
+    <Card className="border-zinc-800 hover:border-zinc-700 transition-colors p-4">
+      <div className="mb-3">
+        <h3 className="text-xs font-medium text-zinc-400 mb-1">{title}</h3>
+        <p className="text-xs text-zinc-600">{description}</p>
       </div>
-      <div className="space-y-3">
-        <p className="text-xs text-gray-400">{description}</p>
-        <div>{children}</div>
-      </div>
+      <div>{children}</div>
     </Card>
   );
 }

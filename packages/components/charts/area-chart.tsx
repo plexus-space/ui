@@ -43,8 +43,8 @@ export interface AreaChartProps {
     domain?: [number, number] | "auto";
     formatter?: (value: number) => string;
   };
-  width?: number;
-  height?: number;
+  width?: number | string;
+  height?: number | string;
   showGrid?: boolean;
   showAxes?: boolean;
   showTooltip?: boolean;
