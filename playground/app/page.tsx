@@ -18,12 +18,14 @@ export default function Home() {
       <div>
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="py-12">
-            <h1 className="text-4xl mb-3">
-              Simplifying human-computer interaction for hardware.
+            <h1 className="text-4xl md:text-5xl mb-4">
+              GPU-Accelerated Charts for Physical Systems
             </h1>
-            <p className="text-sm text-gray-400 max-w-3xl mx-auto">
-              Observability made Simple. Unified visibility and optimization
-              across all physical systems.
+            <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-2">
+              Handle 100k+ data points at 60fps. Built for real-time sensor data, telemetry, and streaming hardware systems.
+            </p>
+            <p className="text-sm text-gray-500 max-w-2xl mx-auto">
+              WebGPU-powered • Zero-copy buffers • Free & Open Source
             </p>
           </div>
         </div>
@@ -66,14 +68,25 @@ export default function Home() {
             <OrientationVisualizer />
           </TabsContent>
         </Tabs>
-        <p className="text-lg max-w-3xl mx-auto text-center pt-12">
-          Want more than just the components? Check out our full product for
-          more information.
-        </p>
-        <div className="flex justify-center items-center text-center pt-4">
-          <Button asChild variant="default">
-            <Link href="https://plexusaero.space">Try free now!</Link>
-          </Button>
+        <div className="max-w-3xl mx-auto text-center pt-12 space-y-4">
+          <p className="text-lg">
+            Ready to use these components in your project?
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Button asChild variant="default" size="lg">
+              <Link href="https://github.com/plexus-space/ui">
+                View on GitHub
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="https://plexusaero.space">
+                See Full Platform
+              </Link>
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500">
+            Free & Open Source (MIT) • Copy-paste components • WebGPU accelerated
+          </p>
         </div>
       </div>
     </div>

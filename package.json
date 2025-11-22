@@ -2,7 +2,7 @@
   "name": "@plexus/ui-aerospace",
   "version": "0.1.0",
   "private": true,
-  "description": "Monorepo for primitive-based aerospace component library with planetary visualization components for React Three Fiber",
+  "description": "GPU-accelerated component library for real-time visualization of physical systems - robotics, medical devices, aerospace, and industrial IoT",
   "workspaces": [
     "packages/*",
     "playground"
@@ -20,13 +20,20 @@
   },
   "keywords": [
     "monorepo",
-    "aerospace",
     "ui",
     "components",
     "react",
     "primitives",
-    "planets",
     "visualization",
+    "webgpu",
+    "gpu-accelerated",
+    "charts",
+    "physical-systems",
+    "robotics",
+    "medical-devices",
+    "aerospace",
+    "industrial-iot",
+    "real-time",
     "shadcn"
   ],
   "author": "",
