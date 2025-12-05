@@ -974,11 +974,11 @@ function Canvas() {
     ctx.canvasRef,
   ]);
 
-  // Render when data changes
+  // Render when data changes (skip if not visible)
   useEffect(() => {
     const canvas = ctx.canvasRef.current;
     const renderer = rendererRef.current;
-    if (!canvas || !renderer || !ctx.renderMode) return;
+    if (!canvas || !renderer || !ctx.renderMode || !ctx.isVisible) return;
 
     const dpr = ctx.devicePixelRatio;
 
@@ -1038,6 +1038,7 @@ function Canvas() {
     ctx.devicePixelRatio,
     ctx.renderMode,
     ctx.canvasRef,
+    ctx.isVisible,
   ]);
 
   return (

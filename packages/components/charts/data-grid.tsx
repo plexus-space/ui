@@ -853,11 +853,11 @@ function Canvas() {
     ctx.setRenderMode,
   ]);
 
-  // Render when data or scroll position changes
+  // Render when data or scroll position changes (skip if not visible)
   useEffect(() => {
     const canvas = ctx.canvasRef.current;
     const renderer = rendererRef.current;
-    if (!canvas || !renderer || !ctx.renderMode) return;
+    if (!canvas || !renderer || !ctx.renderMode || !ctx.isVisible) return;
 
     const dpr = ctx.devicePixelRatio;
     let rafId: number | null = null;
@@ -926,6 +926,7 @@ function Canvas() {
     ctx.devicePixelRatio,
     ctx.renderMode,
     ctx.canvasRef,
+    ctx.isVisible,
   ]);
 
   return (

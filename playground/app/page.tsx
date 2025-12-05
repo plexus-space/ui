@@ -1,18 +1,31 @@
 "use client";
 
+import { useState, lazy, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { AudioVisualizer } from "@/components/audio-visualizer";
-import { CameraVisualizer } from "@/components/camera-visualizer";
-import { OrientationVisualizer } from "@/components/orientation-visualizer";
-import { SkateboardTelemetry } from "@/components/skateboard-telemetry";
 import { Button } from "@/components/ui/button";
+
+// Lazy load heavy visualizer components - only load when tab is selected
+const AudioVisualizer = lazy(() => import("@/components/audio-visualizer").then(m => ({ default: m.AudioVisualizer })));
+const CameraVisualizer = lazy(() => import("@/components/camera-visualizer").then(m => ({ default: m.CameraVisualizer })));
+const OrientationVisualizer = lazy(() => import("@/components/orientation-visualizer").then(m => ({ default: m.OrientationVisualizer })));
+const SkateboardTelemetry = lazy(() => import("@/components/skateboard-telemetry").then(m => ({ default: m.SkateboardTelemetry })));
+
+function TabLoader() {
+  return (
+    <div className="w-full h-[400px] flex items-center justify-center text-gray-500">
+      Loading...
+    </div>
+  );
+}
 
 // ============================================================================
 // MAIN PAGE
 // ============================================================================
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState("skateboard");
+
   return (
     <div className="min-h-screen bg-background">
       <div>
@@ -35,6 +48,7 @@ export default function Home() {
         <Tabs
           defaultValue="skateboard"
           className="w-full justify-center items-center flex flex-col"
+          onValueChange={(value) => setActiveTab(value)}
         >
           <TabsList className="mb-6">
             <TabsTrigger value="skateboard" className="text-xs">
@@ -52,20 +66,37 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="skateboard" className="space-y-4 w-full">
-            <SkateboardTelemetry />
+          {/* Only mount the active tab's component - unmount others to release resources */}
+          <TabsContent value="skateboard" className="space-y-4 w-full" forceMount={activeTab === "skateboard" ? true : undefined}>
+            {activeTab === "skateboard" && (
+              <Suspense fallback={<TabLoader />}>
+                <SkateboardTelemetry />
+              </Suspense>
+            )}
           </TabsContent>
 
-          <TabsContent value="audio" className="space-y-4 w-full">
-            <AudioVisualizer />
+          <TabsContent value="audio" className="space-y-4 w-full" forceMount={activeTab === "audio" ? true : undefined}>
+            {activeTab === "audio" && (
+              <Suspense fallback={<TabLoader />}>
+                <AudioVisualizer />
+              </Suspense>
+            )}
           </TabsContent>
 
-          <TabsContent value="camera" className="space-y-4 w-full">
-            <CameraVisualizer />
+          <TabsContent value="camera" className="space-y-4 w-full" forceMount={activeTab === "camera" ? true : undefined}>
+            {activeTab === "camera" && (
+              <Suspense fallback={<TabLoader />}>
+                <CameraVisualizer />
+              </Suspense>
+            )}
           </TabsContent>
 
-          <TabsContent value="orientation" className="space-y-4 w-full">
-            <OrientationVisualizer />
+          <TabsContent value="orientation" className="space-y-4 w-full" forceMount={activeTab === "orientation" ? true : undefined}>
+            {activeTab === "orientation" && (
+              <Suspense fallback={<TabLoader />}>
+                <OrientationVisualizer />
+              </Suspense>
+            )}
           </TabsContent>
         </Tabs>
         <div className="max-w-3xl mx-auto text-center pt-12 space-y-4">

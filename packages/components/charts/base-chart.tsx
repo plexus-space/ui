@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { useChartVisibility } from "../lib/visibility";
 
 /**
  * Default GPU error fallback component
@@ -180,6 +181,7 @@ export interface BaseChartContext {
   yScale: (y: number) => number;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   overlayRef: React.RefObject<HTMLCanvasElement | null>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   preferWebGPU: boolean;
   renderMode: "webgpu" | "webgl" | null;
   setRenderMode: (mode: "webgpu" | "webgl" | null) => void;
@@ -192,6 +194,8 @@ export interface BaseChartContext {
   setTimeSeriesState: React.Dispatch<
     React.SetStateAction<TimeSeriesState | null>
   >;
+  /** Whether the chart is visible (in viewport and tab active). Use to pause expensive rendering. */
+  isVisible: boolean;
 }
 
 const BaseChartContext = React.createContext<BaseChartContext | null>(null);
@@ -498,6 +502,12 @@ export interface BaseChartRootProps {
   disableErrorBoundary?: boolean;
   errorFallback?: React.ReactNode;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  /**
+   * Automatically pause rendering when chart is off-screen or tab is hidden.
+   * Improves performance by skipping GPU work for invisible charts.
+   * @default true
+   */
+  autoHide?: boolean;
 }
 
 /**
@@ -526,10 +536,15 @@ export function ChartRoot({
   disableErrorBoundary = false,
   errorFallback,
   onError,
+  autoHide = true,
 }: BaseChartRootProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const overlayRef = React.useRef<HTMLCanvasElement>(null);
+
+  // Visibility detection for auto-pausing when off-screen
+  const { isVisible: visibilityState } = useChartVisibility(containerRef);
+  const isVisible = autoHide ? visibilityState : true;
 
   const [dimensions, setDimensions] = React.useState<{
     width: number;
@@ -721,6 +736,7 @@ export function ChartRoot({
     yScale,
     canvasRef,
     overlayRef,
+    containerRef,
     preferWebGPU,
     renderMode,
     setRenderMode,
@@ -731,6 +747,7 @@ export function ChartRoot({
     setTooltipData,
     timeSeriesState,
     setTimeSeriesState,
+    isVisible,
   };
 
   // Container style with responsive support

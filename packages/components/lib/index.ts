@@ -11,3 +11,4 @@ export * from "./data-utils";
 export * from "./color-scales";
 export * from "./connectors";
 export * from "./animations";
+export * from "./visibility";

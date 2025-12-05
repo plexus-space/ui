@@ -1096,11 +1096,11 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     ctx.setRenderMode,
   ]);
 
-  // Render when data changes
+  // Render when data changes (skip if not visible)
   useEffect(() => {
     const canvas = ctx.canvasRef.current;
     const renderer = rendererRef.current;
-    if (!canvas || !renderer || !ctx.renderMode || !rendererReady) return;
+    if (!canvas || !renderer || !ctx.renderMode || !rendererReady || !ctx.isVisible) return;
 
     const dpr = ctx.devicePixelRatio;
     let rafId: number | null = null;
@@ -1161,6 +1161,7 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
     ctx.devicePixelRatio,
     ctx.renderMode,
     ctx.canvasRef,
+    ctx.isVisible,
     ctx.stacked,
     showGrid,
     rendererReady,
