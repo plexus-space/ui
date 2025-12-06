@@ -89,7 +89,7 @@ const [annotations, setAnnotations] = useState<Annotation[]>([]);
 
           <LineChart.Root
             series={[{ name: "Temperature", data, color: color }]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ label: "Time (s)" }}
             yAxis={{ label: "Temperature (°C)" }}
@@ -185,7 +185,7 @@ useEffect(() => {
 
           <LineChart.Root
             series={[{ name: "Live Data", data, color: color }]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ label: "Time (s)" }}
             yAxis={{ label: "Value" }}

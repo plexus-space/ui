@@ -93,7 +93,7 @@ const [enabled, setEnabled] = useState(true);
 
           <LineChart.Root
             series={[{ name: "Signal", data, color: color }]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ label: "Time (s)" }}
             yAxis={{ label: "Value" }}
@@ -163,7 +163,7 @@ const [measurement, setMeasurement] = useState<Measurement | null>(null);
 
           <LineChart.Root
             series={[{ name: "Position", data, color: "#10b981" }]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ label: "Time (s)" }}
             yAxis={{ label: "Position" }}
@@ -284,7 +284,7 @@ const exportData = () => {
 
           <LineChart.Root
             series={[{ name: "Data", data, color: "#3b82f6" }]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ label: "Time (s)" }}
             yAxis={{ label: "Value" }}

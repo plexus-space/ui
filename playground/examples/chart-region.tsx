@@ -54,7 +54,7 @@ function BasicExample() {
         <div className="w-full">
           <LineChart.Root
             series={[{ name: "Telemetry", data, color: "#6366f1" }]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ label: "Time (s)" }}
             yAxis={{ label: "Value" }}
@@ -130,7 +130,7 @@ function FlightPhasesExample() {
         <div className="w-full">
           <LineChart.Root
             series={[{ name: "Altitude", data, color: "#6366f1" }]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ label: "Time (s)" }}
             yAxis={{ label: "Altitude (ft)" }}
@@ -196,7 +196,7 @@ function CustomOpacityExample() {
         <div className="w-full">
           <LineChart.Root
             series={[{ name: "Data", data, color: "#8b5cf6" }]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ label: "Time (s)" }}
             yAxis={{ label: "Value" }}
