@@ -57,7 +57,7 @@ const data = Array.from({ length: 60 }, (_, i) => ({
   showTooltip
 />`}
       preview={
-        <div className="w-full h-[400px]">
+        <div className="w-full">
           <AreaChart
             series={[
               {
@@ -99,7 +99,7 @@ const series2 = [...];
   showTooltip
 />`}
       preview={
-        <div className="w-full h-[400px]">
+        <div className="w-full">
           <AreaChart
             series={[
               {
@@ -191,7 +191,7 @@ useEffect(() => {
   xAxis={{ domain: [data[0].x, data[data.length - 1].x] }}
 />`}
       preview={
-        <div className="w-full h-[400px]">
+        <div className="w-full">
           <AreaChart
             series={[
               {
@@ -234,7 +234,7 @@ function PrimitiveAreaChart() {
   <AreaChart.Tooltip />
 </AreaChart.Root>`}
       preview={
-        <div className="w-full h-[400px]">
+        <div className="w-full">
           <AreaChart.Root
             series={[
               {

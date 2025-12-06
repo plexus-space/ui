@@ -1347,8 +1347,8 @@ export function AreaChart({
       series={series}
       xAxis={xAxis}
       yAxis={yAxis}
-      width={typeof width === "string" ? parseInt(width) : width}
-      height={typeof height === "string" ? parseInt(height) : height}
+      width={width}
+      height={height}
       preferWebGPU={preferWebGPU}
       stacked={stacked}
       className={className}

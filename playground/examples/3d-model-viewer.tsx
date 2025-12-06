@@ -252,51 +252,11 @@ const cubeData = generateCubeSTL();
   showGrid
 />`}
       preview={
-        <div className="w-full">
+        <div className="w-full h-[400px]">
           <ModelViewer
             modelData={cubeData}
             modelType="stl"
-            height={400}
-            showGrid
-            backgroundColor="#111111"
-          />
-        </div>
-      }
-    />
-  );
-}
-
-function IBeamAnalysisExample() {
-  const { buffer, stressValues } = useMemo(() => generateIBeamSTL(), []);
-
-  return (
-    <ComponentPreview
-      title="I-Beam Structural Analysis"
-      description="I-beam cross-section with FEA-style stress visualization. Demonstrates realistic engineering geometry."
-      code={`import { ModelViewer } from "@plexusui/components/charts/3d-model-viewer";
-import { plasma } from "@plexusui/components/lib/color-scales";
-
-<ModelViewer
-  modelData={iBeamBuffer}
-  modelType="stl"
-  vertexColors={stressValues}
-  colorScale={plasma}
-  minValue={0}
-  maxValue={100}
-  showAxes
-  height={400}
-/>`}
-      preview={
-        <div className="w-full">
-          <ModelViewer
-            modelData={buffer}
-            modelType="stl"
-            vertexColors={stressValues}
-            colorScale={plasma}
-            minValue={0}
-            maxValue={100}
-            showAxes
-            height={400}
+            height="100%"
             backgroundColor="#0a0a0a"
           />
         </div>
@@ -322,13 +282,14 @@ function WireframeExample() {
   height={400}
 />`}
       preview={
-        <div className="w-full">
+        <div className="w-full h-[400px]">
           <ModelViewer
             modelData={cubeData}
             modelType="stl"
             wireframe
             showAxes
-            height={400}
+            showGrid={false}
+            height="100%"
             backgroundColor="#0a0a0a"
           />
         </div>
@@ -380,16 +341,18 @@ import { viridis, plasma, inferno } from "@plexusui/components/lib/color-scales"
               </button>
             ))}
           </div>
-          <ModelViewer
-            modelData={buffer}
-            modelType="stl"
-            vertexColors={stressValues}
-            colorScale={colorScales[selectedScale]}
-            minValue={0}
-            maxValue={100}
-            height={400}
-            backgroundColor="#0a0a0a"
-          />
+          <div className="w-full h-[400px]">
+            <ModelViewer
+              modelData={buffer}
+              modelType="stl"
+              vertexColors={stressValues}
+              colorScale={colorScales[selectedScale]}
+              minValue={0}
+              maxValue={100}
+              height="100%"
+              backgroundColor="#0a0a0a"
+            />
+          </div>
         </div>
       }
     />
@@ -438,16 +401,18 @@ function ComposableExample() {
               Show Axes
             </label>
           </div>
-          <ModelViewer.Root
-            modelData={cubeData}
-            modelType="stl"
-            showGrid={showGrid}
-            showAxes={showAxes}
-            height={400}
-            backgroundColor="#111111"
-          >
-            <ModelViewer.Canvas />
-          </ModelViewer.Root>
+          <div className="w-full h-[400px]">
+            <ModelViewer.Root
+              modelData={cubeData}
+              modelType="stl"
+              showGrid={showGrid}
+              showAxes={showAxes}
+              height="100%"
+              backgroundColor="#111111"
+            >
+              <ModelViewer.Canvas />
+            </ModelViewer.Root>
+          </div>
         </div>
       }
     />
@@ -547,13 +512,15 @@ const handleFileChange = async (e) => {
             )}
           </div>
           {modelData && (
-            <ModelViewer
-              modelData={modelData}
-              modelType="stl"
-              height={400}
-              backgroundColor="#0a0a0a"
-              showGrid
-            />
+            <div className="w-full h-[400px]">
+              <ModelViewer
+                modelData={modelData}
+                modelType="stl"
+                height="100%"
+                backgroundColor="#0a0a0a"
+                showGrid
+              />
+            </div>
           )}
         </div>
       }
@@ -727,7 +694,7 @@ function ModelViewerExamples() {
     <div className="space-y-12">
       <div className="space-y-8">
         <BasicCubeExample />
-        <IBeamAnalysisExample />
+
         <WireframeExample />
         <ColorScaleComparisonExample />
         <ComposableExample />

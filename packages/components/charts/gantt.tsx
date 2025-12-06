@@ -945,6 +945,7 @@ const GanttChartViewport = React.forwardRef<
     xScale,
     leftPanelWidth,
     timeWindowHours,
+    width,
     setTimeRangeOffset,
   } = useGantt();
 
@@ -952,29 +953,50 @@ const GanttChartViewport = React.forwardRef<
   const [startX, setStartX] = React.useState(0);
   const [scrollLeft, setScrollLeft] = React.useState(0);
   const hasInitialized = React.useRef(false);
+  const lastXScaleRef = React.useRef<((date: Date) => number) | null>(null);
 
   // Set initial scroll position to show "now" with ~1 hour of history visible
   React.useEffect(() => {
-    if (!scrollContainerRef.current || hasInitialized.current) return;
+    if (!scrollContainerRef.current) return;
+
+    // Only skip if we've already initialized with THIS xScale
+    // This allows re-initialization when xScale changes (e.g., after resize)
+    if (hasInitialized.current && lastXScaleRef.current === xScale) return;
 
     const container = scrollContainerRef.current;
-    const viewportWidth = container.clientWidth - leftPanelWidth;
 
-    // Calculate the pixel width for 1 hour of time
-    const oneHourInPixels = viewportWidth / timeWindowHours;
+    // Use requestAnimationFrame to ensure layout is complete before scrolling
+    const scrollToInitialPosition = () => {
+      if (!container) return;
 
-    // Always scroll to the actual current time, not initialScrollPosition
-    const actualNow = new Date();
-    const nowPosition = xScale(actualNow);
-    const scrollPosition = nowPosition - leftPanelWidth - oneHourInPixels;
+      // Use width from context to match xScale calculation
+      const viewportWidth = width - leftPanelWidth;
 
-    container.scrollTo({
-      left: Math.max(0, scrollPosition),
-      behavior: "auto",
-    });
+      // Wait for proper dimensions
+      if (viewportWidth <= 0) {
+        requestAnimationFrame(scrollToInitialPosition);
+        return;
+      }
 
-    hasInitialized.current = true;
-  }, [xScale, leftPanelWidth, timeWindowHours, scrollContainerRef.current]);
+      // Calculate the pixel width for 1 hour of time (consistent with xScale)
+      const oneHourInPixels = viewportWidth / timeWindowHours;
+
+      // Always scroll to the actual current time
+      const actualNow = new Date();
+      const nowPosition = xScale(actualNow);
+      const scrollPosition = nowPosition - leftPanelWidth - oneHourInPixels;
+
+      container.scrollTo({
+        left: Math.max(0, scrollPosition),
+        behavior: "auto",
+      });
+
+      hasInitialized.current = true;
+      lastXScaleRef.current = xScale;
+    };
+
+    requestAnimationFrame(scrollToInitialPosition);
+  }, [xScale, leftPanelWidth, timeWindowHours, width]);
 
   // Infinite scroll detection
   React.useEffect(() => {
