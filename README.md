@@ -330,16 +330,14 @@ plexus-ui/
 
 ## Playground Demos
 
-The playground includes 6 interactive dashboards showcasing real-time streaming data:
+The playground includes 4 interactive dashboards showcasing real-time streaming data:
 
 1. **Live Audio** - Real-time microphone input with GPU-accelerated FFT spectrogram, frequency analysis, and statistical aggregation
 2. **Motion Detection** - Camera-based motion heatmap with 20x20 grid tracking and historical analysis
 3. **Device Tilt** - Real-time gyroscope/accelerometer data visualized with aviation attitude indicator
-4. **Health Monitoring** - ECG, EEG, vital signs simulation
-5. **Robotics** - Motor speeds, battery cells, sensor arrays
-6. **Energy Management** - Power consumption, solar generation
+4. **Skateboard Telemetry** - IMU sensor data with 3D visualization
 
-Plus 17 individual component examples in `/examples/*`.
+Plus 16 individual component examples in `/examples/*`.
 
 ---
 
