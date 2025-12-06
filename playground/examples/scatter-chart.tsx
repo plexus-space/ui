@@ -98,7 +98,7 @@ function MultiSeriesScatterChart() {
             ]}
             xAxis={{ label: "Processing Time (ms)" }}
             yAxis={{ label: "Throughput (req/s)" }}
-            width={800}
+            width="100%"
             height={400}
             showGrid={true}
             showTooltip
@@ -148,7 +148,7 @@ function PrimitiveScatterChart() {
                 size: 9,
               },
             ]}
-            width={800}
+            width="100%"
             height={400}
             preferWebGPU={true}
           >
@@ -330,7 +330,7 @@ useEffect(() => {
             ]}
             xAxis={{ label: "CPU Usage (%)", domain: [0, 100] }}
             yAxis={{ label: "Memory Usage (%)", domain: [0, 100] }}
-            width={800}
+            width="100%"
             height={400}
             showGrid
             showTooltip

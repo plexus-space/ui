@@ -167,7 +167,7 @@ function TelemetryTable() {
         <DataGrid
           columns={columns}
           data={data.map((item) => ({ ...item }))}
-          width={1200}
+          width="100%"
           height={600}
           sortable
           highlightOnHover
@@ -288,7 +288,7 @@ const flights = generateFlightData(10000);
         <DataGrid
           columns={columns}
           data={data.map((item) => ({ ...item }))}
-          width={1200}
+          width="100%"
           height={600}
           sortable
           virtualScrolling
@@ -411,7 +411,7 @@ function PrimitiveCompositionExample() {
           <DataGrid.Root
             columns={columns}
             data={data}
-            width={1000}
+            width="100%"
             height={400}
             sortable
             highlightOnHover

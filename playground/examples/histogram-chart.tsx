@@ -73,7 +73,7 @@ const data = generateNormalData(1000, 50, 15); // mean=50, stdDev=15
             color={color}
             xAxis={{ label: "Measurement Value" }}
             yAxis={{ label: "Frequency" }}
-            width={800}
+            width="100%"
             height={400}
             showTooltip
           />
@@ -113,7 +113,7 @@ function HistogramWithNormalCurve() {
             color={color}
             xAxis={{ label: "Test Score" }}
             yAxis={{ label: "Number of Students" }}
-            width={800}
+            width="100%"
             height={400}
             showTooltip
           />
@@ -151,7 +151,7 @@ function DensityHistogram() {
             color={color}
             xAxis={{ label: "Time to Failure (hours)" }}
             yAxis={{ label: "Probability Density" }}
-            width={800}
+            width="100%"
             height={400}
             showTooltip
           />
@@ -189,7 +189,7 @@ function UniformDistribution() {
             color={color}
             xAxis={{ label: "Random Value" }}
             yAxis={{ label: "Relative Frequency" }}
-            width={800}
+            width="100%"
             height={400}
             showTooltip
           />
@@ -242,7 +242,7 @@ const measurementData = [
               formatter: (val: number) => `${val.toFixed(1)}mm`,
             }}
             yAxis={{ label: "Part Count" }}
-            width={800}
+            width="100%"
             height={400}
             showTooltip
           />

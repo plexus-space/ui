@@ -304,7 +304,7 @@ function PrimitiveHeatmapChart() {
         <div className="w-full h-[500px]">
           <HeatmapChart.Root
             data={serverActivityData.slice(0, 168)} // One week
-            width={800}
+            width="100%"
             height={500}
             xAxis={{ label: "Day of Week" }}
             yAxis={{ label: "Hour of Day" }}

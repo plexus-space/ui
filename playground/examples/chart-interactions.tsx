@@ -76,7 +76,7 @@ import { ChartClick } from "@/components/plexusui/charts/interactions";
           <div className="w-full h-[400px] relative">
             <LineChart.Root
               series={[{ name: "Telemetry", data: telemetryData, color: "#3b82f6" }]}
-              width={800}
+              width="100%"
               height={400}
               preferWebGPU
             >
@@ -178,7 +178,7 @@ import { ChartBrush } from "@/components/plexusui/charts/interactions";
               series={[
                 { name: "Telemetry", data: telemetryData, color: "#8b5cf6" },
               ]}
-              width={800}
+              width="100%"
               height={400}
               preferWebGPU
             >
@@ -251,7 +251,7 @@ import { ChartCrosshair } from "@/components/plexusui/charts/interactions";
               series={[
                 { name: "Telemetry", data: telemetryData, color: "#ef4444" },
               ]}
-              width={800}
+              width="100%"
               height={400}
               xAxis={{ label: "Sample Index" }}
               yAxis={{ label: "Value" }}
@@ -364,7 +364,7 @@ const [mode, setMode] = useState('crosshair');
           <div className="w-full h-[400px] relative">
             <ScatterChart.Root
               series={[{ name: "Data Points", data: scatterData, color: "#10b981" }]}
-              width={800}
+              width="100%"
               height={400}
               xAxis={{ label: "X Coordinate" }}
               yAxis={{ label: "Y Coordinate" }}

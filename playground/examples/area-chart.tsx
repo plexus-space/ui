@@ -70,7 +70,7 @@ const data = Array.from({ length: 60 }, (_, i) => ({
             ]}
             yAxis={{ label: "Price ($)" }}
             xAxis={{ label: "Time (days)", domain: [0, 59] }}
-            width={800}
+            width="100%"
             height={400}
             showGrid
             showTooltip
@@ -125,7 +125,7 @@ const series2 = [...];
             ]}
             yAxis={{ label: "CPU Usage (%)" }}
             xAxis={{ label: "Time (min)", domain: [0, 39] }}
-            width={800}
+            width="100%"
             height={400}
             showGrid
             showTooltip
@@ -204,7 +204,7 @@ useEffect(() => {
             ]}
             xAxis={{ domain: [xMin, xMax] }}
             yAxis={{ label: "Value" }}
-            width={800}
+            width="100%"
             height={400}
             showGrid
             showTooltip
@@ -244,7 +244,7 @@ function PrimitiveAreaChart() {
                 fillOpacity: 0.3,
               },
             ]}
-            width={800}
+            width="100%"
             height={400}
             xAxis={{ domain: [0, 49] }}
             preferWebGPU={true}

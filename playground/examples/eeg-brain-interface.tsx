@@ -375,7 +375,7 @@ const channelData = Array.from({ length: 8 }, () =>
                       data={electrodeActivity}
                       xAxis={{ label: "" }}
                       yAxis={{ label: "" }}
-                      width={500}
+                      width="100%"
                       height={370}
                       minValue={0}
                       maxValue={100}
@@ -412,7 +412,7 @@ const channelData = Array.from({ length: 8 }, () =>
                     },
                   }}
                   yAxis={{ label: "Amplitude (µV)" }}
-                  width={1100}
+                  width="100%"
                   height={400}
                   showAxes
                   showTooltip
