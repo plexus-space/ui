@@ -20,11 +20,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type {
-  Connector,
-  ConnectionStatus,
-  ConnectionError,
-} from "../connectors";
+import { Connector, ConnectionStatus, ConnectionError } from "../connectors";
 import {
   RaspberryPiConnector,
   type RaspberryPiConnectorConfig,
@@ -60,7 +56,7 @@ export function useConnector<TData = any>(
 ): UseConnectorResult<TData> {
   const [data, setData] = useState<TData | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>(
-    connector?.getStatus() || "disconnected"
+    connector?.getStatus() ?? ConnectionStatus.DISCONNECTED
   );
   const [error, setError] = useState<ConnectionError | null>(null);
   const connectorRef = useRef(connector);
@@ -143,9 +139,7 @@ export function useRaspberryPi<TData = any>(
 ): UseConnectorResult<TData> {
   const [connector] = useState(() => {
     const config =
-      typeof hostOrConfig === "string"
-        ? { host: hostOrConfig }
-        : hostOrConfig;
+      typeof hostOrConfig === "string" ? { host: hostOrConfig } : hostOrConfig;
     return new RaspberryPiConnector<TData>(config);
   });
 
