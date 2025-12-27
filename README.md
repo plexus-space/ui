@@ -1,33 +1,23 @@
 # Plexus UI
 
-> GPU-accelerated component library for physical systems.
-
-A primitive-first, WebGPU-accelerated component library for real-time visualization of physical systems.
-
-## Why Plexus UI?
-
-**For Physical Systems:** Standard web UI libraries optimize for forms, dashboards, and CRUD apps. Plexus UI is built for real-time physical system visualization: medical devices, aircraft HUDs, robotics, and industrial monitoring.
-
-**GPU-Accelerated:** WebGPU and WebGL2 rendering pipelines for smooth 60fps visualization. Handle 100k+ data points in real-time. Zero-copy buffer updates for streaming sensor data.
-
-**Primitive-First Architecture:** You get the core rendering primitives and control the data pipeline. Maximum performance for deep-tech use cases. No black-box abstractions.
-
----
+GPU-accelerated charts for real-time sensor data.
 
 ## Quick Start
 
 ```bash
-# Clone and install
-git clone https://github.com/annschulte/plexus-ui.git
-cd plexus-ui
+git clone https://github.com/plexus-oss/ui.git
+cd ui
 npm install
-
-# Run playground with demos
-cd playground
 npm run dev
 ```
 
-Open http://localhost:3000 to see live demos.
+Open http://localhost:3000 to see demos.
+
+## Why Plexus UI?
+
+- **GPU-Accelerated:** WebGPU/WebGL2 rendering for 100k+ data points at 60fps
+- **Built for Physical Systems:** Medical devices, aircraft HUDs, robotics, industrial monitoring
+- **Copy-paste Components:** No npm package to manage - just copy what you need
 
 ---
 
@@ -385,8 +375,8 @@ We love contributions!
 **Quick ways to contribute:**
 
 - ⭐ Star this repo
-- 🐛 Report bugs via [GitHub Issues](https://github.com/annschulte/plexus-ui/issues)
-- 💡 Request features via [Discussions](https://github.com/annschulte/plexus-ui/discussions)
+- 🐛 Report bugs via [GitHub Issues](https://github.com/plexus-oss/ui/issues)
+- 💡 Request features via [Discussions](https://github.com/plexus-oss/ui/discussions)
 - 📝 Improve documentation
 - 🎨 Build example dashboards
 - 🔧 Submit PRs for bug fixes or new components
@@ -402,27 +392,6 @@ MIT License - see [LICENSE](./LICENSE) for details.
 ## Built With Plexus UI
 
 **Share your project!** Open a PR to add your project here.
-
-<!-- Coming soon: showcase of real-world projects -->
-
----
-
-## Roadmap
-
-**Next up:**
-
-- 🚧 CLI tool for easy component installation
-- 🚧 More data connectors (WebSocket, MAVLink, Serial)
-- 🚧 Additional chart types (polar, sankey, treemap)
-- 🚧 Mobile/touch optimization
-- 🚧 Accessibility improvements
-
-**Future:**
-
-- Plugin system for custom renderers
-- Theme customization UI
-- Real-time collaboration features
-- Cloud deployment templates
 
 ---
 
