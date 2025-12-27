@@ -12,7 +12,9 @@ export default function DocsPage() {
           <h2 className="text-2xl font-semibold mb-4">Prerequisites</h2>
           <ul className="list-disc list-inside text-gray-400 space-y-2">
             <li>React 18 or higher</li>
-            <li>A modern browser with WebGPU support (Chrome 113+, Edge 113+)</li>
+            <li>
+              A modern browser with WebGPU support (Chrome 113+, Edge 113+)
+            </li>
             <li>Node.js 18 or higher</li>
           </ul>
         </section>
@@ -29,7 +31,8 @@ export default function DocsPage() {
             </code>
           </div>
           <p className="text-sm text-gray-500">
-            This will set up the necessary configuration and directory structure for Plexus UI components.
+            This will set up the necessary configuration and directory structure
+            for Plexus UI components.
           </p>
         </section>
 
@@ -57,17 +60,13 @@ export default function DocsPage() {
         {/* List Available Components */}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4">Available Components</h2>
-          <p className="text-gray-400 mb-4">
-            View all available components:
-          </p>
+          <p className="text-gray-400 mb-4">View all available components:</p>
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-4">
             <code className="text-sm font-mono text-green-400">
               npx @plexusui/cli list
             </code>
           </div>
-          <p className="text-gray-400 mb-4">
-            Filter by category:
-          </p>
+          <p className="text-gray-400 mb-4">Filter by category:</p>
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-4">
             <code className="text-sm font-mono text-green-400">
               npx @plexusui/cli list --category charts
@@ -99,7 +98,7 @@ export default function DocsPage() {
           </p>
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 overflow-x-auto">
             <pre className="text-sm font-mono text-gray-300">
-{`import { GPULineChart } from "@/components/plexus/gpu-line-chart";
+              {`import { GPULineChart } from "@/components/plexus/gpu-line-chart";
 
 export function TelemetryDashboard() {
   const [data, setData] = useState<number[]>([]);
@@ -133,7 +132,7 @@ export function TelemetryDashboard() {
             </li>
             <li>
               <a
-                href="https://plexusaero.space"
+                href="https://plexus.company"
                 className="text-blue-400 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"

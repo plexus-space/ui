@@ -54,7 +54,7 @@ export default function Home() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="https://plexusaero.space">See Full Platform</Link>
+              <Link href="https://plexus.company">See Full Platform</Link>
             </Button>
           </div>
           <p className="text-sm text-gray-500">
