@@ -25,7 +25,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="py-12">
             <h1 className="text-4xl md:text-5xl mb-4">
-              GPU Components for Physical Systems
+              Components for Physical Systems
             </h1>
             <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-2">
               Handle 100k+ data points at 60fps. Built for real-time sensor
