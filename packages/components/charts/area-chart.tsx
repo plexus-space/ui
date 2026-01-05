@@ -1100,7 +1100,14 @@ function Canvas({ showGrid = false }: { showGrid?: boolean }) {
   useEffect(() => {
     const canvas = ctx.canvasRef.current;
     const renderer = rendererRef.current;
-    if (!canvas || !renderer || !ctx.renderMode || !rendererReady || !ctx.isVisible) return;
+    if (
+      !canvas ||
+      !renderer ||
+      !ctx.renderMode ||
+      !rendererReady ||
+      !ctx.isVisible
+    )
+      return;
 
     const dpr = ctx.devicePixelRatio;
     let rafId: number | null = null;

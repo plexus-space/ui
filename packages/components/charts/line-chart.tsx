@@ -51,7 +51,7 @@ export interface Series {
 
   /**
    * Line stroke width in pixels
-   * @default 3
+   * @default 1.5
    */
   strokeWidth?: number;
 }
@@ -454,7 +454,7 @@ function createWebGLLineRenderer(
         }
 
         const color = hexToRgb(s.color || "#3b82f6");
-        const lineWidth = (s.strokeWidth || 3) * 2;
+        const lineWidth = s.strokeWidth || 1.5;
         const geometry = createLineGeometry(
           s.data,
           xScale,
@@ -863,7 +863,7 @@ function createWebGPULineRenderer(
         }
 
         const color = hexToRgb(s.color || "#3b82f6");
-        const lineWidth = s.strokeWidth || 3;
+        const lineWidth = s.strokeWidth || 1.5;
         const geometry = createLineGeometry(
           s.data,
           xScale,
