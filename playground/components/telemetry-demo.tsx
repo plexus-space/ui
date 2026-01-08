@@ -456,7 +456,7 @@ export function TelemetryDemo() {
         </div>
       </Card>
 
-      {/* <div className="grid gap-3 md:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-5">
         <StatCard
           icon={Gauge}
           label="Velocity"
@@ -487,14 +487,16 @@ export function TelemetryDemo() {
           value={`${sensor.power.toFixed(0)}%`}
           subValue={sensor.power > 50 ? "Good" : "Low"}
         />
-      </div> */}
+      </div>
 
       {/* Main Visualizations */}
       <div className="grid gap-3 md:grid-cols-2">
         {/* Velocity Chart */}
         <ChartCard
           title="Velocity"
-          description={annotationMode ? "Drag to measure" : "Speed over time (m/s)"}
+          description={
+            annotationMode ? "Drag to measure" : "Speed over time (m/s)"
+          }
         >
           {velocityHistory.length > 10 ? (
             <AreaChart.Root
